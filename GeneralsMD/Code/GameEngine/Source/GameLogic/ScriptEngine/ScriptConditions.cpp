@@ -1044,7 +1044,6 @@ Bool ScriptConditions::evaluateIsBuildingEmpty( Parameter *pItemParm )
 //-------------------------------------------------------------------------------------------------
 Bool ScriptConditions::evaluateEnemySighted(Parameter *pItemParm, Parameter *pAllianceParm, Parameter* pPlayerParm)
 {
-
 	Object *theObj = TheScriptEngine->getUnitNamed( pItemParm->getString() );
 	if (!theObj) {
 		return false;
@@ -1105,6 +1104,7 @@ Bool ScriptConditions::evaluateEnemySighted(Parameter *pItemParm, Parameter *pAl
 //-------------------------------------------------------------------------------------------------
 Bool ScriptConditions::evaluateTypeSighted(Parameter *pItemParm, Parameter *pTypeParm, Parameter* pPlayerParm)
 {
+	return false;
 
 	Object *theObj = TheScriptEngine->getUnitNamed( pItemParm->getString() );
 	if (!theObj) {

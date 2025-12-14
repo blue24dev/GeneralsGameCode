@@ -105,7 +105,7 @@ static void updateTeamAndPlayerStuff( Object *obj, void *userData )
 		Drawable* draw = obj->getDrawable();
 		if (draw)
 		{
-			if (TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT)
+			if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
 				draw->setIndicatorColor(obj->getNightIndicatorColor());
 			else
 				draw->setIndicatorColor(obj->getIndicatorColor());
@@ -3046,7 +3046,9 @@ void ScriptActions::doCameraMotionBlur(Bool zoomIn, Bool saturate)
 	}
 }
 
-static PlayerMaskType getHumanPlayerMask( void )
+//MODDD - removed 'static' modifier, can be externed from other places
+//static PlayerMaskType getHumanPlayerMask( void )
+PlayerMaskType getHumanPlayerMask( void )
 {
 #if RETAIL_COMPATIBLE_CRC
 	PlayerMaskType mask;
@@ -3073,17 +3075,44 @@ static PlayerMaskType getHumanPlayerMask( void )
 //-------------------------------------------------------------------------------------------------
 void ScriptActions::doRevealMapAtWaypoint(const AsciiString& waypointName, Real radiusToReveal, const AsciiString& playerName)
 {
+	//MODDD
+#if REMOVE_FOG_OF_WAR
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		return;
+	}
+#endif
+
+#if GENERALS_CHALLENGE_FORCE
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
+			// fall through
+		} else {
+			// no.
+			return;
+		}
+	}
+#endif
+
 	Waypoint *way = TheTerrainLogic->getWaypointByName(waypointName);
 	if (!way) {
 		return;
 	}
 
+	// thanks for making me need to do this visual studio.......
+#if !GENERALS_CHALLENGE_FORCE
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
+#endif
 	PlayerMaskType playerMask;
+
+	//MODDD - if this constant is on, always apply to all human players instead
+#if !GENERALS_CHALLENGE_FORCE
 	if (player && playerName.isNotEmpty())
 		playerMask = player->getPlayerMask();
 	else
 		playerMask = getHumanPlayerMask();
+#else
+	playerMask = getHumanPlayerMask();
+#endif
 
 	Real positionX = way->getLocation()->x;
 	Real positionY = way->getLocation()->y;
@@ -3098,24 +3127,61 @@ void ScriptActions::doRevealMapAtWaypoint(const AsciiString& waypointName, Real 
 //-------------------------------------------------------------------------------------------------
 void ScriptActions::doShroudMapAtWaypoint(const AsciiString& waypointName, Real radiusToShroud, const AsciiString& playerName)
 {
+	//MODDD
+#if REMOVE_FOG_OF_WAR
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		return;
+	}
+#endif
+
+#if GENERALS_CHALLENGE_FORCE
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
+			// fall through
+		} else {
+			// no.
+			return;
+		}
+	}
+#endif
+
 	Waypoint *way = TheTerrainLogic->getWaypointByName(waypointName);
 	if (!way) {
 		return;
 	}
 
+	// thanks for making me need to do this visual studio.......
+#if !GENERALS_CHALLENGE_FORCE
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
+#endif
 	PlayerMaskType playerMask;
+
+	//MODDD - if this constant is on, always apply to all human players instead
+#if !GENERALS_CHALLENGE_FORCE
 	if (player && playerName.isNotEmpty())
 		playerMask = player->getPlayerMask();
 	else
 		playerMask = getHumanPlayerMask();
+#else
+	playerMask = getHumanPlayerMask();
+#endif
 
 	Real positionX = way->getLocation()->x;
 	Real positionY = way->getLocation()->y;
 
 	// Likewise, this script does a dollop of shroud.  Not permanent active shroud
+	// See comments there.
+	//MODDD - nevermind, just use the new call all the time, looks like that should work out
+	/*
+#if !PARTITIONMANAGER_SHROUD_NONPERSISTENT
 	ThePartitionManager->doShroudCover(positionX, positionY, radiusToShroud, playerMask);
 	ThePartitionManager->undoShroudCover(positionX, positionY, radiusToShroud, playerMask);
+#else
+	// To achieve this, need a different call instead of 'do/undoShroudCover'.
+	ThePartitionManager->doSetShroudArea(positionX, positionY, radiusToShroud, playerMask);
+#endif
+	*/
+	ThePartitionManager->doSetShroudArea(positionX, positionY, radiusToShroud, playerMask);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -3123,6 +3189,31 @@ void ScriptActions::doShroudMapAtWaypoint(const AsciiString& waypointName, Real 
 //-------------------------------------------------------------------------------------------------
 void ScriptActions::doRevealMapEntire(const AsciiString& playerName)
 {
+	//MODDD
+#if REMOVE_FOG_OF_WAR
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		return;
+	}
+#endif
+
+#if GENERALS_CHALLENGE_FORCE
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		// Copy of the loop-thru players route further down. Just do this to apply any reveal to all players for co-op friendliness
+		// (so long as the script is referring to either 'ThePlayer' or 'player0', in case of manual edits done elsewhere - ex: don't do this for both 'player0' and 'player1', etc.)
+		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
+			for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
+			{
+				Player *player = ThePlayerList->getNthPlayer(i);
+				if (player->getPlayerType() == PLAYER_HUMAN)
+				{
+					ThePartitionManager->revealMapForPlayer( i );
+				}
+			}
+		}
+		return;
+	}
+#endif
+
 	DEBUG_LOG(("ScriptActions::doRevealMapEntire() for player named '%s'", playerName.str()));
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
 	if (player && playerName.isNotEmpty())
@@ -3147,6 +3238,34 @@ void ScriptActions::doRevealMapEntire(const AsciiString& playerName)
 
 void ScriptActions::doRevealMapEntirePermanently( Bool reveal, const AsciiString& playerName )
 {
+#if REMOVE_FOG_OF_WAR
+	//MODDD - disable since the change in GameLogic.cpp to reveal the map permanently for all players already
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		return;
+	}
+#endif
+
+#if GENERALS_CHALLENGE_FORCE
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		// Copy of the loop-thru players route further down. Just do this to apply any reveal to all players for co-op friendliness
+		// (so long as the script is referring to either 'ThePlayer' or 'player0', in case of manual edits done elsewhere - ex: don't do this for both 'player0' and 'player1', etc.)
+		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
+			for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
+			{
+				Player *player = ThePlayerList->getNthPlayer(i);
+				if (player->getPlayerType() == PLAYER_HUMAN)
+				{
+					if( reveal )
+						ThePartitionManager->revealMapForPlayerPermanently( i );
+					else
+						ThePartitionManager->undoRevealMapForPlayerPermanently( i );
+				}
+			}
+		}
+		return;
+	}
+#endif
+
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
 	if (player && playerName.isNotEmpty())
 	{
@@ -3177,6 +3296,32 @@ void ScriptActions::doRevealMapEntirePermanently( Bool reveal, const AsciiString
 //-------------------------------------------------------------------------------------------------
 void ScriptActions::doShroudMapEntire(const AsciiString& playerName)
 {
+	//MODDD
+#if REMOVE_FOG_OF_WAR
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		return;
+	}
+#endif
+
+#if GENERALS_CHALLENGE_FORCE
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		// Copy of the loop-thru players route further down. Just do this to apply any reveal to all players for co-op friendliness
+		// (so long as the script is referring to either 'ThePlayer' or 'player0', in case of manual edits done elsewhere - ex: don't do this for both 'player0' and 'player1', etc.)
+		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
+			for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
+			{
+				Player *player = ThePlayerList->getNthPlayer(i);
+				if (player->getPlayerType() == PLAYER_HUMAN)
+				{
+					ThePartitionManager->shroudMapForPlayer( i );
+				}
+			}
+		}
+		return;
+	}
+#endif
+
+
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
 	if (player && playerName.isNotEmpty())
 	{
@@ -3997,7 +4142,8 @@ void ScriptActions::doNamedSetStoppingDistance(const AsciiString& unit, Real sto
 //-------------------------------------------------------------------------------------------------
 void ScriptActions::doDisableSpecialPowerDisplay(void)
 {
-	TheInGameUI->setSuperweaponDisplayEnabledByScript(false);
+	//MODDD - no.
+	//TheInGameUI->setSuperweaponDisplayEnabledByScript(false);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -4070,6 +4216,14 @@ void ScriptActions::doTransferTeamToPlayer(const AsciiString& teamName, const As
 //-------------------------------------------------------------------------------------------------
 void ScriptActions::doSetMoney(const AsciiString& playerName, Int money)
 {
+	//MODDD
+#if BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS:
+	Player* playerPRE = TheScriptEngine->getPlayerFromAsciiString(playerName);
+	if (playerPRE && playerPRE->getPlayerType() == PLAYER_HUMAN) {
+		return;
+	}
+#endif
+
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
 
 	if (!player) {
@@ -4272,6 +4426,9 @@ void ScriptActions::doSkirmishFireSpecialPowerAtMostCost( const AsciiString &pla
 					if( !mod->isReady() )
 						continue;
 
+					//MODDD - if this module is an OCL for OWNER type, block it. See the comment there.
+					if (!mod->canBeSpecialPowerSource())
+						continue;
 
 	        Coord3D location;
           Bool locationFound = FALSE;
@@ -4824,7 +4981,8 @@ void ScriptActions::doNamedFireWeaponFollowingWaypointPath( const AsciiString& u
 		return;
 	}
 
-	Object *projectile = weapon->forceFireWeapon( theUnit, &pos );
+	//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+	Object *projectile = ForceFireWeaponAndHandleOCL( weapon, theUnit, &pos );
 	if( projectile )
 	{
 		//Get the AIUpdateInterface... if it fails, abort.
@@ -5019,6 +5177,7 @@ void ScriptActions::doBorderSwitch(Int borderToUse)
 	 *	observer player we need to undo the old permanent reveal, switch map borders,
 	 *	and re-reveal the map. BGC
 	*/
+#if !REMOVE_FOG_OF_WAR
 	Int observerPlayerIndex = -1;
 	if (ThePlayerList != NULL)
 	{
@@ -5033,13 +5192,32 @@ void ScriptActions::doBorderSwitch(Int borderToUse)
 	{
 		ThePartitionManager->undoRevealMapForPlayerPermanently( observerPlayerIndex );
 	}
+#else
+	//MODDD - added portion to undo the reveal for all players
+	for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
+		Player* player = ThePlayerList->getNthPlayer(i);
+		if (player && player->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(player->getPlayerNameKey()).getLength() != 0) {
+			ThePartitionManager->undoRevealMapForPlayerPermanently( player->getPlayerIndex() );
+		}
+	}
+#endif
 
 	TheTerrainLogic->setActiveBoundary(borderToUse);
 
+#if !REMOVE_FOG_OF_WAR
 	if (observerPlayerIndex != -1)
 	{
 		ThePartitionManager->revealMapForPlayerPermanently( observerPlayerIndex );
 	}
+#else
+	//MODDD - added portion to re-apply the reveal for all players
+	for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
+		Player* player = ThePlayerList->getNthPlayer(i);
+		if (player && player->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(player->getPlayerNameKey()).getLength() != 0) {
+			ThePartitionManager->revealMapForPlayerPermanently( player->getPlayerIndex() );
+		}
+	}
+#endif
 
 	ThePartitionManager->refreshShroudForLocalPlayer();
 }
@@ -6149,6 +6327,51 @@ void ScriptActions::doObjectTypeListMaintenance(const AsciiString& objectList, c
 //-------------------------------------------------------------------------------------------------
 void ScriptActions::doRevealMapAtWaypointPermanent(const AsciiString& waypointName, Real radiusToReveal, const AsciiString& playerName, const AsciiString& lookName)
 {
+	//MODDD
+#if REMOVE_FOG_OF_WAR
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		return;
+	}
+#endif
+
+	//MODDD - nevermind, a few edits in ScriptEngine.cpp is much easier...
+	/*
+#if GENERALS_CHALLENGE_FORCE
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		// Copy of the loop-thru players route further down. Just do this to apply any reveal to all players for co-op friendliness
+		// (so long as the script is referring to either 'ThePlayer' or 'player0', in case of manual edits done elsewhere - ex: don't do this for both 'player0' and 'player1', etc.)
+		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
+			for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
+			{
+				Player *player = ThePlayerList->getNthPlayer(i);
+				if (player->getPlayerType() == PLAYER_HUMAN)
+				{
+					AsciiString playerNameTemp;
+					playerNameTemp.format("player%d", i);
+					// Create a unique name for each one
+					AsciiString lookNameTemp;
+					lookNameTemp.format("%s_p%d", lookName.str(), i);
+					TheScriptEngine->createNamedMapReveal(lookNameTemp, waypointName, radiusToReveal, playerNameTemp);
+					TheScriptEngine->doNamedMapReveal(lookNameTemp);
+				}
+			}
+		}
+		return;
+	}
+#endif
+  */
+	// However, can block calls that aren't to one of the expected player choices
+#if GENERALS_CHALLENGE_FORCE
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
+			// fall through
+		} else {
+			// no.
+			return;
+		}
+	}
+#endif
+
 	TheScriptEngine->createNamedMapReveal(lookName, waypointName, radiusToReveal, playerName);
 	TheScriptEngine->doNamedMapReveal(lookName);
 }
@@ -6156,6 +6379,13 @@ void ScriptActions::doRevealMapAtWaypointPermanent(const AsciiString& waypointNa
 //-------------------------------------------------------------------------------------------------
 void ScriptActions::doUndoRevealMapAtWaypointPermanent(const AsciiString& lookName)
 {
+	//MODDD
+#if REMOVE_FOG_OF_WAR
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		return;
+	}
+#endif
+
 	TheScriptEngine->undoNamedMapReveal(lookName);
 	TheScriptEngine->removeNamedMapReveal(lookName);
 }
@@ -6468,6 +6698,19 @@ void ScriptActions::doAffectSkillPointsModifier(const AsciiString& playerName, R
 	if (!playerDst) {
 		return;
 	}
+
+	//MODDD - personal choice.
+#if NOOB_MODE
+	if (
+		playerDst->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(playerDst->getPlayerNameKey()).getLength() != 0 &&
+		playerDst->getPlayerType() == PLAYER_HUMAN &&
+		playerDst->getSide().compare("AmericaAirForceGeneral") == 0
+		) {
+		Real newModifierMod = newModifier * 1.15;
+		playerDst->setSkillPointsModifier(newModifierMod);
+		return;
+	}
+#endif
 
 	playerDst->setSkillPointsModifier(newModifier);
 

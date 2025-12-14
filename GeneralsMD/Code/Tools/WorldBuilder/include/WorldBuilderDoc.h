@@ -33,7 +33,9 @@ class Undoable;
 class DataChunkInput;
 struct DataChunkInfo;
 
-#define MAX_UNDOS 15
+//MODDD - 15 ahahah brother are you serious
+//#define MAX_UNDOS 15
+#define MAX_UNDOS 64
 
 #define MIN_CELL_SIZE 1
 #define MAX_CELL_SIZE 64
@@ -42,7 +44,10 @@ class CWorldBuilderDoc : public CDocument
 {
 	friend class COptionsPanel;
 
-	enum {MAX_WAYPOINTS=16000}; ///@todo - make it dynamic.  jba.
+	//MODDD - it isn't 2003 anymore
+	//enum {MAX_WAYPOINTS=16000}; ///@todo - make it dynamic.  jba.
+	enum {MAX_WAYPOINTS=32000}; ///@todo - make it dynamic.  jba.
+
 protected: // create from serialization only
 	CWorldBuilderDoc();
 	DECLARE_DYNCREATE(CWorldBuilderDoc)
@@ -87,11 +92,14 @@ public:
 	void getBoundary(Int ndx, ICoord2D* border) const;
 	void addBoundary(ICoord2D* boundaryToAdd);
 	void changeBoundary(Int ndx, ICoord2D *border);
+	//MODDD - added
+	void removeBoundary(Int ndx);
 	void removeLastBoundary(void);
 
 	// outNdx must not be NULL, but outHandle can be.
 	// outHandle: 0 means BL, 1 means TL, 2 means TR, 3 means BR
-	void findBoundaryNear(Coord3D *pt, float okDistance, Int *outNdx, Int *outHandle);
+	//MODDD - use the enum for outHandle, in fact just call it 'outMod' too
+	void findBoundaryNear(Coord3D *pt, float okDistance, Int *outNdx, BorderModificationType *outMod);
 
 	static Bool ParseWaypointDataChunk(DataChunkInput &file, DataChunkInfo *info, void *userData);
 	Bool ParseWaypointData(DataChunkInput &file, DataChunkInfo *info, void *userData);

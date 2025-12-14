@@ -50,8 +50,11 @@ void BezFwdIterator::start(void)
 {
 	mStep = 0;
 
-	if (mStepsDesired <= 1)
+	if (mStepsDesired <= 1) {
+		//MODDD - adding a debug statement
+		DEBUG_CRASH(( "BezFwdIterator::start - mStepsDesired must be over 1, was %d!", mStepsDesired ));
 		return;
+	}
 
 	float d	 = 1.0f / (mStepsDesired - 1);
 	float d2 = d * d;

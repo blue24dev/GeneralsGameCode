@@ -24,6 +24,8 @@
 
 #include "Lib/BaseType.h"
 #include "Common/STLTypedefs.h"
+//MODDD
+#include "Enum.h"
 
 enum TTrackingMode {
 	TRACK_NONE,

@@ -111,11 +111,11 @@ void LookAtTranslator::stopScrolling( void )
 
 }
 
-//-----------------------------------------------------------------------------
 Bool LookAtTranslator::canScrollAtScreenEdge() const
 {
-	if (!TheMouse->isCursorCaptured())
-		return false;
+	//MODDD - bugfix?  This just seems to cause me issues scrolling in windowed mode sometimes, goodbye condition
+	//if (!TheMouse->isCursorCaptured())
+	//	return false;
 
 	if (TheDisplay->getWindowed())
 	{
@@ -130,6 +130,7 @@ Bool LookAtTranslator::canScrollAtScreenEdge() const
 
 	return true;
 }
+
 
 //-----------------------------------------------------------------------------
 LookAtTranslator::LookAtTranslator() :

@@ -491,11 +491,17 @@ DrawableID GameClient::allocDrawableID( void )
 /** -----------------------------------------------------------------------------------------------
  * Given a drawable, register it with the GameClient and give it a unique ID.
  */
-void GameClient::registerDrawable( Drawable *draw )
+//MODDD - added param 'drawableID'
+void GameClient::registerDrawable( Drawable *draw, DrawableID drawableID )
 {
 
 	// assign this drawable a unique ID, this will add it to the fast lookup table too
-	draw->setID( allocDrawableID() );
+	//MODDD - If 'drawableID' is 0(bogus), figure out a number as usual. Otherwise, use what's provided.
+	if (drawableID == INVALID_DRAWABLE_ID) {
+		draw->setID( allocDrawableID() );
+	} else {
+		draw->setID( drawableID );
+	}
 
 	// add the drawable to the master list
 	draw->prependToList( &m_drawableList );
@@ -635,7 +641,9 @@ void GameClient::update( void )
 		TheVideoPlayer->UPDATE();
 	}
 
-	const Bool freezeTime = TheGameEngine->isTimeFrozen() || TheGameEngine->isGameHalted();
+	//MODDD - bugfix for camera movement scripts freezing the game in multiplayer for some players
+	//const Bool freezeTime = TheGameEngine->isTimeFrozen() || TheGameEngine->isGameHalted();
+	const Bool freezeTime = TheGameEngine->isTimeFrozen();
 
 	const Int localPlayerIndex = rts::getObservedOrLocalPlayer()->getPlayerIndex();
 

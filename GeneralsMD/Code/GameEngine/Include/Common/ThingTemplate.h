@@ -451,6 +451,9 @@ public:
 	const ModuleInfo& getBehaviorModuleInfo() const { return m_behaviorModuleInfo; }
 	const ModuleInfo& getDrawModuleInfo() const { return m_drawModuleInfo; }
 	const ModuleInfo& getClientUpdateModuleInfo() const { return m_clientUpdateModuleInfo; }
+	
+	//MODDD - version that returns a non-const reference for your hacky desires
+	ModuleInfo& getBehaviorModuleInfoEvil() { return m_behaviorModuleInfo; }
 
 	const Image *getSelectedPortraitImage( void ) const { return m_selectedPortraitImage; }
 	const Image *getButtonImage( void ) const { return m_buttonImage; }
@@ -609,6 +612,9 @@ public:
 
 	const WeaponTemplateSet* findWeaponTemplateSet(const WeaponSetFlags& t) const;
 	const ArmorTemplateSet* findArmorTemplateSet(const ArmorSetFlags& t) const;
+
+	//MODDD
+	Bool hasAnyWeaponTemplateSetWithFlags(const WeaponSetFlags& t) const;
 
 	// returns true iff we have at least one weaponset that contains a weapon.
 	// returns false if we have no weaponsets, or they are all empty.

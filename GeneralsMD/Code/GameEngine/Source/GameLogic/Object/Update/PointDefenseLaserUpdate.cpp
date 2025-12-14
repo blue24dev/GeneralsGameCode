@@ -215,7 +215,9 @@ void PointDefenseLaserUpdate::fireWhenReady()
 			{
 				Weapon* w = TheWeaponStore->allocateNewWeapon( wt, TERTIARY_WEAPON );
 				w->loadAmmoNow( getObject() );
-				w->fireWeapon( getObject(), target );
+				//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+				FireWeaponAndHandleOCL( w, getObject(), target );
+
 				deleteInstance(w);
 
 				// And now that we have shot, set our internal reload timer.

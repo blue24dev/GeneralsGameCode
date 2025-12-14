@@ -367,6 +367,9 @@ public:
 	void startMove(void); ///< Indicates that a move is starting, primarily to reset the donut timer. jba.
 
 protected:
+	//MODDD - added
+	Real determineBrakingFactor(Real onPathDistToGoal, Real slowDownDist);
+
 	void moveTowardsPositionLegs(Object* obj, PhysicsBehavior *physics, const Coord3D& goalPos, Real onPathDistToGoal, Real desiredSpeed);
 	void moveTowardsPositionLegsWander(Object* obj, PhysicsBehavior *physics, const Coord3D& goalPos, Real onPathDistToGoal, Real desiredSpeed);
 	void moveTowardsPositionClimb(Object* obj, PhysicsBehavior *physics, const Coord3D& goalPos, Real onPathDistToGoal, Real desiredSpeed);

@@ -449,8 +449,11 @@ void GameSpyInfo::clearStagingRoomList( void )
 		++numRoomsRemoved;
 
 		delete it->second;
-		m_stagingRooms.erase(it);
-		it = m_stagingRooms.begin();
+		//MODDD - why not use what 'erase' returns?
+		// 'it =' prepended
+		it = m_stagingRooms.erase(it);
+		//MODDD - disabled
+		//it = m_stagingRooms.begin();
 	}
 	if (numRoomsRemoved > 0)
 	{

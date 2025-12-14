@@ -22,6 +22,10 @@
 
 #include "Common/AsciiString.h"
 #include "Common/GameAudio.h"
+
+//MODDD
+#include "Common/AudioEventInfo.h"
+
 #include "mss/mss.h"
 
 class AudioEventRTS;
@@ -53,6 +57,10 @@ enum PlayingWhich CPP_11(: Int)
 
 struct PlayingAudio
 {
+	//MODDD - TEST. going to make everything volatile here for safety (including what's in 'union').
+	// As-is, only 'm_status' was marked volatile
+	// ...oh. that's a whole bucket of compile errors.   okay not trying this yet.
+	// Have some initializers below anyway just in case, any risk of memory wonkiness will not be tolerated.
 	union
 	{
 		HSAMPLE m_sample;
@@ -70,7 +78,11 @@ struct PlayingAudio
 
 	PlayingAudio() :
 		m_type(PAT_INVALID),
+		//MODDD - adding initializer
+		m_status(PS_Playing),
 		m_audioEventRTS(NULL),
+		//MODDD - adding initializer
+		m_file(NULL),
 		m_requestStop(false),
 		m_cleanupAudioEventRTS(true),
 		m_sample(NULL),
@@ -123,7 +135,9 @@ class AudioFileCache
 		void releaseOpenAudioFile( OpenAudioFile *fileToRelease );
 
 		// This function will return TRUE if it was able to free enough space, and FALSE otherwise.
-		Bool freeEnoughSpaceForSample(const OpenAudioFile& sampleThatNeedsSpace);
+		//MODDD - changed params
+		//Bool freeEnoughSpaceForSample(const OpenAudioFile& sampleThatNeedsSpace);
+		Bool freeEnoughSpaceForSample(std::list<AsciiString>& filesToClose, UnsignedInt newSampleFileSize, AudioPriority newSamplePriority );
 
 		OpenFilesHash m_openFiles;
 		UnsignedInt m_currentlyUsedSize;

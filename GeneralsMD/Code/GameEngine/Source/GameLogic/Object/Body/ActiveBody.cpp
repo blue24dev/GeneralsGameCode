@@ -175,6 +175,34 @@ ActiveBody::ActiveBody( Thing *thing, const ModuleData* moduleData ) :
 	m_maxHealth = getActiveBodyModuleData()->m_maxHealth;
 	m_initialHealth = getActiveBodyModuleData()->m_initialHealth;
 
+	/*
+	//MODDD - for me only
+	Object* obj = getObject();
+	if (obj->isKindOf(KINDOF_STRUCTURE)) {
+		if (obj->isKindOf(KINDOF_FS_SUPERWEAPON)) {
+			// nothing for here - superweapons are plenty beefy enough
+		} else if(obj->isKindOf(KINDOF_FS_BASE_DEFENSE)) {
+			// get more health
+			m_currentHealth *= 1.6;
+			m_prevHealth *= 1.6;
+			m_maxHealth *= 1.6;
+			m_initialHealth *= 1.6;
+		} else {
+			// buildings otherwise
+			m_currentHealth *= 1.4;
+			m_prevHealth *= 1.4;
+			m_maxHealth *= 1.4;
+			m_initialHealth *= 1.4;
+		}
+	} else {
+		// non-structure: have a little more health anyway
+		m_currentHealth *= 1.15;
+		m_prevHealth *= 1.15;
+		m_maxHealth *= 1.15;
+		m_initialHealth *= 1.15;
+	}
+	*/
+
 	// force an initially-valid armor setup
 	validateArmorAndDamageFX();
 	// start us in the right state

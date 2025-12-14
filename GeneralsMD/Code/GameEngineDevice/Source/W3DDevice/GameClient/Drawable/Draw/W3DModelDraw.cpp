@@ -1745,7 +1745,7 @@ W3DModelDraw::W3DModelDraw(Thing *thing, const ModuleData* moduleData) : DrawMod
 
 	// only validate the current time-of-day and weather conditions by default.
 	getW3DModelDrawModuleData()->validateStuffForTimeAndWeather(getDrawable(),
-											TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT,
+											TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT,
 											TheGlobalData->m_weather == WEATHER_SNOWY);
 
 	ModelConditionFlags emptyFlags;
@@ -1763,7 +1763,7 @@ W3DModelDraw::W3DModelDraw(Thing *thing, const ModuleData* moduleData) : DrawMod
 	  Object* obj = draw->getObject();
 	  if (obj)
 	  {
-		  if (TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT)
+		  if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
 			  m_hexColor = obj->getNightIndicatorColor();
 		  else
 			  m_hexColor = obj->getIndicatorColor();
@@ -1785,7 +1785,7 @@ W3DModelDraw::W3DModelDraw(Thing *thing, const ModuleData* moduleData) : DrawMod
 void W3DModelDraw::onDrawableBoundToObject(void)
 {
 	getW3DModelDrawModuleData()->validateStuffForTimeAndWeather(getDrawable(),
-											TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT,
+											TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT,
 											TheGlobalData->m_weather == WEATHER_SNOWY);
 }
 
@@ -3765,11 +3765,21 @@ Bool W3DModelDraw::handleWeaponFireFX(WeaponSlotType wslot, Int specificBarrelTo
 	if (info.m_recoilBone || info.m_muzzleFlashBone)
 	{
 		//DEBUG_LOG(("START muzzleflash %08lx for Draw %08lx state %s at frame %d",info.m_muzzleFlashBone,this,m_curState->m_description.str(),TheGameLogic->getFrame()));
-		WeaponRecoilInfo& recoil = m_weaponRecoilInfoVec[wslot][specificBarrelToUse];
-		recoil.m_state = WeaponRecoilInfo::RECOIL_START;
-		recoil.m_recoilRate = getW3DModelDrawModuleData()->m_initialRecoil;
-		if (info.m_muzzleFlashBone != 0)
-			info.setMuzzleFlashHidden(m_renderObject, false);
+
+		//MODDD - Real-time time-of-day change
+		// Adding a check on 'm_weaponRecoilInfoVec'. This is a quick patch, should probably just not clear this on changing time-of-day during a game.
+		// At least I assume that's what's happening? (Crashes during the Zero Hour splash screen on day/night change, make the cycle time short to make it happen sooner)
+		if (m_weaponRecoilInfoVec[wslot].size() > 0) {
+			WeaponRecoilInfo& recoil = m_weaponRecoilInfoVec[wslot][specificBarrelToUse];
+			recoil.m_state = WeaponRecoilInfo::RECOIL_START;
+			recoil.m_recoilRate = getW3DModelDrawModuleData()->m_initialRecoil;
+			if (info.m_muzzleFlashBone != 0)
+				info.setMuzzleFlashHidden(m_renderObject, false);
+		} else {
+			// for breakpoints
+			int x;
+			x = 4;
+		}
 	}
 
 	return handled;

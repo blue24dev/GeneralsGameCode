@@ -54,6 +54,9 @@
 #include "GameLogic/Scripts.h"
 #include "GameLogic/SidesList.h"
 
+//MODDD
+#include "GameClient/InGameUI.h"
+
 static const Int K_SIDES_DATA_VERSION_1 = 1;
 static const Int K_SIDES_DATA_VERSION_2 = 2;	// includes Team list.
 static const Int K_SIDES_DATA_VERSION_3 = 3;	// includes Team list.
@@ -500,6 +503,23 @@ void SidesList::prepareForMP_or_Skirmish(void)
 			// Don't remove FactionCivilian.
 			continue;
 		}
+
+		//MODDD - print out sides automatically removed for info
+		//////////////////////////////////////////////////////////////////////////////////////////////
+		WideChar buf[ UnicodeString::MAX_FORMAT_BUF_LEN ];
+		UnicodeString formattedMessage;
+
+		swprintf(&buf[0], L"Removed side %hs", m_sides[i].getDict()->getAsciiString(TheKey_playerFaction).str());
+		formattedMessage.set(buf);
+
+		TheInGameUI->messageNoFormat(formattedMessage);
+		//////////////////////////////////////////////////////////////////////////////////////////////
+
+		//MODDD - NOTE - this removes the sides, this behavior is expected for skirmish/multiplayer maps.
+		// However, for generals challenge maps loaded as skirmish, this isn't good.
+		// Going to skip a call to this method entirely (prepareForMP_or_Skirmish) instead of just dummying
+		// out the 'removeSide' call here.
+		// See an edit in GameLogic.cpp for the call-to-here commented out.
 		if (m_numSides == 1) break;	// can't remove the last side.
 		removeSide(i);
 		i--;

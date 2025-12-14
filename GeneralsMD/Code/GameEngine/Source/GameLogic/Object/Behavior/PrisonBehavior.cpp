@@ -307,7 +307,7 @@ void PrisonBehavior::addVisual( Object *obj )
 	Drawable *draw = TheThingFactory->newDrawable( obj->getTemplate() );
 
 	// set the color of the drawable to that of the object
-	if (TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT)
+	if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
 		draw->setIndicatorColor( obj->getNightIndicatorColor() );
 	else
 		draw->setIndicatorColor( obj->getIndicatorColor() );

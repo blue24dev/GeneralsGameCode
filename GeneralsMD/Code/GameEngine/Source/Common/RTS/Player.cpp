@@ -344,7 +344,9 @@ Player::Player( Int playerIndex )
 	m_attackedFrame = 0;
 
 	m_unitsShouldHunt = FALSE;
-	init( NULL );
+
+	//MODDD - uhh no, PlayerList calls this enough
+	//init( NULL );
 
 }
 
@@ -860,6 +862,37 @@ void Player::initFromDict(const Dict* d)
 	{
 		setPlayerType(PLAYER_COMPUTER, skirmish);
 	}
+
+	//MODDD - added, overrides starting money from skirmish setting or an absolute default
+	// (only seen if a map script doesn't soon override that)
+#if defined(FORCE_HUMAN_PLAYER_START_MONEY) && FORCE_HUMAN_PLAYER_START_MONEY != 0:
+	if (getPlayerType() == PLAYER_HUMAN) {
+		m_money.withdraw(m_money.countMoney());
+
+		Real moneyScalar = 1.0;
+#if NOOB_MODE
+		if(getSide().compare("AmericaAirForceGeneral") == 0) {
+			moneyScalar = 1.4;
+		}
+#endif
+		m_money.deposit( FORCE_HUMAN_PLAYER_START_MONEY * moneyScalar, FALSE );
+	}
+#elif NOOB_MODE
+	if (getPlayerType() == PLAYER_HUMAN && getSide().compare("AmericaAirForceGeneral") == 0) {
+		// get the current amount of money, presumably set by skirmish setting. Add it back with the scalar applied.
+		UnsignedInt currentMoney = m_money.countMoney();
+		m_money.withdraw(m_money.countMoney());
+		m_money.deposit(currentMoney * 1.4, FALSE);
+	}
+#endif
+
+	//MODDD - personal choice. Change the experience rate for air force general
+#if NOOB_MODE
+	if (getPlayerType() == PLAYER_HUMAN && getSide().compare("AmericaAirForceGeneral") == 0) {
+		setSkillPointsModifier(1.25);
+	}
+#endif
+
 	m_mpStartIndex = d->getInt(TheKey_multiplayerStartIndex, &exists);
 	if (skirmish) {
 		// Copy and qualify scripts, and teams.
@@ -1107,7 +1140,7 @@ void Player::becomingLocalPlayer(Bool yes)
 							if( getRelationship( object->getTeam() ) != ALLIES && isPlayerActive() )
 							{
 								//Neutrals and enemies will see this disguised unit as the team it's disguised as.
-								if (TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT)
+								if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
 									draw->setIndicatorColor( disguisedPlayer->getPlayerNightColor());
 								else
 									draw->setIndicatorColor( disguisedPlayer->getPlayerColor() );
@@ -1115,7 +1148,7 @@ void Player::becomingLocalPlayer(Bool yes)
 							else
 							{
 								//Otherwise, the color will show up as the team it really belongs to.
-								if (TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT)
+								if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
 									draw->setIndicatorColor(object->getNightIndicatorColor());
 								else
 									draw->setIndicatorColor( object->getIndicatorColor() );
@@ -2041,7 +2074,14 @@ void Player::killPlayer(void)
 			team->killTeam();
 		}
 	}
+
+//MODDD
+#if !GENERALS_CHALLENGE_FORCE
 	if (TheGameLogic->isInSinglePlayerGame()) {
+#else
+  // Treat this as a single player game like the original GC mission would
+	if (TRUE) {
+#endif
 		if (getPlayerType()==PLAYER_COMPUTER) {
 			// This is an AI player in a solo mission - leave him alive so he can be used later. jba.
 			m_isPlayerDead = FALSE; // this is so we can later spawn useful units for us.
@@ -2915,6 +2955,19 @@ Bool Player::canBuild(const ThingTemplate *tmplate) const
 		return false;
 
 	// else BSTATUS tmplate->getBuildable() == BSTATUS_YES
+
+	//MODDD - forcing this new section in, just a personal preference over INI edits
+	// -----------------------------------------------------------------------------
+#if NOOB_MODE
+	/*
+	if (this->getSide().compare("AmericaAirForceGeneral") == 0 && tmplate->getName().startsWithNoCase("boss")) {
+		// proceed - skip prereqs check
+	} else
+	*/
+	//MODDD STUPID HACK
+	//if (FALSE)
+#endif
+	// -----------------------------------------------------------------------------
 	{
 
 		// we must satisfy all of the prereqs
@@ -3055,7 +3108,10 @@ Upgrade *Player::addUpgrade( const UpgradeTemplate *upgradeTemplate, UpgradeStat
 	{
 		m_upgradesInProgress.clear( newMask );
 		m_upgradesCompleted.set( newMask );
-		onUpgradeCompleted( upgradeTemplate );
+		//MODDD
+		if (!objectInitLock) {
+			onUpgradeCompleted( upgradeTemplate );
+		}
 	}
 
 	if( ThePlayerList->getLocalPlayer() == this )
@@ -3357,6 +3413,9 @@ UnsignedInt Player::getOrStartSpecialPowerReadyFrame( const SpecialPowerTemplate
 //-------------------------------------------------------------------------------------------------
 void Player::friend_applyDifficultyBonusesForObject(Object* obj, Bool apply) const
 {
+	//MODDD - HAHAHA no thanks, hard mode is beyond hard enough without this nonsense
+	return;
+
 	if (TheGameLogic->isInSinglePlayerGame())
 	{
 		Real healthFactor = TheGlobalData->m_soloPlayerHealthBonusForDifficulty[getPlayerType()][getPlayerDifficulty()];
@@ -3677,13 +3736,16 @@ void Player::processSelectTeamGameMessage(Int hotkeyNum, GameMessage *msg) {
 		return;
 	}
 
+	//MODDD - superfluous null checks removed
+	/*
 	if (m_squads[hotkeyNum] == NULL) {
 		return;
 	}
+	*/
 
 	m_currentSelection->clearSquad();
 
-	VecObjectPtr objectList = m_squads[hotkeyNum]->getLiveObjects();
+	VecObjectPtr objectList = m_squads[hotkeyNum]->getLiveObjects(this);
 	Int numObjs = objectList.size();
 
 	for (Int i = 0; i < numObjs; ++i)
@@ -3707,15 +3769,20 @@ void Player::processAddTeamGameMessage(Int hotkeyNum, GameMessage *msg) {
 		return;
 	}
 
+	/*
 	if (m_squads[hotkeyNum] == NULL) {
 		return;
 	}
+	*/
 
+	//MODDD - superfluous null checks removed
+	/*
 	if (m_currentSelection == NULL) {
 		m_currentSelection = newInstance( Squad );
 	}
+	*/
 
-	VecObjectPtr objectList = m_squads[hotkeyNum]->getLiveObjects();
+	VecObjectPtr objectList = m_squads[hotkeyNum]->getLiveObjects(this);
 	Int numObjs = objectList.size();
 
 	for (Int i = 0; i < numObjs; ++i) {
@@ -3727,18 +3794,20 @@ void Player::processAddTeamGameMessage(Int hotkeyNum, GameMessage *msg) {
 /** Select a hotkey team based on this GameMessage */
 //-------------------------------------------------------------------------------------------------
 void Player::getCurrentSelectionAsAIGroup(AIGroup *group) {
-	if (m_currentSelection != NULL) {
+	//if (m_currentSelection != NULL) {
 		m_currentSelection->aiGroupFromSquad(group);
-	}
+	//}
 }
 
 //-------------------------------------------------------------------------------------------------
 /** Select a hotkey team based on this GameMessage */
 //-------------------------------------------------------------------------------------------------
 void Player::setCurrentlySelectedAIGroup(AIGroup *group) {
+	/*
 	if (m_currentSelection == NULL) {
 		m_currentSelection = newInstance( Squad );
 	}
+	*/
 
 	m_currentSelection->clearSquad();
 
@@ -3779,9 +3848,11 @@ Int Player::getSquadNumberForObject(const Object *objToFind) const
 void Player::removeObjectFromHotkeySquad(Object *objToRemove)
 {
 	for (Int i = 0; i < NUM_HOTKEY_SQUADS; ++i) {
+		/*
 		if (!m_squads[i]) {
 			continue;
 		}
+		*/
 
 		m_squads[i]->removeObject(objToRemove);
 	}
@@ -3795,9 +3866,11 @@ void Player::addAIGroupToCurrentSelection(AIGroup *group) {
 		return;
 	}
 
+	/*
 	if (m_currentSelection == NULL) {
 		m_currentSelection = newInstance( Squad );
 	}
+	*/
 
 	VecObjectID objectIDVec = group->getAllIDs();
 	Int numObjs = objectIDVec.size();
@@ -3995,7 +4068,8 @@ void Player::xfer( Xfer *xfer )
 {
 
 	// version
-	const XferVersion currentVersion = 8;
+	//MODDD - bumped, was 8
+	const XferVersion currentVersion = 9;
 	XferVersion version = currentVersion;
 	xfer->xferVersion( &version, currentVersion );
 
@@ -4467,7 +4541,7 @@ void Player::xfer( Xfer *xfer )
 	}
 	for( UnsignedShort i = 0; i < squadCount; ++i )
 	{
-
+		/*
 		if( m_squads[ i ] == NULL )
 		{
 
@@ -4475,24 +4549,32 @@ void Player::xfer( Xfer *xfer )
 			throw SC_INVALID_DATA;
 
 		}
-
+		*/
 		xfer->xferSnapshot( m_squads[ i ] );
 
 	}
 
-	// current squad selection
-	Bool currentSelectionPresent = m_currentSelection ? TRUE : FALSE;
-	xfer->xferBool( &currentSelectionPresent );
-	if( currentSelectionPresent )
-	{
-
-		// allocate squad if needed
-		if( m_currentSelection == NULL && xfer->getXferMode() == XFER_LOAD )
-			m_currentSelection = newInstance( Squad );
-
-		// xfer
+	if (version >= 9) {
+		// No null checks needed, just call 'xfer' for this - easy
 		xfer->xferSnapshot( m_currentSelection );
+	} else {
+		// current squad selection
+		Bool currentSelectionPresent = m_currentSelection ? TRUE : FALSE;
+		xfer->xferBool( &currentSelectionPresent );
+		if( currentSelectionPresent )
+		{
 
+			// allocate squad if needed
+			//MODDD - this is a contradiction. If 'm_currentSelection' were NULL, this block would not be reached...
+			/*
+			if( m_currentSelection == NULL && xfer->getXferMode() == XFER_LOAD )
+				m_currentSelection = newInstance( Squad );
+			*/
+
+			// xfer
+			xfer->xferSnapshot( m_currentSelection );
+
+		}
 	}
 
 	// Player battle plan bonuses

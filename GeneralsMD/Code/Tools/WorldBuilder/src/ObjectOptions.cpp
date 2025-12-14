@@ -402,7 +402,9 @@ HTREEITEM ObjectOptions::_FindOrDont(const char* pLabel, HTREEITEM startPoint)
 	std::list<HTREEITEM> itemsToEx;
 	itemsToEx.push_back(startPoint);
 
-	while (itemsToEx.front()) {
+	//MODDD - checking for the list's size being 0 instead is proper according to an exception on high sensitivity
+	//while (itemsToEx.front()) {
+	while (itemsToEx.size() > 0) {
 		char buffer[_MAX_PATH];
 		HTREEITEM hItem = itemsToEx.front();
 		itemsToEx.pop_front();

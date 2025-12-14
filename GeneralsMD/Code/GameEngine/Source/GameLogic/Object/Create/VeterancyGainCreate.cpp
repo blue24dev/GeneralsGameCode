@@ -36,6 +36,8 @@
 #include "GameLogic/ExperienceTracker.h"
 #include "GameLogic/Object.h"
 #include "GameLogic/Module/VeterancyGainCreate.h"
+//MODDD
+#include "GameLogic/GameLogic.h"
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -82,6 +84,12 @@ void VeterancyGainCreate::onCreate( void )
 
 	// When produced normally, this Object will ask the Player if the correct Science is known for it
 	// to set its level to the given level
+
+	//MODDD - no need to run this on loading objects from a saved game, the rank the object had at the time
+	// will be restored
+	if (objectInitLock && globalXferStatus == XFER_LOAD) {
+		return;
+	}
 
 	const VeterancyGainCreateModuleData *md = getVeterancyGainCreateModuleData();
 	Player *myPlayer = getObject()->getControllingPlayer();

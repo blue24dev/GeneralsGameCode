@@ -445,6 +445,14 @@ Bool DumbProjectileBehavior::calcFlightPath(Bool recalcNumSegments)
 	{
 		Real flightDistance = flightCurve.getApproximateLength();
 		m_flightPathSegments = ceil( flightDistance / m_flightPathSpeed );
+		//MODDD - bugfix for a crash on firing to an object that is close enough for the projectile to reach it in
+		// 1 frame (or whatever unit of time 'm_flightPathSpeed' is for).
+		// The BezierSegment class gives up on a path of less than 2 steps, leaving 1 point at the origin (0,0,0).
+		// Somewhere later assumes a flight path has at least 2 points and crashes if that isn't the case.
+		// This is demo'able on a helicopter that can attack other aircraft attacking a support-power-delivering aircraft flying through it.
+		if (m_flightPathSegments < 2) {
+			m_flightPathSegments = 2;
+		}
 	}
 	flightCurve.getSegmentPoints( m_flightPathSegments, &m_flightPath );
 	DEBUG_ASSERTCRASH(m_flightPathSegments == m_flightPath.size(), ("m_flightPathSegments mismatch"));

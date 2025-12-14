@@ -240,9 +240,16 @@ void W3DShadowManager::setLightPosition(Int lightIndex, Real x, Real y, Real z)
 void W3DShadowManager::setTimeOfDay(TimeOfDay tod)
 {
 	//Ray to light source
+	//MODDD - real-time time-of-day change
+	/*
 	const GlobalData::TerrainLighting *ol=&TheGlobalData->m_terrainObjectsLighting[tod][0];
 
 	Vector3 lightRay(-ol->lightPos.x,-ol->lightPos.y,-ol->lightPos.z);
+	*/
+	// ---
+	Coord3D lightPos = TheGlobalData->getTerrainObjectsLighting_lightPos(tod, 0);
+	Vector3 lightRay(-lightPos.x,-lightPos.y,-lightPos.z);
+	// ---
 
 	lightRay.Normalize();
 	lightRay *= SUN_DISTANCE_FROM_GROUND;

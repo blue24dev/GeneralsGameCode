@@ -556,9 +556,20 @@ void GameSpyLaunchGame( void )
 		if (TheGameLogic->isInGame()) {
 			TheGameLogic->clearGameData();
 		}
+
+		//MODDD - adding difficulty to this MSG_NEW_GAME call
+		GameDifficulty difficulty;
+#if !defined(DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY)
+		difficulty = DIFFICULTY_NORMAL;
+#else
+		difficulty = DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY;
+#endif
+
 		// send a message to the logic for a new game
 		GameMessage *msg = TheMessageStream->appendMessage( GameMessage::MSG_NEW_GAME );
 		msg->appendIntegerArgument(GAME_INTERNET);
+		//MODDD - added
+		msg->appendIntegerArgument(difficulty);
 
 		TheGlobalData->m_useFpsLimit = false;
 

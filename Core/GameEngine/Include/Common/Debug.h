@@ -49,7 +49,15 @@
 
 class AsciiString;
 
-#define NO_RELEASE_DEBUG_LOGGING
+//MODDD NOTE - looks like this should be "RELEASE_DEBUG_LOGGING" to disable assert calls for testing
+// a debug build without annoying popups, like to be able to breakpoint & show uncaught exceptions without crashing to desktop.
+// Change back to retail's "NO_RELEASE_DEBUG_LOGGING" for debug mode to get assert popups again.
+// ---
+// TLDR: two choices here, change this const to:
+//   * NO_RELEASE_DEBUG_LOGGING: assert popups in debug mode
+//   * RELEASE_DEBUG_LOGGING: no assert popups in debug mode (moreso like playing in retail)
+// (release mode unaffected by this entirely)
+#define RELEASE_DEBUG_LOGGING
 
 #ifdef RELEASE_DEBUG_LOGGING  ///< Creates a DebugLogFile.txt (No I or D) with all the debug log goodness.  Good for startup problems.
 	#define ALLOW_DEBUG_UTILS 1

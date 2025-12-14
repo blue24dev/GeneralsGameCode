@@ -216,6 +216,12 @@ UpdateSleepTime DemoTrapUpdate::update()
 			}
 		}
 
+		//MODDD - added a broader criteria.
+		// Leaving the retail check above in, see note in 'canClearMines'
+		if (other->canClearMines() && getObject()->isRecognizableToEnemy()) {
+			continue;
+		}
+
 			// order matters: we want to know if I consider it to be an enemy, not vice versa
 		if( getObject()->getRelationship( other ) != ENEMIES )
 		{

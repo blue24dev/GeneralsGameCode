@@ -139,6 +139,13 @@ TransportContain::TransportContain( Thing *thing, const ModuleData *moduleData )
 	m_frameExitNotBusy = 0;
 }
 
+//MODDD - added event
+void TransportContain::onObjectCreated() {
+	OpenContain::onObjectCreated();
+	// Tempting, but going to leave this up to each subclass to handle on its own for safety
+	//TransportContain::createPayload();
+}
+
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 TransportContain::~TransportContain( void )

@@ -156,6 +156,7 @@ static Bool buttonPushed = FALSE;
 static Bool stillNeedsToSetOptions = FALSE;
 void skirmishUpdateSlotList( void );
 static void populateSkirmishBattleHonors( void );
+static void testHonors(void);
 enum{ GREATER_NO_FPS_LIMIT = 60};
 Bool doUpdateSlotList = TRUE;
 
@@ -293,7 +294,8 @@ AsciiString SkirmishPreferences::getPreferredMap(void)
 
 	ret = QuotedPrintableToAsciiString(it->second);
 	ret.trim();
-	if (ret.isEmpty() || !isValidMap(ret, TRUE))
+	//MODDD - changing 'isValidMap's 2nd param to 'FALSE', with the intent of allowing 1-slot (single player) maps
+	if (ret.isEmpty() || !isValidMap(ret, FALSE))
 	{
 		ret = getDefaultMap(TRUE);
 		return ret;
@@ -359,7 +361,8 @@ Bool SkirmishPreferences::write(void)
 	tmp.format("%d", TheSkirmishGameInfo->getConstSlot(0)->getPlayerTemplate());
 	(*this)["PlayerTemplate"] = tmp;
 
-	(*this)["Map"] = TheSkirmishGameInfo->getMap();
+	//MODDD - added 'AsciiStringToQuotedPrintable' wrapper, bugfix so maps with underscores in their names are correctly handled
+	(*this)["Map"] = AsciiStringToQuotedPrintable(TheSkirmishGameInfo->getMap());
 
 	(*this)["UserName"] = UnicodeStringToQuotedPrintable(TheSkirmishGameInfo->getConstSlot(0)->getName());
 
@@ -440,18 +443,44 @@ void reallyDoStart( void )
   TheSkirmishGameInfo->startGame(0);
 	InitGameLogicRandom(TheSkirmishGameInfo->getSeed());
 
-		Bool isSkirmish = TRUE;
+	Bool isSkirmish = TRUE;
 	const MapMetaData *md = TheMapCache->findMap(TheSkirmishGameInfo->getMap());
 	if (md)
 	{
-		isSkirmish = md->m_isMultiplayer; // we can now select solo campaign maps in Skirmish.
+		//MODDD - I am going to change this to set 'isSkirmish' to TRUE unconditionally.
+		// I think the suggestion from the original comment here is from some earlier point of development
+		// before playing maps in single player through the skirmish menu must have been broken.
+		// True single player (campaign, original generals challenge with some exceptions) works with 'TheGameInfo' being NULL.
+		// For a 1-player skirmish map where you are meant to impact the starting player with your in-menu choice, this means
+		// that game info configured in the skirmish menu can't be used.
+		// Plus, look at saving a game: if the game mode at the time isn't SKIRMISH, it deletes the skirmish game info, which
+		// can cause issues if the game ever expects to look up info by player slot.
+		// Easiest solution is to force 'isSkirmish' to TRUE here so even a 1-player skirmish map works like it should.
+		// ---
+		//isSkirmish = md->m_isMultiplayer; // we can now select solo campaign maps in Skirmish.
+#if !CAMPAIGN_FORCE
+		isSkirmish = TRUE;
+#else
+		isSkirmish = FALSE;
+#endif
 	}
+
+	//MODDD - moving the global difficulty to this var
+	GameDifficulty difficulty;
+#if !defined(DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY)
+	// retail
+	difficulty = DIFFICULTY_NORMAL;
+#else
+	// to set to something else, most likely to affect non-standard-skirmish games like GC maps played as skirmish
+	difficulty = DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY;
+#endif
 
 	if (isSkirmish)
 	{
 		GameMessage *msg = TheMessageStream->appendMessage( GameMessage::MSG_NEW_GAME );
 		msg->appendIntegerArgument(GAME_SKIRMISH);
-		msg->appendIntegerArgument(DIFFICULTY_NORMAL);	// not really used; just specified so we can add the game speed last
+		//MODDD - DIFFICULTY_NORMAL -> difficulty
+		msg->appendIntegerArgument(difficulty);	// not really used; just specified so we can add the game speed last
 		msg->appendIntegerArgument(0);									// not really used; just specified so we can add the game speed last
 		msg->appendIntegerArgument(maxFPS);							// FPS limit
 	}
@@ -459,7 +488,8 @@ void reallyDoStart( void )
 	{
 		GameMessage *msg = TheMessageStream->appendMessage( GameMessage::MSG_NEW_GAME );
 		msg->appendIntegerArgument(GAME_SINGLE_PLAYER);
-		msg->appendIntegerArgument(DIFFICULTY_NORMAL);	// not really used; just specified so we can add the game speed last
+		//MODDD - DIFFICULTY_NORMAL -> difficulty
+		msg->appendIntegerArgument(difficulty);	// not really used; just specified so we can add the game speed last
 		msg->appendIntegerArgument(0);									// not really used; just specified so we can add the game speed last
 		msg->appendIntegerArgument(maxFPS);							// FPS limit
 	}
@@ -783,7 +813,10 @@ void positionStartSpots( AsciiString mapName, GameWindow *buttonMapStartPosition
 
 		AsciiString waypointName;
 		Int i = 0;
-		for(; i < mmd.m_numPlayers && mmd.m_isMultiplayer; ++i )
+
+		//MODDD - why the 'isMultiplayer' part of that?
+		//for(; i < mmd.m_numPlayers && mmd.m_isMultiplayer; ++i )
+		for(; i < mmd.m_numPlayers; ++i )
 		{
 			waypointName.format("Player_%d_Start", i+1); // start pos waypoints are 1-based
 			WaypointMap::iterator wmIt = mmd.m_waypoints.find(waypointName);
@@ -1191,6 +1224,7 @@ void InitSkirmishGameGadgets( void )
 	}
 
 	populateSkirmishBattleHonors();
+	//testHonors();
 }
 
 void skirmishUpdateSlotList( void )
@@ -1268,7 +1302,10 @@ void updateSkirmishGameOptions( void )
 		mapDisplay.translate(AsciiString(TheSkirmishGameInfo->getMap().str()));
 		GadgetStaticTextSetText(textEntryMapDisplay, mapDisplay);
 	}
-	if (isSkirmish)
+
+	//MODDD - always use the 1st way instead so a 1-player map doesn't hide every single slot
+	//if (isSkirmish)
+	if (TRUE)
 	{
 		ShowUnderlyingGUIElements(TRUE, layoutFilename, parentName, gadgetsToHide, perPlayerGadgetsToHide );
 	}
@@ -1359,7 +1396,9 @@ void SkirmishGameOptionsMenuInit( WindowLayout *layout, void *userData )
 
 	UnsignedInt isPreorder = 0;
 	GetUnsignedIntFromRegistry("", "Preorder", isPreorder);
-	if (isPreorder != 0)
+
+	//MODDD - quick test (commented out)
+	//if (isPreorder != 0)
 	{
 		TheSkirmishGameInfo->markPlayerAsPreorder(0);
 	}
@@ -1796,6 +1835,152 @@ WindowMsgHandledType SkirmishGameOptionsMenuSystem( GameWindow *window, Unsigned
 	return MSG_HANDLED;
 }
 
+
+//MODDD
+// --------------------------------------------------------------------------------------
+#include "GameNetwork/RankPointValue.h"
+#include "Common/PlayerTemplate.h"
+static const char *const rankNames[] = {
+	"Private",
+	"Corporal",
+	"Sergeant",
+	"Lieutenant",
+	"Captain",
+	"Major",
+	"Colonel",
+	"General",
+	"Brigadier",
+	"Commander",
+};
+const Image* lookupRankImage(AsciiString side, Int rank)
+{
+	if (side.isEmpty())
+		return TheMappedImageCollection->findImageByName("NewPlayer");
+
+	if (rank < 0 || rank >= MAX_RANKS)
+		return NULL;
+
+	// dirty hack rather than try to get artists to follow a naming convention
+	if (side == "USA")
+		side = "_USA";
+	else if (side == "China")
+		side = "_China";
+	else if (side == "GLA")
+		side = "_GLA";
+	else if (side == "Random")
+		side = "Elite";
+
+	AsciiString fullImageName;
+	fullImageName.format("Rank_%s%s", rankNames[rank], side.str());
+	if(strcmp(fullImageName.str(),"Rank_PrivateElite") == 0)
+		fullImageName = "Rank";//_Private_Elite";
+	const Image *img = TheMappedImageCollection->findImageByName(fullImageName);
+	DEBUG_ASSERTCRASH( img, ("Could not load rank image: %s", fullImageName.str()));
+	return img;
+}
+
+void testHonors(void) {
+	static int countah = 0;
+	GameWindow *list = TheWindowManager->winGetWindowFromId(NULL, NAMEKEY("SkirmishGameOptionsMenu.wnd:ListboxInfo"));
+	if (!list)
+		return;
+
+	SkirmishBattleHonors stats;
+
+	list->winSetTooltipFunc(BattleHonorTooltip);
+	GadgetListBoxReset( list );
+	Int column = 0;
+	Int row = 0;
+	//Int honors = stats.getHonors();
+
+	UnicodeString uStr;
+	GameWindow *streakWindow = TheWindowManager->winGetWindowFromId( NULL, NAMEKEY("SkirmishGameOptionsMenu.wnd:StaticTextStreakValue") );
+	if (streakWindow)
+	{
+		uStr.format(L"%d", stats.getWinStreak());
+		GadgetStaticTextSetText(streakWindow, uStr);
+	}
+	GameWindow *bestStreakWindow = TheWindowManager->winGetWindowFromId( NULL, NAMEKEY("SkirmishGameOptionsMenu.wnd:StaticTextBestStreakValue") );
+	if (bestStreakWindow)
+	{
+		uStr.format(L"%d", stats.getBestWinStreak());
+		GadgetStaticTextSetText(bestStreakWindow, uStr);
+	}
+	GameWindow *winsWindow = TheWindowManager->winGetWindowFromId( NULL, NAMEKEY("SkirmishGameOptionsMenu.wnd:StaticTextWinsValue") );
+	if (winsWindow)
+	{
+		uStr.format(L"%d", stats.getWins());
+		GadgetStaticTextSetText(winsWindow, uStr);
+	}
+	GameWindow *lossesWindow = TheWindowManager->winGetWindowFromId( NULL, NAMEKEY("SkirmishGameOptionsMenu.wnd:StaticTextLossesValue") );
+	if (lossesWindow)
+	{
+		uStr.format(L"%d", stats.getLosses());
+		GadgetStaticTextSetText(lossesWindow, uStr);
+	}
+
+	ResetBattleHonorInsertion();
+	GadgetListBoxAddEntryImage(list, NULL, 0, 0, 10, 10, TRUE, GameMakeColor(255,255,255,255));
+
+	// FIRST ROW OF HONORS
+	row = 1; column = 0;
+
+
+	/*
+	InsertBattleHonor(list, TheMappedImageCollection->findImageByName("FairPlay"), TRUE,
+		BATTLE_HONOR_FAIR_PLAY, row, column);
+	InsertBattleHonor(list, TheMappedImageCollection->findImageByName("FairPlay"), TRUE,
+		BATTLE_HONOR_FAIR_PLAY, row, column);
+	InsertBattleHonor(list, TheMappedImageCollection->findImageByName("FairPlay"), TRUE,
+		BATTLE_HONOR_FAIR_PLAY, row, column);
+	InsertBattleHonor(list, TheMappedImageCollection->findImageByName("FairPlay"), TRUE,
+		BATTLE_HONOR_FAIR_PLAY, row, column);
+	InsertBattleHonor(list, TheMappedImageCollection->findImageByName("FairPlay"), TRUE,
+		BATTLE_HONOR_FAIR_PLAY, row, column);
+	InsertBattleHonor(list, TheMappedImageCollection->findImageByName("GlobalGen"), TRUE,
+		BATTLE_HONOR_GLOBAL_GENERAL, row, column);
+	InsertBattleHonor(list, TheMappedImageCollection->findImageByName("HonorStreak_1000"), TRUE,
+		BATTLE_HONOR_STREAK_ONLINE, row, column);
+
+
+	InsertBattleHonor(list, TheMappedImageCollection->findImageByName("Domination_10000"), TRUE,
+		BATTLE_HONOR_DOMINATION_ONLINE, row, column);
+	InsertBattleHonor(list, TheMappedImageCollection->findImageByName("OfficersClub"), TRUE,
+		BATTLE_HONOR_OFFICERSCLUB, row, column);
+	InsertBattleHonor(list, TheMappedImageCollection->findImageByName("Loyalty_USA"), TRUE,
+		BATTLE_HONOR_LOYALTY_USA, row, column);
+	InsertBattleHonor(list, TheMappedImageCollection->findImageByName("Loyalty_China"), TRUE,
+		BATTLE_HONOR_LOYALTY_CHINA, row, column);
+	InsertBattleHonor(list, TheMappedImageCollection->findImageByName("Loyalty_GLA"), TRUE,
+		BATTLE_HONOR_LOYALTY_GLA, row, column);
+	InsertBattleHonor(list, TheMappedImageCollection->findImageByName("HonorChallenge1"), TRUE,
+		BATTLE_HONOR_CHALLENGE, row, column);
+	InsertBattleHonor(list, TheMappedImageCollection->findImageByName("HonorChallenge7"), TRUE,
+		BATTLE_HONOR_CHALLENGE, row, column);
+		*/
+
+	static const char* sidesStr[] = {
+		"USA",
+		"China",
+		"GLA",
+		"Random"
+	};
+	//const char* whut = ThePlayerTemplateStore->getNthPlayerTemplate(0)->getBaseSide().str();
+	//printf("%s\n", whut);
+	for(int i = 0; i < 10; i++){
+		//ThePlayerTemplateStore->getNthPlayerTemplate(0)->getBaseSide()
+		const char* side = sidesStr[countah];
+		InsertBattleHonor(list, lookupRankImage(side, i), TRUE,
+			BATTLE_HONOR_FAIR_PLAY, row, column);
+	}
+
+	countah++;
+	if(countah >= 4) {
+		countah = 0;
+	}
+}
+// --------------------------------------------------------------------------------------
+
 void populateSkirmishBattleHonors(void)
 {
 	GameWindow *list = TheWindowManager->winGetWindowFromId(NULL, NAMEKEY("SkirmishGameOptionsMenu.wnd:ListboxInfo"));
@@ -2170,7 +2355,8 @@ void populateSkirmishBattleHonors(void)
 
 	UnsignedInt isPreorder = 0;
 	GetUnsignedIntFromRegistry("", "Preorder", isPreorder);
-	if (isPreorder != 0)
+	//MODDD - quick test (commented out)
+	//if (isPreorder != 0)
 	{
 		InsertBattleHonor(list, TheMappedImageCollection->findImageByName("OfficersClub"), TRUE,
 			BATTLE_HONOR_OFFICERSCLUB, row, column);

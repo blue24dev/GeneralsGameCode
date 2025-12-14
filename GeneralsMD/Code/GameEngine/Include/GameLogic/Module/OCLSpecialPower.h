@@ -91,6 +91,9 @@ public:
 
 	OCLSpecialPower( Thing *thing, const ModuleData* moduleData );
 	// virtual destructor prototype provided by memory pool object
+	
+	//MODDD - new
+	virtual Bool canBeSpecialPowerSource() const;
 
 	virtual void doSpecialPower( UnsignedInt commandOptions );
 	virtual void doSpecialPowerAtObject( Object *obj, UnsignedInt commandOptions );

@@ -1011,7 +1011,7 @@ void WorkerAIUpdate::aiDoCommand(const AICommandParms* parms)
 
 	}
 
-	if (isClearingMines() && m_numberBoxes > 0 )
+	if (getObject()->isClearingMines() && m_numberBoxes > 0 )
 	{
 		// if clearing mines, we drop any boxes we were carrying
 		m_numberBoxes = 0;

@@ -89,7 +89,9 @@ enum
 	// If we want to consider the inner radius, we will specify guard inner. Otherwise, use guard outer.
 	AI_VISIONFACTOR_GUARDINNER = 0x04,
 };
-enum {MAX_AI_UPGRADES = 20};
+//MODDD - increased, it's not 2003 anymore!
+//enum {MAX_AI_UPGRADES = 20};
+enum {MAX_AI_UPGRADES = 512};
 
 typedef struct {
 	Int	m_numSkills;

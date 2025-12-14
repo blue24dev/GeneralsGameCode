@@ -147,6 +147,13 @@ RiderChangeContain::~RiderChangeContain( void )
 
 }
 
+//MODDD - added event. Also, several other 'TransportContain' subclasses do this.
+//MODDD - TODO - add this to InternetHackContain, RailedTransportContain?
+// Are there any other TransportContain subclasses?
+void RiderChangeContain::onObjectCreated() {
+	RiderChangeContain::createPayload();
+}
+
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 /**
@@ -234,6 +241,10 @@ void RiderChangeContain::onContaining( Object *rider, Bool wasSelected )
 				ai->chooseLocomotorSet( data->m_riders[ i ].m_locomotorSetType );
 			}
 
+			//MODDD - uhhh.  why.
+			// If no detectors are around, your unit will flash as though it were detected once.
+			// If this is needed to refresh something stealth-related, that should be done in a new helper method.
+			/*
 			if( obj->getStatusBits().test( OBJECT_STATUS_STEALTHED ) )
 			{
 				StealthUpdate* stealth = obj->getStealth();
@@ -242,13 +253,13 @@ void RiderChangeContain::onContaining( Object *rider, Bool wasSelected )
 					stealth->markAsDetected();
 				}
 			}
+			*/
 
 			//Transfer experience from the rider to the bike.
 			ExperienceTracker *riderTracker = rider->getExperienceTracker();
 			ExperienceTracker *bikeTracker = obj->getExperienceTracker();
 			bikeTracker->setVeterancyLevel( riderTracker->getVeterancyLevel(), FALSE );
 			riderTracker->setExperienceAndLevel( 0, FALSE );
-
 			break;
 		}
 	}

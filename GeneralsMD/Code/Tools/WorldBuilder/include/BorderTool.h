@@ -23,11 +23,12 @@
 class BorderTool : public Tool
 {
 	protected:
-		enum ModificationType { MOD_TYPE_INVALID, MOD_TYPE_UP, MOD_TYPE_FREE, MOD_TYPE_RIGHT };
+		//MODDD - moved to Tool.h, renamed to 'BorderModificationType' so other places can refer to this
+		//enum ModificationType { MOD_TYPE_INVALID, MOD_TYPE_UP, MOD_TYPE_FREE, MOD_TYPE_RIGHT };
 		Bool m_mouseDown;
 		Bool m_addingNewBorder;
 		Int m_modifyBorderNdx;
-		ModificationType m_modificationType;
+		BorderModificationType m_modificationType;
 
 
 	public:

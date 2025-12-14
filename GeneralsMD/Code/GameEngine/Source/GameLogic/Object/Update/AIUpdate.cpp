@@ -1091,6 +1091,15 @@ UpdateSleepTime AIUpdateInterface::update( void )
 		{
 			if (m_turretAI[i])
 			{
+				//MODDD - is this a good idea?
+				// hm, no. Something with turretAI, IS the turret.
+				// This isn't the avengerChasis->avengerTurret relationship I thought it was.
+				/*
+				if(this->getStateMachine()->getGoalObject() != m_turretAI[i]->getTurretStateMachine()->getGoalObject() ){
+					m_turretAI[i]->setTurretTargetObject(this->getStateMachine()->getGoalObject(), this->getStateMachine()->isInForceAttackState());
+				}
+				*/
+
 				UpdateSleepTime tmp = m_turretAI[i]->updateTurretAI();
 				if (tmp < subMachineSleep)
 					subMachineSleep = tmp;
@@ -3132,25 +3141,6 @@ Bool AIUpdateInterface::isBusy() const
 }
 
 //----------------------------------------------------------------------------------------
-Bool AIUpdateInterface::isClearingMines() const
-{
-	// if we are attacking with an anti-mine weapon, we are clearing mines, regardless
-	// of our target.
-
-	if (!getObject()->testStatus(OBJECT_STATUS_IS_ATTACKING))
-		return FALSE;
-
-	const Weapon* weapon = getObject()->getCurrentWeapon();
-	if (!weapon)
-		return FALSE;
-
-	if ((weapon->getAntiMask() & WEAPON_ANTI_MINE) == 0)
-		return FALSE;
-
-	return TRUE;
-}
-
-//----------------------------------------------------------------------------------------
 /**
  * Take the shortest path towards pos in order to tighten up a formation
  */
@@ -4641,6 +4631,38 @@ Object* AIUpdateInterface::getNextMoodTarget( Bool calledByAI, Bool calledDuring
 	}
 
 	Object *newVictim = TheAI->findClosestEnemy(obj, rangeToFindWithin, flags, getAttackInfo());
+	//MODDD - new block. If you don't find anything to attack on your own, try using what the container is
+	// focused on (if applicable). See 'groupAttackObjectPrivate', this is based off that.
+	// This is a simple fix for some turret-ed things needing a bit of help acquiring a target. That is, sometimes
+	// the host signals to attack something but its turret just does nothing - missile avengers in some mods seem
+	// prone to this (Firestorm).
+	// It might be better to make the container (or any object) check to see if it has a container module, then
+	// apply this to all its contained members instead. And see that this works through recursion (below won't let
+	// infantry in a humvee in a chinook with fireports for vehicles go all the way to the chinook for attack priority,
+	// at least not in one call).
+	if (newVictim == NULL) {
+		Object* objContainedBy = obj->getContainedBy();
+		if (objContainedBy != NULL && objContainedBy->getAI() != NULL) {
+			ContainModuleInterface* containInterface = objContainedBy->getContain();
+			if (containInterface != NULL && containInterface->isPassengerAllowedToFire()) {
+				AIStateMachine* containerStateMachine = objContainedBy->getAI()->getStateMachine();
+				// Idea is that the state was set by something like 'getStateMachine()->setState( AI_ATTACK_OBJECT )'.
+				// And 'containerStateMachine->getCurrentState()->isAttackingObject()' is tempting, but several states
+				// like 'AIGuardState' don't override it (always false even if that's clearly what's happening).
+				if (containerStateMachine->isInAttackState()) {
+					Object* containerVictim = containerStateMachine->getEnemyObject();
+					if (containerVictim != NULL) {
+						Bool forced = containerStateMachine->getCurrentState()->isForceAttacking();
+						CanAttackResult result = obj->getAbleToAttackSpecificObject( forced ? ATTACK_NEW_TARGET_FORCED : ATTACK_NEW_TARGET, containerVictim, CMD_FROM_AI );
+						if( result == ATTACKRESULT_POSSIBLE || result == ATTACKRESULT_POSSIBLE_AFTER_MOVING ) {
+							// Gentlemen, we have our directive
+							newVictim = containerVictim;
+						}
+					}
+				}
+			}
+		}
+	}
 
 /*
 DEBUG_LOG(("GNMT frame %d: %s %08lx (con %s %08lx) uses range %f, flags %08lx, %s finds %s %08lx",

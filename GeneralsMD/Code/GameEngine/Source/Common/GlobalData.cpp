@@ -1085,6 +1085,109 @@ GlobalData::~GlobalData( void )
 
 }
 
+#if REAL_TIME_TOD_CHANGE
+//MODDD - Real-time time-of-day change
+#include "GameLogic/GameLogic.h"
+
+void GlobalData::setTodFrameFromParam( TimeOfDay tod )
+{
+	// Use the given 'tod' to decide 'tod_frame'
+	switch(tod) {
+		case TIME_OF_DAY_MORNING: {
+			tod_frame = (TOD_CYCLE_LENGTH_FRAMES / 4) * 1;
+			break;
+		}
+		case TIME_OF_DAY_AFTERNOON: {
+			tod_frame = (TOD_CYCLE_LENGTH_FRAMES / 4) * 2;
+			break;
+		}
+		case TIME_OF_DAY_EVENING: {
+			tod_frame = (TOD_CYCLE_LENGTH_FRAMES / 4) * 3;
+			break;
+		}
+		case TIME_OF_DAY_NIGHT: {
+			tod_frame = 0;
+			break;
+		}
+	}
+}
+#endif
+
+//MODDD - Real-time time-of-day change
+void GlobalData::determineTerrainLighting_ambient( TimeOfDay tod, int i )
+{
+#if !REAL_TIME_TOD_CHANGE
+	m_terrainAmbient[i] = m_terrainLighting[ tod ][i].ambient;
+#else
+	m_terrainAmbient[i].red = m_terrainLighting[ tod ][i].ambient.red * (1 - tod_IntervalPortion) + m_terrainLighting[ tod_next ][i].ambient.red * (tod_IntervalPortion);
+	m_terrainAmbient[i].green = m_terrainLighting[ tod ][i].ambient.green * (1 - tod_IntervalPortion) + m_terrainLighting[ tod_next ][i].ambient.green * (tod_IntervalPortion);
+	m_terrainAmbient[i].blue = m_terrainLighting[ tod ][i].ambient.blue * (1 - tod_IntervalPortion) + m_terrainLighting[ tod_next ][i].ambient.blue * (tod_IntervalPortion);
+#endif
+}
+
+void GlobalData::determineTerrainLighting_diffuse( TimeOfDay tod, int i )
+{
+#if !REAL_TIME_TOD_CHANGE
+	m_terrainDiffuse[i] = m_terrainLighting[ tod ][i].diffuse;
+#else
+	m_terrainDiffuse[i].red = m_terrainLighting[ tod ][i].diffuse.red * (1 - tod_IntervalPortion) + m_terrainLighting[ tod_next ][i].diffuse.red * (tod_IntervalPortion);
+	m_terrainDiffuse[i].green = m_terrainLighting[ tod ][i].diffuse.green * (1 - tod_IntervalPortion) + m_terrainLighting[ tod_next ][i].diffuse.green * (tod_IntervalPortion);
+	m_terrainDiffuse[i].blue = m_terrainLighting[ tod ][i].diffuse.blue * (1 - tod_IntervalPortion) + m_terrainLighting[ tod_next ][i].diffuse.blue * (tod_IntervalPortion);
+#endif
+}
+
+void GlobalData::determineTerrainLighting_lightPos( TimeOfDay tod, int i )
+{
+#if !REAL_TIME_TOD_CHANGE
+	m_terrainLightPos[i] = m_terrainLighting[ tod ][i].lightPos;
+#else
+	m_terrainLightPos[i].x = m_terrainLighting[ tod ][i].lightPos.x * (1 - tod_IntervalPortion) + m_terrainLighting[ tod_next ][i].lightPos.x * (tod_IntervalPortion);
+	m_terrainLightPos[i].y = m_terrainLighting[ tod ][i].lightPos.y * (1 - tod_IntervalPortion) + m_terrainLighting[ tod_next ][i].lightPos.y * (tod_IntervalPortion);
+	m_terrainLightPos[i].z = m_terrainLighting[ tod ][i].lightPos.z * (1 - tod_IntervalPortion) + m_terrainLighting[ tod_next ][i].lightPos.z * (tod_IntervalPortion);
+#endif
+}
+
+// GlobalData::TerrainLighting? No, I don't think it makes sense to return the whole object just for these.
+// Return one field adjusted for the real-time time-of-day change mechanic at a time.
+RGBColor GlobalData::getTerrainObjectsLighting_ambient( TimeOfDay tod, int i ) const
+{
+#if !REAL_TIME_TOD_CHANGE
+	return m_terrainObjectsLighting[tod][i].ambient;
+#else
+	RGBColor ambient;
+	ambient.red = m_terrainObjectsLighting[ tod ][i].ambient.red * (1 - tod_IntervalPortion) + m_terrainObjectsLighting[ tod_next ][i].ambient.red * (tod_IntervalPortion);
+	ambient.green = m_terrainObjectsLighting[ tod ][i].ambient.green * (1 - tod_IntervalPortion) + m_terrainObjectsLighting[ tod_next ][i].ambient.green * (tod_IntervalPortion);
+	ambient.blue = m_terrainObjectsLighting[ tod ][i].ambient.blue * (1 - tod_IntervalPortion) + m_terrainObjectsLighting[ tod_next ][i].ambient.blue * (tod_IntervalPortion);
+	return ambient;
+#endif
+}
+
+RGBColor GlobalData::getTerrainObjectsLighting_diffuse( TimeOfDay tod, int i ) const
+{
+#if !REAL_TIME_TOD_CHANGE
+	return m_terrainObjectsLighting[tod][i].diffuse;
+#else
+	RGBColor diffuse;
+	diffuse.red = m_terrainObjectsLighting[ tod ][i].diffuse.red * (1 - tod_IntervalPortion) + m_terrainObjectsLighting[ tod_next ][i].diffuse.red * (tod_IntervalPortion);
+	diffuse.green = m_terrainObjectsLighting[ tod ][i].diffuse.green * (1 - tod_IntervalPortion) + m_terrainObjectsLighting[ tod_next ][i].diffuse.green * (tod_IntervalPortion);
+	diffuse.blue = m_terrainObjectsLighting[ tod ][i].diffuse.blue * (1 - tod_IntervalPortion) + m_terrainObjectsLighting[ tod_next ][i].diffuse.blue * (tod_IntervalPortion);
+	return diffuse;
+#endif
+}
+
+Coord3D GlobalData::getTerrainObjectsLighting_lightPos( TimeOfDay tod, int i ) const
+{
+#if !REAL_TIME_TOD_CHANGE
+	return m_terrainObjectsLighting[tod][i].lightPos;
+#else
+	Coord3D lightPos;
+	lightPos.x = m_terrainObjectsLighting[ tod ][i].lightPos.x * (1 - tod_IntervalPortion) + m_terrainObjectsLighting[ tod_next ][i].lightPos.x * (tod_IntervalPortion);
+	lightPos.y = m_terrainObjectsLighting[ tod ][i].lightPos.y * (1 - tod_IntervalPortion) + m_terrainObjectsLighting[ tod_next ][i].lightPos.y * (tod_IntervalPortion);
+	lightPos.z = m_terrainObjectsLighting[ tod ][i].lightPos.z * (1 - tod_IntervalPortion) + m_terrainObjectsLighting[ tod_next ][i].lightPos.z * (tod_IntervalPortion);
+	return lightPos;
+#endif
+}
+
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 Bool GlobalData::setTimeOfDay( TimeOfDay tod )
@@ -1093,12 +1196,31 @@ Bool GlobalData::setTimeOfDay( TimeOfDay tod )
 	{
 		return FALSE;
 	}
+	
+#if REAL_TIME_TOD_CHANGE
+	// This allows a loaded map to know that its 'TheGlobalData->setTimeOfDay' call should set 'tod_frame' so
+	// that the frame begins at the time-of-day the map was saved with.
+	if (tod_assign) {
+		setTodFrameFromParam(tod);
+		extern void determineTimeOfDayGlobals();
+		// Run this to set things expected to be set for other real-time time-of-day related places
+		determineTimeOfDayGlobals();
+	}
+#endif
 
 	m_timeOfDay = tod;
 	for (Int i=0; i<MAX_GLOBAL_LIGHTS; i++)
-	{	m_terrainAmbient[i] = m_terrainLighting[ tod ][i].ambient;
+	{
+		//MODDD - Real-time time-of-day change
+		// Direct 'm_terrainLighting[ tod ][i].*' references replaced with function calls
+		/*
+		m_terrainAmbient[i] = m_terrainLighting[ tod ][i].ambient;
 		m_terrainDiffuse[i] = m_terrainLighting[ tod ][i].diffuse;
 		m_terrainLightPos[i] = m_terrainLighting[ tod ][i].lightPos;
+		*/
+		determineTerrainLighting_ambient(tod, i);
+		determineTerrainLighting_diffuse(tod, i);
+		determineTerrainLighting_lightPos(tod, i);
 	}
 
 	return TRUE;

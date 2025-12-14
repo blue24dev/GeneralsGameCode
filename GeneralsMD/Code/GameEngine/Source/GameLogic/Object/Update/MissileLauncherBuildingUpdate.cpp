@@ -62,6 +62,14 @@ MissileLauncherBuildingUpdate::~MissileLauncherBuildingUpdate( void )
 	}
 }
 
+//MODDD - set this up as soon as possible, all modules are known at the time
+void MissileLauncherBuildingUpdate::onObjectCreated() {
+	SpecialPowerUpdateModule::onObjectCreated();
+	const MissileLauncherBuildingUpdateModuleData* d = getMissileLauncherBuildingUpdateModuleData();
+	m_specialPowerModule = getObject()->getSpecialPowerModule(d->m_specialPowerTemplate);
+	DEBUG_ASSERTCRASH(m_specialPowerModule, ("Missing special power"));
+}
+
 //-------------------------------------------------------------------------------------------------
 void MissileLauncherBuildingUpdate::switchToState(DoorStateType dst)
 {
@@ -246,11 +254,14 @@ UpdateSleepTime MissileLauncherBuildingUpdate::update( void )
 	if( getObject()->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION) )
 		return UPDATE_SLEEP_NONE;
 
+	//MODDD - should no longer be needed
+	/*
 	if (!m_specialPowerModule)
 	{
 		m_specialPowerModule = getObject()->getSpecialPowerModule(d->m_specialPowerTemplate);
 		DEBUG_ASSERTCRASH(m_specialPowerModule, ("Missing special power"));
 	}
+	*/
 
 	if (m_specialPowerModule)
 	{

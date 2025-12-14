@@ -1757,8 +1757,9 @@ Bool WorldHeightMapEdit::optimizeTiles(void)
 	resize
 		Changes the size of the height map.
 */
+//MODDD - added 'pAbsChange'
 Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int newBorder, Bool anchorTop, Bool anchorBottom,
-							Bool anchorLeft, Bool anchorRight, Coord3D *pObjOffset)
+							Bool anchorLeft, Bool anchorRight, Coord3D *pObjOffset, Coord3D* pAbsChange)
 {
 	if (newBorder<0) newBorder = 0;
 	newXSize += 2*newBorder;
@@ -1771,6 +1772,10 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 	pObjOffset->x = 0;
 	pObjOffset->y = 0;
 	pObjOffset->z = 0;
+	//MODDD
+	pAbsChange->x = 0;
+	pAbsChange->y = 0;
+	pAbsChange->z = 0;
 	Int xOffset = m_borderSize-newBorder;
 	Int sizeChange = (m_width-2*m_borderSize) - (newXSize - 2*newBorder);
 	if (anchorLeft) {
@@ -1782,6 +1787,9 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 		xOffset += (sizeChange)/2;
 		pObjOffset->x = -((sizeChange)/2)*MAP_XY_FACTOR;
 	}
+
+	//MODDD
+	pAbsChange->x -= sizeChange * MAP_XY_FACTOR;
 
 	Int yOffset = m_borderSize - newBorder;
 	sizeChange = (m_height-2*m_borderSize) - (newYSize - 2*newBorder);
@@ -1795,13 +1803,22 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 		pObjOffset->y = -((sizeChange)/2)*MAP_XY_FACTOR;
 	}
 
+	//MODDD
+	pAbsChange->y -= sizeChange * MAP_XY_FACTOR;
+
+	//MODDD - something from below moved up
+	Int numBytesX = (newXSize+7)/8;	//how many bytes to fit all bitflags
+	Int flipStateWidth = numBytesX;
 
 	Short *tileNdxes = new Short[newDataSize];
 	Short *blendTileNdxes = new Short[newDataSize];
 	Short *extraBlendTileNdxes = new Short[newDataSize];
 	UnsignedByte *data = new UnsignedByte[newDataSize];
 	Short  *cliffInfoNdxes = new Short[newDataSize];
-
+	//MODDD
+	UnsignedByte* cellCliffState = new UnsignedByte[numBytesX*newYSize];
+	UnsignedByte* cellFlipState = new UnsignedByte[numBytesX*newYSize];
+	
 	Int i, j;
 	for (i=0; i<newXSize; i++) {
 		for (j=0; j<newYSize; j++) {
@@ -1832,12 +1849,59 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 				blendTileNdxes[newNdx] = m_blendTileNdxes[oldNdx];
 				extraBlendTileNdxes[newNdx] = m_extraBlendTileNdxes[oldNdx];
 				cliffInfoNdxes[newNdx] = m_cliffInfoNdxes[oldNdx];
+				//MODDD
+				// 'setCliffState(i, j, getCliffState(oldI, oldJ))' for the new map instead
+				{
+					Bool tempState = getCliffState(oldI, oldJ);
+					UnsignedByte	flagByte = cellCliffState[j*flipStateWidth + (i >> 3)];
+					UnsignedByte flagMask = (1<<(i&0x7));
+					if (tempState) {
+						flagByte |= flagMask;
+					} else {
+						flagByte &= (~flagMask);
+					}
+					cellCliffState[j*flipStateWidth + (i >> 3)] = flagByte;
+				}
+				// 'setFlipState(i, j, getFlipState(oldI, oldJ))' for the new map instead
+				{
+					Bool tempState = getFlipState(oldI, oldJ);
+					UnsignedByte *curVal = &cellFlipState[j*flipStateWidth + (i >> 3)];
+					if (tempState) {
+						*curVal |= (1<<(i&0x7));
+					}	else {
+						*curVal &= ~(1<<(i&0x7));
+					}
+				}
+				// ---
 			} else {
 				data[newNdx] = m_data[oldNdx];
 				tileNdxes[newNdx] = m_tileNdxes[oldNdx];
 				blendTileNdxes[newNdx] = 0;
 				extraBlendTileNdxes[newNdx] = 0;
 				cliffInfoNdxes[newNdx] = 0;
+				//MODDD
+				// 'setCliffState(i, j, getCliffState(oldI, oldJ))' for the new map instead
+				{
+					Bool tempState = getCliffState(oldI, oldJ);
+					UnsignedByte	flagByte = cellCliffState[j*flipStateWidth + (i >> 3)];
+					UnsignedByte flagMask = (1<<(i&0x7));
+					if (tempState) {
+						flagByte |= flagMask;
+					} else {
+						flagByte &= (~flagMask);
+					}
+					cellCliffState[j*flipStateWidth + (i >> 3)] = flagByte;
+				}
+				// 'setFlipState(i, j, getFlipState(oldI, oldJ))' for the new map instead
+				{
+					Bool tempState = getFlipState(oldI, oldJ);
+					UnsignedByte *curVal = &cellFlipState[j*flipStateWidth + (i >> 3)];
+					if (tempState) {
+						*curVal |= (1<<(i&0x7));
+					}	else {
+						*curVal &= ~(1<<(i&0x7));
+					}
+				}
 			}
 		}
 	}
@@ -1858,11 +1922,18 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 	m_dataSize = newDataSize;
 	delete(m_cellCliffState);
 	delete(m_cellFlipState);
-	Int numBytesX = (m_width+7)/8;	//how many bytes to fit all bitflags
- 	m_flipStateWidth=numBytesX;
+	//MODDD - moved earlier
+	//Int numBytesX = (m_width+7)/8;	//how many bytes to fit all bitflags
+ 	m_flipStateWidth=flipStateWidth;
 
-	m_cellFlipState	= MSGNEW("WorldHeightMapEdit::resize") UnsignedByte[numBytesX*m_height];
-	m_cellCliffState	= MSGNEW("WorldHeightMapEdit::resize") UnsignedByte[numBytesX*m_height];
+	//MODDD - replaced
+	// ---
+	//m_cellFlipState	= MSGNEW("WorldHeightMapEdit::resize") UnsignedByte[numBytesX*m_height];
+	//m_cellCliffState	= MSGNEW("WorldHeightMapEdit::resize") UnsignedByte[numBytesX*m_height];
+	// ---
+	m_cellCliffState = cellCliffState;
+	m_cellFlipState = cellFlipState;
+	// ---
 
 	// Verify index remapping
 	for(i=0; i<m_dataSize; i++) {
@@ -1876,7 +1947,8 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 			m_extraBlendTileNdxes[i] = 0;
 		}
 	}
-	initCliffFlagsFromHeights();
+	//MODDD - disabled, should no longer be needed since using the cliff states from the existing map
+	//initCliffFlagsFromHeights();
 
 	optimizeTiles();
 	return(true);
@@ -3348,6 +3420,17 @@ void WorldHeightMapEdit::changeBoundary(Int ndx, ICoord2D *border)
 	m_boundaries[ndx] = (*border);
 }
 
+//MODDD - added
+void WorldHeightMapEdit::removeBoundary(Int ndx)
+{
+	if (ndx < 0 || ndx >= m_boundaries.size()) {
+		DEBUG_CRASH(("Invalid border change request. jkmcd"));
+		return;
+	}
+
+	m_boundaries.erase(m_boundaries.begin() + ndx);
+}
+
 void WorldHeightMapEdit::removeLastBoundary(void)
 {
 	if (m_boundaries.size() == 0) {
@@ -3358,7 +3441,8 @@ void WorldHeightMapEdit::removeLastBoundary(void)
 	m_boundaries.pop_back();
 }
 
-void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *outNdx, Int *outHandle)
+//MODDD - last param adjustments
+void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *outNdx, BorderModificationType *outMod)
 {
 	if (!outNdx) {
 		return;
@@ -3366,21 +3450,44 @@ void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *ou
 
 	if (!pt) {
 		(*outNdx) = -1;
+		//MODDD - added return, visual studio warning about 'pt' being null / dereferenced below as-is
+		return;
 	}
 
 	int numBoundaries = m_boundaries.size();
-	for (int i = 0; i < numBoundaries; ++i) {
-		Vector3 vecPt(pt->x / MAP_XY_FACTOR, pt->y / MAP_XY_FACTOR, 0);
 
+	//MODDD - check for the best distance instead, not just the first one that passes the 'OK' distance so that
+	// tiny ones don't become forever unselectable. Also adding a tiny bit so technically at exactly 'okDistance'
+	// passes too like in the original.
+	float bestDistance = okDistance + 0.1;
+	// And for the border index & mod type for the border at the best distance currently
+	int bestDistanceBorderNdx = -1;
+	BorderModificationType bestDistanceMod = BORDERMOD_TYPE_NONE;
+
+	//MODDD - moved from the loop below, this doesn't depend on the current iteration at all
+	Vector3 vecPt(pt->x / MAP_XY_FACTOR, pt->y / MAP_XY_FACTOR, 0);
+
+	//MODDD - checking in reverse order so that later boundaries win in distance tie-breaks by occurring first.
+	// This resembles the render order so you select the point of the border that's actually drawn on top in
+	// case they overlap between different borders.
+	//for (int i = 0; i < numBoundaries; ++i) {
+	for (int i = numBoundaries - 1; i >= 0; --i) {
+		//MODDD - boundaries with x or y are effectively single lines or a single point at the bottom-left corner (if both are 0).
+		// This should not even exist to begin with - commenting this out
+		/*
 		if (m_boundaries[i].x == 0 || m_boundaries[i].y == 0) {
 			continue;
 		}
+		*/
 
+		//MODDD - just going to replace this whole block at this rate.
+		/*
 		Vector3 vecTestPt(m_boundaries[i].x, m_boundaries[i].y, 0);
 		if (Vector3::Distance(vecPt, vecTestPt) <= okDistance) {
 			(*outNdx) = i;
-			if (outHandle) {
-				(*outHandle) = 2;
+			if (outMod) {
+				//MODDD
+				(*outMod) = MOD_TYPE_FREE;
 			}
 			return;
 		}
@@ -3388,8 +3495,9 @@ void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *ou
 		vecTestPt.X = 0;
 		if (Vector3::Distance(vecPt, vecTestPt) <= okDistance) {
 			(*outNdx) = i;
-			if (outHandle) {
-				(*outHandle) = 1;
+			if (outMod) {
+				//MODDD
+				(*outMod) = MOD_TYPE_UP;
 			}
 			return;
 		}
@@ -3398,8 +3506,9 @@ void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *ou
 		vecTestPt.Y = 0;
 		if (Vector3::Distance(vecPt, vecTestPt) <= okDistance) {
 			(*outNdx) = i;
-			if (outHandle) {
-				(*outHandle) = 3;
+			if (outMod) {
+				//MODDD
+				(*outMod) = MOD_TYPE_RIGHT;
 			}
 			return;
 		}
@@ -3408,13 +3517,82 @@ void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *ou
 		vecTestPt.Y = 0;
 		if (Vector3::Distance(vecPt, vecTestPt) <= okDistance) {
 			(*outNdx) = i;
-			if (outHandle) {
-				(*outHandle) = 0;
+			if (outMod) {
+				//MODDD
+				(*outMod) = MOD_TYPE_INVALID;
 			}
 			return;
 		}
+		*/
+		// ---------
+		Vector3 vecTestPt;
+		float testDistance;
+		vecTestPt.Z = 0;
+
+		vecTestPt.X = m_boundaries[i].x;
+		vecTestPt.Y = m_boundaries[i].y;
+		testDistance = Vector3::Distance(vecPt, vecTestPt);
+		if (testDistance < bestDistance) {
+			// First point of a border-rectangle that wins, move on to the next border to check against.
+			// Ex: a top-right (FREE) point being close enough is all we care about, other points getting precedence
+			// (less drag freedom) isn't worthwhile.
+			bestDistance = testDistance;
+			bestDistanceBorderNdx = i;
+			bestDistanceMod = BORDERMOD_TYPE_FREE;
+			continue;
+		}
+
+		// If a border is exactly along the left/bottom edge, don't bother with the top-left & bottom-right point checks.
+		// Also counting being a 0-size border.  (still possible, maybe on old maps?)
+		// The above check for checking the top-right point to be a free-drag would suffice.
+		if (m_boundaries[i].x != 0 && m_boundaries[i].y != 0) {
+			vecTestPt.X = 0;
+			vecTestPt.Y = m_boundaries[i].y;
+			testDistance = Vector3::Distance(vecPt, vecTestPt);
+			if (testDistance < bestDistance) {
+				bestDistance = testDistance;
+				bestDistanceBorderNdx = i;
+				bestDistanceMod = BORDERMOD_TYPE_UP;
+				continue;
+			}
+
+			vecTestPt.X = m_boundaries[i].x;
+			vecTestPt.Y = 0;
+			testDistance = Vector3::Distance(vecPt, vecTestPt);
+			if (testDistance < bestDistance) {
+				bestDistance = testDistance;
+				bestDistanceBorderNdx = i;
+				bestDistanceMod = BORDERMOD_TYPE_RIGHT;
+				continue;
+			}
+
+			// This is the bottom-left corner of a border: not possible to resize from here.
+			// Grabbing this doesn't really serve a purpose, so only allow this outcome if nothing else is selected.
+			// Prefer absolutely anything else, basically.
+			if (bestDistanceMod == BORDERMOD_TYPE_NONE || bestDistanceMod == BORDERMOD_TYPE_INVALID) {
+				vecTestPt.X = 0;
+				vecTestPt.Y = 0;
+				testDistance = Vector3::Distance(vecPt, vecTestPt);
+				if (testDistance < bestDistance) {
+					// Don't change 'bestDistance' - allow anything else to work instead
+					bestDistanceBorderNdx = i;
+					bestDistanceMod = BORDERMOD_TYPE_INVALID;
+					continue;
+				}
+			}
+		}
+
+		// ---------
+
 	}
 
+	//MODDD - removed, assuming this just for reaching here no longer holds up
+	/*
 	(*outNdx) = -1;
-	(*outHandle) = -1;
+	(*outMod) = MOD_TYPE_NONE;
+	*/
+
+	//MODDD - added
+	(*outNdx) = bestDistanceBorderNdx;
+	(*outMod) = bestDistanceMod;
 }

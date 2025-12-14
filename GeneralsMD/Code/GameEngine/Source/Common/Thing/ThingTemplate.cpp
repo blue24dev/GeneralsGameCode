@@ -1136,6 +1136,36 @@ void ThingTemplate::validateAudio()
 //-------------------------------------------------------------------------------------------------
 void ThingTemplate::validate()
 {
+	/*
+	//MODDD - for me only
+	// This area is called after ThingFactory::parseObjectDefinition's 'ini->initFromINI( thingTemplate...' call,
+	// so any hackish edits to apply to everything can go here.
+	if (this->isKindOf(KINDOF_STRUCTURE)) {
+		if (this->isKindOf(KINDOF_FS_SUPERWEAPON)) {
+			// superweapons cost a bit more but already take a while to build - less factor there
+			this->m_buildCost *= 1.2;
+			this->m_buildTime *= 1.25;
+		} else if(this->isKindOf(KINDOF_FS_BASE_DEFENSE)) {
+			// even better health buff, so they cost more, but the build time isn't affected as much
+			this->m_buildCost *= 1.25;
+			this->m_buildTime *= 1.4;
+		} else {
+			// all other buildings
+			this->m_buildTime *= 1.75;
+		}
+	} else {
+		// non-buildings
+		this->m_buildTime *= 2;
+	}
+	
+	//MODDD - for me only
+	// Beware of side effects like revealed fog of war that doesn't un-reveal. This is not well understood.
+	// Checking for being above 0 first appears to fix this. Are negative values used in some places?
+	if (this->m_shroudClearingRange > 0) {
+		this->m_shroudClearingRange *= 1.6;
+	}
+	*/
+
 	if (m_shadowTextureName.isEmpty())
 	{
 		// no texture given, pick a default
@@ -1367,6 +1397,25 @@ const ArmorTemplateSet* ThingTemplate::findArmorTemplateSet(const ArmorSetFlags&
 const WeaponTemplateSet* ThingTemplate::findWeaponTemplateSet(const WeaponSetFlags& t) const
 {
   return m_weaponTemplateSetFinder.findBestInfo(m_weaponTemplateSets, t);
+}
+
+//MODDD - check for whether this unit has any weapons with a particular set of flags.
+// This check isn't exclusive - there just has to be at least 1 weapon with each of the flags in 't', even if
+// that weapon has other conditions too.
+// If having the flags across different weapons is ok (not just all in 1 weapon), that should be a
+// separate method: 'hasFlagsAcrossWeaponTemplateSets'.
+// (this difference is N/A for finding a weapon set with only 1 flag set in 't')
+// Note that 'findWeaponTemplateSet' is supposed to always find something, even a very poor fit if nothing
+// has the expected condition.
+Bool ThingTemplate::hasAnyWeaponTemplateSetWithFlags(const WeaponSetFlags& t) const {
+	for (WeaponTemplateSetVector::const_iterator it = m_weaponTemplateSets.begin(); it != m_weaponTemplateSets.end(); ++it)
+	{
+		WeaponSetFlags flagsAndResult = t.getAnd(it->friend_getWeaponSetFlags());
+		if (flagsAndResult == t) {
+			return true;
+		}
+	}
+	return false;
 }
 
 //-----------------------------------------------------------------------------

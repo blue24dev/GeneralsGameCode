@@ -141,4 +141,7 @@ private:
 	void detonateOnce(const Coord3D& position);
 	UpdateSleepTime calcSleepTime();
 
+	//MODDD - helper
+	MinefieldBehavior::ImmuneInfo* getAvailableImmuneInfoSlot(ObjectID objectID);
+
 };

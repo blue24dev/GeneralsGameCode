@@ -67,6 +67,34 @@ enum BuildableStatus CPP_11(: Int);
 
 typedef const CommandButton* ConstCommandButtonPtr;
 
+//MODDD - let anywhere know whether the current game is being created (SETUP) or ending (TEARDOWN).
+// And for info, 'GameEngine::init' appears to be for setup for the whole program, not just a particular
+// game.
+// The shell map running in the background still counts as 'INGAME' even if you're using menus to start a
+// game from there. (in Quickstart mode, perhaps not - verify?).
+// Main point of this is to tell when a game is ending so some cleanup/'onExit' logic can be lazier or less
+// spammy with assertion. Any other states aren't as well tested.
+// For seeing whether a game is being loaded/saved/neither instead, see Xfer.h's 'globalXferStatus'
+enum GameStatus CPP_11(: Int)
+{
+	GAMESTATUS_NONE, // N/A (only some UI screen like a score screen)
+	GAMESTATUS_SETUP, // During 'GameLogic::startNewGame'
+	GAMESTATUS_INGAME, // Normal, interactive/replay game is active
+	GAMESTATUS_TEARDOWN //  During 'GameEngine::reset'
+};
+//MODDD - more globals
+extern GameStatus gameStatus;
+extern Bool objectInitLock;
+#if REAL_TIME_TOD_CHANGE
+extern UnsignedInt tod_frame;
+extern Bool tod_assign;
+extern TimeOfDay tod_current;
+extern TimeOfDay tod_next;
+extern TimeOfDay tod_model;
+extern UnsignedInt tod_IntervalFrame;
+extern Real tod_IntervalPortion;
+#endif
+
 // What kind of game we're in.
 enum GameMode CPP_11(: Int)
 {
@@ -150,7 +178,10 @@ public:
 
 	//-----------------------------------------------------------------------------------------------
 	/// create an object given the thing template. (Only for use by ThingFactory.)
-	Object *friend_createObject( const ThingTemplate *thing, const ObjectStatusMaskType &objectStatusMask, Team *team );
+	//MODDD - added simpler overload
+	Object *friend_createObject( const ThingTemplate *thing );
+	//MODDD - added param 'objectInitLockLocalTemp', swapped 'team' and 'statusBits' order
+	Object *friend_createObject( const ThingTemplate *thing, Team *team, const ObjectStatusMaskType &objectStatusMask, Bool objectInitLockLocalTemp );
 	void destroyObject( Object *obj );							///< Mark object as destroyed for later deletion
 	Object *findObjectByID( ObjectID id );								///< Given an ObjectID, return a pointer to the object.
  	Object *getFirstObject( void );									///< Returns the "first" object in the world. When used with the object method "getNextObject()", all objects in the world can be iterated.
@@ -158,6 +189,11 @@ public:
 
 	// super hack
 	void startNewGame( Bool loadSaveGame );
+
+	//MODDD
+	void runPostInitOnObjects();
+	void runPostInitOnObjectsExtra();
+
 	void loadMapINI( AsciiString mapName );
 
 	void updateLoadProgress( Int progress );
@@ -215,6 +251,9 @@ public:
 	void closeWindows( void );
 
 	void sendObjectCreated( Object *obj );
+	//MODDD
+	void sendObjectCreated( Object *obj, DrawableID drawableID );
+
 	void sendObjectDestroyed( Object *obj );
 
 	void bindObjectAndDrawable(Object* obj, Drawable* draw);
@@ -277,7 +316,8 @@ private:
 	void pauseGameMusic(Bool paused);
 	void pauseGameInput(Bool paused);
 
-	void pushSleepyUpdate(UpdateModulePtr u);
+	//MODDD - added param
+	void pushSleepyUpdate(UpdateModulePtr u, Bool rebalanceQueue);
 	UpdateModulePtr peekSleepyUpdate() const;
 	void popSleepyUpdate();
 	void eraseSleepyUpdate(Int i);
@@ -354,6 +394,11 @@ private:
 	ObjectID m_nextObjID;																		///< For allocating object id's
 
 	void setDefaults( Bool loadSaveGame );									///< Set default values of class object
+
+	//MODDD
+	void resetUpdateModuleQueues();
+	void addUpdateModulesToQueues(Object* obj, Bool rebalanceQueue);
+
 	void processDestroyList( void );												///< Destroy all pending objects on the destroy list
 
 	void destroyAllObjectsImmediate();											///< destroy, and process destroy list immediately
@@ -442,7 +487,8 @@ inline Object* GameLogic::findObjectByID( ObjectID id )
 	return NULL;
 }
 
-
+//MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
+void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCreateCalls = FALSE);
 
 // the singleton
 extern GameLogic *TheGameLogic;

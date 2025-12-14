@@ -329,6 +329,9 @@ public:
 	void friend_checkForIdleMoodTarget();
 	UnsignedInt friend_getNextIdleMoodTargetFrame() const;
 	void friend_notifyStateMachineChanged();
+	
+	//MODDD - getter
+	TurretStateMachine* getTurretStateMachine() { return m_turretStateMachine; }
 
 protected:
 	// snapshot interface

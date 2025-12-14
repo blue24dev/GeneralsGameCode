@@ -721,6 +721,15 @@ BOOL CWorldBuilderDoc::DoSave(LPCTSTR lpszPathName, BOOL bReplace)
 	// if 'bReplace' is TRUE will change file name if successful (SaveAs)
 	// if 'bReplace' is FALSE will not change path name (SaveCopyAs)
 {
+	//MODDD - first, a check. Is there at least one border?
+	// Adding this since it's now possible to delete borders. Ingame probably wouldn't work with this, it likely
+	// needs that first border to determine the ingame playable area.
+	if (this->getNumBoundaries() == 0) {
+		CString error = "Error: map must have at least 1 border to represent the area available in-game.";
+		::AfxMessageBox(error);
+		return FALSE;
+	}
+
 	CString newName = lpszPathName;
 	if (newName.IsEmpty())
 	{
@@ -1085,10 +1094,12 @@ void CWorldBuilderDoc::OnFileResize()
 
 	WorldHeightMapEdit *htMapEditCopy = GetHeightMap()->duplicate();
 	if (htMapEditCopy == NULL) return;
+	//MODDD - added 'absChange', including involvement
 	Coord3D objOffset;
+	Coord3D absChange;
 	if (htMapEditCopy->resize(hi.xExtent, hi.yExtent, hi.initialHeight, hi.borderWidth,
-		hi.anchorTop, hi.anchorBottom, hi.anchorLeft, hi.anchorRight, &objOffset)) {  // does all the work.
-		WBDocUndoable *pUndo = new WBDocUndoable(this, htMapEditCopy, &objOffset);
+		hi.anchorTop, hi.anchorBottom, hi.anchorLeft, hi.anchorRight, &objOffset, &absChange)) {  // does all the work.
+		WBDocUndoable *pUndo = new WBDocUndoable(this, htMapEditCopy, &objOffset, &absChange);
 		this->AddAndDoUndoable(pUndo);
 		REF_PTR_RELEASE(pUndo); // belongs to this now.
 		POSITION pos = GetFirstViewPosition();
@@ -2303,6 +2314,9 @@ void CWorldBuilderDoc::OnDumpDocToText(void)
 			fprintf(theLogFile, "Total Map Objects (with ThingTemplates): %d\n", totalObjectCount);
 
 			while (mapOfTemplates.size() > 0) {
+				//MODDD - NOTE - it looks like this is getting 'storedIt' as whichever item in mapOfTemplates has the greatest
+				// value (Int), erasing it from 'mapOfTemplates', then repeating the process for the next (greatest after) item.
+				// That would print out all items in descending order.
 				std::map<AsciiString, Int>::iterator storedIt = mapOfTemplates.begin();
 
 				for (it = mapOfTemplates.begin(); it != mapOfTemplates.end(); ++it) {
@@ -2647,13 +2661,20 @@ void CWorldBuilderDoc::changeBoundary(Int ndx, ICoord2D *border)
 	m_heightMap->changeBoundary(ndx, border);
 }
 
+//MODDD - new
+void CWorldBuilderDoc::removeBoundary(Int ndx)
+{
+	m_heightMap->removeBoundary(ndx);
+}
+
 void CWorldBuilderDoc::removeLastBoundary(void)
 {
 	m_heightMap->removeLastBoundary();
 }
 
-void CWorldBuilderDoc::findBoundaryNear(Coord3D *pt, float okDistance, Int *outNdx, Int *outHandle)
+//MODDD - last param adjustments
+void CWorldBuilderDoc::findBoundaryNear(Coord3D *pt, float okDistance, Int *outNdx, BorderModificationType *outMod)
 {
-	m_heightMap->findBoundaryNear(pt, okDistance, outNdx, outHandle);
+	m_heightMap->findBoundaryNear(pt, okDistance, outNdx, outMod);
 }
 

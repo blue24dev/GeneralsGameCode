@@ -691,11 +691,12 @@ void W3DRadar::renderObjectList( const RadarObject *listHead, TextureClass *text
 	// loop through all objects and draw
 	ICoord2D radarPoint;
 
-	Player *player = rts::getObservedOrLocalPlayer();
+	//MODDD - renaming to 'clientPlayer' for clarity
+	Player *clientPlayer = rts::getObservedOrLocalPlayer();
 
 	for( const RadarObject *rObj = listHead; rObj; rObj = rObj->friend_getNext() )
 	{
-		if (!canRenderObject(rObj, player))
+		if (!canRenderObject(rObj, clientPlayer))
 			continue;
 
 		// get object position
@@ -713,20 +714,37 @@ void W3DRadar::renderObjectList( const RadarObject *listHead, TextureClass *text
 		// if( obj->getRadarPriority() == RADAR_PRIORITY_LOCAL_UNIT_ONLY )
 		// ML-- What the heck is this? local-only and neutral-observer-viewed units are stealthy?? Since when?
 		// Now it twinkles for any stealthed object, whether locally controlled or neutral-observer-viewed
+
+		//MODDD - not entirely sure what the above comment is complaining about.
+		// Anyway, it seems weird to me that disguised units from an enemy player's perspective get the stealth-effect.
+		// A player could see that a unit that appears to be theirs isn't stealthed in-game, but is blinking on the mini-map - dead giveaway.
+		// Convincing disguises should appear opaque on the mini-map to non-allies. Color is handled elsewhere properly.
 		if( obj->testStatus( OBJECT_STATUS_STEALTHED ) )
 		{
-			UnsignedByte r, g, b, a;
-			GameGetColorComponents( c, &r, &g, &b, &a );
+			//MODDD - check for being disguised, and an enemy to the local player. Only allies should see disguised units as stealth on the minimap.
+			// Allies would also see disguised units as their owner's color, not the disguised color (color is handled elsewhere).
+			BOOL doStealthEffect = TRUE;
+			if (obj->testStatus( OBJECT_STATUS_DISGUISED )) {
+				if (clientPlayer->getRelationship(obj->getControllingPlayer()->getDefaultTeam()) != ALLIES) {
+					doStealthEffect = FALSE;
+				}
+			}
 
-			const UnsignedInt framesForTransition = LOGICFRAMES_PER_SECOND;
-			const UnsignedByte minAlpha = 32;
+			//MODDD - require this condition. Might want to make this a small helper method to break up some complexity here.
+			if (doStealthEffect) {
+				UnsignedByte r, g, b, a;
+				GameGetColorComponents( c, &r, &g, &b, &a );
 
-			Real alphaScale = INT_TO_REAL(TheGameLogic->getFrame() % framesForTransition) / (framesForTransition / 2.0f);
-			if( alphaScale > 0.0f )
-				a = REAL_TO_UNSIGNEDBYTE( ((alphaScale - 1.0f) * (255.0f - minAlpha)) + minAlpha );
-			else
-				a = REAL_TO_UNSIGNEDBYTE( (alphaScale * (255.0f - minAlpha)) + minAlpha );
-			c = GameMakeColor( r, g, b, a );
+				const UnsignedInt framesForTransition = LOGICFRAMES_PER_SECOND;
+				const UnsignedByte minAlpha = 32;
+
+				Real alphaScale = INT_TO_REAL(TheGameLogic->getFrame() % framesForTransition) / (framesForTransition / 2.0f);
+				if( alphaScale > 0.0f )
+					a = REAL_TO_UNSIGNEDBYTE( ((alphaScale - 1.0f) * (255.0f - minAlpha)) + minAlpha );
+				else
+					a = REAL_TO_UNSIGNEDBYTE( (alphaScale * (255.0f - minAlpha)) + minAlpha );
+				c = GameMakeColor( r, g, b, a );
+			}
 
 		}
 

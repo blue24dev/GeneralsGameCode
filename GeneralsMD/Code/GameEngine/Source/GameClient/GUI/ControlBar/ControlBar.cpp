@@ -2740,7 +2740,7 @@ void ControlBar::showRallyPoint(const Coord3D* loc)
 	Player* player = TheControlBar->getCurrentlyViewedPlayer();
 	if (player)
 	{
-		if (TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT)
+		if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
 			marker->setIndicatorColor(player->getPlayerNightColor());
 		else
 			marker->setIndicatorColor(player->getPlayerColor());

@@ -2100,6 +2100,49 @@ void grabMultiPlayerInfo( void )
 
 	DEBUG_ASSERTCRASH(count == playerCount, ("For some reason we added %d players to the scores map, but only read %d", playerCount, count));
 
+	//MODDD - NEW. Add info about AI controlled non-neutral, non-civilian factions too, why not?
+	// Just keep in mind - this is limited to showing 8 rows for the assumed 8 multiplayer-available players.
+	// If there were ever a case where <# of human players doing co-op> + <# of baked-in map AI players> exceeds 8, rows after 8 would be missing.
+	// That can be an argument for combining AI players into one "Enemy General" row - see points below for more detail.
+	// Or, edit other places to allow more than 8 rows?  I dunno.
+#if GENERALS_CHALLENGE_FORCE
+	Player* civilianPlayer = ThePlayerList->findPlayerWithNameKey(NAMEKEY("PlyrCivilian"));
+	//Player* thePlayerRef = ThePlayerList->findPlayerWithNameKey(NAMEKEY("ThePlayer"));
+	for (int i = 0; i < ThePlayerList->getPlayerCount(); i++) {
+		// Iterate through all players (not necessarily slot players, includes players baked into the map).
+		// Only want players baked into the map here, i.e. the AI controlled general that owns the map.
+		// There may be multiple "players" that make up this even though it isn't obvious (same color).
+		// Going to handwave that for now, if they show up, oh well. Solve it later if you really care enough,
+		// kind of like how single-player logic for the score screen combines all 'enemies'.
+		// Look to there for inspiration I suppose.
+		Player* player = ThePlayerList->getNthPlayer(i);
+		// A player with an invalid or empty name isn't being used - avoid that too
+		/*
+		if (!player || player->getPlayerNameKey() == NAMEKEY_INVALID || KEYNAME(player->getPlayerNameKey()).getLength() == 0 || player->isPlayerObserver()) {
+			continue;
+		}
+		*/
+		// Actually just an observer check is enough - using 'getPlayerCount()' instead of 'MAX_PLAYERS' above
+		if (player->isPlayerObserver()) {
+			continue;
+		}
+		if (player == ThePlayerList->getNeutralPlayer() || player == civilianPlayer || /*player == thePlayerRef ||*/ player->getPlayerType() == PLAYER_HUMAN) {
+			// no, neutral/civilian stats aren't very interesting.
+			// And exclude "ThePlayer" that's supposed to be specified in challenge maps
+			// Actually, a "PLAYER_HUMAN" check should take care of that (marked not AI controlled in the editor I presume?)
+			continue;
+		}
+		const char* playerName = TheNameKeyGenerator->keyToName(player->getPlayerNameKey()).str();
+		if (strlen(playerName) == 7 && strncmp("player", playerName, strlen("player")) == 0 &&
+			playerName[6] >= '0' && playerName[6] <= '9') {
+			// player0-7 are slot players, already listed at this point, so no
+			continue;
+		}
+		// All passed - include in addition to the slot players already listed
+		populatePlayerInfo(player, count);
+		count ++;
+	}
+#endif
 }
 
 enum

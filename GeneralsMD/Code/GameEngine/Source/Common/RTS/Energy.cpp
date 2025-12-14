@@ -233,20 +233,28 @@ void Energy::addProduction(Int amt)
 	if( m_owner == NULL )
 		return;
 
-	// A repeated Brownout signal does nothing bad, and we need to handle more than just edge cases.
-	// Like low power, now even more low power, refresh disable.
-	m_owner->onPowerBrownOutChange( !hasSufficientPower() );
+	//MODDD - load w/ low power, rider bug fix: take 3
+	// If we're still creating objects for a fresh map start or loading a game, don't bother with a 'low-power'
+	// event. Wait until the end to decide this.
+	if (!objectInitLock && gameStatus != GAMESTATUS_TEARDOWN) {
+		// A repeated Brownout signal does nothing bad, and we need to handle more than just edge cases.
+		// Like low power, now even more low power, refresh disable.
+		m_owner->onPowerBrownOutChange( !hasSufficientPower() );
+	}
 }
 
 // ------------------------------------------------------------------------------------------------
 void Energy::addConsumption(Int amt)
 {
 	m_energyConsumption += amt;
-
+	
 	if( m_owner == NULL )
 		return;
 
-	m_owner->onPowerBrownOutChange( !hasSufficientPower() );
+	//MODDD - load w/ low power, rider bug fix: take 3
+	if (!objectInitLock && gameStatus != GAMESTATUS_TEARDOWN) {
+		m_owner->onPowerBrownOutChange( !hasSufficientPower() );
+	}
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -301,5 +309,10 @@ void Energy::xfer( Xfer *xfer )
 // ------------------------------------------------------------------------------------------------
 void Energy::loadPostProcess( void )
 {
-
+	//MODDD - oh look, a use for this method
+	// After a series of units producing/consuming power has finished being added at fresh map start or game
+	// load, run the event
+	if (m_owner) {
+		m_owner->onPowerBrownOutChange( !hasSufficientPower() );
+	}
 }

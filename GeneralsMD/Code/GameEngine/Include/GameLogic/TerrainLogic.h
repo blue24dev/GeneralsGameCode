@@ -310,6 +310,11 @@ public:
 	// This is stuff to get the currently active boundary information
 	Int getActiveBoundary(void) { return m_activeBoundary; }
 	void setActiveBoundary(Int newActiveBoundary);
+	//MODDD - get the actual current active boundary: x/y coord, not just the index to it
+	const ICoord2D& getActiveBoundaryInfo(void);
+	//MODDD - get the number of boundaries there are
+	Int getBoundaryCount(void);
+
 
   void flattenTerrain(Object *obj);  ///< Flatten the terrain under a building.
   void createCraterInTerrain(Object *obj);  ///< Flatten the terrain under a building.

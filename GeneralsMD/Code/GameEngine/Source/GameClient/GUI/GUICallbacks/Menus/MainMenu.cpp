@@ -1508,6 +1508,12 @@ WindowMsgHandledType MainMenuSystem( GameWindow *window, UnsignedInt msg,
 			}
 			else if( controlID == exitID )
 			{
+				//MODDD - I don't understand whether to offer a confirmation dialog or not depending on the game being
+				// windowed or not. This just messes with my head when I go between the two ways a lot.
+				// I'll say it can be skipped for developers but enabled for release builds, devs don't need to be asked if they're sure...
+				// (going to replace this whole block to avoid getting really hard to follow)
+				/*
+
 				// If we ever want to add a dialog before we exit out of the game, uncomment this line and kill the quitCallback() line below.
 //#if defined(RTS_DEBUG)
 				if (TheGlobalData->m_windowed)
@@ -1520,6 +1526,14 @@ WindowMsgHandledType MainMenuSystem( GameWindow *window, UnsignedInt msg,
 					QuitMessageBoxYesNo(TheGameText->fetch("GUI:QuitPopupTitle"), TheGameText->fetch("GUI:QuitPopupMessage"),quitCallback,NULL);
 				}
 //#endif
+				*/
+				// ---------
+#if CONFIRMATION_PROMPT_TO_EXIT_PROGRAM
+				QuitMessageBoxYesNo(TheGameText->fetch("GUI:QuitPopupTitle"), TheGameText->fetch("GUI:QuitPopupMessage"),quitCallback,NULL);
+#else
+				quitCallback();
+#endif
+				// ---------
 
 			}
 			else if(controlID == buttonChallengeID)

@@ -141,6 +141,46 @@ ScriptEngine *TheScriptEngine = NULL;
 /// AttackPriorityInfo class
 
 static const Int ATTACK_PRIORITY_DEFAULT = 1;
+
+//MODDD - NEW
+//#include "GameNetwork/GameInfo.h"
+Player* getRandomSlotPlayer() {
+	Player* availablePlayerList[MAX_SLOTS];
+	int availablePlayerListSoftCount = 0;
+
+	for (int i=0; i<MAX_SLOTS; ++i)
+	{
+		// Not going to rely on 'TheGameInfo' in case it ever gets deleted after the game starts.
+		// The final players populated by startup (player0, ...) has enough info anyway.
+		/*
+		GameSlot *slot = TheGameInfo->getSlot(i);
+
+		// Excluding AI slots because their AI must be dead - why waste special powers / attention on them?
+		if (!slot || !slot->isOccupied() || !slot->isHuman())
+			continue;
+		*/
+
+		AsciiString playerName;
+		playerName.format("player%d", i);
+		Player *player = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(playerName));
+
+		if (player && player->getPlayerType() == PLAYER_HUMAN) {
+			// Add the valid slot-player to the list of players to choose from
+			availablePlayerList[availablePlayerListSoftCount] = player;
+			availablePlayerListSoftCount++;
+		}
+	}
+
+	if (availablePlayerListSoftCount <= 0) {
+		// Nothing available?
+		return NULL;
+	}
+
+	// Randomly pick a player from the list
+	int randomVal = GameLogicRandomValue(0, availablePlayerListSoftCount - 1);
+	return availablePlayerList[randomVal];
+}
+
 //-------------------------------------------------------------------------------------------------
 /** Ctor */
 //-------------------------------------------------------------------------------------------------
@@ -5379,11 +5419,24 @@ void ScriptEngine::reset( void )
 	m_sequentialScripts.clear();
 
 	// clear out all the lists of object types that were in the old map.
-	for (AllObjectTypesIt it = m_allObjectTypeLists.begin(); it != m_allObjectTypeLists.end(); it = m_allObjectTypeLists.begin() ) {
+	//MODDD - why the iterator back to 'begin' every time?
+	// Oh, because 'removeObjectTypes' calls 'erase' on the iterator without returning the result of 'erase'.
+	// Seems like this creates a lot of opportunity for mistakes, handling that here entirely.
+	for (AllObjectTypesIt it = m_allObjectTypeLists.begin(); it != m_allObjectTypeLists.end(); /*it = m_allObjectTypeLists.begin()*/ ) {
+		/*
 		if (*it) {
 			removeObjectTypes(*it);
 		} else {
 			m_allObjectTypeLists.erase(it);
+		}
+		*/
+		//MODDD - rest is new.
+		// This replaces the 'removeObjectTypesFromList' call's part that deals with removing from the list.
+		ObjectTypes* typesToRemove = *it;
+		it = m_allObjectTypeLists.erase(it);
+		// Replicating the intent of the original null check above (on '*it'), doubt it's necessary though.
+		if (typesToRemove) {
+			onRemoveObjectTypes(typesToRemove);
 		}
 	}
 	DEBUG_ASSERTCRASH( m_allObjectTypeLists.empty() == TRUE, ("ScriptEngine::reset - m_allObjectTypeLists should be empty but is not!") );
@@ -5796,10 +5849,16 @@ void ScriptEngine::clearTeamFlags(void)
 //-------------------------------------------------------------------------------------------------
 Player *ScriptEngine::getSkirmishEnemyPlayer(void)
 {
+	//MODDD - #if wrapper
+#if !GENERALS_CHALLENGE_FORCE
 	Bool is_GeneralsChallengeContext = TheCampaignManager->getCurrentCampaign() && TheCampaignManager->getCurrentCampaign()->m_isChallengeCampaign;
+#endif
+
 	if (m_currentPlayer) {
 		Player *enemy = m_currentPlayer->getCurrentEnemy();
 		if (enemy==NULL) {
+			//MODDD - replacing to get a random slot player, includes the human requirement
+#if !GENERALS_CHALLENGE_FORCE
 			// get the human player.
 			Int i;
 			for (i=0; i<ThePlayerList->getPlayerCount(); i++) {
@@ -5813,6 +5872,9 @@ Player *ScriptEngine::getSkirmishEnemyPlayer(void)
 				}
 				enemy = NULL;
 			}
+#else
+			return getRandomSlotPlayer();
+#endif
 		}
 		return enemy;
 	}
@@ -5825,11 +5887,22 @@ Player *ScriptEngine::getSkirmishEnemyPlayer(void)
 //-------------------------------------------------------------------------------------------------
 Player *ScriptEngine::getPlayerFromAsciiString(const AsciiString& playerString)
 {
+	//MODDD - #if wrapper + alt
+#if !GENERALS_CHALLENGE_FORCE
 	Bool is_GeneralsChallengeContext = TheCampaignManager->getCurrentCampaign() && TheCampaignManager->getCurrentCampaign()->m_isChallengeCampaign;
+#else
+	Bool is_GeneralsChallengeContext = TRUE;
+#endif
+
 	if (playerString == LOCAL_PLAYER || (playerString == THE_PLAYER && is_GeneralsChallengeContext))
 		// Designers have built their Generals' Challenge maps, referencing "ThePlayer" meaning the local player.
 		// However, they've also built many of their single player maps with this string, where "ThePlayer" is not intended as an alias.
+		//MODDD - get player #0 instead
+#if !GENERALS_CHALLENGE_FORCE
 		return ThePlayerList->getLocalPlayer();
+#else
+		return ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey("player0"));
+#endif
 	if (playerString == THIS_PLAYER)
 		return getCurrentPlayer();
 	else if (playerString == THIS_PLAYER_ENEMY)	{
@@ -5892,7 +5965,7 @@ void ScriptEngine::doObjectTypeListMaintenance(const AsciiString& objectTypeList
 
 	// Remove it. Its dead Jim.
 	if (currentObjectTypeVec->getListSize() == 0) {
-		removeObjectTypes(currentObjectTypeVec);
+		removeObjectTypesFromList(currentObjectTypeVec);
 
 		// Semantic emphasis
 		currentObjectTypeVec = NULL;
@@ -5950,11 +6023,22 @@ PolygonTrigger *ScriptEngine::getQualifiedTriggerAreaByName( AsciiString name )
 //-------------------------------------------------------------------------------------------------
 Team * ScriptEngine::getTeamNamed(const AsciiString& teamName)
 {
+	//MODDD - #if wrapper + alt
+#if !GENERALS_CHALLENGE_FORCE
 	Bool is_GeneralsChallengeContext = TheCampaignManager->getCurrentCampaign() && TheCampaignManager->getCurrentCampaign()->m_isChallengeCampaign;
+#else
+	Bool is_GeneralsChallengeContext = TRUE;
+#endif
+
 	if (teamName == TEAM_THE_PLAYER && is_GeneralsChallengeContext)
 		// Designers have built their Generals' Challenge maps, referencing "teamThePlayer" meaning the local player's default (parent) team.
 		// However, they've also built many of their single player maps with this string, where "teamThePlayer" is not intended as an alias.
+		//MODDD - you know the drill
+#if !GENERALS_CHALLENGE_FORCE
 		return ThePlayerList->getLocalPlayer()->getDefaultTeam();
+#else
+		return ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey("player0"))->getDefaultTeam();
+#endif
 	if (teamName == THIS_TEAM) {
 		if (m_callingTeam)
 			return m_callingTeam;
@@ -6180,6 +6264,10 @@ void ScriptEngine::createNamedMapReveal(const AsciiString& revealName, const Asc
 
 	m_namedReveals.push_back(reveal);
 }
+
+//MODDD
+extern PlayerMaskType getHumanPlayerMask(void);
+
 //-------------------------------------------------------------------------------------------------
 void ScriptEngine::doNamedMapReveal(const AsciiString& revealName)
 {
@@ -6210,7 +6298,12 @@ void ScriptEngine::doNamedMapReveal(const AsciiString& revealName)
 	Coord3D pos;
 	pos = *way->getLocation();
 
+	//MODDD - force for all players if this const is on
+#if !GENERALS_CHALLENGE_FORCE
 	ThePartitionManager->doShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, player->getPlayerMask());
+#else
+	ThePartitionManager->doShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, getHumanPlayerMask());
+#endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -6243,7 +6336,12 @@ void ScriptEngine::undoNamedMapReveal(const AsciiString& revealName)
 	Coord3D pos;
 	pos = *way->getLocation();
 
+	//MODDD - force for all players if this const is on
+#if !GENERALS_CHALLENGE_FORCE
 	ThePartitionManager->undoShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, player->getPlayerMask());
+#else
+	ThePartitionManager->undoShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, getHumanPlayerMask());
+#endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -6686,12 +6784,13 @@ void ScriptEngine::setObjectCount(Int playerIndex, const AsciiString& objectType
 /** Removes an object types list from the list owned by the script engine, and then deletes the */
 /**	associated item. */
 //-------------------------------------------------------------------------------------------------
-void ScriptEngine::removeObjectTypes(ObjectTypes *typesToRemove)
+void ScriptEngine::removeObjectTypesFromList(ObjectTypes *typesToRemove)
 {
 	if (typesToRemove == NULL) {
 		return;
 	}
 
+	//MODDD - condition
 	AllObjectTypesIt it = std::find(m_allObjectTypeLists.begin(), m_allObjectTypeLists.end(), typesToRemove);
 
 	if (it == m_allObjectTypeLists.end()) {
@@ -6699,11 +6798,20 @@ void ScriptEngine::removeObjectTypes(ObjectTypes *typesToRemove)
 		return;
 	}
 
-	// delete it.
-	deleteInstance(typesToRemove);
+	//MODDD - moved to the method below
+	//deleteInstance(typesToRemove);
 
 	// remove it from the main array of stuff
 	m_allObjectTypeLists.erase(it);
+
+	//MODDD - anything not dealing with the removal from the list directly moved to here
+	onRemoveObjectTypes(typesToRemove);
+}
+
+void ScriptEngine::onRemoveObjectTypes(ObjectTypes *typesToRemove)
+{
+	// delete it.
+	deleteInstance(typesToRemove);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -7881,19 +7989,71 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 	SequentialScript* lastScript = NULL;
 	Bool itAdvanced = false;
 
+	//MODDD - bugfix - endless sequential script loop
+	// If this method was called this frame, it affects the '*it' compared to 'lastScript', causing 'spinCount' to be reset, which usually tracks endless loops.
+	// Record if 'cleanupSequentialScript' was called this frame, and if so, don't reset spinCount (allow this to contribute to noticing an endless loop) so
+	// we don't get stuck.
+	// Also - only going to do this whenever 'cleanupSequentialScript' is called with 2nd param 'cleanDanglers' set to 'false', just since that's when I
+	// noticed the issue (3rd call to be specific, but doing this everywhere until I understand the issue better).
+	Bool calledCleanupSequentialScriptThisFrame = false;
+	// And something extra for me - give an assertion if an endless loop was detected and the above var was ever flipped on. Just curious.
+	Bool calledCleanupSequentialScriptThisSpinCycle = false;
+
 	Int spinCount = 0;
 	for (it = m_sequentialScripts.begin(); it != m_sequentialScripts.end(); /* empty */) {
-		if ((*it) == lastScript) {
+		//MODDD - bugfix - endless sequential script loop - added 'calledCleanupSequentialScriptThisFrame'
+		if ((*it) == lastScript || calledCleanupSequentialScriptThisFrame) {
 			++spinCount;
 		} else {
 			spinCount = 0;
 		}
+
+		//MODDD - see below
+		if (calledCleanupSequentialScriptThisFrame) {
+			calledCleanupSequentialScriptThisSpinCycle = true;
+		}
+
+		//MODDD - bugfix - endless sequential script loop - reset each frame
+		calledCleanupSequentialScriptThisFrame = false;
 
 		if (spinCount > MAX_SPIN_COUNT) {
 			SequentialScript *seqScript = (*it);
 			if (seqScript) {
 				DEBUG_LOG(("Sequential script %s appears to be in an infinite loop.",
 					seqScript->m_scriptToExecuteSequentially->getName().str()));
+
+				//MODDD - see above
+				if (calledCleanupSequentialScriptThisSpinCycle) {
+					SYSTEMTIME lt;
+					std::ofstream outputFile;
+					GetLocalTime(&lt);
+					outputFile.open("test_crash_infiniteLoopSequentialScript.txt", std::ios::out | std::ios::app);
+					outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << " - " << seqScript->m_scriptToExecuteSequentially->getName().str() << std::endl;
+					outputFile << "---List of m_sequentialScripts:" << std::endl;
+					for(int i = 0; i < m_sequentialScripts.size(); i++) {
+						SequentialScript* thisOne = m_sequentialScripts.at(i);
+						outputFile << "[" << i << "]";
+						if (thisOne->m_scriptToExecuteSequentially) {
+							outputFile << " |m_scriptToExecuteSequentially: " << thisOne->m_scriptToExecuteSequentially->getName().str();
+						} else {
+							outputFile << " |m_scriptToExecuteSequentially: <NULL>";
+						}
+
+						if (thisOne->m_nextScriptInSequence) {
+							if (thisOne->m_nextScriptInSequence->m_scriptToExecuteSequentially) {
+								outputFile << " |m_nextScriptInSequence->m_scriptToExecuteSequentially: " << thisOne->m_nextScriptInSequence->m_scriptToExecuteSequentially->getName().str();
+							} else {
+								outputFile << " |m_nextScriptInSequence->m_scriptToExecuteSequentially: <NULL>";
+							}
+						} else {
+							outputFile << " |m_nextScriptInSequence: <NULL>";
+						}
+						outputFile << std::endl;
+					}
+					outputFile << "------" << std::endl;
+					outputFile.close();
+				}
+				// ------------------------------------------------------------
 			}
 			++it;
 			continue;
@@ -7906,13 +8066,30 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 		SequentialScript *seqScript = (*it);
 		if (seqScript == NULL) {
 			it = cleanupSequentialScript(it, false);
+			//MODDD
+			calledCleanupSequentialScriptThisFrame = true;
 			continue;
+		}
+
+		//MODDD - new, debug test
+		if (
+			seqScript->m_scriptToExecuteSequentially != NULL &&
+			(seqScript->m_scriptToExecuteSequentially->getName() == "Call Attack WPGround1" || seqScript->m_scriptToExecuteSequentially->getName() == "Attack WPGround1")
+		){
+			std::ofstream outputFile;
+			SYSTEMTIME lt;
+			outputFile.open("test_particular_script_called.txt", std::ios::out | std::ios::app);
+			GetLocalTime(&lt);
+			outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << " - "<< seqScript->m_scriptToExecuteSequentially->getName().str() << std::endl;
+			outputFile.close();
 		}
 
 		Team *team = seqScript->m_teamToExecOn;
 		Object *obj = TheGameLogic->findObjectByID(seqScript->m_objectID);
 		if (!(obj || team)) {
 			it = cleanupSequentialScript(it, false);
+			//MODDD
+			calledCleanupSequentialScriptThisFrame = true;
 			itAdvanced = true;
 			continue;
 		}
@@ -8052,6 +8229,8 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 					}
 
 					it = cleanupSequentialScript(it, false);
+					//MODDD
+					calledCleanupSequentialScriptThisFrame = true;
 					itAdvanced = true;
 				}
 			} else if (seqScript->m_framesToWait > 0) {

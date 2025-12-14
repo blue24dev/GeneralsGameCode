@@ -71,13 +71,21 @@ protected:
 	WorldHeightMapEdit		*mPOldHeightMapData;  ///< ref counted.
 	Bool									m_offsetObjects;			///< If true, apply m_objOffset.
 	Coord3D								m_objOffset;					///< Offset to adjust all objects.
+	//MODDD - added, absolute change in map size (for auto border resize)
+	Coord3D m_absChange;
 
 
 public:
-		WBDocUndoable(CWorldBuilderDoc *pDoc, WorldHeightMapEdit *pNewHtMap, Coord3D *pObjOffset = NULL);
+		//MODDD - added  'm_absChange'
+		WBDocUndoable(CWorldBuilderDoc *pDoc, WorldHeightMapEdit *pNewHtMap, Coord3D *pObjOffset = NULL, Coord3D *pAbsChange = NULL);
 
 		// destructor.
 		~WBDocUndoable(void);
+
+		//MODDD - added
+		void _Do(Bool fresh);
+		void _Undo(void);
+
 		virtual void Do(void);
 		virtual void Undo(void);
 		virtual void Redo(void);

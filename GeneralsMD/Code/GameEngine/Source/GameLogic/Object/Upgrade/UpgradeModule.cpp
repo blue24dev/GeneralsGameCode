@@ -126,6 +126,23 @@ Bool UpgradeMux::wouldUpgrade( UpgradeMaskType keyMask ) const
 	UpgradeMaskType activation, conflicting;
 	getUpgradeActivationMasks(activation, conflicting);
 
+	//MODDD - if an upgrade lacks any 'activation' criteria (ex: empty 'TriggeredBy' criteria), doesn't it make
+	// sense to just allow it unconditionally so it isn't forever unattainable?
+	// Update: I would think so, but it seems some things in retail are dummied out by having no criteria to
+	// activate them.
+	// Ex: 'PatriotMissileEMP' has 'FireWeaponWhenDeadBehavior', with only 'DeathWeapon=ScudStormDamageWeapon' specified, not
+	// 'StartsActive' (implied 'No'?) nor 'TriggeredBy'.
+	// With the fix below, this dormant behavior will run and these EMP missiles will be horrifically overpowered.
+	// Better question is why this module is in the INI to begin with, if never having an effect is the best case scenario.
+	// TLDR: introduce this 'fix' to a mod ecosystem that never expected this at your own risk.
+
+	//MODDD - for me only (enable anyway?)
+	/*
+	if(!activation.any() && !m_upgradeExecuted) {
+	  return TRUE;
+	}
+	*/
+
 	//Make sure we have activation conditions and we haven't performed the upgrade already.
 	if( activation.any() && keyMask.any() && !m_upgradeExecuted )
 	{
@@ -161,8 +178,24 @@ void UpgradeMux::giveSelfUpgrade()
 	// If I have an activation condition, and I haven't activated, and this key matches my condition.
 	performUpgradeFX();
 	processUpgradeRemoval();// Need to execute removals first, to prevent both being on for a moment.
-	upgradeImplementation();
+
+	//MODDD - moved this from after 'upgradeImplementation' to here, before.
+	// It is possible for an upgrade to change the current rider (bike/using that logic), leading to reaching
+	// this same 'giveSelfUpgrade' recursively as sending veterency re-runs upgrade checks if the veterency
+	// isn't the default 0 (normal). This can cause 'RiderChangeContain::onContaining' to be called
+	// recursively, which ends in 'm_containing = FALSE' and causes the original
+	// 'RiderChangeContain::onContaining' call to see 'm_containing' is FALSE and make the game think that
+	// the bike/obj has no occupant and needs to be scuttled (self destruct).
+	// And somewhere in there, thinks there are 2 occupants in the bike at a time instead of 1 (assertion triggered).
+	// Example: sentry drones with veterency in Firestorm exploding when the nano-armor-upgrade is selected
+	// from the promotion menu.
+	// Chain of events for that particular case appears to start at 'RiderChangeContain::onRemoving''s
+	// 'bikeTracker->setExperienceAndLevel( 0, FALSE )'.
+	// I doubt making the 'ExperienceTracker::setExperienceAndLevel' -> 'm_parent->onVeterancyLevelChanged' call
+	// skip 'updateUpgradeModules()' is necessary, but just an idea - not sure what the purpose of that is here.
 	setUpgradeExecuted(true);
+
+	upgradeImplementation();
 }
 
 //-------------------------------------------------------------------------------------------------

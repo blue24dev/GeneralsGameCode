@@ -38,7 +38,6 @@
 #include "Common/STLTypedefs.h"
 typedef std::vector<ICoord2D> VecICoord2D;
 
-
 /** MapObject class
 Not ref counted.  Do not store pointers to this class.  */
 

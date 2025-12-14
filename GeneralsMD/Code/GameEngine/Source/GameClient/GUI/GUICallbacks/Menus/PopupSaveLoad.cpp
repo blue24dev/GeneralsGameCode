@@ -414,6 +414,10 @@ static void doLoadGame( void )
 	// loose these allocated user data pointers attached as listbox item data when the
 	// engine resets
 	//
+	//MODDD - replacing this.
+	//MODDD - The 'clearGameData'/'reset' seems redundant. See 'loadGame', already does this if there is a
+	// failure loading a file & it didn't stop early on failing to find a file altogether.
+	/*
 	if (TheGameState->loadGame( *selectedGameInfo ) != SC_OK)
 	{
 		if (TheGameLogic->isInGame())
@@ -421,6 +425,15 @@ static void doLoadGame( void )
 		TheGameEngine->reset();
 		TheShell->showShell(TRUE);
 	}
+	*/
+	// ---
+	SaveCode saveResult = TheGameState->loadGame( *selectedGameInfo );
+	// For a 'file not found' result, no need to do anything - game isn't exited
+	if (saveResult == SC_INVALID_DATA)
+	{
+		TheShell->showShell(TRUE);
+	}
+	// ---
 
 }
 

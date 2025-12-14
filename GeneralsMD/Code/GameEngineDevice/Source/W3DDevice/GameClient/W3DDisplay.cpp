@@ -107,6 +107,10 @@ static void drawFramerateBar(void);
 #include "GameLogic/PartitionManager.h"
 #endif
 
+//MODDD
+#include "GameLogic/TerrainLogic.h"
+#include "GameLogic/PartitionManager.h"
+
 #include "WinMain.h"
 
 
@@ -1747,7 +1751,9 @@ AGAIN:
   	//
 	//PredictiveLODOptimizerClass::Optimize_LODs( 5000 );
 
-	Bool freezeTime = TheFramePacer->isTimeFrozen() || TheFramePacer->isGameHalted();
+	//MODDD - bugfix for camera movement scripts freezing the game in multiplayer for some players
+	//Bool freezeTime = TheFramePacer->isTimeFrozen() || TheFramePacer->isGameHalted();
+	Bool freezeTime = TheFramePacer->isTimeFrozen();
 
 	/// @todo: I'm assuming the first view is our main 3D view.
 	W3DView *primaryW3DView=(W3DView *)getFirstView();
@@ -2116,17 +2122,30 @@ void W3DDisplay::enableLetterBox(Bool enable)
 //=============================================================================
 void W3DDisplay::setTimeOfDay( TimeOfDay tod )
 {
+	//MODDD - real-time time-of-day change
+	/*
 	const GlobalData::TerrainLighting *ol=&TheGlobalData->m_terrainObjectsLighting[tod][0];
 
 	if( m_3DScene )
 	{
 		m_3DScene->Set_Ambient_Light( Vector3(ol->ambient.red, ol->ambient.green, ol->ambient.blue) );
 	}
+	*/
+	// ---
+	RGBColor ambient = TheGlobalData->getTerrainObjectsLighting_ambient(tod, 0);
+
+	if( m_3DScene )
+	{
+		m_3DScene->Set_Ambient_Light( Vector3(ambient.red, ambient.green, ambient.blue) );
+	}
+	// ---
 
 	for (Int i=0; i<LightEnvironmentClass::MAX_LIGHTS; i++)
 	{
 		if( m_myLight[i] )
 		{
+			//MODDD - real-time time-of-day change
+			/*
 			ol=&TheGlobalData->m_terrainObjectsLighting[tod][i];
 
 			m_myLight[i]->Set_Ambient( Vector3( 0.0f, 0.0f, 0.0f ) );
@@ -2135,6 +2154,18 @@ void W3DDisplay::setTimeOfDay( TimeOfDay tod )
 			Matrix3D mtx;
 			mtx.Set(Vector3(1,0,0), Vector3(0,1,0), Vector3(ol->lightPos.x, ol->lightPos.y, ol->lightPos.z), Vector3(0,0,0));
 			m_myLight[i]->Set_Transform(mtx);
+			*/
+			// ---------
+			RGBColor diffuse = TheGlobalData->getTerrainObjectsLighting_diffuse(tod, i);
+			Coord3D lightPos = TheGlobalData->getTerrainObjectsLighting_lightPos(tod, i);
+
+			m_myLight[i]->Set_Ambient( Vector3( 0.0f, 0.0f, 0.0f ) );
+			m_myLight[i]->Set_Diffuse( Vector3(diffuse.red, diffuse.green, diffuse.blue ) );
+			m_myLight[i]->Set_Specular( Vector3(0,0,0) );
+			Matrix3D mtx;
+			mtx.Set(Vector3(1,0,0), Vector3(0,1,0), Vector3(lightPos.x, lightPos.y, lightPos.z), Vector3(0,0,0));
+			m_myLight[i]->Set_Transform(mtx);
+			// ---------
 		}
 	}
 	if(TheTerrainRenderObject) {
@@ -2886,6 +2917,46 @@ void W3DDisplay::setClipRegion( IRegion2D *region )
 void W3DDisplay::clearShroud()
 {
 	// nothing
+
+	//MODDD - not so much anymore, adding this or safety - see comments there
+	shroudAreaOutsideActiveBorder();
+}
+
+//MODDD
+void W3DDisplay::shroudAreaOutsideActiveBorder()
+{
+	// Note: wanted this to be in PartitionManager.cpp, but I can't figure out how to access 'TheTerrainRenderObject',
+	// a 'W3DDevice folder'-type, from there. Not a huge deal.
+	// ---
+	// This sets every cell outside of the active border to 'shrouded' so that changing the current active
+	// border to a smaller one doesn't cause unreachable parts of the map to be visible.
+	// As of retail, maps that do this (ex: boss china general map) may shroud the map before the border
+	// switch to make currently visible areas to the right/upwards shrouded.
+	// With this addition, that should no longer be needed.
+	// Alternative: rendering can do this check and force cells outside of the current active border to be
+	// rendered as shrouded unconditionally. Not familiar enough with that part of the codebase to do that.
+	int cellCountX = TheTerrainRenderObject->getShroud()->getNumShroudCellsX();
+	int cellCountY = TheTerrainRenderObject->getShroud()->getNumShroudCellsY();
+
+	const ICoord2D& boundaryInfo = TheTerrainLogic->getActiveBoundaryInfo();
+	Real cellSizeInv = ThePartitionManager->getCellSizeInv();
+	Real curBoundaryExtentX = boundaryInfo.x*MAP_XY_FACTOR;
+	Real curBoundaryExtentY = boundaryInfo.y*MAP_XY_FACTOR;
+	Int curBoundaryCellCountX = REAL_TO_INT_CEIL(curBoundaryExtentX * cellSizeInv);
+	Int curBoundaryCellCountY = REAL_TO_INT_CEIL(curBoundaryExtentY * cellSizeInv);
+
+	// For safety, only apply to cells outisde of the current active boundary.
+	// Any boundary changes that shrink the map vs. its actual size will shroud only the non-playable areas.
+	for(int y = 0; y < cellCountY; y++)
+	{
+		for(int x = 0; x < cellCountX; x++)
+		{
+			if (x >= curBoundaryCellCountX || y >= curBoundaryCellCountY)
+			{
+				setShroudLevel(x, y, CELLSHROUD_SHROUDED);
+			}
+		}
+	}
 }
 
 //=============================================================================

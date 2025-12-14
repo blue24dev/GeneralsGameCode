@@ -84,12 +84,17 @@ public:
 	/** request a new object using the given template.
 		this will throw an exception on failure; it will never return null.
 	*/
-	Object *newObject( const ThingTemplate *tmplate, Team *team, ObjectStatusMaskType statusMask = OBJECT_STATUS_MASK_NONE );
+	//MODDD - added a simpler overload
+	Object *newObject( const ThingTemplate *tmplate );
+	//MODDD - added param 'objectInitLockLocalTemp'
+	Object *newObject( const ThingTemplate *tmplate, Team *team, ObjectStatusMaskType statusMask = OBJECT_STATUS_MASK_NONE, Bool objectInitLockLocalTemp = false );
 
 	/** request a new drawable using the given template.
 		this will throw an exception on failure; it will never return null.
 	*/
 	Drawable *newDrawable(const ThingTemplate *tmplate, DrawableStatusBits statusBits = DRAWABLE_STATUS_DEFAULT );
+	//MODDD - new overload, added param 'drawableID'
+	Drawable *newDrawable(const ThingTemplate *tmplate, DrawableID drawableID, DrawableStatusBits statusBits = DRAWABLE_STATUS_DEFAULT );
 
 	static void parseObjectDefinition( INI* ini, const AsciiString& name, const AsciiString& reskinFrom );
 

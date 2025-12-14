@@ -85,6 +85,9 @@ public:
 	StealthDetectorUpdate( Thing *thing, const ModuleData* moduleData );
 	// virtual destructor prototype provided by memory pool declaration
 
+	//MODDD
+	virtual StealthDetectorUpdate* getStealthDetector() { return this; }
+
 	Bool isSDEnabled() const { return m_enabled; }
 	void setSDEnabled( Bool enabled );
 	virtual UpdateSleepTime update();

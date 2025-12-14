@@ -238,6 +238,10 @@ static void SpitLights()
 
 void GlobalLightOptions::OnResetLights()
 {
+	//MODDD - TODO.
+	// Why are these values hardcoded instead of coming from the GameData.ini file?
+	// Shouldn't the user be able to set what these defaults are that way so they can be applied anytime?
+
 	TheWritableGlobalData->m_terrainLighting[1][0].ambient.red = 0.50f;
 	TheWritableGlobalData->m_terrainLighting[1][0].ambient.green = 0.39f;
 	TheWritableGlobalData->m_terrainLighting[1][0].ambient.blue = 0.30f;

@@ -149,6 +149,12 @@ void AutoHealBehavior::undoUpgrade()
 	setUpgradeExecuted( FALSE );
 }
 
+//MODDD - moved here to make breakpoints easier
+void AutoHealBehavior::upgradeImplementation()
+{
+	setWakeFrame(getObject(), UPDATE_SLEEP_NONE);
+}
+
 //-------------------------------------------------------------------------------------------------
 /** Damage has been dealt, this is an opportunity to reach to that damage */
 //-------------------------------------------------------------------------------------------------

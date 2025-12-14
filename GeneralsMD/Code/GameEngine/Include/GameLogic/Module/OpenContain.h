@@ -237,8 +237,11 @@ protected:
 	const ContainedItemsList& getContainList() const { return m_containList; }
 
 	void scatterToNearbyPosition(Object* obj);
-	void removeFromContainViaIterator( ContainedItemsList::iterator it, Bool exposeStealthUnits = FALSE );  ///< remove item from contain list
-	void removeFromPassengerViaIterator( ContainedItemsList::iterator it );///< remove item from passenger list
+	//MODDD - 1st param replaced, slight rename to reflect that this is an event called alongside a removal,
+	// doesn't handle the removal.
+	void onRemoveFromContain( Object *rider, Bool exposeStealthUnits = FALSE );  ///< remove item from contain list
+	//MODDD - Removed, never implemented
+	//void removeFromPassengerViaIterator( ContainedItemsList::iterator it );///< remove item from passenger list
 
 	virtual void doLoadSound();
 	virtual void doUnloadSound();

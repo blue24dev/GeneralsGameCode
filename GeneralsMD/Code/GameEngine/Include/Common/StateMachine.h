@@ -152,6 +152,10 @@ public:
 	virtual Bool isGuardIdle() const { return FALSE; }
 	//Definition of busy -- when explicitly in the busy state. Moving or attacking is not considered busy!
 	virtual Bool isBusy() const { return false; }
+	
+	//MODDD - adding these from 'AIAttackState' so that they can be checked on any state
+	virtual Bool isAttackingObject() const { return false; }
+	virtual Bool isForceAttacking() const { return false; }
 
 	StateMachine* getMachine() { return m_machine; }		///< return the machine this state is part of
 	StateID getID() const { return m_ID; }			///< get this state's id
@@ -161,6 +165,9 @@ public:
 	Object* getMachineGoalObject();
 	const Object* getMachineGoalObject() const;
 	const Coord3D* getMachineGoalPosition() const;
+	
+	//MODDD - new
+	virtual Object *getEnemyObject();
 
 #ifdef STATE_MACHINE_DEBUG
 	virtual AsciiString getName() const {return m_name;}
@@ -264,6 +271,8 @@ public:
 	StateID getCurrentStateID() const { return m_currentState ? m_currentState->getID() : INVALID_STATE_ID; }	///< return the id of the current state of the machine
 	Bool isInIdleState() const { return m_currentState ? m_currentState->isIdle() : true; }	// stateless things are considered 'idle'
 	Bool isInAttackState() const { return m_currentState ? m_currentState->isAttack() : true; }	// stateless things are considered 'idle'
+	//MODDD - NOTE - why is 'isInForceAttackState' using the state's 'isIdle'?
+	// Not changing this, but consider using the now-available state's 'isForceAttacking' instead.
 	Bool isInForceAttackState() const { return m_currentState ? m_currentState->isIdle() : true; }	// stateless things are considered 'idle'
 	Bool isInGuardIdleState() const { return m_currentState ? m_currentState->isGuardIdle() : FALSE; } // stateless things aren't guard idle.
 
@@ -272,7 +281,9 @@ public:
 
 	// no, this is now deprecated. you should strive to avoid having to get the current state.
 	// try to make do with getCurrentStateID() or isInIdleState() instead. (srj)
-	// State *getCurrentState() { return m_currentState; }	///< return the current state of the machine
+	//MODDD - re-enabling, what's wrong with this? I don't want to make new getters for every single current-state-check.
+	// Most likely, the intent is to not make changes externally or save a reference to it, just use this to peek at it.
+	State *getCurrentState() { return m_currentState; }	///< return the current state of the machine
 
 	/**
 	 * Lock/unlock this state machine.
@@ -308,6 +319,10 @@ public:
 	void setGoalObject( const Object *obj );
 	Object *getGoalObject();
 	const Object *getGoalObject() const;
+
+	//MODDD - new
+	Object *getEnemyObject();
+
 	void setGoalPosition( const Coord3D *pos );
 	const Coord3D *getGoalPosition() const { return &m_goalPosition; }
 	Bool isGoalObjectDestroyed() const;  ///< Returns true if we had a goal object, but it has been destroyed.

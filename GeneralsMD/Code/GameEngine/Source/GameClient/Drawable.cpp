@@ -342,7 +342,8 @@ void Drawable::saturateRGB(RGBColor& color, Real factor)
  * graphical side of a logical object, whereas GameLogic objects encapsulate
  * behaviors and physics.  */
 //-------------------------------------------------------------------------------------------------
-Drawable::Drawable( const ThingTemplate *thingTemplate, DrawableStatusBits statusBits )
+//MODDD - added param 'drawableID'
+Drawable::Drawable( const ThingTemplate *thingTemplate, DrawableID drawableID, DrawableStatusBits statusBits )
 				: Thing( thingTemplate )
 {
 
@@ -358,7 +359,7 @@ Drawable::Drawable( const ThingTemplate *thingTemplate, DrawableStatusBits statu
 	// complex that uses any of the drawable data so that we have and ID!!  It's ok to initialize
 	// members of the drawable before this registration happens
 	//
-	TheGameClient->registerDrawable( this );
+	TheGameClient->registerDrawable( this, drawableID );
 
 	Int i;
 
@@ -4143,7 +4144,7 @@ void Drawable::friend_bindToObject( Object *obj ) ///< bind this drawable to an 
 	m_object = obj;
 	if (getObject())
 	{
-		if (TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT)
+		if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
 			setIndicatorColor(getObject()->getNightIndicatorColor());
 		else
 			setIndicatorColor(getObject()->getIndicatorColor());
@@ -4181,7 +4182,7 @@ void Drawable::changedTeam()
 	Object *object = getObject();
 	if( object )
 	{
-		if (TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT)
+		if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
 			setIndicatorColor( object->getNightIndicatorColor() );
 		else
 			setIndicatorColor( object->getIndicatorColor() );
@@ -4361,7 +4362,14 @@ void	Drawable::setTimeOfDay(TimeOfDay tod)
 	startAmbientSound(dt, tod);
 
 	ModelConditionFlags c = m_conditionState;
+	
+#if !REAL_TIME_TOD_CHANGE
 	c.set(MODELCONDITION_NIGHT, (tod == TIME_OF_DAY_NIGHT) ? 1 : 0);
+#else
+	// Use 'tod_model' instead, so that being some-of-the-ways towards/from night counts as 'night' instead of
+	// only the whole 'night -> morning' period & not a moment before.
+	c.set(MODELCONDITION_NIGHT, (tod_model == TIME_OF_DAY_NIGHT) ? 1 : 0);
+#endif
 	replaceModelConditionFlags(c);
 }
 
@@ -5494,8 +5502,71 @@ void TintEnvelope::play(const RGBColor *peak, UnsignedInt attackFrames, Unsigned
 {
 	setPeakColor( peak );
 
+	//MODDD - debug
+	if (m_peakColor.X > 5.0f || m_peakColor.X < -5.0f || m_peakColor.Y > 5.0f || m_peakColor.Y < -5.0f || m_peakColor.Z > 5.0f || m_peakColor.Z < -5.0f) {
+		DEBUG_CRASH(("Bad m_peakColor! '%.2f %.2f %.2f'", m_peakColor.X, m_peakColor.Y, m_peakColor.Z));
+	}
+	if (m_currentColor.X > 5.0f || m_currentColor.X < -5.0f || m_currentColor.Y > 5.0f || m_currentColor.Y < -5.0f || m_currentColor.Z > 5.0f || m_currentColor.Z < -5.0f) {
+		DEBUG_CRASH(("Bad m_currentColor! '%.2f %.2f %.2f'", m_currentColor.X, m_currentColor.Y, m_currentColor.Z));
+	}
+
 	setAttackFrames( attackFrames );
 	setDecayFrames( decayFrames );
+
+	//MODDD - debug
+	if (attackFrames > 300) {
+		DEBUG_CRASH(("Bad attackFrames! '%u'", attackFrames));
+	}
+	if (decayFrames > 300) {
+		DEBUG_CRASH(("Bad decayFrames! '%u'", decayFrames));
+	}
+
+	if (m_peakColor.X > 0) {
+		if (m_decayRate.X >= 0) {
+			DEBUG_CRASH(("Bad m_decayRate.X on positive m_peakColor.X! '%.2f %.2f %.2f'", m_decayRate.X, m_decayRate.Y, m_decayRate.Z));
+		}
+	} else if (m_peakColor.X < 0) {
+		if (m_decayRate.X <= 0) {
+			DEBUG_CRASH(("Bad m_decayRate.X on negative m_peakColor.X! '%.2f %.2f %.2f'", m_decayRate.X, m_decayRate.Y, m_decayRate.Z));
+		}
+	} else {
+		if (m_decayRate.X != 0) {
+			DEBUG_CRASH(("Bad m_decayRate.X on 0 m_peakColor.X! '%.2f %.2f %.2f'", m_decayRate.X, m_decayRate.Y, m_decayRate.Z));
+		}
+	}
+
+	if (m_peakColor.Y > 0) {
+		if (m_decayRate.Y >= 0) {
+			DEBUG_CRASH(("Bad m_decayRate.Y on positive m_peakColor.Y! '%.2f %.2f %.2f'", m_decayRate.X, m_decayRate.Y, m_decayRate.Z));
+		}
+	} else if (m_peakColor.Y < 0) {
+		if (m_decayRate.Y <= 0) {
+			DEBUG_CRASH(("Bad m_decayRate.Y on negative m_peakColor.Y! '%.2f %.2f %.2f'", m_decayRate.X, m_decayRate.Y, m_decayRate.Z));
+		}
+	} else {
+		if (m_decayRate.Y != 0) {
+			DEBUG_CRASH(("Bad m_decayRate.Y on 0 m_peakColor.Y! '%.2f %.2f %.2f'", m_decayRate.X, m_decayRate.Y, m_decayRate.Z));
+		}
+	}
+
+	if (m_peakColor.Z > 0) {
+		if (m_decayRate.Z >= 0) {
+			DEBUG_CRASH(("Bad m_decayRate.Z on positive m_peakColor.Z! '%.2f %.2f %.2f'", m_decayRate.X, m_decayRate.Y, m_decayRate.Z));
+		}
+	} else if (m_peakColor.Z < 0) {
+		if (m_decayRate.Z <= 0) {
+			DEBUG_CRASH(("Bad m_decayRate.Z on negative m_peakColor.Z! '%.2f %.2f %.2f'", m_decayRate.X, m_decayRate.Y, m_decayRate.Z));
+		}
+	} else {
+		if (m_decayRate.Z != 0) {
+			DEBUG_CRASH(("Bad m_decayRate.Z on 0 m_peakColor.Z! '%.2f %.2f %.2f'", m_decayRate.X, m_decayRate.Y, m_decayRate.Z));
+		}
+	}
+
+	// All 0's?
+	if (m_decayRate.X == 0.0f && m_decayRate.Y == 0.0f && m_decayRate.Z == 0.0f) {
+		DEBUG_CRASH(("Bad m_decayRate (all 0's)? '%.2f %.2f %.2f'", m_decayRate.X, m_decayRate.Y, m_decayRate.Z));
+	}
 
 	m_envState = ENVELOPE_STATE_ATTACK;
 	m_sustainCounter = sustainAtPeak;

@@ -24,6 +24,9 @@
 
 #include "W3DDevice/GameClient/WorldHeightMap.h"
 
+//MODDD
+#include "Enum.h"
+
 class DataChunkOutput;
 class TerrainType;
 
@@ -141,8 +144,9 @@ public: // Editing methods.
 	Bool selectSimilar(void); ///< Selects any dupicate map objects.
 	Bool selectInvalidTeam(void); ///< Selects any objects with invalid teams.
 
+	//MODDD - added 'pAbsChange'
 	Bool resize(Int newXSize, Int newYSize, Int newHeight, Int newBorder, Bool anchorTop, Bool anchorBottom,
-							Bool anchorLeft, Bool anchorRight, Coord3D *pObjOffset);
+							Bool anchorLeft, Bool anchorRight, Coord3D *pObjOffset, Coord3D *pAbsChange);
 	Bool remapTextures(void); ///< returns true if the operation had an effect.
 	void reloadTextures(void); ///< Reloads textures from disk.
 	void resetResources(void); ///< Releases textures in preparation for device reset.
@@ -155,9 +159,12 @@ public: // Editing methods.
 	void getBoundary(Int ndx, ICoord2D* border) const;
 	void addBoundary(ICoord2D* boundaryToAdd);
 	void changeBoundary(Int ndx, ICoord2D *border);
+	//MODDD - added
+	void removeBoundary(Int ndx);
 	void removeLastBoundary(void);
 
 	// outNdx must not be NULL, but outHandle can be.
 	// outHandle: 0 means BL, 1 means TL, 2 means TR, 3 means BR
-	void findBoundaryNear(Coord3D *pt, float okDistance, Int *outNdx, Int *outHandle);
+	//MODDD - last param adjustments
+	void findBoundaryNear(Coord3D *pt, float okDistance, Int *outNdx, BorderModificationType *outMod);
 };

@@ -213,10 +213,14 @@ public:
 		return m_indexInLogic;
 	}
 
+	//MODDD - defined in .cpp instead for now
+	/*
 	UPDATEMODULE_FRIEND_DECLARATOR void friend_setIndexInLogic(Int i)
 	{
 		m_indexInLogic = i;
 	}
+	*/
+	void friend_setIndexInLogic(Int i);
 
 	UPDATEMODULE_FRIEND_DECLARATOR const Object* friend_getObject() const
 	{

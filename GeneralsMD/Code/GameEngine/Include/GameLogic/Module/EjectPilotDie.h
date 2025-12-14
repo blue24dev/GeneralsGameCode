@@ -63,7 +63,8 @@ public:
 	EjectPilotDie( Thing *thing, const ModuleData* moduleData );
 	// virtual destructor prototype provided by memory pool declaration
 
-	static void ejectPilot(const ObjectCreationList* ocl, const Object* dyingObject, const Object* damageDealer);
+	//MODDD - disarming mines gives experience. Removed 'const' on 'dyingObject'
+	static void ejectPilot(const ObjectCreationList* ocl, Object* dyingObject, const Object* damageDealer);
 
 	virtual void onDie( const DamageInfo *damageInfo );
 	virtual DieModuleInterface* getEjectPilotDieInterface( void ) {return this; }

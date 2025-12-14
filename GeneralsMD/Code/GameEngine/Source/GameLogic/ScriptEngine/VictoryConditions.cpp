@@ -142,6 +142,15 @@ void VictoryConditions::reset( void )
 //-------------------------------------------------------------------------------------------------
 void VictoryConditions::update( void )
 {
+#if GENERALS_CHALLENGE_FORCE
+	//MODDD - CHANGE
+	// Early termination.
+	// Check for default defeat conditions removed.
+	// Doing the generals challenge normally has "isMultiplayer()" showing 0, and even localSlotNum being -1.
+	// So these checks never run for there, they may as well not run here either.
+	return;
+#endif
+
 	if (!TheRecorder->isMultiplayer() || (m_localSlotNum < 0 && !m_isObserver))
 		return;
 

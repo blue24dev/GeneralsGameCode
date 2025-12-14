@@ -1270,7 +1270,7 @@ void GarrisonContain::recalcApparentControllingPlayer( void )
 		const Player* controller = getApparentControllingPlayer(ThePlayerList->getLocalPlayer());
 		if (controller)
 		{
-			if (TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT)
+			if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
 				draw->setIndicatorColor( controller->getPlayerNightColor() );
 			else
 				draw->setIndicatorColor( controller->getPlayerColor() );

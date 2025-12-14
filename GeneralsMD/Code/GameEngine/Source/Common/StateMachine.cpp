@@ -61,6 +61,11 @@ State::State( StateMachine *machine, AsciiString name )
 	m_machine = machine;
 }
 
+//MODDD - new
+Object* State::getEnemyObject() {
+	return NULL;
+}
+
 //-----------------------------------------------------------------------------
 /**
  * Add another state transition condition for this state
@@ -785,6 +790,24 @@ Object *StateMachine::getGoalObject()
 //-----------------------------------------------------------------------------
 const Object *StateMachine::getGoalObject() const
 {
+	return TheGameLogic->findObjectByID( m_goalObjectID );
+}
+
+//MODDD - version of 'getGoalObject' that allows the current state to intervene first.
+// Ex: guard mode has its own 'nemesisID' separate from 'goalObjectID'.
+// Note that this assumes 'isInAttackState' has already been checked and is the case. Otherwise,
+// 'getEnemyObject' may return something that's a more specific goal of some state without actually being an
+// 'enemy'.
+Object *StateMachine::getEnemyObject()
+{
+	// Use the state's 'enemy' if it supports this & has something that meets this criteria
+	if (m_currentState) {
+		Object* enemy = m_currentState->getEnemyObject();
+		if (enemy) {
+			return enemy;
+		}
+	}
+	// Otherwise, fall back to the goal object ID for this state machine
 	return TheGameLogic->findObjectByID( m_goalObjectID );
 }
 

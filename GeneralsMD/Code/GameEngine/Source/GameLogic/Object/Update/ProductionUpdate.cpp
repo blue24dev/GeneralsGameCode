@@ -812,13 +812,25 @@ UpdateSleepTime ProductionUpdate::update( void )
 						//
 						if( d->m_numDoorAnimations == 0 || door == NULL || door->m_doorWaitOpenFrame != 0 )
 						{
+							//MODDD - stop the object from calling 'gamePostLoad' until after 'exitObjectViaDoor' sets its
+							// position/angle. That way, modules that want to run instantly like shroud generation will do
+							// so at the right place, not the bottom-left corner of the map (point 0,0,0) the first frame.
 							Object *newObj = TheThingFactory->newObject( production->m_objectToProduce,
-																	creationBuilding->getControllingPlayer()->getDefaultTeam() );
-
+																	creationBuilding->getControllingPlayer()->getDefaultTeam(),
+								//MODDD - added params. Ensures that 'runCreateModules', etc. won't run in the constructor.
+																	OBJECT_STATUS_MASK_NONE,
+																	true );
 							newObj->setProducer(creationBuilding);
 
 							// call the exit interface to do the rally point and position stuff
 							exitInterface->exitObjectViaDoor( newObj, exitDoor );
+
+							//MODDD - now that the position/angle is known
+							// ---
+							newObj->runCreateModules();
+							newObj->constructorEnd();
+							newObj->gamePostLoad();
+							// ---
 
 							// since we successfully exited via this door, we should NOT call unreserveDoorForExit
 							// when we toss this production entry. so set it back to an innocuous value.
@@ -834,6 +846,8 @@ UpdateSleepTime ProductionUpdate::update( void )
 
 							// onCreates have been called on newObj, and after that the owner was set,
 							// so now is the time to call the game side of CreateModules
+							//MODDD - condensed
+							/*
 							for (BehaviorModule** m = newObj->getBehaviorModules(); *m; ++m)
 							{
 								CreateModuleInterface* create = (*m)->getCreate();
@@ -841,6 +855,8 @@ UpdateSleepTime ProductionUpdate::update( void )
 									continue;
 								create->onBuildComplete();
 							}
+							*/
+							call_objectOnBuildComplete(newObj);
 
 							if( production->getProductionQuantity() == production->getProductionQuantityRemaining() )
 							{

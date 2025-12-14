@@ -1168,6 +1168,10 @@ public:
 	virtual StateReturnType onEnter();
 	virtual void onExit( StateExitType status );
 	virtual StateReturnType update();
+
+	//MODDD - new
+	virtual Object *getEnemyObject();
+
 #ifdef STATE_MACHINE_DEBUG
 	virtual AsciiString getName() const ;
 #endif

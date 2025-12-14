@@ -36,6 +36,10 @@
 struct ShroudLevel
 {
 	Short m_currentShroud;		///< A Value of 1 means shrouded.  0 is not.  Negative is the count of people looking.
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	// Works like 'currentShroud', but loses precedence to 'activeShroudLevel' instead.
+	Short m_currentShroudJammable;
+#endif
 	Short m_activeShroudLevel;///< A Value of 0 means passive shroud.  Positive is the count of people shrouding.
 };
 

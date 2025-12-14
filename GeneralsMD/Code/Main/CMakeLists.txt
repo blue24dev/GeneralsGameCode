@@ -64,6 +64,10 @@ if(WIN32 OR "${CMAKE_SYSTEM}" MATCHES "Windows")
             "/MANIFEST:NO"
         )
     endif()
+    
+    #MODDD - added "/LARGEADDRESSAWARE" as a monkey patch for running out of memory on mods with everything precached
+    #set_target_properties(z_generals PROPERTIES LINK_FLAGS /LARGEADDRESSAWARE)
+    target_link_options(z_generals PRIVATE "/LARGEADDRESSAWARE")
 
     target_sources(z_generals PRIVATE
         RTS.RC

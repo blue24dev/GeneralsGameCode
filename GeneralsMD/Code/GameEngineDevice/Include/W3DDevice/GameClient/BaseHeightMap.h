@@ -116,6 +116,9 @@ public:
 
   // Other VIRTUAL methods. [3/20/2003]
 
+	//MODDD
+	void assignMap(WorldHeightMap* pMap);
+
 	///allocate resources needed to render heightmap
 	virtual int initHeightData(Int width, Int height, WorldHeightMap *pMap, RefRenderObjListIterator *pLightsIterator, Bool updateExtraPassTiles=TRUE);
 	virtual Int freeMapResources(void);	///< free resources used to render heightmap

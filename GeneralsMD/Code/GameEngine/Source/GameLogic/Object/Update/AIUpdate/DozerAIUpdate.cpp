@@ -591,6 +591,8 @@ StateReturnType DozerActionDoActionState::update( void )
 						// Now onCreates were called at construction start.  Now at finish is when we
 						// want the Game side of OnCreate
 						//
+						//MODDD - condensed
+						/*
 						for (BehaviorModule** m = goalObject->getBehaviorModules(); *m; ++m)
 						{
 							CreateModuleInterface* create = (*m)->getCreate();
@@ -598,7 +600,8 @@ StateReturnType DozerActionDoActionState::update( void )
 								continue;
 							create->onBuildComplete();
 						}
-
+						*/
+						call_objectOnBuildComplete(goalObject, TRUE);
 					}
 
 					// Creation is another valid and essential time to call this.  This building now Looks.

@@ -57,6 +57,9 @@
 #include "GameClient/Drawable.h"	// For getPosition
 #include "GameClient/GameClient.h"	// For getDrawableByID
 
+//MODDD - NOTE. Why does 'AudoEventRTS' have 'm_timeOfDay'?
+// Nothing refers to it here, nor is 'getTimeOfDay' used anywhere else.
+// I don't see what a 'time of day' choice would have to do with a sound.
 
 //-------------------------------------------------------------------------------------------------
 AudioEventRTS::AudioEventRTS()

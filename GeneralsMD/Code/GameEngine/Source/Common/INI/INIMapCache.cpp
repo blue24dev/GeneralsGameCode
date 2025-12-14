@@ -151,7 +151,10 @@ void INI::parseMapCacheDefinition( INI* ini )
 		AsciiString tempdisplayname;
 		tempdisplayname = name.reverseFind('\\') + 1;
 		md.m_displayName.translate(tempdisplayname);
+		//MODDD
+#if !MAP_NAME_PLAYER_COUNT_EXTENSION_ALWAYS
 		if (md.m_numPlayers >= 2)
+#endif
 		{
 			UnicodeString extension;
 			extension.format(L" (%d)", md.m_numPlayers);
@@ -162,7 +165,10 @@ void INI::parseMapCacheDefinition( INI* ini )
 	{
 		// official maps with name tags
 		md.m_displayName = TheGameText->fetch(md.m_nameLookupTag);
+		//MODDD
+#if !MAP_NAME_PLAYER_COUNT_EXTENSION_ALWAYS
 		if (md.m_numPlayers >= 2)
+#endif
 		{
 			UnicodeString extension;
 			extension.format(L" (%d)", md.m_numPlayers);

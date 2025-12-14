@@ -244,6 +244,10 @@ void OverchargeBehavior::onDelete( void )
 	if( m_overchargeActive == FALSE )
 		return;
 
+	//MODDD - BUGFIX - losing an overcharged powerplant while disabled adds negative power
+	// (surrounded with '!getObject()->isDisabled()' check)
+	// REVERTED - already handled in 'removePowerBonus' now
+	
 	// remove the power bonus from the player
 	Player *player = getObject()->getControllingPlayer();
 	if( player )
@@ -305,6 +309,17 @@ void OverchargeBehavior::xfer( Xfer *xfer )
 	// overcharge active
 	xfer->xferBool( &m_overchargeActive );
 
+	//MODDD - moved from 'loadPostProcess' so that this runs before 'Energy::loadPostProcess'.
+	// The owner of this object is correctly set at the time so this is now feasible.
+	// ---
+	if( xfer->getXferMode() == XFER_LOAD )
+	{
+		// Our effect is a fire and forget effect, not an upgrade state that is itself saved, so need to re-fire.
+		if( m_overchargeActive && getObject()->getControllingPlayer() )
+			getObject()->getControllingPlayer()->addPowerBonus( getObject() );
+	}
+	// ---
+
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -316,8 +331,6 @@ void OverchargeBehavior::loadPostProcess( void )
 	// extend base class
 	UpdateModule::loadPostProcess();
 
-	// Our effect is a fire and forget effect, not an upgrade state that is itself saved, so need to re-fire.
-	if( m_overchargeActive && getObject()->getControllingPlayer() )
-		getObject()->getControllingPlayer()->addPowerBonus( getObject() );
+	// MODDD - apply-on-load moved to 'xfer'
 
 }

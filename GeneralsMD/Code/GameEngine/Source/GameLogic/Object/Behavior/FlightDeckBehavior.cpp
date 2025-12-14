@@ -333,6 +333,7 @@ void FlightDeckBehavior::purgeDead()
 		Bool anythingPurged = false;
 		for (std::list<HealingInfo>::iterator it = m_healing.begin(); it != m_healing.end(); /*++it*/)
 		{
+			//MODDD - No iterator increment for 'm_gettingHealedID' of INVALID_ID
 			if (it->m_gettingHealedID != INVALID_ID)
 			{
 				Object* objToHeal = TheGameLogic->findObjectByID(it->m_gettingHealedID);
@@ -340,12 +341,19 @@ void FlightDeckBehavior::purgeDead()
 				{
 					it = m_healing.erase(it);
 					anythingPurged = true;
+					//MODDD
+					continue;
 				}
+				//MODDD - moved to the bottom
+				/*
 				else
 				{
 					++it;
 				}
+				*/
 			}
+			//MODDD
+			++it;
 		}
 		if (anythingPurged)
 			resetWakeFrame();
@@ -1106,12 +1114,15 @@ UpdateSleepTime FlightDeckBehavior::update()
 		m_nextHealFrame = now + HEAL_RATE_FRAMES;
 		for (std::list<HealingInfo>::iterator it = m_healing.begin(); it != m_healing.end(); /*++it*/)
 		{
+			//MODDD - No iterator increment for 'm_gettingHealedID' of INVALID_ID
 			if (it->m_gettingHealedID != INVALID_ID)
 			{
 				Object* objToHeal = TheGameLogic->findObjectByID(it->m_gettingHealedID);
 				if (objToHeal == NULL || objToHeal->isEffectivelyDead())
 				{
 					it = m_healing.erase(it);
+					//MODDD
+					continue;
 				}
 				else
 				{
@@ -1122,9 +1133,12 @@ UpdateSleepTime FlightDeckBehavior::update()
 					healInfo.in.m_amount = HEAL_RATE_FRAMES * data->m_healAmount * SECONDS_PER_LOGICFRAME_REAL;
 					BodyModuleInterface *body = objToHeal->getBodyModule();
 					body->attemptHealing( &healInfo );
-					++it;
+					//MODDD - moved
+					//++it;
 				}
 			}
+			//MODDD
+			++it;
 		}
 	}
 

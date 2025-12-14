@@ -187,6 +187,7 @@ void ParkingPlaceBehavior::purgeDead()
 		Bool anythingPurged = false;
 		for (std::list<HealingInfo>::iterator it = m_healing.begin(); it != m_healing.end(); /*++it*/)
 		{
+			//MODDD - No iterator increment for 'm_gettingHealedID' of INVALID_ID
 			if (it->m_gettingHealedID != INVALID_ID)
 			{
 				Object* objToHeal = TheGameLogic->findObjectByID(it->m_gettingHealedID);
@@ -194,12 +195,19 @@ void ParkingPlaceBehavior::purgeDead()
 				{
 					it = m_healing.erase(it);
 					anythingPurged = true;
+					//MODDD
+					continue;
 				}
+				//MODDD
+				/*
 				else
 				{
 					++it;
 				}
+				*/
 			}
+			//MODDD
+			++it;
 		}
 		if (anythingPurged)
 			resetWakeFrame();
@@ -728,12 +736,15 @@ UpdateSleepTime ParkingPlaceBehavior::update()
 		const ParkingPlaceBehaviorModuleData* d = getParkingPlaceBehaviorModuleData();
 		for (std::list<HealingInfo>::iterator it = m_healing.begin(); it != m_healing.end(); /*++it*/)
 		{
+			//MODDD - No iterator increment for 'm_gettingHealedID' of INVALID_ID
 			if (it->m_gettingHealedID != INVALID_ID)
 			{
 				Object* objToHeal = TheGameLogic->findObjectByID(it->m_gettingHealedID);
 				if (objToHeal == NULL || objToHeal->isEffectivelyDead())
 				{
 					it = m_healing.erase(it);
+					//MODDD
+					continue;
 				}
 				else
 				{
@@ -748,9 +759,12 @@ UpdateSleepTime ParkingPlaceBehavior::update()
 
 					BodyModuleInterface *body = objToHeal->getBodyModule();
 					body->attemptHealing( &healInfo );
-					++it;
+					//MODDD
+					//++it;
 				}
 			}
+			//MODDD
+			++it;
 		}
 	}
 

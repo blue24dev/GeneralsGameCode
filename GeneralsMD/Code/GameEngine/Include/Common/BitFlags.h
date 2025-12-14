@@ -198,6 +198,14 @@ public:
 		m_bits.flip();
 	}
 
+	//MODDD - Return the flip, doesn't modify this instance.
+	BitFlags getFlip()
+	{
+		BitFlags tmp = *this;
+		tmp.m_bits = ~tmp.m_bits;
+		return tmp;
+	}
+
 	void clear()
 	{
 		m_bits.reset();
@@ -224,6 +232,31 @@ public:
 		BitFlags tmp = that;
 		tmp.m_bits &= m_bits;
 		return tmp.m_bits.any();
+	}
+
+	//MODDD - 'or' operator to see which bits are 1 in either/both of the bitmasks. Doesn't modify this instance.
+	BitFlags getOr( const BitFlags& that ) const
+	{
+		BitFlags tmp = *this;
+		tmp.m_bits |= that.m_bits;
+		return tmp;
+	}
+
+	//MODDD - 'and' operator to see which bits are 1 in both of the bitmasks. Doesn't modify this instance.
+	BitFlags getAnd( const BitFlags& that ) const
+	{
+		BitFlags tmp = *this;
+		tmp.m_bits &= that.m_bits;
+		return tmp;
+	}
+
+	//MODDD - 'exclusive-or' operator to see which bits are different between this bitmask and 'that' as 1's in
+	// what's returned. Doesn't modify this instance.
+	BitFlags getExclusiveOr( const BitFlags& that ) const
+	{
+		BitFlags tmp = *this;
+		tmp.m_bits ^= that.m_bits;
+		return tmp;
 	}
 
 	void clear(const BitFlags& clr)

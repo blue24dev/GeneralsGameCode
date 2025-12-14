@@ -215,7 +215,10 @@ class ScriptEngine : public SubsystemInterface,
 {
 
 public:
-	enum {MAX_COUNTERS=256, MAX_FLAGS=256, MAX_ATTACK_PRIORITIES=256};
+	//MODDD - increasing this!  It ain't 2003 anymore
+	//enum {MAX_COUNTERS=256, MAX_FLAGS=256, MAX_ATTACK_PRIORITIES=256};
+	enum {MAX_COUNTERS=1024, MAX_FLAGS=1024, MAX_ATTACK_PRIORITIES=1024};
+
 	enum TFade {FADE_NONE, FADE_SUBTRACT, FADE_ADD, FADE_SATURATE, FADE_MULTIPLY};
 	ScriptEngine();
 	virtual ~ScriptEngine();
@@ -399,7 +402,9 @@ protected:
 	void setPriorityDefault( ScriptAction *pAction );
 
 	// For Object types maintenance.
-	void removeObjectTypes(ObjectTypes *typesToRemove);
+	//MODDD - renamed for clarity, a 2nd version added to break it up (as tiny as this is)
+	void removeObjectTypesFromList(ObjectTypes *typesToRemove);
+	void onRemoveObjectTypes(ObjectTypes* typesToRemove);
 
 	void particleEditorUpdate( void );
 	void updateFades( void );

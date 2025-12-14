@@ -97,7 +97,8 @@ WBDocUndoable::~WBDocUndoable(void)
 //
 /// Create a new undoable.
 //
-WBDocUndoable::WBDocUndoable(CWorldBuilderDoc *pDoc, WorldHeightMapEdit *pNewHtMap, Coord3D *pObjOffset):
+//MODDD - addded 'm_absChange'
+WBDocUndoable::WBDocUndoable(CWorldBuilderDoc *pDoc, WorldHeightMapEdit *pNewHtMap, Coord3D *pObjOffset, Coord3D *pAbsChange):
 	mPNewHeightMapData(NULL),
 	mPOldHeightMapData(NULL),
 	mPDoc(NULL)
@@ -109,17 +110,23 @@ WBDocUndoable::WBDocUndoable(CWorldBuilderDoc *pDoc, WorldHeightMapEdit *pNewHtM
 		m_offsetObjects = false;
 		m_objOffset.x = m_objOffset.y = m_objOffset.z = 0;
 	}
+
+	//MODDD
+	if (pAbsChange) {
+		m_absChange = *pAbsChange;
+	} else {
+		m_absChange.x = m_absChange.y = m_absChange.z = 0;
+	}
+
 	REF_PTR_SET(mPNewHeightMapData, pNewHtMap);
 	REF_PTR_SET(mPOldHeightMapData, pDoc->GetHeightMap());
 	mPDoc = pDoc; // not ref counted.
 }
 
-//
-/// Set the new height map.
-//
-void WBDocUndoable::Do(void)
-{
-	mPDoc->SetHeightMap(mPNewHeightMapData, false);		// SetHeightMap but don't inval.
+
+
+//MODDD
+void WBDocUndoable::_Do(Bool fresh) {
 	if (m_offsetObjects) {
 		MapObject *pCur = MapObject::getFirstMapObject();
 		while (pCur) {
@@ -144,8 +151,86 @@ void WBDocUndoable::Do(void)
 			}
 		}
 		mPDoc->invalObject(NULL); // Inval all objects.
+
+		//MODDD - do the translation for polygons too you <cantankerous fellow>!
+		for (PolygonTrigger *pTrig=PolygonTrigger::getFirstPolygonTrigger(); pTrig; pTrig = pTrig->getNext()) {
+			for (i=0; i<pTrig->getNumPoints(); i++) {
+				ICoord3D iLoc = *pTrig->getPoint(i);
+				iLoc.x += floor(m_objOffset.x+0.5f);
+				iLoc.y += floor(m_objOffset.y+0.5f);
+				iLoc.z += floor(m_objOffset.z+0.5f);
+				pTrig->setPoint(iLoc, i);
+			}
+		}
+
+		// And adjust the borders.
+		// Also note that border info is already baked into undo/redo history, so applying the change again on calls
+		// after the first (redo's/undo's) is redundant.
+		if (fresh) {
+			for (i=0; i<mPDoc->getNumBoundaries(); i++) {
+				ICoord2D iLoc;
+				mPDoc->getBoundary(i, &iLoc);
+				iLoc.x += REAL_TO_INT((m_absChange.x / MAP_XY_FACTOR) + 0.5f);
+				iLoc.y += REAL_TO_INT((m_absChange.y / MAP_XY_FACTOR) + 0.5f);
+				mPDoc->changeBoundary(i, &iLoc);
+			}
+		}
 	}
 	mPNewHeightMapData->dbgVerifyAfterUndo();
+}
+
+//MODDD
+void WBDocUndoable::_Undo(void) {
+	if (m_offsetObjects) {
+		MapObject *pCur = MapObject::getFirstMapObject();
+		while (pCur) {
+			Coord3D loc = *pCur->getLocation();
+			loc.x -= m_objOffset.x;
+			loc.y -= m_objOffset.y;
+			loc.z -= m_objOffset.z;
+			pCur->setLocation(&loc);
+			pCur = pCur->getNext();
+		}
+		Int i;
+		// Update build lists.
+		for (i=0; i<TheSidesList->getNumSides(); i++) {
+			SidesInfo *pSide = TheSidesList->getSideInfo(i);
+			for (BuildListInfo *pBuild = pSide->getBuildList(); pBuild; pBuild = pBuild->getNext()) {
+				// Update.
+				Coord3D loc = *pBuild->getLocation();
+				loc.x -= m_objOffset.x;
+				loc.y -= m_objOffset.y;
+				loc.z -= m_objOffset.z;
+				pBuild->setLocation(loc);
+			}
+		}
+		mPDoc->invalObject(NULL); // Inval all objects.
+
+		//MODDD - do the translation for polygons too you <cantankerous fellow>!
+		for (PolygonTrigger *pTrig=PolygonTrigger::getFirstPolygonTrigger(); pTrig; pTrig = pTrig->getNext()) {
+			for (i=0; i<pTrig->getNumPoints(); i++) {
+				ICoord3D iLoc = *pTrig->getPoint(i);
+				iLoc.x -= floor(m_objOffset.x+0.5f);
+				iLoc.y -= floor(m_objOffset.y+0.5f);
+				iLoc.z -= floor(m_objOffset.z+0.5f);
+				pTrig->setPoint(iLoc, i);
+
+			}
+		}
+		// Don't adjust the borders - see note further above.
+	}
+	mPNewHeightMapData->dbgVerifyAfterUndo();
+}
+
+
+//
+/// Set the new height map.
+//
+void WBDocUndoable::Do(void)
+{
+	mPDoc->SetHeightMap(mPNewHeightMapData, false);		// SetHeightMap but don't inval.
+	//MODDD - condensed
+	_Do(TRUE);
 }
 
 //
@@ -158,19 +243,8 @@ void WBDocUndoable::Redo(void)
 	mPNewHeightMapData->getTerrainTexture();
 
 	mPDoc->SetHeightMap(mPNewHeightMapData, true);		// SetHeightMap and inval the world.
-	if (m_offsetObjects) {
-		MapObject *pCur = MapObject::getFirstMapObject();
-		while (pCur) {
-			Coord3D loc = *pCur->getLocation();
-			loc.x += m_objOffset.x;
-			loc.y += m_objOffset.y;
-			loc.z += m_objOffset.z;
-			pCur->setLocation(&loc);
-			pCur = pCur->getNext();
-		}
-		mPDoc->invalObject(NULL); // Inval all objects.
-	}
-	mPNewHeightMapData->dbgVerifyAfterUndo();
+	//MODDD - condensed
+	_Do(FALSE);
 }
 
 //
@@ -183,19 +257,7 @@ void WBDocUndoable::Undo(void)
 	mPOldHeightMapData->getTerrainTexture();
 
 	mPDoc->SetHeightMap(mPOldHeightMapData, true);		// SetHeightMap and inval the world.
-	if (m_offsetObjects) {
-		MapObject *pCur = MapObject::getFirstMapObject();
-		while (pCur) {
-			Coord3D loc = *pCur->getLocation();
-			loc.x -= m_objOffset.x;
-			loc.y -= m_objOffset.y;
-			loc.z -= m_objOffset.z;
-			pCur->setLocation(&loc);
-			pCur = pCur->getNext();
-		}
-		mPDoc->invalObject(NULL); // Inval all objects.
-	}
-	mPOldHeightMapData->dbgVerifyAfterUndo();
+	_Undo();
 }
 
 /*************************************************************************

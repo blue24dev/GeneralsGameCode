@@ -3235,7 +3235,7 @@ void InGameUI::placeBuildAvailable( const ThingTemplate *build, Drawable *buildD
 			}
 			if (sourceObject)
 			{
-				if (TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT)
+				if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
 					draw->setIndicatorColor(sourceObject->getControllingPlayer()->getPlayerNightColor());
 				else
 					draw->setIndicatorColor(sourceObject->getControllingPlayer()->getPlayerColor());
@@ -3428,6 +3428,11 @@ void InGameUI::deselectDrawable( Drawable *draw )
 		DEBUG_ASSERTCRASH( findIt != m_selectedDrawables.end(),
 											 ("deselectDrawable: Drawable not found in the selected drawable list '%s'",
 											 draw->getTemplate()->getName().str()) );
+
+		//MODDD - just in case?
+		if (findIt == m_selectedDrawables.end()) {
+			return;
+		}
 
 		// remove it from the selected drawable list
 		m_selectedDrawables.erase( findIt );

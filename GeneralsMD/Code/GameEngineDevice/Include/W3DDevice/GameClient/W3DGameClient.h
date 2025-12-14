@@ -75,7 +75,8 @@ public:
 	virtual ~W3DGameClient();
 
 	/// given a type, create a drawable
-	virtual Drawable *friend_createDrawable( const ThingTemplate *thing, DrawableStatusBits statusBits = DRAWABLE_STATUS_DEFAULT );
+	//MODDD - added param 'drawableID'
+	virtual Drawable *friend_createDrawable( const ThingTemplate *thing, DrawableID drawableID, DrawableStatusBits statusBits = DRAWABLE_STATUS_DEFAULT );
 
 	virtual void init( void );		///< initialize resources
 	virtual void update( void );  ///< per frame update

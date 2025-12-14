@@ -100,6 +100,7 @@ MilesAudioManager::MilesAudioManager() :
 //-------------------------------------------------------------------------------------------------
 MilesAudioManager::~MilesAudioManager()
 {
+	//MODDD - NOTE - 'Chuybregts'?  what is that even a typo of
 	DEBUG_ASSERTCRASH(m_binkHandle == NULL, ("Leaked a Bink handle. Chuybregts"));
 	releaseHandleForBink();
 	closeDevice();
@@ -448,7 +449,19 @@ void MilesAudioManager::init()
 
 	// We should now know how many samples we want to load
 	openDevice();
+
+	//MODDD - enforce a minimum of 128 meg in audio cache size.
+	// See the description at the preprocessor constant definition.
+#if !ENFORCE_HIGHER_AUDIO_CACHE_SIZE
 	m_audioCache->setMaxSize(getAudioSettings()->m_maxCacheSize);
+#else
+	UnsignedInt maxCache = getAudioSettings()->m_maxCacheSize;
+	// 128 megabytes
+	if (maxCache < 134217728) {
+		maxCache = 134217728;
+	}
+	m_audioCache->setMaxSize(maxCache);
+#endif
 
 	// Now, set the file callbacks to load the streams from Biggie files
 	AIL_set_file_callbacks(streamingFileOpen, streamingFileClose, streamingFileSeek, streamingFileRead);
@@ -768,6 +781,9 @@ void MilesAudioManager::playAudioEvent( AudioEventRTS *event )
 				}
 
 				H3DSAMPLE sample3D;
+				//MODDD - init this to null for safety?
+				sample3D = NULL;
+
 				if( !handleToKill || foundSoundToReplace )
 				{
 					sample3D = getFirst3DSample( event );
@@ -792,6 +808,7 @@ void MilesAudioManager::playAudioEvent( AudioEventRTS *event )
 				audio->m_3DSample = sample3D;
 				audio->m_file = NULL;
 				audio->m_type = PAT_3DSample;
+
 				m_playing3DSounds.push_back(audio);
 
 				if (sample3D) {
@@ -1123,7 +1140,9 @@ void MilesAudioManager::releasePlayingAudio( PlayingAudio *release )
 		releaseAudioEventRTS(release->m_audioEventRTS);
 	}
 	delete release;
-	release = NULL;
+	//MODDD - this gives a false sense of security. This only affects the param sent, not whatever the caller
+	// sent for it.
+	//release = NULL;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1135,6 +1154,10 @@ void MilesAudioManager::stopAllAudioImmediately( void )
 	for (it = m_playingSounds.begin(); it != m_playingSounds.end(); ) {
 		playing = *it;
 		if (!playing) {
+			//MODDD - increment!
+			// NOTE - these null checks on '*it' are superfluous and can be removed if it's guaranteed a 'null' item
+			// is ever added to the list.
+			++it;
 			continue;
 		}
 
@@ -1145,6 +1168,8 @@ void MilesAudioManager::stopAllAudioImmediately( void )
 	for (it = m_playing3DSounds.begin(); it != m_playing3DSounds.end(); ) {
 		playing = *it;
 		if (!playing) {
+			//MODDD - increment!
+			++it;
 			continue;
 		}
 
@@ -1155,6 +1180,8 @@ void MilesAudioManager::stopAllAudioImmediately( void )
 	for (it = m_playingStreams.begin(); it != m_playingStreams.end(); ) {
 		playing = (*it);
 		if (!playing) {
+			//MODDD - increment!
+			++it;
 			continue;
 		}
 
@@ -1165,6 +1192,8 @@ void MilesAudioManager::stopAllAudioImmediately( void )
   for (it = m_fadingAudio.begin(); it != m_fadingAudio.end(); ) {
     playing = (*it);
     if (!playing) {
+			//MODDD - increment!
+			++it;
       continue;
     }
 
@@ -1267,6 +1296,8 @@ void MilesAudioManager::stopAllSpeech( void )
 	for (it = m_playingStreams.begin(); it != m_playingStreams.end(); ) {
 		playing = (*it);
 		if (!playing) {
+			//MODDD - increment!
+			++it;
 			continue;
 		}
 
@@ -2241,6 +2272,8 @@ void MilesAudioManager::processRequestList( void )
 	for (it = m_audioRequests.begin(); it != m_audioRequests.end(); /* empty */) {
 		AudioRequest *req = (*it);
 		if (req == NULL) {
+			//MODDD - increment!
+			++it;
 			continue;
 		}
 
@@ -2435,6 +2468,8 @@ void MilesAudioManager::processFadingList( void )
 	for (it = m_fadingAudio.begin(); it != m_fadingAudio.end(); /* emtpy */) {
 		playing = *it;
 		if (!playing) {
+			//MODDD - increment!
+			++it;
 			continue;
 		}
 
@@ -2608,20 +2643,46 @@ Real MilesAudioManager::getFileLengthMS( AsciiString strToLoad ) const
 	return INT_TO_REAL(retVal);
 }
 
+//MODDD - debugging
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+
 //-------------------------------------------------------------------------------------------------
 void MilesAudioManager::closeAnySamplesUsingFile( const void *fileToClose )
 {
 	std::list<PlayingAudio *>::iterator it;
 	PlayingAudio *playing;
 
+	//MODDD - debugging
+	// Instead of deleting a sound here, scheduled it to be deleted at the end instead.
+	// This way, there isn't a chance of 'releasePlayingAudio' being called on the same thing twice.
+	// (Assuming that is the issue)
+	PlayingAudio* playingSoundToBeDeleted = NULL;
+	PlayingAudio* playingSound3DToBeDeleted = NULL;
+
 	for (it = m_playingSounds.begin(); it != m_playingSounds.end(); ) {
 		playing = *it;
 		if (!playing) {
+			//MODDD - increment!
+			++it;
 			continue;
 		}
 
 		if (playing->m_file == fileToClose) {
-			releasePlayingAudio(playing);
+			//MODDD - debugging
+			//releasePlayingAudio(playing);
+			if(playingSoundToBeDeleted != NULL) {
+				// is this supposed to ever happen?
+				SYSTEMTIME lt;
+				std::ofstream outputFile;
+				GetLocalTime(&lt);
+				outputFile.open("test_crash_MilesAudioManager.txt", std::ios::out | std::ios::app);
+				outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << "." << std::setw(3) << std::setfill('0') << lt.wMilliseconds << " - closeAnySampleUsingFile: m_playingSounds: multiple 'playing->m_file == fileToClose' matches" << std::endl;
+				outputFile << "* Does playingSoundToBeDeleted == playing (same address)? " << (playingSoundToBeDeleted == playing) << std::endl;
+				outputFile.close();
+			}
+			playingSoundToBeDeleted = playing;
 			it = m_playingSounds.erase(it);
 		} else {
 			++it;
@@ -2631,16 +2692,80 @@ void MilesAudioManager::closeAnySamplesUsingFile( const void *fileToClose )
 	for (it = m_playing3DSounds.begin(); it != m_playing3DSounds.end(); ) {
 		playing = *it;
 		if (!playing) {
+			//MODDD - increment!
+			++it;
 			continue;
 		}
 
 		if (playing->m_file == fileToClose) {
-			releasePlayingAudio(playing);
+			//MODDD - debugging
+			//releasePlayingAudio(playing);
+			if(playingSoundToBeDeleted != NULL) {
+				// is this supposed to ever happen?
+				SYSTEMTIME lt;
+				std::ofstream outputFile;
+				GetLocalTime(&lt);
+				outputFile.open("test_crash_MilesAudioManager.txt", std::ios::out | std::ios::app);
+				outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << "." << std::setw(3) << std::setfill('0') << lt.wMilliseconds << " - closeAnySampleUsingFile: m_playing3DSounds: multiple 'playing->m_file == fileToClose' matches" << std::endl;
+				outputFile << "* Does playingSound3DToBeDeleted == playing (same address)? " << (playingSound3DToBeDeleted == playing) << std::endl;
+				outputFile.close();
+			}
+			playingSound3DToBeDeleted = playing;
 			it = m_playing3DSounds.erase(it);
 		} else {
 			++it;
 		}
 	}
+
+	//MODDD - debugging
+	// Now, see if either of the new sound vars is non-null - delete if so.
+	// And see if this was going to be a double-deletion, for my own info.
+	if(playingSoundToBeDeleted || playingSound3DToBeDeleted) {
+		if (playingSoundToBeDeleted && playingSound3DToBeDeleted) {
+			SYSTEMTIME lt;
+			std::ofstream outputFile;
+			GetLocalTime(&lt);
+			outputFile.open("test_crash_MilesAudioManager.txt", std::ios::out | std::ios::app);
+			outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << "." << std::setw(3) << std::setfill('0') << lt.wMilliseconds << " - closeAnySamplesUsingFile: Double deletion!" << std::endl;
+			outputFile << "* Same memory address? " << (playingSoundToBeDeleted == playingSound3DToBeDeleted) << std::endl;
+			if (playingSoundToBeDeleted->m_audioEventRTS != NULL) {
+				outputFile << "* playingSoundToBeDeleted - "
+					<< "** eventName: " << playingSoundToBeDeleted->m_audioEventRTS->getEventName().str()
+					<< "** fileName: " << playingSoundToBeDeleted->m_audioEventRTS->getFilename().str()
+					<< "** decayFileName: " << playingSoundToBeDeleted->m_audioEventRTS->getDecayFilename().str()
+					<< "** attackFileName: " << playingSoundToBeDeleted->m_audioEventRTS->getAttackFilename().str()
+					<< std::endl;
+			} else {
+				outputFile << "* playingSoundToBeDeleted - m_audioEventRTS is NULL" << std::endl;
+			}
+			if (playingSound3DToBeDeleted->m_audioEventRTS != NULL) {
+				outputFile << "* playingSound3DToBeDeleted - "
+					<< "** eventName: " << playingSound3DToBeDeleted->m_audioEventRTS->getEventName().str()
+					<< "** fileName: " << playingSound3DToBeDeleted->m_audioEventRTS->getFilename().str()
+					<< "** decayFileName: " << playingSound3DToBeDeleted->m_audioEventRTS->getDecayFilename().str()
+					<< "** attackFileName: " << playingSound3DToBeDeleted->m_audioEventRTS->getAttackFilename().str()
+					<< std::endl;
+			} else {
+				outputFile << "* playingSound3DToBeDeleted - m_audioEventRTS is NULL" << std::endl;
+			}
+			outputFile.close();
+		}
+
+		if (playingSoundToBeDeleted == playingSound3DToBeDeleted) {
+			// just do the deletion once for both then
+			releasePlayingAudio(playingSound3DToBeDeleted);
+		} else {
+			// Otherwise, fine to check/delete each individually, I hope
+			if (playingSoundToBeDeleted) {
+				releasePlayingAudio(playingSoundToBeDeleted);
+			}
+
+			if (playingSound3DToBeDeleted) {
+				releasePlayingAudio(playingSound3DToBeDeleted);
+			}
+		}
+	}
+
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -3156,10 +3281,46 @@ void *AudioFileCache::openFile( AudioEventRTS *eventToOpenFrom )
 	}
 
 	UnsignedInt fileSize = file->size();
+
+	//MODDD - new check. Is an individual sound file ever larger than 'maxSize'? Consider what mods might do.
+	// I would think that would cause issues trying to add it since freeing up enough sounds to fit this new
+	// sound would be impossible.
+	// Ex: m_maxSize is 4 meg as of retail. Try to load a sound that's 4.3 meg, leads to freeing all existing
+	// sounds to make space-used 0 -> still doesn't fit.
+	// Also, note: m_maxSize comes from 'AudioSettings.ini' -> 'AudioFootprintInBytes'.
+	if (fileSize >= m_maxSize) {
+		// TODO - debug assert?
+		file->close();
+		return NULL;
+	}
+
+	// Just in case 'freeEnoughSpaceForSample' finds files to close to free up enough space.
+	// If that call is skipped entirely (not running low on space), 'this list remaining empty -> no closures' is fine.
+	// That method doesn't do anything to the files listed (nor any), so if it returns false, no cleanup needed either.
+	std::list<AsciiString> filesToClose;
+
+	//MODDD - moving the 'able to play file' check to here instead.
+	// Why bother doing the rest if it will be interrupted by being unable to free up enough space?
+	// And I think the 'openedAudioFile.m_openCount = 1;' wasn't getting cleared in this case since no
+	// handles currently use the sound so it's stuck as a '1' so future checks to find whatever's
+	// using that sound wouldn't find anything.
+	if (m_currentlyUsedSize + fileSize > m_maxSize) {
+		// We need to free some samples, or we're not going to be able to play this sound.
+		//MODDD - removed 'currentlyUsedSize' revert + 'releaseOpenAudioFile' calls since that is skipped entirely
+		// by moving this block up here. Also changed params sent to no longer need the whole 'openedAudioFile' yet.
+		if (!freeEnoughSpaceForSample(filesToClose, fileSize, eventToOpenFrom->getAudioEventInfo()->m_priority)) {
+      file->close();
+			return NULL;
+		}
+	}
+
 	char* buffer = file->readEntireAndClose();
 
+	//MODDD - moving this below, why do this if the 'positional audio check w/ 1 channel' check fails?
+	/*
 	OpenAudioFile openedAudioFile;
 	openedAudioFile.m_eventInfo = eventToOpenFrom->getAudioEventInfo();
+	*/
 
 	AILSOUNDINFO soundInfo;
 	AIL_WAV_info(buffer, &soundInfo);
@@ -3171,6 +3332,12 @@ void *AudioFileCache::openFile( AudioEventRTS *eventToOpenFrom )
 			return NULL;
 		}
 	}
+
+	//MODDD - moved
+	// ---
+	OpenAudioFile openedAudioFile;
+	openedAudioFile.m_eventInfo = eventToOpenFrom->getAudioEventInfo();
+	// ---
 
 	if (soundInfo.format == WAVE_FORMAT_IMA_ADPCM) {
 		void *decompressFileBuffer;
@@ -3194,8 +3361,23 @@ void *AudioFileCache::openFile( AudioEventRTS *eventToOpenFrom )
 		return NULL;
 	}
 
+	//MODDD - no more early-terminations possible, so go ahead and make persistent changes + handle file closures
+	// (moved 'filesToClose' handling from 'freeEnoughSpaceForSample' to here)
+	std::list<AsciiString>::iterator ait;
+	for (ait = filesToClose.begin(); ait != filesToClose.end(); ++ait) {
+		OpenFilesHashIt itToErase = m_openFiles.find(*ait);
+		if (itToErase != m_openFiles.end()) {
+			releaseOpenAudioFile(&itToErase->second);
+			m_currentlyUsedSize -= itToErase->second.m_fileSize;
+			m_openFiles.erase(itToErase);
+		}
+	}
+
 	openedAudioFile.m_fileSize = fileSize;
 	m_currentlyUsedSize += openedAudioFile.m_fileSize;
+
+	//MODDD - moving this 'enough space -> call freeEnoughSpaceForSample if needed' thing to above, see notes there
+	/*
 	if (m_currentlyUsedSize > m_maxSize) {
 		// We need to free some samples, or we're not going to be able to play this sound.
 		if (!freeEnoughSpaceForSample(openedAudioFile)) {
@@ -3204,6 +3386,7 @@ void *AudioFileCache::openFile( AudioEventRTS *eventToOpenFrom )
 			return NULL;
 		}
 	}
+	*/
 
 	m_openFiles[strToFind] = openedAudioFile;
 	return openedAudioFile.m_file;
@@ -3259,13 +3442,17 @@ void AudioFileCache::releaseOpenAudioFile( OpenAudioFile *fileToRelease )
 }
 
 //-------------------------------------------------------------------------------------------------
-Bool AudioFileCache::freeEnoughSpaceForSample(const OpenAudioFile& sampleThatNeedsSpace)
+//MODDD - changed params
+//Bool AudioFileCache::freeEnoughSpaceForSample(const OpenAudioFile& sampleThatNeedsSpace)
+Bool AudioFileCache::freeEnoughSpaceForSample(std::list<AsciiString>& filesToClose, UnsignedInt newSampleFileSize, AudioPriority newSamplePriority)
 {
-
-	Int spaceRequired = m_currentlyUsedSize - m_maxSize;
+	//MODDD - involve 'newSampleFileSize' instead of assuming 'm_currentlyUsedSize' is adjusted
+	//Int spaceRequired = m_currentlyUsedSize - m_maxSize;
+	Int spaceRequired = (m_currentlyUsedSize + newSampleFileSize) - m_maxSize;
 	Int runningTotal = 0;
 
-	std::list<AsciiString> filesToClose;
+	//MODDD - now an output param instead
+	//std::list<AsciiString> filesToClose;
 	// First, search for any samples that have ref counts of 0. They are low-hanging fruit, and
 	// should be considered immediately.
 	OpenFilesHashIt it;
@@ -3289,7 +3476,9 @@ Bool AudioFileCache::freeEnoughSpaceForSample(const OpenAudioFile& sampleThatNee
 	if (runningTotal < spaceRequired) {
 		for (it = m_openFiles.begin(); it != m_openFiles.end(); ++it) {
 			if (it->second.m_openCount > 0) {
-				if (it->second.m_eventInfo->m_priority < sampleThatNeedsSpace.m_eventInfo->m_priority) {
+				//MODDD - plug in new param newSamplePriority
+				//if (it->second.m_eventInfo->m_priority < sampleThatNeedsSpace.m_eventInfo->m_priority) {
+				if (it->second.m_eventInfo->m_priority < newSamplePriority) {
 					filesToClose.push_back(it->first);
 					runningTotal += it->second.m_fileSize;
 
@@ -3306,6 +3495,9 @@ Bool AudioFileCache::freeEnoughSpaceForSample(const OpenAudioFile& sampleThatNee
 		return FALSE;
 	}
 
+	//MODDD - let the caller handle this instead.
+	// Turning 'filesToClose' into a list given by the caller as an output param
+	/*
 	std::list<AsciiString>::iterator ait;
 	for (ait = filesToClose.begin(); ait != filesToClose.end(); ++ait) {
 		OpenFilesHashIt itToErase = m_openFiles.find(*ait);
@@ -3315,6 +3507,7 @@ Bool AudioFileCache::freeEnoughSpaceForSample(const OpenAudioFile& sampleThatNee
 			m_openFiles.erase(itToErase);
 		}
 	}
+	*/
 
 	return TRUE;
 }

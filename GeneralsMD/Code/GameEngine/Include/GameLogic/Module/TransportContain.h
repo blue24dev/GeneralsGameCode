@@ -76,6 +76,9 @@ public:
 	TransportContain( Thing *thing, const ModuleData* moduleData );
 	// virtual destructor prototype provided by memory pool declaration
 
+	//MODDD
+	virtual void onObjectCreated();
+
 	virtual Bool isValidContainerFor( const Object* obj, Bool checkCapacity) const;
 
 	virtual void onCapture( Player *oldOwner, Player *newOwner ); // have to kick everyone out on capture.

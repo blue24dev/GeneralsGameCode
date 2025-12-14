@@ -652,5 +652,12 @@ static PoolSizeRec PoolSizes[] =
 	{ "ThumbnailManagerClass", 32, 32},
 	{ "SmudgeSet", 32, 32},
 	{ "Smudge", 128, 32},
+	//MODDD - new
+	// ---------
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+	{ "CellInfo", 8192, 2048 },
+#endif
+	{ "ObjectThreatValueParms", 8192, 2048 },
+	// ---------
 	{ 0, 0, 0 }
 };

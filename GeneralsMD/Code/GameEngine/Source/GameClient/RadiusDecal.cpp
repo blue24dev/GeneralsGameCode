@@ -31,6 +31,10 @@
 
 #include "Common/Player.h"
 #include "Common/PlayerList.h"
+
+//MODDD
+#include "Common/GameUtility.h"
+
 #include "Common/Xfer.h"
 #include "GameClient/RadiusDecal.h"
 #include "GameClient/Shadow.h"
@@ -66,8 +70,29 @@ void RadiusDecalTemplate::createRadiusDecal(const Coord3D& pos, Real radius, con
 	// it is now considered nonEmpty, regardless of the state of m_decal, etc
 	result.m_empty = false;
 
+	//MODDD - replacing the condition with a slightly deeper check.
+	// If 'onlyVisibleToOwningPlayer' is on, also include allies so that friendly players can see where a
+	// support power is being used for better coordination.
+	/*
 	if (!m_onlyVisibleToOwningPlayer ||
 			owningPlayer->getPlayerIndex() == ThePlayerList->getLocalPlayer()->getPlayerIndex())
+	*/
+	Bool canShowDecal;
+	if (!m_onlyVisibleToOwningPlayer)
+	{
+		// show to all players - nothing else to do here
+		canShowDecal = TRUE;
+	}
+	else
+	{
+		// 'onlyVisibleToOwningPlayer'
+		// Retail behavior is, only show the decal to the player using the support power. Include allied players too now.
+		// Also using the new 'getObservedOrLocalPlayer' util - is that ok here?
+		Player *clientPlayer = rts::getObservedOrLocalPlayer();
+		canShowDecal = (clientPlayer->getRelationship(owningPlayer->getDefaultTeam()) == ALLIES);
+	}
+
+	if (canShowDecal)
 	{
 		Shadow::ShadowTypeInfo decalInfo;
 		decalInfo.allowUpdates = FALSE;										// shadow texture will never update

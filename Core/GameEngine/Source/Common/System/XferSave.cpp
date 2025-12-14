@@ -296,7 +296,7 @@ void XferSave::xferAsciiString( AsciiString *asciiStringData )
 	if( asciiStringData->getLength() > 255 )
 	{
 
-		DEBUG_CRASH(( "XferSave cannot save this unicode string because it's too long.  Change the size of the length header (but be sure to preserve save file compatability" ));
+		DEBUG_CRASH(( "XferSave cannot save this unicode string because it's too long.  Change the size of the length header (but be sure to preserve save file compatibility" ));
 		throw XFER_STRING_ERROR;
 
 	}
@@ -321,7 +321,7 @@ void XferSave::xferUnicodeString( UnicodeString *unicodeStringData )
 	if( unicodeStringData->getLength() > 255 )
 	{
 
-		DEBUG_CRASH(( "XferSave cannot save this unicode string because it's too long.  Change the size of the length header (but be sure to preserve save file compatability" ));
+		DEBUG_CRASH(( "XferSave cannot save this unicode string because it's too long.  Change the size of the length header (but be sure to preserve save file compatibility" ));
 		throw XFER_STRING_ERROR;
 
 	}

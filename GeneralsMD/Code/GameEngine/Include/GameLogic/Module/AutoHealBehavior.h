@@ -140,10 +140,14 @@ public:
 
 protected:
 
+	//MODDD - moving imp to .cpp, I want my debugging stuff
+	/*
 	virtual void upgradeImplementation()
 	{
 		setWakeFrame(getObject(), UPDATE_SLEEP_NONE);
 	}
+	*/
+	virtual void upgradeImplementation();
 
 	virtual void getUpgradeActivationMasks(UpgradeMaskType& activation, UpgradeMaskType& conflicting) const
 	{

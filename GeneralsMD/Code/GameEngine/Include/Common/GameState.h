@@ -156,12 +156,22 @@ public:
 	virtual void update( void ) { }
 
 	// save game methods
+	//MODDD - wrapper for a new global, original name given an underscore in front
 	SaveCode saveGame( AsciiString filename,
 										 UnicodeString desc,
 										 SaveFileType saveType,
+										 SnapshotType which = SNAPSHOT_SAVELOAD  );
+	SaveCode _saveGame( AsciiString filename,
+										 UnicodeString desc,
+										 SaveFileType saveType,
 										 SnapshotType which = SNAPSHOT_SAVELOAD  );  ///< save a game
+
 	SaveCode missionSave( void );																	 ///< do a in between mission save
+
+	//MODDD - wrapper for a new global, original name given an underscore in front
 	SaveCode loadGame( AvailableGameInfo gameInfo );							 ///< load a save file
+	SaveCode _loadGame( AvailableGameInfo gameInfo );							 ///< load a save file
+
 	SaveGameInfo *getSaveGameInfo( void ) { return &m_gameInfo; }
 
 	// snapshot interaction

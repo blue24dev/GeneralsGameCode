@@ -81,7 +81,8 @@ EjectPilotDie::~EjectPilotDie( void )
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
-/*static*/ void EjectPilotDie::ejectPilot(const ObjectCreationList* ocl, const Object* dyingObject, const Object* damageDealer)
+//MODDD - disarming mines gives experience. Removed 'const' on 'dyingObject'
+/*static*/ void EjectPilotDie::ejectPilot(const ObjectCreationList* ocl, Object* dyingObject, const Object* damageDealer)
 {
 	if (!ocl || !dyingObject)
 		return;	// it's OK for damageDealer to be null

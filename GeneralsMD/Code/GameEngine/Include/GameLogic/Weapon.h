@@ -305,6 +305,11 @@ static const char *const TheWeaponBonusFieldNames[] =
 static_assert(ARRAY_SIZE(TheWeaponBonusFieldNames) == WeaponBonus::FIELD_COUNT + 1, "Incorrect array size");
 #endif
 
+//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+void HandleWeaponFireQueuedOCL(Weapon *weapon, Object *source);
+Bool FireWeaponAndHandleOCL(Weapon *weapon, Object *source, Object *target, ObjectID* projectileID = NULL);
+Bool FireWeaponAndHandleOCL(Weapon *weapon, Object *source, const Coord3D* pos, ObjectID* projectileID = NULL);
+Object *ForceFireWeaponAndHandleOCL(Weapon *weapon, Object *source, const Coord3D *pos);
 
 //-------------------------------------------------------------------------------------------------
 class WeaponBonusSet : public MemoryPoolObject
@@ -479,7 +484,8 @@ protected:
 	void dealDamageInternal(ObjectID sourceID, ObjectID victimID, const Coord3D *pos, const WeaponBonus& bonus, Bool isProjectileDetonation) const;
 	void trimOldHistoricDamage() const;
 	void trimTriggeredHistoricDamage() const;
-	void processHistoricDamage(const Object* source, const Coord3D* pos) const;
+	//MODDD - removed 'const' from 'source'
+	void processHistoricDamage(Object* source, const Coord3D* pos) const;
 
 private:
 
@@ -594,20 +600,20 @@ public:
 //~Weapon();
 
 	// return true if we auto-reloaded our clip after firing.
-	Bool fireWeapon(const Object *source, Object *target, ObjectID* projectileID = NULL);
+	Bool fireWeapon(Object *source, Object *target, ObjectID* projectileID = NULL);
 
 	// return true if we auto-reloaded our clip after firing.
-	Bool fireWeapon(const Object *source, const Coord3D* pos, ObjectID* projectileID = NULL);
+	Bool fireWeapon(Object *source, const Coord3D* pos, ObjectID* projectileID = NULL);
 
-	void fireProjectileDetonationWeapon(const Object *source, Object *target, WeaponBonusConditionFlags extraBonusFlags, Bool inflictDamage = TRUE );
+	void fireProjectileDetonationWeapon(Object *source, Object *target, WeaponBonusConditionFlags extraBonusFlags, Bool inflictDamage = TRUE );
 
-	void fireProjectileDetonationWeapon(const Object *source, const Coord3D* pos, WeaponBonusConditionFlags extraBonusFlags, Bool inflictDamage = TRUE );
+	void fireProjectileDetonationWeapon(Object *source, const Coord3D* pos, WeaponBonusConditionFlags extraBonusFlags, Bool inflictDamage = TRUE );
 
 	void preFireWeapon( const Object *source, const Object *victim );
 
 	//Currently, this function was added to allow a script to force fire a weapon,
 	//and immediately gain control of the weapon that was fired to give it special orders...
-	Object* forceFireWeapon( const Object *source, const Coord3D *pos );
+	Object* forceFireWeapon( Object *source, const Coord3D *pos );
 
 	/**
 		return the estimate damage that would be done to the given target, taking bonuses, armor, etc
@@ -766,13 +772,19 @@ public:
 	void setClipPercentFull(Real percent, Bool allowReduction);
 	UnsignedInt getSuspendFXFrame( void ) const { return m_suspendFXFrame; }
 
+	//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'.
+	// Setters/getters
+	const ObjectCreationList* getWeaponFireQueuedOcl() { return m_weaponFireQueuedOcl; }
+	void setWeaponFireQueuedOcl(const ObjectCreationList* weaponFireQueuedOcl) { m_weaponFireQueuedOcl = weaponFireQueuedOcl; }
+
 protected:
 
 	Weapon(const WeaponTemplate* tmpl, WeaponSlotType wslot);
 
 	// return true if we auto-reloaded our clip after firing.
 	Bool privateFireWeapon(
-		const Object *sourceObj,
+		//MODDD - removed 'const' from param, applies to any other 'sourceObj' ones
+		Object *sourceObj,
 		Object *victimObj,
 		const Coord3D* victimPos,
 		Bool isProjectileDetonation,
@@ -810,6 +822,11 @@ private:
 	std::vector<Int>					m_scatterTargetsUnused;			///< A running memory of which targets I've used, so I can shoot them all at random
 	Bool											m_pitchLimited;
 	Bool											m_leechWeaponRangeActive;		///< This weapon has unlimited range until attack state is aborted!
+
+	//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'.
+	// OCL that would have been made during a 'fireWeapon' or -like call, up to the caller to handle this
+	// afterwards instead.
+	const ObjectCreationList* m_weaponFireQueuedOcl;
 
 	// setter function for status that should not be used outside this class
 	void setStatus( WeaponStatus status) { m_status = status; }
@@ -849,10 +866,10 @@ public:
 		return newInstance(Weapon)(tmpl, wslot);	// my, that was easy
 	}
 
-	void createAndFireTempWeapon(const WeaponTemplate* w, const Object *source, const Coord3D* pos);
-	void createAndFireTempWeapon(const WeaponTemplate* w, const Object *source, Object *target);
+	void createAndFireTempWeapon(const WeaponTemplate* w, Object *source, const Coord3D* pos);
+	void createAndFireTempWeapon(const WeaponTemplate* w, Object *source, Object *target);
 
-	void handleProjectileDetonation( const WeaponTemplate* w, const Object *source, const Coord3D* pos, WeaponBonusConditionFlags extraBonusFlags, Bool inflictDamage = TRUE );
+	void handleProjectileDetonation( const WeaponTemplate* w, Object *source, const Coord3D* pos, WeaponBonusConditionFlags extraBonusFlags, Bool inflictDamage = TRUE );
 
 	static void parseWeaponTemplateDefinition(INI* ini);
 

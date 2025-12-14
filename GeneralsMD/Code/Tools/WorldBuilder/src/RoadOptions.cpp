@@ -460,11 +460,14 @@ void RoadOptions::SelectConnected(void)
 	while (changed)
 	{
 		changed = false;
-		for (std::list<MapObject*>::iterator it = roadSegs.begin(); it != roadSegs.end(); ++it)
+		//MODDD - when 'erase' is called on an iterator being used in a loop, the iterator should come from that 'erase' call
+		for (std::list<MapObject*>::iterator it = roadSegs.begin(); it != roadSegs.end(); /*++it*/)
 		{
 			MapObject* o = *it;
 			const Coord3D *oLoc = o->getLocation();
 			const Coord3D *onLoc = o->getNext()->getLocation();
+			//MODDD - added var
+			Bool eraseRoadSegsIt = false;
 			for (std::list<MapObject*>::iterator connected = connectedSegs.begin(); connected != connectedSegs.end(); ++connected)
 			{
 				MapObject* p = *connected;
@@ -501,10 +504,20 @@ void RoadOptions::SelectConnected(void)
 
 				if (qd1 < MAP_XY_FACTOR/100 || qd2 < MAP_XY_FACTOR/100 || qd3 < MAP_XY_FACTOR/100 || qd4 < MAP_XY_FACTOR/100) {
 					connectedSegs.push_back(o);
-					roadSegs.erase(it);
+					//MODDD - moved below
+					//roadSegs.erase(it);
 					changed = true;
+					//MODDD - added
+					eraseRoadSegsIt = true;
 					break;
 				}
+			}
+
+			//MODDD - added
+			if (eraseRoadSegsIt) {
+				it = roadSegs.erase(it);
+			} else {
+				++it;
 			}
 		}
 	}

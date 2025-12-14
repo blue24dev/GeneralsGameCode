@@ -3315,6 +3315,22 @@ void Object::friend_adjustPowerForPlayer( Bool incoming )
 	}
 }
 
+//MODDD - specify a player
+void Object::friend_adjustPowerForPlayer( Player* player, Bool incoming )
+{
+	if (isDisabled() && getTemplate()->getEnergyProduction() > 0)
+	{
+		// Disabledness only affects Producers, not Consumers.
+		return;
+	}
+
+	if (incoming) {
+		player->getEnergy()->objectEnteringInfluence(this);
+	} else {
+		player->getEnergy()->objectLeavingInfluence(this);
+	}
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////

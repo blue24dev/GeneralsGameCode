@@ -945,6 +945,38 @@ float Animatable3DObjClass::Compute_Current_Frame(float *newDirection) const
 	float frame = 0;
 	float direction = ModeAnim.animDirection;
 
+	//MODDD - UPDATE! not needed anymore?  yippee
+	/*
+	//MODDD - bugfix for repeated animobj.h: 'Compute_Current_Frame' calls
+	// New block to fix some animation effects skipping frames, ex: paladin railgun fire effect in Firestorm.
+	// Issue is, in retail, repeated calls to here during the same frame would cause 'delta' further down to
+	// just be 0. However, the current 'frametime' way can't recognize if multiple calls happen in the same
+	// frame, so 'delta' is the same as the first time in the same frame instead of retail's 0 for that case.
+	// To better resemble retail behavior, adding back 'LastSyncTime' and stopping calls to here early if they
+	// aren't during a new sync time, this should be safe.
+	// Longer explanation:
+	// This method can be called several times within the same frame from W3DModelDraw.cpp's
+	// 'recalcBonesForClientParticleSystems'. Each 'm_renderObject->Set_Transform' call leads to 
+	// 'Animatable3DObjClass::Set_Transform' -> 'Set_Hierarchy_Valid(false)', which means the
+	// 'm_renderObject->Get_Bone_Transform' call right after (Animatable3DObjClass::Get_Bone_Transform) will see
+	// that '!Is_Hierarchy_Valid()' is the case and eventually lead to here.
+	// I don't know if those 'Set_Transform' shouldn't call 'Set_Hierarchy_Valid(false)', or this method
+	// shouldn't be called anytime '!Is_Hierarchy_Valid" is the case, and some other way to guarantee that this
+	// method is only ever called once per frame for any bone(?) that needs it is better.
+	// ---
+	if (ModeAnim.LastSyncTime == WW3D::Get_Sync_Time()) {
+		if (newDirection)
+			*newDirection = direction;
+		if (CurMotionMode == SINGLE_ANIM) {
+			return ModeAnim.Frame;
+		} else {
+			// ? Technically retail behavior for this case
+			return 0;
+		}
+	}
+	// ---
+	*/
+
 	switch (CurMotionMode)
 	{
 		case SINGLE_ANIM:

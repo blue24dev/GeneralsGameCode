@@ -965,7 +965,7 @@ void HierarchyView::removeWindow( GameWindow *window )
  	TreeHash::iterator find = m_treeHash.find(window);
  	if (find != m_treeHash.end())
  		m_treeHash.erase(find);
- 	#endif
+#endif
 
 }
 

@@ -174,14 +174,16 @@ void FireWeaponWhenDamagedBehavior::onDamage( DamageInfo *damageInfo )
 	if (damageInfo->out.m_actualDamageDealt < d->m_damageAmount)
 		return;
 
-	const Object *obj = getObject();
+	//MODDD - 'const' removed
+	Object *obj = getObject();
 	BodyDamageType bdt = obj->getBodyModule()->getDamageState();
 
 	if ( bdt == BODY_RUBBLE )
 	{
 		if( m_reactionWeaponRubble && m_reactionWeaponRubble->getStatus() == READY_TO_FIRE )
 		{
-			m_reactionWeaponRubble->forceFireWeapon( obj, obj->getPosition() );
+			//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+			ForceFireWeaponAndHandleOCL( m_reactionWeaponRubble, obj, obj->getPosition() );
 		}
 
 	}
@@ -189,21 +191,24 @@ void FireWeaponWhenDamagedBehavior::onDamage( DamageInfo *damageInfo )
 	{
 		if( m_reactionWeaponReallyDamaged && m_reactionWeaponReallyDamaged->getStatus() == READY_TO_FIRE )
 		{
-			m_reactionWeaponReallyDamaged->forceFireWeapon( obj, obj->getPosition() );
+			//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+			ForceFireWeaponAndHandleOCL( m_reactionWeaponReallyDamaged, obj, obj->getPosition() );
 		}
 	}
 	else if ( bdt == BODY_DAMAGED )
 	{
 		if( m_reactionWeaponDamaged && m_reactionWeaponDamaged->getStatus() == READY_TO_FIRE )
 		{
-			m_reactionWeaponDamaged->forceFireWeapon( obj, obj->getPosition() );
+			//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+			ForceFireWeaponAndHandleOCL( m_reactionWeaponDamaged, obj, obj->getPosition() );
 		}
 	}
 	else // not damaged yet
 	{
 		if( m_reactionWeaponPristine && m_reactionWeaponPristine->getStatus() == READY_TO_FIRE )
 		{
-			m_reactionWeaponPristine->forceFireWeapon( obj, obj->getPosition() );
+			//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+			ForceFireWeaponAndHandleOCL( m_reactionWeaponPristine, obj, obj->getPosition() );
 		}
 	}
 
@@ -220,14 +225,16 @@ UpdateSleepTime FireWeaponWhenDamagedBehavior::update( void )
 		return UPDATE_SLEEP_FOREVER;
 	}
 
-	const Object *obj = getObject();
+	//MODDD - 'const' removed
+	Object *obj = getObject();
 	BodyDamageType bdt = obj->getBodyModule()->getDamageState();
 
 	if ( bdt == BODY_RUBBLE )
 	{
 		if( m_continuousWeaponRubble && m_continuousWeaponRubble->getStatus() == READY_TO_FIRE )
 		{
-			m_continuousWeaponRubble->forceFireWeapon( obj, obj->getPosition() );
+			//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+			ForceFireWeaponAndHandleOCL( m_continuousWeaponRubble, obj, obj->getPosition() );
 		}
 
 	}
@@ -235,21 +242,24 @@ UpdateSleepTime FireWeaponWhenDamagedBehavior::update( void )
 	{
 		if( m_continuousWeaponReallyDamaged && m_continuousWeaponReallyDamaged->getStatus() == READY_TO_FIRE )
 		{
-			m_continuousWeaponReallyDamaged->forceFireWeapon( obj, obj->getPosition() );
+			//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+			ForceFireWeaponAndHandleOCL( m_continuousWeaponReallyDamaged, obj, obj->getPosition() );
 		}
 	}
 	else if ( bdt == BODY_DAMAGED )
 	{
 		if( m_continuousWeaponDamaged && m_continuousWeaponDamaged->getStatus() == READY_TO_FIRE )
 		{
-			m_continuousWeaponDamaged->forceFireWeapon( obj, obj->getPosition() );
+			//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+			ForceFireWeaponAndHandleOCL( m_continuousWeaponDamaged, obj, obj->getPosition() );
 		}
 	}
 	else // not damaged yet
 	{
 		if( m_continuousWeaponPristine && m_continuousWeaponPristine->getStatus() == READY_TO_FIRE )
 		{
-			m_continuousWeaponPristine->forceFireWeapon( obj, obj->getPosition() );
+			//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+			ForceFireWeaponAndHandleOCL( m_continuousWeaponPristine, obj, obj->getPosition() );
 		}
 	}
 

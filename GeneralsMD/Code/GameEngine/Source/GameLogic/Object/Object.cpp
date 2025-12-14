@@ -105,12 +105,20 @@
 #include "GameLogic/Weapon.h"
 #include "GameLogic/WeaponSet.h"
 #include "GameLogic/Module/RadarUpdate.h"
-#include "GameLogic/Module/PowerPlantUpdate.h"
+// (duplicate)
+//#include "GameLogic/Module/PowerPlantUpdate.h"
+
+//MODDD
+#include "GameLogic/ObjectCreationList.h"
+#include "GameLogic/Module/StealthDetectorUpdate.h"
 
 #include "Common/CRCDebug.h"
 #include "Common/MiscAudio.h"
 #include "Common/AudioEventInfo.h"
 #include "Common/DynamicAudioEventInfo.h"
+
+//MODDD - temp hack
+#include "GameLogic/Module/ActiveShroudUpgrade.h"
 
 
 #ifdef DEBUG_OBJECT_ID_EXISTS
@@ -143,6 +151,84 @@ static const ModelConditionFlags s_allWeaponFireFlags[WEAPONSLOT_COUNT] =
 	)
 };
 
+//MODDD - copy of 'ThreatValueParms' with quality of life features from 'SightingInfo' from PartitionManager.cpp to better suite some things here
+//==========================================================================================================
+//==========================================================================================================
+//==========================================================================================================
+class ObjectThreatValueParms : public MemoryPoolObject, public Snapshot
+{
+	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE( ObjectThreatValueParms, "ObjectThreatValueParms" );
+
+public:
+	Real xCenter;
+	Real yCenter;
+	Real radius;
+	PlayerMaskType m_forWhom;
+	UnsignedInt threatOrValue;
+
+	ObjectThreatValueParms();
+	void reset();
+	Bool isInvalid() const;
+	
+protected:
+
+	// snapshot method
+	virtual void crc( Xfer *xfer );
+	virtual void xfer( Xfer *xfer );
+	virtual void loadPostProcess();
+};
+
+ObjectThreatValueParms::ObjectThreatValueParms()
+{
+	reset();
+}
+
+ObjectThreatValueParms::~ObjectThreatValueParms()
+{
+
+}
+
+void ObjectThreatValueParms::reset()
+{
+	xCenter = 0;
+	yCenter = 0;
+	radius = 0.0f;
+	m_forWhom = 0;
+	threatOrValue = 0;
+}
+
+Bool ObjectThreatValueParms::isInvalid() const
+{
+	return radius == 0.0f;
+}
+
+void ObjectThreatValueParms::crc( Xfer *xfer )
+{
+
+}
+
+void ObjectThreatValueParms::xfer( Xfer *xfer )
+{
+	// version
+	XferVersion currentVersion = 1;
+	XferVersion version = currentVersion;
+	xfer->xferVersion( &version, currentVersion );
+	
+	xfer->xferReal( &xCenter );
+	xfer->xferReal( &yCenter );
+	xfer->xferReal( &radius );
+	xfer->xferUser( &m_forWhom, sizeof( PlayerMaskType ) );
+	xfer->xferUnsignedInt( &threatOrValue );
+}
+
+void ObjectThreatValueParms::loadPostProcess()
+{
+
+}
+//==========================================================================================================
+//==========================================================================================================
+//==========================================================================================================
+
 //-------------------------------------------------------------------------------------------------
 extern void addIcon(const Coord3D *pos, Real width, Int numFramesDuration, RGBColor color);
 
@@ -173,10 +259,15 @@ AsciiString DebugDescribeObject(const Object *obj)
 	return ret;
 }
 
-//-------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------
-Object::Object( const ThingTemplate *tt, const ObjectStatusMaskType &objectStatusMask, Team *team ) :
-	Thing(tt),
+//MODDD - simple constructor that only needs a template. Expectation is that 'Object::Xfer' is called by the
+// caller afterwards, followed by 'constructorEnd' after other info is known.
+// This allows logic that depends on the template and nothing else to run first, instead of running team-
+// related script for the neutral player's team once regardless of whether the object actually belongs to that.
+// TODO (for somewhere): don't apply power-based events such as low-power-disabling-things until after
+// post-load to avoid a crash in 'OverlordContain' from dependency objects not being found from IDs yet.
+// Note that even as-is, the template-to-use is known before the constructor is called, so it can be involved.
+Object::Object( const ThingTemplate *tt ) :
+  Thing(tt),
 	m_indicatorColor(0),
 	m_ai(NULL),
 	m_physics(NULL),
@@ -187,7 +278,9 @@ Object::Object( const ThingTemplate *tt, const ObjectStatusMaskType &objectStatu
 	m_behaviors(NULL),
 	m_body(NULL),
 	m_contain(NULL),
-  m_stealth(NULL),
+	m_stealth(NULL),
+	//MODDD
+	m_stealthDetector(NULL),
 	m_partitionData(NULL),
 	m_radarData(NULL),
 	m_drawable(NULL),
@@ -204,6 +297,9 @@ Object::Object( const ThingTemplate *tt, const ObjectStatusMaskType &objectStatu
 	m_wsHelper(NULL),
 	m_defectionHelper(NULL),
 	m_partitionLastLook(NULL),
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	m_partitionLastLookJammable(NULL),
+#endif
 	m_partitionRevealAllLastLook(NULL),
 	m_partitionLastShroud(NULL),
 	m_partitionLastThreat(NULL),
@@ -218,19 +314,218 @@ Object::Object( const ThingTemplate *tt, const ObjectStatusMaskType &objectStatu
 	m_visionSpiedMask (PLAYERMASK_NONE),
 	m_numTriggerAreasActive(0)
 {
-#if defined(RTS_DEBUG)
-	m_hasDiedAlready = false;
-#endif
-	//Modules have not been created yet!
-	m_modulesReady = false;
-
 	// Force the thing template to use the most overridden version of itself - jkmcd
 	// Note that after this, the object will be using m_template, which forces the usage of the
 	// most overridden version of tt, so this is okay.
 	tt = (const ThingTemplate *) tt->getFinalOverride();
+	earlyConstructor( tt );
+}
 
-	Int i, modIdx;
-	AsciiString modName;
+//-------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
+//MODDD - added param 'objectInitLockLocalTemp', swapped 'team' and 'objectStatusMask' order
+Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& objectStatusMask, Bool objectInitLockLocalTemp) :
+	//MODDD - chaining this to the simpler constructor above should work, also moving all the 0-initted stuff
+	// to there
+	//Thing(tt),
+	Object(tt)
+{
+	// sanity
+	if( TheGameLogic == NULL || tt == NULL )
+	{
+		assert( 0 );
+		return;
+	}
+
+	this->objectInitLockLocal = TRUE;
+	this->objectInitLockLocalTemp = objectInitLockLocalTemp;
+	tt = (const ThingTemplate *) tt->getFinalOverride();
+
+	//MODDD - since the load-system doesn't use this constructor, go ahead and set the ID here
+	// ---
+	// assign unique object id
+	setID( TheGameLogic->allocateObjectID() );
+
+	m_status = objectStatusMask;
+
+	createBehaviorModules_PRE(tt);
+
+	setTeam(team ? team : ThePlayerList->getNeutralPlayer()->getDefaultTeam());
+
+	createBehaviorModules(tt);
+	callModuleOnObjectCreated();
+	initHookup();
+	constructorOnActualTeamAssigned();
+	setStartVeterancy();
+
+	if (!objectInitLockLocalTemp) {
+		runCreateModules();
+		constructorEnd();
+	}
+
+	// TODO - this should be handled externally instead, anywhere making an object outside of map start / loading a game
+	// should know to call these too, a new util for just those places maybe
+	if (!isInitLockedHard() && !objectInitLockLocalTemp){
+		gamePostLoad();
+	}
+	this->objectInitLockLocal = FALSE;
+	this->objectInitLockLocalTemp = FALSE;
+}
+
+void Object::initHookup()
+{
+	// Don't involve the radar system if this is loading a game, when radar data is loaded this will be handled.
+	if (!(isInitLocked() && globalXferStatus == XFER_LOAD)) {
+		TheRadar->addObject( this );
+	}
+
+	// register the object with the GameLogic
+	TheGameLogic->registerObject( this );
+
+	// TheSuperHackers @bugfix Mauller/xezon 02/08/2025 sendObjectCreated needs calling before CreateModule's are initialized to prevent drawable related crashes
+	// This predominantly occurs with the veterancy create module when the chemical suits upgrade is unlocked as it tries to set the terrain decal.
+
+	// emit message announcing object's creation
+	TheGameLogic->sendObjectCreated( this );
+
+	ThePartitionManager->registerObject( this );
+}
+
+//MODDD - new method with some of the Object constructor's script.
+// Call this after an object has finished loading ('xfer') so that per-object init can finish.
+// Note that this is for immediately after an object has finished loading, and doesn't require all other
+// objects to have finished loading / been added to the game (see 'gamePostLoad' instead)
+void Object::constructorEnd()
+{
+
+	//MODDD - the rest are a few things moved from 'Object::initObject' that should probably run sooner than later
+	for (int i = 0; i < WEAPONSLOT_COUNT; ++i)
+		m_lastWeaponCondition[i] = WSF_INVALID;
+
+	//For each special power module that we have, add it's type to the specialpower bits. This is
+	//for optimal access later.
+	for (BehaviorModule** m = m_behaviors; *m; ++m)
+	{
+		SpecialPowerModuleInterface* sp = (*m)->getSpecialPower();
+		if (!sp)
+			continue;
+
+		const SpecialPowerTemplate *spTemplate = sp->getSpecialPowerTemplate();
+		if( spTemplate )
+		{
+			SET_SPECIALPOWERMASK( m_specialPowerBits, spTemplate->getSpecialPowerType() );
+		}
+	}
+
+	this->initObject();
+}
+
+//MODDD - event to be called when the object's actual team is assigned, as opposed to the dummy 'neutral' (#0)
+// team assigned while loading a saved game.
+// Note that this also execpts the modules to be created ('createBehaviorModules' should have occurred beforehand).
+void Object::constructorOnActualTeamAssigned()
+{
+	AIUpdateInterface *ai = getAIUpdateInterface();
+	//MODDD - assuming 'getTeam()' and 'm_team->getPrototype()' isn't null, then null checks for them after?
+	// Fixed, though these should never be null at this point to begin with (nor were they ever observed to be).
+	if (ai && m_team && m_team->getPrototype()) {
+		ai->setAttitude(m_team->getPrototype()->getTemplateInfo()->m_initialTeamAttitude);
+		if (m_team->getPrototype()->getAttackPriorityName().isNotEmpty()) {
+			AsciiString name = m_team->getPrototype()->getAttackPriorityName();
+			const AttackPriorityInfo *info = TheScriptEngine->getAttackInfo(name);
+			if (info && info->getName().isNotEmpty()) {
+				ai->setAttackInfo(info);
+			}
+		}
+	}
+}
+
+void Object::setStartVeterancy()
+{
+	// If a valid team has been assigned me, then I have a Player I can ask about my starting level
+	//MODDD - NOTE - this is sneaky because veterency changes lead to
+	//   onVeterancyLevelChanged -> updateUpgradeModules
+	// Which can loop through all other game objects. May as well wait for everything to finish being added to the game.
+	// Also - note that the original intent was for this to run before any behavior's 'onCreate' calls below.
+	// This allows any 'VeterancyGainCreate' modules to override what's here, I assume.
+	// Though this could also occur after and just take the experience tracker's 'minVeterancyLevel' into
+	// account I would assume.
+	// And, don't apply this when loading a game. The 'xfer' for experienceTracker handles this and this INI
+	// veterancy default would just be overridden anyway.
+	// Its inner 'updateUpgradeModules();' only runs if this changes veterancy, which doesn't seem needed anway
+	// for a few reasons,
+	//   1: as of retail, things that start at rank 0 & have a higher rank as of a saved game don't reach that
+	//   2: part of 'Object::initObject' already calls 'updateUpgradeModules();'
+	// By this logic you could argue this wouldn't even need to go through 'setVeterancyLevel', just set the
+	// veterancy stat in 'm_experienceTracker' directly like 'ExperienceTracker::xfer' does.
+	const Player* controller = getControllingPlayer();
+	m_experienceTracker->setVeterancyLevel( controller->getProductionVeterancyLevel( getTemplate()->getName() ) );
+
+}
+
+void Object::callModuleOnObjectCreated()
+{
+	//MODDD - important to call this at the right time.
+	// For AIUpdate, does 'm_stateMachine = makeStateMachine();'. Missing that in time can cause problems, most
+	// places don't check that for being NULL.
+	for (BehaviorModule** b = m_behaviors; *b; ++b)
+	{
+		(*b)->onObjectCreated();
+	}
+}
+
+void Object::runCreateModules()
+{
+
+	// run the create function for the thing
+	for (BehaviorModule** m = m_behaviors; *m; ++m)
+	{
+		CreateModuleInterface* create = (*m)->getCreate();
+		if (!create)
+			continue;
+
+		create->onCreate();
+	}
+}
+
+//MODDD - to be called after all objects are finished being added to the map per object, not after individual
+// object init unless this is in-game.
+void Object::gamePostLoad()
+{
+
+	updateUpgradeModules();
+	
+	//MODDD - NOTE - this would probably be fine in 'constructorEnd' but just being safe for now
+	// (nahh)
+	/*
+	AIUpdateInterface *ai = getAIUpdateInterface();
+	if (ai) {
+		ai->setAttitude(getTeam()->getPrototype()->getTemplateInfo()->m_initialTeamAttitude);
+		if (m_team && m_team->getPrototype() && m_team->getPrototype()->getAttackPriorityName().isNotEmpty()) {
+			AsciiString name = m_team->getPrototype()->getAttackPriorityName();
+			const AttackPriorityInfo *info = TheScriptEngine->getAttackInfo(name);
+			if (info && info->getName().isNotEmpty()) {
+				ai->setAttackInfo(info);
+			}
+		}
+	}
+	*/
+}
+
+//MODDD - init before 'xfer'
+void Object::earlyConstructor(const ThingTemplate* tt)
+{
+
+#if defined(RTS_DEBUG)
+	m_hasDiedAlready = false;
+#endif
+	//Modules have not been created yet!
+	//MODDD - TODO - the only place that uses 'areModulesReady' is one place in Player.cpp, if the need for
+	// that were removed (maybe the setTeam call during object init send a yes/no param?), this var could be
+	// removed.
+	m_modulesReady = false;
+
+	Int i;
 
 	m_formationOffset.x = m_formationOffset.y = 0.0f;
 	m_iPos.zero();
@@ -247,26 +542,16 @@ Object::Object( const ThingTemplate *tt, const ObjectStatusMaskType &objectStatu
 	m_weaponBonusCondition = 0;
 	m_curWeaponSetFlags.clear();
 
-	// sanity
-	if( TheGameLogic == NULL || tt == NULL )
-	{
-
-		assert( 0 );
-		return;
-
-	}
-
 	// Object's set of these persist for the life of the object.
-	m_partitionLastLook = newInstance(SightingInfo);
-	m_partitionLastLook->reset();
-	m_partitionRevealAllLastLook = newInstance(SightingInfo);
-	m_partitionRevealAllLastLook->reset();
-	m_partitionLastShroud = newInstance(SightingInfo);
-	m_partitionLastShroud->reset();
-	m_partitionLastThreat = newInstance(SightingInfo);
-	m_partitionLastThreat->reset();
-	m_partitionLastValue = newInstance(SightingInfo);
-	m_partitionLastValue->reset();
+	// MODDD - removing all 'reset' calls, this was always redundant with the constructor, which already calls that.
+	m_partitionLastLook = newInstance(ObjectThreatValueParms);
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	m_partitionLastLookJammable = newInstance(ObjectThreatValueParms);
+#endif
+	m_partitionRevealAllLastLook = newInstance(ObjectThreatValueParms);
+	m_partitionLastShroud = newInstance(ObjectThreatValueParms);
+	m_partitionLastThreat = newInstance(ObjectThreatValueParms);
+	m_partitionLastValue = newInstance(ObjectThreatValueParms);
 
 	// must set ID to zero, since some of these set methods
 	// will cause network messages to be sent
@@ -275,7 +560,10 @@ Object::Object( const ThingTemplate *tt, const ObjectStatusMaskType &objectStatu
 	m_producerID = INVALID_ID;
 	m_builderID = INVALID_ID;
 
-	m_status = objectStatusMask;
+	//MODDD - moved... well, default just in case for now, it's the 'constructor' thing to do after all
+	//m_status = objectStatusMask;
+	m_status = OBJECT_STATUS_MASK_NONE;
+
 	m_layer = LAYER_GROUND;
 
 	m_group = NULL;
@@ -290,26 +578,56 @@ Object::Object( const ThingTemplate *tt, const ObjectStatusMaskType &objectStatu
 
 	m_singleUseCommandUsed = false;
 
+	//MODDD - moving this since loading a game will soon override this
 	// assign unique object id
-	setID( TheGameLogic->allocateObjectID() );
+	//setID( TheGameLogic->allocateObjectID() );
+
+	m_numTriggerAreasActive = 0;
+	m_enteredOrExitedFrame = 0;
+	m_isSelectable = tt->isKindOf(KINDOF_SELECTABLE);
+
+	m_healthBoxOffset.zero();// this is used for units that are amorphous, like angry mob
+
+	//disable occlusion for some time after object is created to allow them to exit the factory/building.
+	m_safeOcclusionFrame = TheGameLogic->getFrame()+tt->getOcclusionDelay();
+
+
+	m_soleHealingBenefactorID = INVALID_ID; ///< who is the only other object that can give me this non-stacking heal benefit?
+	m_soleHealingBenefactorExpirationFrame = 0; ///< on what frame can I accept healing (thus to switch) from a new benefactor
+
+}
+
+void Object::createBehaviorModules_PRE(const ThingTemplate* tt)
+{
+	Int totalModules = tt->getBehaviorModuleInfo().getCount() + NUM_SLEEP_HELPERS;  // need to take into account all the helper modules
+
+	// allocate the publicModule arrays
+	// pool[]ify
+	m_behaviors = MSGNEW("ModulePtrs") BehaviorModule*[totalModules + 1];
+}
+
+//MODDD - anything related to initial behavior creation, at least the minimum from 'baseConstructor'.
+void Object::createBehaviorModules(const ThingTemplate* tt)
+{
+
+	Int modIdx;
+	AsciiString modName;
 
 	//
 	// allocate any modules we need to, we should keep
 	// this at or near the end of the drawable construction so that we have
 	// all the valid data about the thing when we create the module
 	//
+
+	/*
 	Int totalModules = tt->getBehaviorModuleInfo().getCount() + NUM_SLEEP_HELPERS;  // need to take into account all the helper modules
 
 	// allocate the publicModule arrays
-// pool[]ify
+	// pool[]ify
 	m_behaviors = MSGNEW("ModulePtrs") BehaviorModule*[totalModules + 1];
+	*/
 	BehaviorModule** curB = m_behaviors;
 	const ModuleInfo& mi = tt->getBehaviorModuleInfo();
-
-	// set m_team to null before the first call, to avoid naughtiness...
-	// If no team is specified in the constructor, then assign the object
-	// to the neutral team.
-	setTeam(team ? team : ThePlayerList->getNeutralPlayer()->getDefaultTeam());
 
 	// the helpers are done first -- even before Behaviors! -- in case a module needs
 	// to call something that uses them.
@@ -423,13 +741,20 @@ Object::Object( const ThingTemplate *tt, const ObjectStatusMaskType &objectStatu
 			m_contain = contain;
 		}
 
-    StealthUpdate* stealth = (StealthUpdate*)newMod->getStealth();
+    StealthUpdate* stealth = newMod->getStealth();
     if ( stealth )
     {
-      DEBUG_ASSERTCRASH( m_stealth == NULL, ("DuplicateStealthUpdates!") );
+      DEBUG_ASSERTCRASH( m_stealth == NULL, ("Duplicate StealthUpdates!") );
       m_stealth = stealth;
     }
 
+		//MODDD
+		StealthDetectorUpdate* stealthDetector = newMod->getStealthDetector();
+		if ( stealthDetector )
+		{
+			DEBUG_ASSERTCRASH( m_stealthDetector == NULL, ("Duplicate StealthDetectorUpdates!") );
+			m_stealthDetector = stealthDetector;
+		}
 
 		AIUpdateInterface* ai = newMod->getAIUpdateInterface();
 		if (ai)
@@ -449,60 +774,96 @@ Object::Object( const ThingTemplate *tt, const ObjectStatusMaskType &objectStatu
 		}
 	}
 
-	*curB = NULL;
+	/*
+	//MODDD - for me only
+	// Temp hack. Add active-shroud-generation to anything that is a stealth detector.
+	// This lets shroud generation be easy to see/test in mods that never use the shroud generating module (including retail).
+	// Requires the "MODDD - for me only" block in 'UpgradeModule.cpp' to be enabled so lacking a condition still lets this work.
+  if (m_stealthDetector != NULL) {
+	  // First, do you already have this
+	  modName = AsciiString("ActiveShroudUpgrade");
+	  static NameKeyType tempKey = NAMEKEY(modName);
+		Module *mod = mod = findModule(tempKey);
+		if(mod == NULL) {
 
-	AIUpdateInterface *ai = getAIUpdateInterface();
-	if (ai) {
-		ai->setAttitude(getTeam()->getPrototype()->getTemplateInfo()->m_initialTeamAttitude);
-		if (m_team && m_team->getPrototype() && m_team->getPrototype()->getAttackPriorityName().isNotEmpty()) {
-			AsciiString name = m_team->getPrototype()->getAttackPriorityName();
-			const AttackPriorityInfo *info = TheScriptEngine->getAttackInfo(name);
-			if (info && info->getName().isNotEmpty()) {
-				ai->setAttackInfo(info);
+			// the detector needs to support types other than 'MINE' and 'DEMOTRAP'.
+			// why bother if not?
+			// (also allow if 'extraDetectKindof' has no bits set - means this wasn't specified so imply everything)
+			KindOfMaskType testMask;
+			testMask.set(KINDOF_MINE);
+			testMask.set(KINDOF_DEMOTRAP);
+			testMask.flip();
+			if (
+				(
+					!m_stealthDetector->getStealthDetectorUpdateModuleData()->m_extraDetectKindof.any() ||
+					m_stealthDetector->getStealthDetectorUpdateModuleData()->m_extraDetectKindof.getAnd(testMask).any()
+				)
+				// even if you're a detector, a vision of 0 tells me something isn't quite right
+				&& getVisionRange() > 0
+			) {
+				// proceed
+				//mi.getInfoVector().push_back(Nugget(modName, AsciiString("Module_GENERATED4567"), data, interfaceMask, inheritable, overrideableByLikeKind));
+
+				AsciiString moduleTag = AsciiString("Module_GENERATED4567");
+				ModuleInfo& mi2 = ((ThingTemplate*)tt)->getBehaviorModuleInfoEvil();
+				ModuleData* data = TheModuleFactory->newModuleDataFromINI(NULL, modName, MODULETYPE_BEHAVIOR, moduleTag);
+		
+				ActiveShroudUpgradeModuleData* mdCast = (ActiveShroudUpgradeModuleData*)data;
+				//mdCast->m_newShroudRange = this->getVisionRange();
+				Real testRange = m_stealthDetector->getStealthDetectorUpdateModuleData()->m_detectionRange;
+				if (testRange == 0) {
+					testRange = getVisionRange();
+				}
+				mdCast->m_newShroudRange = testRange * 0.75;
+
+				mi2.addModuleInfo((ThingTemplate*)tt, modName, moduleTag, data, (MODULEINTERFACE_UPDATE), false);
+
+				//ActiveShroudUpgradeModuleData md;
+				//int whut = md.m_upgradeMuxData.m_triggerUpgradeNames.size();
+				//whut = whut;
+
+				BehaviorModule* newMod = (BehaviorModule*)TheModuleFactory->newModule(this, modName, data, MODULETYPE_BEHAVIOR);
+				*curB++ = newMod;
 			}
 		}
-	}
+  }
+	*/
+
+	*curB = NULL;
 
 	// allocate experience tracker
 	m_experienceTracker = newInstance(ExperienceTracker)(this);
 
-	// If a valid team has been assigned me, then I have a Player I can ask about my starting level
-	const Player* controller = getControllingPlayer();
-	m_experienceTracker->setVeterancyLevel( controller->getProductionVeterancyLevel( getTemplate()->getName() ) );
-
-	/// allow for inter-Module resolution
+	//MODDD - moving to its own method for more control
+	/*
 	for (BehaviorModule** b = m_behaviors; *b; ++b)
 	{
 		(*b)->onObjectCreated();
 	}
-
-	m_numTriggerAreasActive = 0;
-	m_enteredOrExitedFrame = 0;
-	m_isSelectable = tt->isKindOf(KINDOF_SELECTABLE);
-
-	m_healthBoxOffset.zero();// this is used for units that are amorphous, like angry mob
+	*/
 
 	//Modules have now been completely created!
 	m_modulesReady = true;
+}
 
-	TheRadar->addObject( this );
+//MODDD - new method to run a different form of init calls on loading this object from a saved game
+void Object::loadInit()
+{
+	// Touching 'objectInitLockLocal' won't be necessary for loading objects from a saved game.
+	// See 'isInitLocked()' - the global 'objectInitLock' will always be enough
+	const ThingTemplate *tt = getTemplate();
+	// This needs to happen before creating a drawable ('TheGameLogic->sendObjectCreated').
+	createBehaviorModules_PRE(tt);
 
-	// register the object with the GameLogic
-	TheGameLogic->registerObject( this );
+	// Use the default neutral player (#0) as the placeholder team for some of setup I guess.
+	setTeam(ThePlayerList->getNeutralPlayer()->getDefaultTeam());
 
-	//disable occlusion for some time after object is created to allow them to exit the factory/building.
-	m_safeOcclusionFrame = TheGameLogic->getFrame()+tt->getOcclusionDelay();
+	createBehaviorModules(tt);
+	callModuleOnObjectCreated();
+	initHookup();
+	runCreateModules();
 
-
-	m_soleHealingBenefactorID = INVALID_ID; ///< who is the only other object that can give me this non-stacking heal benefit?
-	m_soleHealingBenefactorExpirationFrame = 0; ///< on what frame can I accept healing (thus to switch) from a new benefactor
-
-	// TheSuperHackers @bugfix Mauller/xezon 02/08/2025 sendObjectCreated needs calling before CreateModule's are initialized to prevent drawable related crashes
-	// This predominantly occurs with the veterancy create module when the chemical suits upgrade is unlocked as it tries to set the terrain decal.
-
-	// emit message announcing object's creation
-	TheGameLogic->sendObjectCreated( this );
-
+	constructorEnd();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -523,11 +884,20 @@ void Object::initObject()
 //	m_weaponSet.updateWeaponSet(this);
 //	m_weaponBonusCondition = 0;
 
+	//MODDD - moved
+	/*
 	for (int i = 0; i < WEAPONSLOT_COUNT; ++i)
 		m_lastWeaponCondition[i] = WSF_INVALID;
+	*/
 
-	// If I have a valid team assigned, I can run through my Upgrade modules with his flags
-	updateUpgradeModules();
+	//MODDD - don't run this while starting a game / loading a saved game.
+	// This will be called at the end when all objects are present.
+	/*
+	if (!isInitLocked()) {
+		// If I have a valid team assigned, I can run through my Upgrade modules with his flags
+		updateUpgradeModules();
+	}
+	*/
 
 	//If the player has battle plans (America Strategy Center), then apply those bonuses
 	//to this object if applicable. Internally it validates certain kinds of objects.
@@ -546,6 +916,8 @@ void Object::initObject()
 	}
 
 
+	//MODDD - moved
+	/*
 	//For each special power module that we have, add it's type to the specialpower bits. This is
 	//for optimal access later.
 	for (BehaviorModule** m = m_behaviors; *m; ++m)
@@ -560,6 +932,7 @@ void Object::initObject()
 			SET_SPECIALPOWERMASK( m_specialPowerBits, spTemplate->getSpecialPowerType() );
 		}
 	}
+	*/
 
 	// Kris -- All missiles must be projectiles! This is the perfect place to assert them!
 	// srj: yes, but only in debug...
@@ -588,6 +961,13 @@ void Object::initObject()
 	{
 		ThePlayerList->getNeutralPlayer()->getAcademyStats()->recordMine();
 	}
+}
+
+Bool Object::isInitLocked() {
+	return objectInitLock || this->objectInitLockLocal;
+}
+Bool Object::isInitLockedHard() {
+	return objectInitLock;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -625,6 +1005,10 @@ Object::~Object()
 	// Object's set of these persist for the life of the object.
 	deleteInstance(m_partitionLastLook);
 	m_partitionLastLook = NULL;
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	deleteInstance(m_partitionLastLookJammable);
+	m_partitionLastLookJammable = NULL;
+#endif
 	deleteInstance(m_partitionRevealAllLastLook);
 	m_partitionRevealAllLastLook = NULL;
 	deleteInstance(m_partitionLastShroud);
@@ -865,6 +1249,11 @@ void Object::setOrRestoreTeam( Team* team, Bool restoring )
 
 	Team* oldTeam = m_team;
 
+	//MODDD - NOTE - I think below didn't consider the case of transferring an object to a different team
+	// within the same player. Some parts of 'Player::becomingTeamMember' might not make sense if the
+	// object isn't moving between different players. Not sure when/if that happens though, computer players and
+	// map scripts maybe?
+
 	// Before Switch //////////////////////////
 	if (m_team)
 	{
@@ -986,6 +1375,18 @@ Bool Object::checkAndDetonateBoobyTrap(const Object *victim)
 //=============================================================================
 void Object::setStatus( ObjectStatusMaskType objectStatus, Bool set )
 {
+	//MODDD - NOTE. There are subtle difference between checking bits on different things:
+	// *m_status: resulting state of the bit, can't decide whether it was changed by this call alone.
+	// *objectStatus: intent for changing the bit, '1' always means 'I want to change this' per 'set' above (turn on/off).
+	//                But the bit can be changed to a state it is already at: can't decide a change here either.
+	// *statusChanged: NEW. Records bits actually changed by applying the 'objectStatus' param to the existing status.
+	//                 Like the 'oldStatus.test(...) != m_status.test(...)' seen in the script as-is.
+	// Notice how 'm_status == oldStatus' is enough to end this call early, yet there are 'objectStatus.test' calls as-is.
+	// That means if even one completely unrelated bit changed but the intent to make a change to a bit that produced no
+	// change is the case, the logic for that still runs just because the intent to change it is there... Doesn't seem right.
+	// So, going to make everything below use checks on 'statusChanged' instead, should stop some cases of logic
+	// running even if a bit didn't actually change.
+
 	ObjectStatusMaskType oldStatus = m_status;
 
 	if (set)
@@ -993,57 +1394,77 @@ void Object::setStatus( ObjectStatusMaskType objectStatus, Bool set )
 	else
 		m_status.clear( objectStatus );
 
-	if (m_status != oldStatus)
+	//MODDD - Inverted condition to return early instead of surrounding the rest of the method.
+	if (m_status == oldStatus) {
+		return;
+	}
+
+	//MODDD - NEW
+	ObjectStatusMaskType statusChanged;
+	statusChanged = m_status.getExclusiveOr(oldStatus);
+
+	if( set && statusChanged.test( OBJECT_STATUS_REPULSOR ) && m_repulsorHelper != NULL )
 	{
-		if( set && objectStatus.test( OBJECT_STATUS_REPULSOR ) && m_repulsorHelper != NULL )
+		// Damaged repulsable civilians scare (repulse) other civs, but only
+		// for a short amount of time... use the repulsor helper to turn off repulsion shortly.
+		m_repulsorHelper->sleepUntil(TheGameLogic->getFrame() + 2*LOGICFRAMES_PER_SECOND);
+	}
+
+	//MODDD - replaced block
+	// ---
+	/*
+	if( objectStatus.test( OBJECT_STATUS_STEALTHED ) || objectStatus.test( OBJECT_STATUS_DETECTED ) || objectStatus.test( OBJECT_STATUS_DISGUISED ) )
+	{
+		//Kris: Aug 20, 2003
+		//When any of the three key status bits for stealth go on or off, then handle partition updates for vision.
+		if( getTemplate()->getShroudRevealToAllRange() > 0.0f )
 		{
-			// Damaged repulsable civilians scare (repulse) other civs, but only
-			// for a short amount of time... use the repulsor helper to turn off repulsion shortly.
-			m_repulsorHelper->sleepUntil(TheGameLogic->getFrame() + 2*LOGICFRAMES_PER_SECOND);
+			handlePartitionCellMaintenance();
 		}
-
-		if( objectStatus.test( OBJECT_STATUS_STEALTHED ) || objectStatus.test( OBJECT_STATUS_DETECTED ) || objectStatus.test( OBJECT_STATUS_DISGUISED ) )
-		{
-			//Kris: Aug 20, 2003
-			//When any of the three key status bits for stealth go on or off, then handle partition updates for vision.
-			if( getTemplate()->getShroudRevealToAllRange() > 0.0f )
-			{
-				handlePartitionCellMaintenance();
-			}
+	}
+	*/
+	// ---
+	//MODDD - 'm_visionSpiedMask != 0' check is new.
+	// If anyone is currently spying on this unit (or, trying to), need to re-run fog-of-war-update in case
+	// the unit's visibility changed and would affect what the spy ability should reveal.
+	if (getTemplate()->getShroudRevealToAllRange() > 0.0f || m_visionSpiedMask != 0) {
+		if (statusChanged.test( OBJECT_STATUS_STEALTHED ) || statusChanged.test( OBJECT_STATUS_DETECTED ) || statusChanged.test( OBJECT_STATUS_DISGUISED )) {
+			handlePartitionCellMaintenance();
 		}
+	}
+	// ---
 
+	// when an object's construction status changes, it needs to have its partition data updated,
+	// in order to maintain the shroud correctly.
+	//MODDD - replacing the condition with something simpler now possible
+	//if( m_status.test( OBJECT_STATUS_UNDER_CONSTRUCTION ) != oldStatus.test( OBJECT_STATUS_UNDER_CONSTRUCTION ) )
+	if ( statusChanged.test( OBJECT_STATUS_UNDER_CONSTRUCTION ) )
+	{
 
-		// when an object's construction status changes, it needs to have its partition data updated,
-		// in order to maintain the shroud correctly.
-		if( m_status.test( OBJECT_STATUS_UNDER_CONSTRUCTION ) != oldStatus.test( OBJECT_STATUS_UNDER_CONSTRUCTION ) )
+		// CHECK FOR MINES, AND DETONATE THEM NOW
+		ObjectIterator *iter =
+				ThePartitionManager->iteratePotentialCollisions( getPosition(), getGeometryInfo(), getOrientation() );
+		MemoryPoolObjectHolder hold( iter );
+		Object *them;
+		for( them = iter->first(); them; them = iter->next() )
 		{
-
-			// CHECK FOR MINES, AND DETONATE THEM NOW
-			ObjectIterator *iter =
-					ThePartitionManager->iteratePotentialCollisions( getPosition(), getGeometryInfo(), getOrientation() );
-			MemoryPoolObjectHolder hold( iter );
-			Object *them;
-			for( them = iter->first(); them; them = iter->next() )
+			if (them->isKindOf( KINDOF_MINE ))
 			{
-				if (them->isKindOf( KINDOF_MINE ))
+				//DETONATE ANY ENEMY MINES, OR DELETE FRIENDLY ONES
+				Relationship r = getRelationship(them);
+				if (r == ENEMIES)
 				{
-					//DETONATE ANY ENEMY MINES, OR DELETE FRIENDLY ONES
-					Relationship r = getRelationship(them);
-					if (r == ENEMIES)
-					{
-						them->kill(); // detonate mine
-					}
-					else
-					{
-						TheGameLogic->destroyObject(them);
-					}
+					them->kill(); // detonate mine
+				}
+				else
+				{
+					TheGameLogic->destroyObject(them);
 				}
 			}
-
-			if (m_partitionData)
-				m_partitionData->makeDirty(true);
 		}
 
+		if (m_partitionData)
+			m_partitionData->makeDirty(true);
 	}
 
 }
@@ -1127,7 +1548,9 @@ Bool Object::canCrushOrSquish(Object *otherObj, CrushSquishTestType testType ) c
 	UnsignedByte crusherLevel = getCrusherLevel();
 
 	// order matters: we want to know if I consider it to be an ally, not vice versa
-	if( getRelationship( otherObj ) == ALLIES )
+	//MODDD - just don't be enemies instead?  Running over civilians seems like a bad idea don'cha think?
+	//if( getRelationship( otherObj ) == ALLIES )
+	if( getRelationship( otherObj ) != ENEMIES )
 	{
 		//Friends don't let friends crush friends.
 		return false;
@@ -1499,6 +1922,9 @@ void Object::fireCurrentWeapon(Object *target)
 		if (reloaded)
 			releaseWeaponLock(LOCKED_TEMPORARILY);	// release any temporary locks.
 
+		//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+		HandleWeaponFireQueuedOCL(weapon, this);
+
 		friend_setUndetectedDefector( FALSE );// My secret is out
 	}
 }
@@ -1520,6 +1946,9 @@ void Object::fireCurrentWeapon(const Coord3D* pos)
 			m_firingTracker->shotFired(weapon, INVALID_ID);
 		if (reloaded)
 			releaseWeaponLock(LOCKED_TEMPORARILY);	// release any temporary locks.
+
+		//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'.
+		HandleWeaponFireQueuedOCL(weapon, this);
 
 		friend_setUndetectedDefector( FALSE );// My secret is out
 	}
@@ -2068,6 +2497,65 @@ Bool Object::isHero(void) const
 	return isKindOf( KINDOF_HERO );
 }
 
+//MODDD - NEW. Convenience feature for whether this is visible to the enemy (not stealthed, or detected if so)
+// and not trying to fool them (not disguised). Note that a detected disguised unit immediately loses the disguise.
+// Doesn't consider defection stuff, not meaningfully testable for me.
+//-------------------------------------------------------------------------------------------------
+Bool Object::isRecognizableToEnemy() const {
+	// Not necessary, checking the status should be enough
+	//StealthUpdate* stealth = getStealth();
+	if ((!testStatus( OBJECT_STATUS_STEALTHED ) && !testStatus( OBJECT_STATUS_DISGUISED )) || testStatus( OBJECT_STATUS_DETECTED )) {
+		// Clear to the enemy - not trying to hide or my cover's blown
+		return TRUE;
+	}
+	return FALSE;
+}
+
+//MODDD - NEW. Similar to 'isClearingMines', but for whether the attached object is capable of clearing mines,
+// like a 'MINESWEEPER'-type/kindof if that existed.
+// For broad mod stability, it's best to leave retail checks (ex: attacking with a minesweeping weapon at the
+// moment) since it's hard to determine whether a unit is a minesweeper across all mods.
+//----------------------------------------------------------------------------------------
+Bool Object::canClearMines() const
+{
+	// Check to see if there is a weapon set for the 'MINE_CLEARING_DETAIL' condition.
+	// Every minesweeper in retail (dozers/workers) has this.
+
+	//MODDD - TODO, maybe.
+	// Any other checks, for any weapons with a certain criteria?
+	// * Weapons with 'AntiMine = Yes': weapon->getAntiMask() & WEAPON_ANTI_MINE
+	// * Weapons with 'DamageType = DISARM': weapon->getDamageType() == DAMAGE_DISARM
+	// For these, it's probably better to cache them
+	// to a variable per object and update on receiving an upgrade (ex: upgradable minesweeping ability?).
+	// Only count a weapon if you have the potential to equip it - needing an upgrade & lacking it, no.
+	// Lastly, could argue that this deeper weapons check should replace the weapon condition check above entirely.
+	// Could it be tricked by not having any weapons that touch mines? No idea.
+
+	WeaponSetFlags flags;
+	flags.set( WEAPONSET_MINE_CLEARING_DETAIL );
+	return getTemplate()->hasAnyWeaponTemplateSetWithFlags( flags );
+}
+
+//MODDD - moved from AIUpdate. Only ever used member fields from the 'Object' class so may as well be here.
+//----------------------------------------------------------------------------------------
+Bool Object::isClearingMines() const
+{
+	// if we are attacking with an anti-mine weapon, we are clearing mines, regardless
+	// of our target.
+
+	if (!testStatus(OBJECT_STATUS_IS_ATTACKING))
+		return FALSE;
+
+	const Weapon* weapon = getCurrentWeapon();
+	if (!weapon)
+		return FALSE;
+
+	if ((weapon->getAntiMask() & WEAPON_ANTI_MINE) == 0)
+		return FALSE;
+
+	return TRUE;
+}
+
 //-------------------------------------------------------------------------------------------------
 void Object::setReceivingDifficultyBonus(Bool receive)
 {
@@ -2095,6 +2583,23 @@ void Object::setDisabledUntil( DisabledType type, UnsignedInt frame )
 	if( type < 0 || type >= DISABLED_COUNT )
 	{
 		DEBUG_CRASH( ("Invalid disabled type value %d specified -- doesn't not exist!", type ) );
+		return;
+	}
+
+	//MODDD - why was something like this missing from here?
+	// 'clearDisabled' having the check, runs on re-enabling something presumably, but no there disabling it in the first place is baffling to me.
+	// ... you get weird side effects if this is added, so don't do this yet at least. Maybe its mask isn't completley accurate/filled-out
+	// if it was never expected to be used here, somehow.
+	/*
+	if (!isDisabledByType(type)) {
+		return;
+	}
+	*/
+	
+	//MODDD - bugfix, minor. If this is a building under construction and this is a low-power disable, ignore it.
+	// No sense in making the low-power effect come on during construction when #1: it isn't drawing power yet,
+	// and #2: new construction made while low power doesn't show the low-power status (inconsistent).
+	if ( type == DISABLED_UNDERPOWERED && testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION) ) {
 		return;
 	}
 
@@ -2210,6 +2715,9 @@ void Object::setDisabledUntil( DisabledType type, UnsignedInt frame )
 				xpTracker->setExperienceAndLevel( 0, FALSE );
 			}
 			//Not only that, but it also loses any healing bonuses it may have earned in its prior life
+			//MODDD - TODO - this check seems a bit crude. What if the object already had 'AutoHealBehavior'
+			// regardless of veterency? Perhaps a loop through all behavior modules to see which are currently
+			// enabled & depend on above-0 veterency would be more robust?
 			{
 				static const NameKeyType key_AutoHealBehavior = NAMEKEY("AutoHealBehavior");
 				AutoHealBehavior* autoHeal = (AutoHealBehavior*)(findUpdateModule( key_AutoHealBehavior ));
@@ -2253,6 +2761,7 @@ UnsignedInt Object::getDisabledUntil( DisabledType type ) const
 	return 0;
 }
 
+//MODDD - TODO. why does this have a 'Bool' return type? Does anything refer to the return from this?
 //-------------------------------------------------------------------------------------------------
 Bool Object::clearDisabled( DisabledType type )
 {
@@ -2265,6 +2774,16 @@ Bool Object::clearDisabled( DisabledType type )
 	if (!isDisabledByType(type)) {
 		return FALSE;
 	}
+
+	//MODDD - bugfix, minor. If this is a building under construction and this is a low-power disable, ignore it.
+	// No sense in making the low-power effect come on during construction when #1: it isn't drawing power yet,
+	// and #2: new construction made while low power doesn't show the low-power status (inconsistent).
+	// Wait, shouldn't need this if this combo of factors is never possible in the first place now (same check in 'setDisabledUntil' now)
+	/*
+	if ( type == DISABLED_UNDERPOWERED && testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION) ) {
+		return FALSE;
+	}
+	*/
 
 	if( type == DISABLED_UNDERPOWERED || type == DISABLED_EMP || type == DISABLED_SUBDUED || type == DISABLED_HACKED )
 	{
@@ -2827,6 +3346,9 @@ void Object::friend_prepareForMapBoundaryAdjust(void)
 	// The whole PartitionManager and all of the Looker data is about to be blown away,
 	// so forget what I think I have done
 	m_partitionLastLook->reset();
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	m_partitionLastLookJammable->reset();
+#endif
 	m_partitionRevealAllLastLook->reset();
 	m_partitionLastShroud->reset();
 
@@ -2934,17 +3456,29 @@ void Object::scoreTheKill( const Object *victim )
 	/// @todo Multiplayer score hook location?
 
 	Player* victimController = victim->getControllingPlayer();
+
+	//MODDD - I disagree with this point. The player should be 'neutral' to neutral/civilian/etc. players, as in
+	// making units attack them requires CTRL'ing (very deliberate) = no experience anyway from a relationship
+	// check further down.  'isPlayableSide' as a requirement doesn't seem necessary and just opens up rare cases
+	// of odd behavior from map setup, such as using the Civilian player to avoid despawning sides in retail.
+	// TLDR: commenting out this - rely on the ENEMIES relationship check below
+	/*
 	// if the other player is not a playable side (i.e. they are civilian, observer, whatever)
 	// we shouldn't count the kill.
 	if (victimController->isPlayableSide() == FALSE)
 	{
 		return;
 	}
-
+	*/
 
 	if ( victim->isKindOf( KINDOF_IGNORED_IN_GUI ) )
 		return;
 
+	//MODDD - check from further down moved to here. under-construction victims shouldn't have some things
+	// blocked and some things not - block everything for consistency.
+	if (victim->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION)) {
+		return;
+	}
 
 	Player* controller = getControllingPlayer();
 
@@ -2957,11 +3491,15 @@ void Object::scoreTheKill( const Object *victim )
 	if (r != ENEMIES)
 		return;
 
+	//MODDD - I really don't think this check is needed. A player's relationship with themselves is
+	// always ALLIES so this point wouldn't be reached if 'controller == victimController' were the case.
+	/*
 	// Don't count kills that I do on my own buildings or units, cause thats just silly.
 	if (controller == victimController)
 	{
 		return;
 	}
+	*/
 
 	if (controller)
 	{
@@ -2973,12 +3511,15 @@ void Object::scoreTheKill( const Object *victim )
 	// Now handle experience, if we can gain any
 	if (m_experienceTracker && m_experienceTracker->isAcceptingExperiencePoints())
 	{
+		//MODDD - moving the under-construction check to earlier, why even give experience to the player if the
+		// unit is denied?
+		// ---
 		// srj sez: per dustin, no experience (et al) for killing things under construction.
-		if (!victim->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION))
-		{
+		//if (!victim->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION))
+		//{
 			Int experienceValue = victim->getExperienceTracker()->getExperienceValue( this );
 			getExperienceTracker()->addExperiencePoints( experienceValue );
-		}
+		//}
 	}
 }
 
@@ -3011,7 +3552,7 @@ void Object::friend_bindToDrawable( Drawable *draw )
 		{
 			if (TheGlobalData->m_forceModelsToFollowTimeOfDay)
 			{
-				set.set(MODELCONDITION_NIGHT, (TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT) ? 1 : 0);
+				set.set(MODELCONDITION_NIGHT, (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT) ? 1 : 0);
 			}
 
 			if (TheGlobalData->m_forceModelsToFollowWeather)
@@ -3104,7 +3645,11 @@ Bool Object::hasAnySpecialPower() const
 //-------------------------------------------------------------------------------------------------
 void Object::onVeterancyLevelChanged( VeterancyLevel oldLevel, VeterancyLevel newLevel, Bool provideFeedback )
 {
-	updateUpgradeModules();
+	//MODDD - don't run this while starting a game / loading a saved game.
+	// This will be called at the end when all objects are present.
+	if (!isInitLocked()) {
+		updateUpgradeModules();
+	}
 
 	const UpgradeTemplate* up = TheUpgradeCenter->findVeterancyUpgrade(newLevel);
 	if (up)
@@ -3814,6 +4359,22 @@ void Object::friend_adjustPowerForPlayer( Bool incoming )
 	}
 }
 
+//MODDD - specify a player
+void Object::friend_adjustPowerForPlayer( Player* player, Bool incoming )
+{
+	if (isDisabled() && getTemplate()->getEnergyProduction() > 0)
+	{
+		// Disabledness only affects Producers, not Consumers.
+		return;
+	}
+
+	if (incoming) {
+		player->getEnergy()->objectEnteringInfluence(this);
+	} else {
+		player->getEnergy()->objectLeavingInfluence(this);
+	}
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4024,9 +4585,9 @@ void Object::crc( Xfer *xfer )
 //-------------------------------------------------------------------------------------------------
 void Object::xfer( Xfer *xfer )
 {
-
 	// version
-	const XferVersion currentVersion = 9;
+	//MODDD - was 9
+	const XferVersion currentVersion = 10;
 	XferVersion version = currentVersion;
 	xfer->xferVersion( &version, currentVersion );
 
@@ -4037,27 +4598,50 @@ void Object::xfer( Xfer *xfer )
 
 	DEBUG_LOG(("Xfer Object %s id=%d",getTemplate()->getName().str(),id));
 
+	if (xfer->getXferMode() == XFER_LOAD) {
+		loadInit();
+	}
+
+	/*
+	if( xfer->getXferMode() == XFER_LOAD ) {
+		TheGameLogic->sendObjectCreated( this );
+		ThePartitionManager->registerObject( this );
+	}
+	*/
+
+	//MODDD - instead of applying the matrix or pos/orientation now, wait for the drawable to be made since
+	// it can be affected by this if present. It's possible for this call to lead to an exepction if the drawable
+	// hasn't been made:
+	//   setTransformationMatrix -> reactToTransformChange -> OpenContain::containReactToTransformChange > GarrisonContain::redeployOccupants() -> matchObjectsToGarrisonPoints() -> positionObjectsAtStationGarrisonPoints() -> loadStatioGarrisonPoints() -> <expects 'draw' to be non-null>
+	// In fact just wait for the team too, no harm in that.
+	Matrix3D mtx;
+	Coord3D pos;
+	Real orientation;
 	if (version >= 7)
 	{
-		Matrix3D mtx = *getTransformMatrix();
+		mtx = *getTransformMatrix();
 		xfer->xferMatrix3D(&mtx);
-		setTransformMatrix(&mtx);
+		//setTransformMatrix(&mtx);
 	}
 	else
 	{
 		// object position
-		Coord3D pos = *getPosition();
+		pos = *getPosition();
 		xfer->xferCoord3D( &pos );
-		setPosition( &pos );
+		//setPosition( &pos );
 
 		// orientation
-		Real orientation = getOrientation();
+		orientation = getOrientation();
 		xfer->xferReal( &orientation );
-		setOrientation( orientation );
+		//setOrientation( orientation );
 	}
 
 	// team
-	TeamID teamID = m_team ? m_team->getID() : TEAM_ID_INVALID;
+	//MODDD - check xfer mode, only saving needs to bother getting the existing ID
+	TeamID teamID;
+	if (xfer->getXferMode() == XFER_SAVE) {
+		teamID = m_team ? m_team->getID() : TEAM_ID_INVALID;
+	}
 	xfer->xferUser( &teamID, sizeof( TeamID ) );
 	// DON'T set the team yet; must wait till we read our status bits,
 	// since setTeam can affect the player's power usage, but that could
@@ -4070,14 +4654,28 @@ void Object::xfer( Xfer *xfer )
 	xfer->xferObjectID( &m_builderID );
 
 	// drawable id
-	Drawable *draw = getDrawable();
-	DrawableID drawableID = draw ? draw->getID() : INVALID_DRAWABLE_ID;
+	//MODDD - only need to get the drawableID from the current drawable on saving a game
+	DrawableID drawableID;
+	if( xfer->getXferMode() == XFER_SAVE) {
+		Drawable *draw = getDrawable();
+		drawableID = draw ? draw->getID() : INVALID_DRAWABLE_ID;
+	}
 	xfer->xferDrawableID( &drawableID );
+
 	if( xfer->getXferMode() == XFER_LOAD )
 	{
-
 		// change the ID of the drawable attached to be the same ID as it was when it was saved
+		//MODDD - would just making the drawable here work out?
+		// Nope! This requires behaviors to be initialized - do this after that
+		Drawable *draw = getDrawable();
 		draw->setID( drawableID );
+		//TheGameLogic->sendObjectCreated( this, drawableID );
+
+		//ThePartitionManager->registerObject( this );
+
+
+		//MODDD - version & objetID moved to 'xferPre' so that they can be handled before 'baseConstructor' when
+		// loading a game
 
 	}
 
@@ -4124,15 +4722,36 @@ void Object::xfer( Xfer *xfer )
 			DEBUG_CRASH(( "Object::xfer - Unable to load team" ));
 			throw SC_INVALID_DATA;
 		}
+
 		const Bool restoring = true;
 		setOrRestoreTeam( team, restoring );
+
+		//MODDD - Run these since having a drawable and having the correct team assigned
+		if (version >= 7)
+		{
+			setTransformMatrix(&mtx);
+		}
+		else
+		{
+			setPosition( &pos );
+			setOrientation( orientation );
+		}
+
+		constructorOnActualTeamAssigned();
 	}
 
+	//MODDD - NOTE - is 'setGeometryInfo' ever called to reach anything that should happen in response to this being loaded in?
 	// geometry info
 	xfer->xferSnapshot( &m_geometryInfo );
 
 	// sighting info, last look - must be saved cause we save PartitionCell::m_shroudLevel
 	xfer->xferSnapshot( m_partitionLastLook );
+	
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	if ( version >= 10 ) {
+	  xfer->xferSnapshot( m_partitionLastLookJammable );
+	}
+#endif
 
 	if( version >= 9 )
 		xfer->xferSnapshot( m_partitionRevealAllLastLook );
@@ -4186,8 +4805,11 @@ void Object::xfer( Xfer *xfer )
 	// radar data ... when loading, we will remove all objects from the radar and let
 	// the radar system load itself as a separate chunk of data from the save file
 	//
+	//MODDD - is this still necessary? Wouldn't it be possible to just not add this obj to the radar in the constructor when loading?
+	/*
 	if( xfer->getXferMode() == XFER_LOAD && m_radarData )
 		TheRadar->removeObject( this );
+	*/
 
 	// experience tracker
 	xfer->xferSnapshot( m_experienceTracker );
@@ -4278,12 +4900,33 @@ void Object::xfer( Xfer *xfer )
 		xfer->xferCoord2D(&m_formationOffset);
 	}
 
+	if( xfer->getXferMode() == XFER_LOAD ) {
+		//tt = (const ThingTemplate *) tt->getFinalOverride();
+		//MODDD - do this here!  And is 'getFinalOverride' needed?
+		// I fail to see how 'getTemplate' reaches the current final override implicitly at any point.
+		//////createBehaviorModules((const ThingTemplate *)getTemplate()->getFinalOverride());
+	}
+
 	// module count
+	//MODDD - NOTE - this 'moduleCount' is overwritten when loading a game, since xfer methods read instead of write.
+	// Using this for validation makes more sense in that case.
 	UnsignedShort moduleCount = 0;
 	for (BehaviorModule** b = m_behaviors; *b; ++b)
 		++moduleCount;
 
-	xfer->xferUnsignedShort( &moduleCount );
+	//MODDD - per the above comment
+	if( xfer->getXferMode() == XFER_SAVE ) {
+		xfer->xferUnsignedShort( &moduleCount );
+	} else {
+		UnsignedShort moduleCountIn;
+		xfer->xferUnsignedShort( &moduleCountIn );
+		if (moduleCountIn != moduleCount) {
+			DEBUG_CRASH(("Object::xfer - Module count from loaded game (%d) disagrees with the actual value (%d).", moduleCountIn, moduleCount));
+		}
+		// Preserve retail behavior to overwrite 'moduleCount' with what's loaded in any case?
+		moduleCount = moduleCountIn;
+	}
+
 	AsciiString moduleIdentifier;
 	BehaviorModule *module;
 	if( xfer->getXferMode() == XFER_SAVE )
@@ -4373,6 +5016,18 @@ void Object::xfer( Xfer *xfer )
 
 	}
 
+	/*
+	//MODDD - does here work, or before the module-load stuff above instead?
+	if( xfer->getXferMode() == XFER_LOAD ) {
+		const Bool restoring = true;
+		Team* team = m_team;
+		m_team = NULL;
+		setOrRestoreTeam( team, restoring );
+
+		// Create a drawable for this Object
+		TheGameLogic->sendObjectCreated( this, drawableID );
+	}
+	*/
 
 	if ( version >= 3 )
 	{
@@ -4419,7 +5074,13 @@ void Object::xfer( Xfer *xfer )
 
 		xfer->xferAsciiString(&m_commandSetStringOverride);
 
-		xfer->xferBool(&m_modulesReady);
+		//MODDD - no sense in saving 'm_modulesReady'. It is always 'true' at the end of the Object constructor,
+		// both as-is and with my object-init changes. And, loading a game would have already re-run basic object
+		// init before this point (set modulesReady to 'false' -> 'true').
+		// (added condition).
+		if (version <= 9) {
+			xfer->xferBool(&m_modulesReady);
+		}
 	}
 
 	if (version >= 5)
@@ -4498,7 +5159,10 @@ void Object::giveUpgrade( const UpgradeTemplate *upgradeT )
 		// iterate through all the upgrade modules of this object and call the method to
 		// grant a new upgrade
 		//
-		updateUpgradeModules();
+		//MODDD
+		if (!isInitLocked()) {
+			updateUpgradeModules();
+		}
 	}
 }
 
@@ -4520,13 +5184,22 @@ void Object::removeUpgrade( const UpgradeTemplate *upgradeT )
 	}
 }
 
+//MODDD - TODO - rename this to 'onChangeOwner'.
+// This is an event called on any transfer from player to player, such as depiloting (goes to neutral),
+// hijacking, capture (buildings) or map script (probably?).
 //-------------------------------------------------------------------------------------------------
 /** Central point for onCapture logic */
 //-------------------------------------------------------------------------------------------------
 void Object::onCapture( Player *oldOwner, Player *newOwner )
 {
-	// Everybody dhills when they captured so they don't keep doing something the new player might not want him to be doing
-	if( getAIUpdateInterface()  &&  (oldOwner != newOwner) )
+	//MODDD - Added. See notes in a bugfix further down, but I feel that 'onCapture' running when oldOwner &
+	// newOwner match doesn't make much sense. What impact is this supposed to have?
+	if (oldOwner == newOwner) {
+		return;
+	}
+
+	// Everybody idles when captured so they don't keep doing something the new player might not want him to be doing
+	if( getAIUpdateInterface() /* &&  (oldOwner != newOwner)*/ )
 		getAIUpdateInterface()->aiIdle(CMD_FROM_AI);
 
 	// this gets the new owner some points
@@ -4549,9 +5222,22 @@ void Object::onCapture( Player *oldOwner, Player *newOwner )
 	clearScriptStatus(OBJECT_STATUS_SCRIPT_UNSELLABLE);
 
 	// mark the command bar to redraw
-	TheControlBar->markUIDirty();
+	//MODDD - bugfix for the AI becoming unresponsive during some repeated AI calls (map script?) to recruit
+	// a team over and over, somehow causing 'onCapture' to be called & reach here for a noticeable amount of time.
+	// Causes some UI interactions like spending promotion points (purchasing a science) to be ignored or delayed
+	// until the repeated 'markUIDirty' calling frames stop.
+	// Also see the new early return added further above. That will probably block this circumstance altogether,
+	// though it still feels weird letting units changed between unrelated sides dirty every player's UI.
+	// ---
+	//TheControlBar->markUIDirty();
+	// ---
+	Player* localPlayer = ThePlayerList->getLocalPlayer();
+	if (oldOwner == localPlayer || newOwner == localPlayer) {
+		// Including 'oldOwner' in case losing this unit/building has an effect too.
+		TheControlBar->markUIDirty();
+	}
 
-	if (oldOwner!=newOwner && newOwner->isSkirmishAIPlayer()) {
+	if (/*oldOwner!=newOwner &&*/ newOwner->isSkirmishAIPlayer()) {
 		// The skirmish ai doesn't know what to do with captured faction buildings except sell them.
 		if (isFactionStructure()) {
 			TheBuildAssistant->sellObject( this );
@@ -4844,7 +5530,8 @@ void Object::addValue()
 	if( getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ) || isEffectivelyDead() || getShroudClearingRange() <= 0.0f )
 		return;
 
-
+	//MODDD - adjusted for type change
+	/*
 	m_partitionLastValue->m_where = *getPosition();
 	m_partitionLastValue->m_data = getTemplate()->friend_getBuildCost();
 
@@ -4857,6 +5544,20 @@ void Object::addValue()
 																		 m_partitionLastValue->m_data,
 																		 m_partitionLastValue->m_forWhom
 																		 );
+	*/
+	const Coord3D* pos = getPosition();
+	m_partitionLastValue->xCenter = pos->x;
+	m_partitionLastValue->yCenter = pos->y;
+	m_partitionLastValue->threatOrValue = getTemplate()->friend_getBuildCost();
+	m_partitionLastValue->m_forWhom = getControllingPlayer()->getPlayerMask();
+	m_partitionLastValue->radius = getVisionRange();	// we are valuable all the way to where we can target.
+	ThePartitionManager->doValueAffect(m_partitionLastValue->xCenter,
+																		 m_partitionLastValue->yCenter,
+																		 m_partitionLastValue->radius,
+																		 m_partitionLastValue->threatOrValue,
+																		 m_partitionLastValue->m_forWhom
+																		 );
+
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -4869,10 +5570,19 @@ void Object::removeValue()
 		return;
 	}
 
+	//MODDD - adjusted for type change
+	/*
 	ThePartitionManager->undoValueAffect(m_partitionLastValue->m_where.x,
 																			 m_partitionLastValue->m_where.y,
 																			 m_partitionLastValue->m_howFar,
 																			 m_partitionLastValue->m_data,
+																			 m_partitionLastValue->m_forWhom
+																			);
+	*/
+	ThePartitionManager->undoValueAffect(m_partitionLastValue->xCenter,
+																			 m_partitionLastValue->yCenter,
+																			 m_partitionLastValue->radius,
+																			 m_partitionLastValue->threatOrValue,
 																			 m_partitionLastValue->m_forWhom
 																			);
 
@@ -4895,6 +5605,8 @@ void Object::addThreat()
 		return;
 
 
+	//MODDD - adjusted for type change
+	/*
 	m_partitionLastThreat->m_where = *getPosition();
 	m_partitionLastThreat->m_data = getTemplate()->getThreatValue();
 
@@ -4905,6 +5617,21 @@ void Object::addThreat()
 																			m_partitionLastThreat->m_where.y,
 																			m_partitionLastThreat->m_howFar,
 																			m_partitionLastThreat->m_data,
+																			m_partitionLastThreat->m_forWhom
+																		 );
+  */
+	const Coord3D* pos = getPosition();
+	m_partitionLastThreat->xCenter = pos->x;
+	m_partitionLastThreat->yCenter = pos->y;
+	m_partitionLastThreat->threatOrValue = getTemplate()->getThreatValue();
+
+	m_partitionLastThreat->m_forWhom = getControllingPlayer()->getPlayerMask();
+	m_partitionLastThreat->radius = getVisionRange();	// we are threatening all the way to where we can target.
+
+	ThePartitionManager->doThreatAffect(m_partitionLastThreat->xCenter,
+																			m_partitionLastThreat->yCenter,
+																			m_partitionLastThreat->radius,
+																			m_partitionLastThreat->threatOrValue,
 																			m_partitionLastThreat->m_forWhom
 																		 );
 }
@@ -4919,17 +5646,168 @@ void Object::removeThreat()
 		return;
 	}
 
+	//MODDD - adjusted for type change
+	/*
 	ThePartitionManager->undoThreatAffect(m_partitionLastThreat->m_where.x,
 																			  m_partitionLastThreat->m_where.y,
 																			  m_partitionLastThreat->m_howFar,
 																				m_partitionLastThreat->m_data,
 																			  m_partitionLastThreat->m_forWhom
 																			 );
+	*/
+	ThePartitionManager->undoThreatAffect(m_partitionLastThreat->xCenter,
+																			  m_partitionLastThreat->yCenter,
+																			  m_partitionLastThreat->radius,
+																				m_partitionLastThreat->threatOrValue,
+																			  m_partitionLastThreat->m_forWhom
+																			 );
 
 	m_partitionLastThreat->reset();
 }
 
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+Real Object::determineNonJammableShroudClearingRange( Real shroudClearingRangeJammable )
+{
+	// Check to see if this unit detects stealth and isn't aircraft. If so, 100% of its sight range overrides jamming from shroud-clearing objects.
+	// Otherwise, it depends on the original shroud clearing range (SCR), and being a ground unit or aircraft.
+	// (Aircraft stealth detectors will use the better ground unit logic instead)
+	// Ground units:
+	// < 150   : no effect
+	// 150 to 200: 150 + 0.8 * (SCR - 150) -> 150 to 190
+	// 200 to 300: 190 + 0.65 * (SCR - 200) -> 190 to 255
+	// 300 to 400: 255 + 0.45 * (SCR - 300) -> 255 to 300
+	// 400 to 500: 300 + 0.20 * (SCR - 400) -> 300 to 320
+	// > 500: capped at 320
+	// ---
+	// Aircraft:
+	// < 150   : no effect
+	// 150 to 200: 150 + 0.7 * (SCR - 150) -> 150 to 185
+	// 200 to 300: 185 + 0.55 * (SCR - 200) -> 185 to 240
+	// 300 to 400: 240 + 0.35 * (SCR - 300) -> 240 to 275
+	// 400 to 500: 275 + 0.10 * (SCR - 400) -> 275 to 285
+	// > 500: capped at 285
 
+	// Any shroud clearing from spy vision or otherwise large scale map reveals from special powers (ex:
+	// china statellite hack two in Contra) should not clear deliberately shrouded areas.
+	// Dynamic shroud clearing (a module) is used by some units themselves or as a temporary object placed
+	// at their origin (hack two in Contra w/ huge shroud clearing range) or special power induced (spy
+	// satellite). Huge-range shroud clearing should never detect stealth, so its unjammable range will be
+	// greatly clipped like anything else. Spy vision shroud clearing is handled elsewhere (always jammable).
+
+	Bool isStealthDetector = (getStealthDetector() && getStealthDetector()->isSDEnabled());
+	Bool useGroundLogic;
+	if(!isUsingAirborneLocomotor()) {
+		if (isStealthDetector) {
+			// ground stealth detector - 100% of the sight range is unjammable
+			return shroudClearingRangeJammable;
+		} else {
+			useGroundLogic = TRUE;
+		}
+	} else {
+		if (isStealthDetector) {
+			// airborne stealth detector - use better ground logic
+			useGroundLogic = TRUE;
+		} else {
+			useGroundLogic = FALSE;
+		}
+	}
+
+	if (useGroundLogic) {
+		if (shroudClearingRangeJammable < 150) {
+			return shroudClearingRangeJammable;
+		}
+		if (shroudClearingRangeJammable < 200) {
+			return 150 + 0.80f * (shroudClearingRangeJammable - 150);
+		}
+		if (shroudClearingRangeJammable < 300) {
+			return 190 + 0.65f * (shroudClearingRangeJammable - 200);
+		}
+		if (shroudClearingRangeJammable < 400) {
+			return 255 + 0.45f * (shroudClearingRangeJammable - 300);
+		}
+		if (shroudClearingRangeJammable < 500) {
+			return 300 + 0.20f * (shroudClearingRangeJammable - 400);
+		}
+		// Otherwise
+		return 320;
+	} else {
+		if (shroudClearingRangeJammable < 150) {
+			return shroudClearingRangeJammable;
+		}
+		if (shroudClearingRangeJammable < 200) {
+			return 150 + 0.70f * (shroudClearingRangeJammable - 150);
+		}
+		if (shroudClearingRangeJammable < 300) {
+			return 185 + 0.55f * (shroudClearingRangeJammable - 200);
+		}
+		if (shroudClearingRangeJammable < 400) {
+			return 240 + 0.35f * (shroudClearingRangeJammable - 300);
+		}
+		if (shroudClearingRangeJammable < 500) {
+			return 275 + 0.10f * (shroudClearingRangeJammable - 400);
+		}
+		// Otherwise
+		return 285;
+	}
+}
+#endif
+
+//MODDD
+// Check to see what of 'm_visionSpiedMask' should be returned for anything spying on this unit.
+// Undetected stealthed units shouldn't be spied on, they are unfairly revealed by clearing shroud/fog around them.
+// Disguised units can be treated as the player they're disguised as instead (disguised successfully as something
+// the spying player is still enemies with -> stays spied on, otherwise no, that would be unfairly revealed like stealth).
+PlayerMaskType Object::getFilteredVisionSpiedMask() {
+	Bool stealthed = (testStatus( OBJECT_STATUS_STEALTHED ) && !testStatus( OBJECT_STATUS_DETECTED ) && !testStatus( OBJECT_STATUS_DISGUISED ) );
+	if (stealthed) {
+		// not possible to spy on this
+		return 0;
+	}
+
+	if (!testStatus( OBJECT_STATUS_DISGUISED )) {
+		// Not cloaked, not disguised - go ahead
+		return m_visionSpiedMask;
+	}
+	
+	// Disguised. If disguised as an enemy, count as spy-able
+	// (leaving out 'isKindOf( KINDOF_DISGUISER )', I imagine having the DISGUISED status implies this)
+	// ---
+	// MODDD - TODO
+	// I imagine it would be proper for the spy vision update to check for a unit being disguised/undetected
+	// and use the player the unit is disguised as for diplomacy (enemies with that or not) and re-evaluating
+	// the unit's own 'visionSpiedMask' on changing the disguise.
+	// A lot of weapons-related logic, or AI for whether to target something, might also be able to be simplified
+	// in that case too.
+	// ---
+	StealthUpdate *update = getStealth();
+	if( update /*&& update->isDisguised()*/ )
+	{
+		Player *disguisedAsPlayer = ThePlayerList->getNthPlayer( update->getDisguisedPlayerIndex() );
+		if (disguisedAsPlayer) {
+			// Go through the players that want to spy on this disguised unit (enemies of it, regardless of the disguise).
+			// Only let them spy on it if it is disguised as an enemy unit, on a per-player basis.
+			// Note that detected disguised units lose the disguise (would not even reach this far -> already spied on w/o filtering).
+			PlayerMaskType finalVisionSpiedMask = 0;
+			// Create a clone of 'visionSpiedMask' so that it isn't affected directly by 'getEachPlayerFromMask'
+			PlayerMaskType visionSpiedMaskClone = m_visionSpiedMask;
+			Player *owningPlayer =  this->getControllingPlayer();
+			while( visionSpiedMaskClone )
+			{
+				// Two checks here that must both pass:
+				// * spying player is not allies with this unit's player, regardless of the disguise (allies share intel & know of diguised ally units to not think they're enemies)
+				// * spying player is enemies with what this unit is diguised as's player (meant to be fooled by the diguise -> includes this as an enemy to spy on)
+				Player *spyingPlayer = ThePlayerList->getEachPlayerFromMask(visionSpiedMaskClone);
+				if (spyingPlayer->getRelationship( owningPlayer->getDefaultTeam() ) != ALLIES && spyingPlayer->getRelationship( disguisedAsPlayer->getDefaultTeam() ) == ENEMIES) {
+					finalVisionSpiedMask |= spyingPlayer->getPlayerMask();
+				}
+			}
+			return finalVisionSpiedMask;
+		}
+	}
+
+	// ??? Issue telling what this disguised object is disguised as?
+	return m_visionSpiedMask;
+}
 
 //-------------------------------------------------------------------------------------------------
 void Object::look()
@@ -4966,6 +5844,7 @@ void Object::look()
 			{
 				PlayerMaskType lookingMask = 0;
 
+#if !PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
 				if ( isKindOf(KINDOF_REVEAL_TO_ALL) )
 				{
 					lookingMask = PLAYERMASK_ALL;
@@ -4987,13 +5866,77 @@ void Object::look()
 					// Other players can also be looking through our eyes.
 					lookingMask |= m_visionSpiedMask;
 				}
+#else
+				// Separate player mask for neutral/enemy players that happen to be looking at the object, either through
+				// being KINDOF_REVEAL_TO_ALL or a player using a spy ability.
+				// Any area viewed this way shouldn't unshroud jammed territory. 
+				PlayerMaskType lookingMaskJammable = 0;
+				//MODDD - NOTE - should a 'reveal-to-all' effect from this KINDOF be ignored if the object is cloaked, disguised, or actively jamming?
+				// I don't think retail nor mods use this very often so it's hard to tell what the best assumption is.
+				Bool revealToAll = isKindOf(KINDOF_REVEAL_TO_ALL);
+				for( Int currentIndex = ThePlayerList->getPlayerCount() - 1; currentIndex >=0; currentIndex-- )
+				{
+					const Player *currentPlayer = ThePlayerList->getNthPlayer( currentIndex );
+
+					// Build mask of of allies who can see me.
+					// This is the Object-centric game level that cares
+					if( getControllingPlayer()->getRelationship( currentPlayer->getDefaultTeam() ) == ALLIES )
+					{
+						lookingMask |= currentPlayer->getPlayerMask();
+					}
+					else if (revealToAll)
+					{
+						// Show to the other players, but don't unshroud the shroud made by jammers
+						lookingMaskJammable |= currentPlayer->getPlayerMask();
+					}
+				}
+
+				// If not already handled by 'revealToAll' (already shown to all players regardless of 'SpiedMask'),
+				// allow the remaining non-allied players using a spy ability, but don't unshroud jammed territory.
+				if (!revealToAll) {
+					//MODDD - replacing retail behavior. Don't allow cloaked units, etc. to be revealed during spy abilities
+					// (or rather, clear fog/shroud).
+					lookingMaskJammable = getFilteredVisionSpiedMask();
+				}
+#endif
+
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+			  // The base shroud clearing range will be partially jammable, and some distance inward unjammable.
+				// That is, moving units closer to a jammed area will eventually unshroud it.
+				Real shroudClearingRangeJammable = shroudClearingRange;
+				shroudClearingRange = determineNonJammableShroudClearingRange(shroudClearingRangeJammable);
+#endif
 
 				Coord3D pos = *getPosition();
 				ThePartitionManager->doShroudReveal( pos.x, pos.y, shroudClearingRange, lookingMask );
+				
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+				// Both the current player/allies and enemies using spy abilities get the jammable form
+				PlayerMaskType lookingMaskTotal = lookingMask | lookingMaskJammable;
+				ThePartitionManager->doShroudRevealJammable( pos.x, pos.y, shroudClearingRangeJammable, lookingMaskTotal );
+#endif
 
+				//MODDD - adjusted for type change
+				/*
 				m_partitionLastLook->m_where = pos;
 				m_partitionLastLook->m_forWhom = lookingMask;
-				m_partitionLastLook->m_howFar = getShroudClearingRange();
+				m_partitionLastLook->m_howFar = shroudClearingRange;
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+				m_partitionLastLookJammable->m_where = pos;
+				m_partitionLastLookJammable->m_forWhom = lookingMaskTotal;
+				m_partitionLastLookJammable->m_howFar = shroudClearingRangeJammable;
+#endif
+				*/
+				m_partitionLastLook->xCenter = pos.x;
+				m_partitionLastLook->yCenter = pos.y;
+				m_partitionLastLook->m_forWhom = lookingMask;
+				m_partitionLastLook->radius = shroudClearingRange;
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+				m_partitionLastLookJammable->xCenter = pos.x;
+				m_partitionLastLookJammable->yCenter = pos.y;
+				m_partitionLastLookJammable->m_forWhom = lookingMaskTotal;
+				m_partitionLastLookJammable->radius = shroudClearingRangeJammable;
+#endif
 
 	//			DEBUG_LOG(( "A %s looks at %f, %f for %x at range %f",
 	//									getTemplate()->getName().str(),
@@ -5019,10 +5962,25 @@ void Object::look()
 				{
 					Coord3D pos = *getPosition();
 					PlayerMaskType thePlayersMask = ThePlayerList->getPlayersWithRelationship( getControllingPlayer()->getPlayerIndex(), ALLOW_ENEMIES | ALLOW_NEUTRAL );
+
+
+#if !PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
 					ThePartitionManager->doShroudReveal( pos.x, pos.y, shroudRevealToAllRange, thePlayersMask );
+#else
+					// Reveal-all for superweapons is 100% jammable.
+					// But you better believe enemies will be suspicious of anywhere jammed when the timer shows up.
+					ThePartitionManager->doShroudRevealJammable( pos.x, pos.y, shroudRevealToAllRange, thePlayersMask );
+#endif
+					//MODDD - adjusted for type change
+					/*
 					m_partitionRevealAllLastLook->m_where = pos;
 					m_partitionRevealAllLastLook->m_forWhom = thePlayersMask;
 					m_partitionRevealAllLastLook->m_howFar = shroudRevealToAllRange;
+					*/
+					m_partitionRevealAllLastLook->xCenter = pos.x;
+					m_partitionRevealAllLastLook->yCenter = pos.y;
+					m_partitionRevealAllLastLook->m_forWhom = thePlayersMask;
+					m_partitionRevealAllLastLook->radius = shroudRevealToAllRange;
 				}
 			}
 		}
@@ -5039,11 +5997,33 @@ void Object::unlook()
 		return;
 	}
 
+	//MODDD - adjusted for type change
+	/*
 	ThePartitionManager->queueUndoShroudReveal(m_partitionLastLook->m_where.x,
 																				m_partitionLastLook->m_where.y,
 																				m_partitionLastLook->m_howFar,
 																				m_partitionLastLook->m_forWhom
 																				);
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	ThePartitionManager->queueUndoShroudRevealJammable(m_partitionLastLookJammable->m_where.x,
+																				m_partitionLastLookJammable->m_where.y,
+																				m_partitionLastLookJammable->m_howFar,
+																				m_partitionLastLookJammable->m_forWhom
+																				);
+#endif
+	*/
+	ThePartitionManager->queueUndoShroudReveal(m_partitionLastLook->xCenter,
+																				m_partitionLastLook->yCenter,
+																				m_partitionLastLook->radius,
+																				m_partitionLastLook->m_forWhom
+																				);
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	ThePartitionManager->queueUndoShroudRevealJammable(m_partitionLastLookJammable->xCenter,
+																				m_partitionLastLookJammable->yCenter,
+																				m_partitionLastLookJammable->radius,
+																				m_partitionLastLookJammable->m_forWhom
+																				);
+#endif
 
 //			DEBUG_LOG(( "A %s queues an unlook at %f, %f for %x at range %f",
 //									getTemplate()->getName().str(),
@@ -5054,14 +6034,35 @@ void Object::unlook()
 //									));
 
 	m_partitionLastLook->reset();
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	// is this even necessary?
+	m_partitionLastLookJammable->reset();
+#endif
 
 	if( !m_partitionRevealAllLastLook->isInvalid() )
 	{
+#if !PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+		//MODDD - adjusted for type change
+		/*
 		ThePartitionManager->queueUndoShroudReveal(m_partitionRevealAllLastLook->m_where.x,
 																				m_partitionRevealAllLastLook->m_where.y,
 																				m_partitionRevealAllLastLook->m_howFar,
 																				m_partitionRevealAllLastLook->m_forWhom
 																				);
+		*/
+		ThePartitionManager->queueUndoShroudReveal(m_partitionRevealAllLastLook->xCenter,
+																				m_partitionRevealAllLastLook->yCenter,
+																				m_partitionRevealAllLastLook->radius,
+																				m_partitionRevealAllLastLook->m_forWhom
+																				);
+#else
+		// Changed to the 'Jammable' variant to correspond to the change elsewhere
+		ThePartitionManager->queueUndoShroudRevealJammable(m_partitionRevealAllLastLook->xCenter,
+																				m_partitionRevealAllLastLook->yCenter,
+																				m_partitionRevealAllLastLook->radius,
+																				m_partitionRevealAllLastLook->m_forWhom
+																				);
+#endif
 
 		m_partitionRevealAllLastLook->reset();
 	}
@@ -5098,9 +6099,16 @@ void Object::shroud()
 				getShroudRange(),
 				shroudingMask);
 
+			//MODDD - adjusted for type change
+			/*
 			m_partitionLastShroud->m_where = pos;
 			m_partitionLastShroud->m_forWhom = shroudingMask;
 			m_partitionLastShroud->m_howFar = getShroudRange();
+			*/
+			m_partitionLastShroud->xCenter = pos.x;
+			m_partitionLastShroud->yCenter = pos.y;
+			m_partitionLastShroud->m_forWhom = shroudingMask;
+			m_partitionLastShroud->radius = getShroudRange();
 		}
 	}
 }
@@ -5115,9 +6123,16 @@ void Object::unshroud()
 		return;
 	}
 
+	//MODDD - adjusted for type change
+	/*
 	ThePartitionManager->undoShroudCover(m_partitionLastShroud->m_where.x,
 		m_partitionLastShroud->m_where.y,
 		m_partitionLastShroud->m_howFar,
+		m_partitionLastShroud->m_forWhom);
+	*/
+	ThePartitionManager->undoShroudCover(m_partitionLastShroud->xCenter,
+		m_partitionLastShroud->yCenter,
+		m_partitionLastShroud->radius,
 		m_partitionLastShroud->m_forWhom);
 
 	m_partitionLastShroud->reset();
@@ -5184,6 +6199,14 @@ Real Object::getShroudClearingRange() const
 //-------------------------------------------------------------------------------------------------
 void Object::setShroudClearingRange( Real newShroudClearingRange )
 {
+	//MODDD - BUG NOTE.
+	// If a mod adds shroud generation (none in the retail game), and vehicles are produced that start with it, the bottom-left corner
+	// of the map gets shrouded. This is clear in the retail game where the shroud persists instead of following the jammer.
+	// This is hard to notice now, but you could argue still should never be the case to begin with. Apparently even the 'monkey patch'
+	// below did not prevent this issue.
+	// Ensuring an object only runs module behavior when it's given a starting position might work.
+	// There's also mine effects appearing at the bottom-left corner of the map too sometimes (origin 0,0,0). Anything else popping up there as setup side effects?
+
  	if( newShroudClearingRange != m_shroudClearingRange )
  	{
  		// The partition cell refresh is a slow operation, so only do it if you really have to.

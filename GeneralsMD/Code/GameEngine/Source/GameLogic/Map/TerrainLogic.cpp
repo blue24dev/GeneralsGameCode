@@ -2560,6 +2560,12 @@ void TerrainLogic::findAxisAlignedBoundingRect( const WaterHandle *water, Region
 
 }
 
+//MODDD
+#if 0
+#include "Common/Player.h"
+#include "Common/PlayerList.h"
+#endif
+
 void TerrainLogic::setActiveBoundary(Int newActiveBoundary)
 {
 	if (newActiveBoundary < 0 || newActiveBoundary >= m_boundaries.size()) {
@@ -2584,6 +2590,48 @@ void TerrainLogic::setActiveBoundary(Int newActiveBoundary)
 
 	//Store fogged cells
 	ThePartitionManager->storeFoggedCells(partitionStore, TRUE);
+
+	// (doing something else instead of this - see W3DDisplay.cpp: 'W3DDisplay::clearShroud' for the new approach)
+#if 0
+	//MODDD - if this preprocessor const is on, need to re-shroud whatever part of the map was permanently
+	// revealed so it doesn't show up past the playable map area.
+	if (m_boundaries[newActiveBoundary].x < m_boundaries[m_activeBoundary].x || m_boundaries[newActiveBoundary].y < m_boundaries[m_activeBoundary].y) {
+		// translate boundary to cell count
+		Real cellSizeInv = ThePartitionManager->getCellSizeInv();
+
+		Real curBoundaryExtentX = m_boundaries[m_activeBoundary].x*MAP_XY_FACTOR;
+		Real curBoundaryExtentY = m_boundaries[m_activeBoundary].y*MAP_XY_FACTOR;
+		Int curBoundaryCellCountX = REAL_TO_INT_CEIL(curBoundaryExtentX * cellSizeInv);
+		Int curBoundaryCellCountY = REAL_TO_INT_CEIL(curBoundaryExtentY * cellSizeInv);
+
+		Real newBoundaryExtentX = m_boundaries[newActiveBoundary].x*MAP_XY_FACTOR;
+		Real newBoundaryExtentY = m_boundaries[newActiveBoundary].y*MAP_XY_FACTOR;
+		Int newBoundaryCellCountX = REAL_TO_INT_CEIL(newBoundaryExtentX * cellSizeInv);
+		Int newBoundaryCellCountY = REAL_TO_INT_CEIL(newBoundaryExtentY * cellSizeInv);
+		newBoundaryCellCountY = newBoundaryCellCountY;
+
+		Int minBoundaryCellCountX = min(curBoundaryCellCountX, newBoundaryCellCountX);
+		Int minBoundaryCellCountY = min(curBoundaryCellCountY, newBoundaryCellCountY);
+
+		for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
+			Player* player = ThePlayerList->getNthPlayer(i);
+			if (player && player->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(player->getPlayerNameKey()).getLength() != 0) {
+				if (m_boundaries[newActiveBoundary].x < m_boundaries[m_activeBoundary].x) {
+					ThePartitionManager->shroudRangeCells(newBoundaryCellCountX, 0, curBoundaryCellCountX, minBoundaryCellCountY, player->getPlayerIndex());
+				}
+
+				if (m_boundaries[newActiveBoundary].y < m_boundaries[m_activeBoundary].y) {
+					ThePartitionManager->shroudRangeCells(0, newBoundaryCellCountY, minBoundaryCellCountX, curBoundaryCellCountY, player->getPlayerIndex());
+				}
+
+				// Get the top-right area excluded by the above sweeps (only happens if the map shrinks in both directions).
+				if (m_boundaries[newActiveBoundary].x < m_boundaries[m_activeBoundary].x && m_boundaries[newActiveBoundary].y < m_boundaries[m_activeBoundary].y) {
+					ThePartitionManager->shroudRangeCells(newBoundaryCellCountX, newBoundaryCellCountY, curBoundaryCellCountX, curBoundaryCellCountY, player->getPlayerIndex());
+				}
+			}
+		}
+	}
+#endif
 
 	m_activeBoundary = newActiveBoundary;
 
@@ -2630,6 +2678,18 @@ void TerrainLogic::setActiveBoundary(Int newActiveBoundary)
 	//TheAI->pathfinder()->newMap();
 
 	TheTacticalView->forceCameraConstraintRecalc();
+}
+
+//MODDD
+// Note that you might want to check that 'getBoundaryCount()' is above 0 first
+const ICoord2D& TerrainLogic::getActiveBoundaryInfo(void)
+{
+	return m_boundaries[m_activeBoundary];
+}
+//MODDD
+Int TerrainLogic::getBoundaryCount(void)
+{
+	return m_boundaries.size();
 }
 
 // ------------------------------------------------------------------------------------------------

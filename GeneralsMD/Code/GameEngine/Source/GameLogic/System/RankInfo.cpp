@@ -71,6 +71,7 @@ void RankInfoStore::reset()
 	for (RankInfoVec::iterator it = m_rankInfos.begin(); it != m_rankInfos.end(); /*++it*/)
 	{
 		RankInfo* ri = *it;
+		//MODDD - iterator wasn't iterated if 'ri' is null
 		if (ri)
 		{
 			Overridable* temp = ri->deleteOverrides();
@@ -78,12 +79,19 @@ void RankInfoStore::reset()
 			{
 				DEBUG_CRASH(("hmm, should not be possible for RankInfo"));
 				it = m_rankInfos.erase(it);
+				//MODDD
+				continue;
 			}
+			//MODDD
+			/*
 			else
 			{
 				++it;
 			}
+			*/
 		}
+		//MODDD
+		++it;
 	}
 }
 

@@ -565,11 +565,14 @@ void LocomotorStore::reset()
 {
 	// cleanup overrides.
 	LocomotorTemplateMap::iterator it;
+
 	for (it = m_locomotorTemplates.begin(); it != m_locomotorTemplates.end(); ) {
 		Overridable *locoTemp = it->second->deleteOverrides();
 		if (!locoTemp)
 		{
-			m_locomotorTemplates.erase(it);
+			//MODDD - prepending with 'it =' so that the iterator changes to what occurs after the erased iterator.
+			// Otherwise this risks leaving 'it' as garbage memory.
+			it = m_locomotorTemplates.erase(it);
 		}
 		else
 		{
@@ -1218,11 +1221,9 @@ void Locomotor::moveTowardsPositionTreads(Object* obj, PhysicsBehavior *physics,
 
 	if (getFlag(IS_BRAKING))
 	{
-		m_brakingFactor = slowDownDist/onPathDistToGoal;
-		m_brakingFactor *= m_brakingFactor;
-		if (m_brakingFactor>MAX_BRAKING_FACTOR) {
-			m_brakingFactor = MAX_BRAKING_FACTOR;
-		}
+		//MODDD - avoid a divde-by-0 issue that makes 'm_brakingFactor' NaN
+		m_brakingFactor = determineBrakingFactor(onPathDistToGoal, slowDownDist);
+
 		if (slowDownDist>onPathDistToGoal) {
 			goalSpeed = actualSpeed-getBraking();
 			if (goalSpeed<0.0f) goalSpeed= 0.0f;
@@ -1426,12 +1427,12 @@ void Locomotor::moveTowardsPositionWheels(Object* obj, PhysicsBehavior *physics,
 
 	if (getFlag(IS_BRAKING))
 	{
-		m_brakingFactor = slowDownDist/onPathDistToGoal;
-		m_brakingFactor *= m_brakingFactor;
-		if (m_brakingFactor>MAX_BRAKING_FACTOR) {
-			m_brakingFactor = MAX_BRAKING_FACTOR;
-		}
+		//MODDD - avoid a divde-by-0 issue that makes 'm_brakingFactor' NaN
+		// ...actually, simplifying this to the last line that just forced braking factor to 1.0.
+		// This overrides any other results, so, not sure why a near clone of treads-braking-logic was here besides that line.
+		//m_brakingFactor = determineBrakingFactor(onPathDistToGoal, slowDownDist);
 		m_brakingFactor = 1.0f;
+
 		if (slowDownDist>onPathDistToGoal) {
 			goalSpeed = actualSpeed-getBraking();
 			if (goalSpeed<0.0f) goalSpeed= 0.0f;
@@ -1603,6 +1604,25 @@ Real Locomotor::calcMinTurnRadius(BodyDamageType condition, Real* timeToTravelTh
 	return minTurnRadius;
 }
 
+//MODDD - helper to avoid a divde-by-0 issue that makes 'm_brakingFactor' NaN
+Real Locomotor::determineBrakingFactor(Real onPathDistToGoal, Real slowDownDist) {
+	Real brakingFactorDivisor;
+	if (onPathDistToGoal > 0.0001) {
+		brakingFactorDivisor = onPathDistToGoal;
+	} else if (slowDownDist < 0.05) {
+		brakingFactorDivisor = 0.0001;
+	} else {
+		return MAX_BRAKING_FACTOR;
+	}
+
+	// Divisor comes from 'brakingFactorDivisor' instead of always being 'onPathDistToGoal'
+	Real brakingFactor = slowDownDist/brakingFactorDivisor;
+	brakingFactor *= brakingFactor;
+	if (brakingFactor>MAX_BRAKING_FACTOR) {
+		brakingFactor = MAX_BRAKING_FACTOR;
+	}
+	return brakingFactor;
+}
 
 //-------------------------------------------------------------------------------------------------
 void Locomotor::moveTowardsPositionLegs(Object* obj, PhysicsBehavior *physics, const Coord3D& goalPos, Real onPathDistToGoal, Real desiredSpeed)

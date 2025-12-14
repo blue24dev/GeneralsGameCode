@@ -131,7 +131,10 @@ protected:
 
 protected:
 	enum { MAX_PROPS=4000};
-	enum {MAX_TYPES = 64};
+
+	//MODDD - increasing the limit, it's not 2003 anymore!
+	//enum {MAX_TYPES = 64};
+	enum {MAX_TYPES = 512};
 
 	TProp	m_props[MAX_PROPS];			///< The prop buffer.  All props are stored here.
 	Int			m_numProps;						///< Number of props in m_props.

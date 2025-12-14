@@ -594,7 +594,10 @@ Bool MapCache::addMap(
 				AsciiString tempdisplayname;
 				tempdisplayname = fname.reverseFind('\\') + 1;
 				(*this)[lowerFname].m_displayName.translate(tempdisplayname);
+				//MODDD
+#if !MAP_NAME_PLAYER_COUNT_EXTENSION_ALWAYS
 				if (md.m_numPlayers >= 2)
+#endif
 				{
 					UnicodeString extension;
 					extension.format(L" (%d)", md.m_numPlayers);
@@ -605,7 +608,10 @@ Bool MapCache::addMap(
 			{
 				// official maps with name tags
 				(*this)[lowerFname].m_displayName = TheGameText->fetch(md.m_nameLookupTag);
+				//MODDD
+#if !MAP_NAME_PLAYER_COUNT_EXTENSION_ALWAYS
 				if (md.m_numPlayers >= 2)
+#endif
 				{
 					UnicodeString extension;
 					extension.format(L" (%d)", md.m_numPlayers);
@@ -656,7 +662,10 @@ Bool MapCache::addMap(
 		AsciiString tempdisplayname;
 		tempdisplayname = fname.reverseFind('\\') + 1;
 		md.m_displayName.translate(tempdisplayname);
+		//MODDD
+#if !MAP_NAME_PLAYER_COUNT_EXTENSION_ALWAYS
 		if (md.m_numPlayers >= 2)
+#endif
 		{
 			UnicodeString extension;
 			extension.format(L" (%d)", md.m_numPlayers);
@@ -672,7 +681,10 @@ Bool MapCache::addMap(
 		stringFileName.concat("\\map.str");
 		TheGameText->initMapStringFile(stringFileName);
 		md.m_displayName = TheGameText->fetch(nameLookupTag);
+		//MODDD
+#if !MAP_NAME_PLAYER_COUNT_EXTENSION_ALWAYS
 		if (md.m_numPlayers >= 2)
+#endif
 		{
 			UnicodeString extension;
 			extension.format(L" (%d)", md.m_numPlayers);
@@ -723,20 +735,74 @@ Bool WouldMapTransfer( const AsciiString& mapName )
 
 //-------------------------------------------------------------------------------------------------
 typedef std::set<UnicodeString, rts::less_than_nocase<UnicodeString> > MapNameList;
-typedef std::map<UnicodeString, AsciiString> MapDisplayToFileNameList;
 
-static void buildMapListForNumPlayers(MapNameList &outMapNames, MapDisplayToFileNameList &outFileNames, Int numPlayers)
+//MODDD - replacing this
+//typedef std::map<UnicodeString, AsciiString> MapDisplayToFileNameList;
+typedef std::map<UnicodeString, std::pair<AsciiString, MapMetaData>, rts::less_than_nocase<UnicodeString>> MapDisplayToMapInfoList;
+typedef MapDisplayToMapInfoList::const_iterator MapDisplayToMapInfoListIter;
+
+//MODDD - changed params
+//static void buildMapListForNumPlayers(MapNameList &outMapNames, MapDisplayToFileNameList &outFileNames, Int numPlayers)
+static void buildMapListForNumPlayers(MapDisplayToMapInfoList& nameToMapList, Int numPlayers, const AsciiString& mapDir, MapFilterMode mapFilterMode)
 {
 	MapCache::iterator it = TheMapCache->begin();
 
 	for (; it != TheMapCache->end(); ++it)
 	{
+		//MODDD - added 'mapPath'
+		const AsciiString &mapPath = it->first;
 		const MapMetaData &mapData = it->second;
-		if (mapData.m_numPlayers == numPlayers)
+
+		if (mapData.m_numPlayers != numPlayers)
 		{
-			outMapNames.insert(it->second.m_displayName);
-			outFileNames[it->second.m_displayName] = it->first;
+			continue;
 		}
+
+		//MODDD - moving checks done later to here.
+		// This has the added benefit of not letting maps with the same display name between the system & use map groups
+		// causing only one map to show up between the two (persistently missing a map for a very strange reason).
+		// ----------------------------------------------------------------------------------------------------------------------------------
+		Bool passedMapFilter;
+		if (mapFilterMode == MAPFILTER_SINGLEPLAYER_ONLY) {
+			passedMapFilter = !mapData.m_isMultiplayer;
+		} else if(mapFilterMode == MAPFILTER_MULTIPLAYER_ONLY) {
+			passedMapFilter = mapData.m_isMultiplayer;
+		} else {
+			// anything - allow all
+			passedMapFilter = TRUE;
+		}
+
+		if (!(mapPath.startsWithNoCase(mapDir.str()) && passedMapFilter && !mapData.m_displayName.isEmpty())) {
+			continue;
+		}
+
+		// ----------------------------------------------------------------------------------------------------------------------------------
+		//MODDD - adding a check for a display name occuring multiple times in the list.
+		// If so, add a "(#)" to the name (ex: "(2)") so that later maps don't entirely overshadow earlier ones
+		// with the same display name. Using a 'std::multimap' could also work (multiple values for the same key),
+		// or even a map of strings to vectors, but if we're changing the display name to force it to be unique
+		// this soon I doubt there would be any added benefit.
+		// Also, not sure if there's any rhyme or reason to the order of maps with the same display name, may be
+		// based off file name order. Not high priority.
+		// Lastly, keep in mind that this modded display name doesn't actually show up. The one from the map item
+		// itself (mapData.m_displayName) is still used in the end, so you would just see 2 items with the same exact
+		// display name in-game. Up to you to know which is which.
+		UnicodeString finalDisplayName = mapData.m_displayName;
+		int uniqueAddOn = 2;
+		while (nameToMapList.contains(finalDisplayName)) {
+			// Each time this loop runs, try a different display name from 'mapData.m_displayName'
+			finalDisplayName.format(L"%s (%d)", mapData.m_displayName.str(), uniqueAddOn);
+			++uniqueAddOn;
+		}
+		//MODDD - why not map to the 'display-name:map-metadata' pair directly instead of having to use the
+		// display name to find the pair?
+		/*
+		outMapNames.insert(finalDisplayName);
+		outFileNames[finalDisplayName] = mapPath;
+		*/
+		nameToMapList[finalDisplayName] = (*it);
+
+		DEBUG_LOG(("Adding map '%s' to temp cache.", mapPath.str()));
 	}
 }
 
@@ -757,7 +823,9 @@ struct MapListBoxData
 		, maxBrutalImage(NULL)
 		, mapToSelect()
 		, selectionIndex(0) // always select *something*
-		, isMultiplayer(false)
+		//MODDD
+		//, isMultiplayer(false)
+		, mapFilterMode(MAPFILTER_ANY)
 	{
 	}
 
@@ -774,7 +842,9 @@ struct MapListBoxData
 	const Image *maxBrutalImage;
 	AsciiString mapToSelect;
 	Int selectionIndex;
-	Bool isMultiplayer;
+	//MODDD
+	//Bool isMultiplayer;
+	MapFilterMode mapFilterMode;
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -784,7 +854,9 @@ static Bool addMapToMapListbox(
 	const AsciiString& mapName,
 	const MapMetaData& mapMetaData)
 {
-	const Bool mapOk = mapName.startsWithNoCase(mapDir.str()) && lbData.isMultiplayer == mapMetaData.m_isMultiplayer && !mapMetaData.m_displayName.isEmpty();
+	//MODDD - check is handled earlier now
+	//const Bool mapOk = mapName.startsWithNoCase(mapDir.str()) && lbData.isMultiplayer == mapMetaData.m_isMultiplayer && !mapMetaData.m_displayName.isEmpty();
+	const Bool mapOk = true;
 
 	if (mapOk)
 	{
@@ -858,21 +930,32 @@ static Bool addMapToMapListbox(
 }
 
 //-------------------------------------------------------------------------------------------------
+//MODDD - changed params
+/*
 static Bool addMapCollectionToMapListbox(
 	MapListBoxData& lbData,
 	const AsciiString& mapDir,
 	const MapNameList& mapNames,
 	const MapDisplayToFileNameList& fileNames)
+*/
+static Bool addMapCollectionToMapListbox(
+	MapListBoxData& lbData,
+	const AsciiString& mapDir,
+	const MapDisplayToMapInfoList& nameToMapList)
 {
-	MapNameList::const_iterator mapNameIt = mapNames.begin();
-
-	for (; mapNameIt != mapNames.end(); ++mapNameIt)
+	//MODDD - Adjusting loop header
+	//MapNameList::const_iterator mapNameIt = mapNames.begin();
+	//for (; mapNameIt != mapNames.end(); ++mapNameIt)
+	MapDisplayToMapInfoListIter nameToMapList_it = nameToMapList.begin();
+	for (; nameToMapList_it != nameToMapList.end(); ++nameToMapList_it)
 	{
-		MapDisplayToFileNameList::const_iterator fileNameIt = fileNames.find(*mapNameIt);
-		DEBUG_ASSERTCRASH(fileNameIt != fileNames.end(), ("Map '%s' not found in file names map", mapNameIt->str()));
+		//MODDD - nope
+		//MapDisplayToFileNameList::const_iterator fileNameIt = fileNames.find(*mapNameIt);
+		//DEBUG_ASSERTCRASH(fileNameIt != fileNames.end(), ("Map '%s' not found in file names map", mapNameIt->str()));
+		//const AsciiString& asciiMapName = fileNameIt->second;
 
-		const AsciiString& asciiMapName = fileNameIt->second;
-
+		//MODDD - disagree, just show them
+		/*
 #if RTS_ZEROHOUR
 		//Patch 1.03 -- Purposely filter out these broken maps that exist in Generals.
 		if( !asciiMapName.compare( "maps\\armored fury\\armored fury.map" ) ||
@@ -881,9 +964,18 @@ static Bool addMapCollectionToMapListbox(
 			continue;
 		}
 #endif
+		*/
 
-		MapCache::iterator mapCacheIt = TheMapCache->find(asciiMapName);
-		DEBUG_ASSERTCRASH(mapCacheIt != TheMapCache->end(), ("Map '%s' not found in map cache.", mapNameIt->str()));
+		//MODDD - nope
+		//MapCache::iterator mapCacheIt = TheMapCache->find(asciiMapName);
+		//DEBUG_ASSERTCRASH(mapCacheIt != TheMapCache->end(), ("Map '%s' not found in map cache.", mapNameIt->str()));
+
+		// Keep in mind that display name can already be found in 'md.m_displayName'
+		//const UnicodeString &displayName = nameToMapList_it->first;
+		const std::pair<AsciiString, MapMetaData>& mapCacheElement = nameToMapList_it->second;
+		const AsciiString &mapPath = mapCacheElement.first;
+		const MapMetaData &md = mapCacheElement.second;
+
 		/*
 		if (it != TheMapCache->end())
 		{
@@ -893,7 +985,7 @@ static Bool addMapCollectionToMapListbox(
 		}
 		*/
 
-		const Bool ok = addMapToMapListbox(lbData, mapDir, mapCacheIt->first, mapCacheIt->second);
+		const Bool ok = addMapToMapListbox(lbData, mapDir, mapPath, md);
 
 		if (!ok)
 			return false;
@@ -905,7 +997,9 @@ static Bool addMapCollectionToMapListbox(
 //-------------------------------------------------------------------------------------------------
 /** Load the listbox with all the map files available to play */
 //-------------------------------------------------------------------------------------------------
-Int populateMapListboxNoReset( GameWindow *listbox, Bool useSystemMaps, Bool isMultiplayer, AsciiString mapToSelect )
+//MODDD - old overload uses the new param, 'isMultiplayer' -> 'mapFilterMode'
+//Int populateMapListboxNoReset( GameWindow *listbox, Bool useSystemMaps, Bool isMultiplayer, AsciiString mapToSelect )
+Int populateMapListboxNoReset( GameWindow *listbox, Bool useSystemMaps, MapFilterMode mapFilterMode, AsciiString mapToSelect )
 {
 	if(!TheMapCache)
 		return -1;
@@ -918,7 +1012,9 @@ Int populateMapListboxNoReset( GameWindow *listbox, Bool useSystemMaps, Bool isM
 	lbData.numLength = GadgetListBoxGetListLength( listbox );
 	lbData.numColumns = GadgetListBoxGetNumColumns( listbox );
 	lbData.mapToSelect = mapToSelect;
-	lbData.isMultiplayer = isMultiplayer;
+	//MODDD
+	//lbData.isMultiplayer = isMultiplayer;
+	lbData.mapFilterMode = mapFilterMode;
 
 	if (lbData.numColumns > 1)
 	{
@@ -945,18 +1041,30 @@ Int populateMapListboxNoReset( GameWindow *listbox, Bool useSystemMaps, Bool isM
 	}
 	mapDir.toLower();
 
-	MapNameList mapNames;
-	MapDisplayToFileNameList fileNames;
+	//MODDD - condensing
+	//MapNameList mapNames;
+	//MapDisplayToFileNameList fileNames;
+	MapDisplayToMapInfoList nameToMapList;
+
 	Int curNumPlayersInMap = 1;
 
 	for (; curNumPlayersInMap <= MAX_SLOTS; ++curNumPlayersInMap)
 	{
+		//MODDD - adjustment
+		/*
 		buildMapListForNumPlayers(mapNames, fileNames, curNumPlayersInMap);
 
 		const Bool ok = addMapCollectionToMapListbox(lbData, mapDir, mapNames, fileNames);
 
 		mapNames.clear();
 		fileNames.clear();
+		*/
+		// ---
+		buildMapListForNumPlayers(nameToMapList, curNumPlayersInMap, mapDir, mapFilterMode);
+		const Bool ok = addMapCollectionToMapListbox(lbData, mapDir, nameToMapList);
+
+		nameToMapList.clear();
+		// ---
 
 		if (!ok)
 			break;
@@ -987,7 +1095,9 @@ Int populateMapListboxNoReset( GameWindow *listbox, Bool useSystemMaps, Bool isM
 //-------------------------------------------------------------------------------------------------
 /** Load the listbox with all the map files available to play */
 //-------------------------------------------------------------------------------------------------
-Int populateMapListbox( GameWindow *listbox, Bool useSystemMaps, Bool isMultiplayer, AsciiString mapToSelect )
+//MODDD - old overload uses the new param, 'isMultiplayer' -> 'mapFilterMode'
+//Int populateMapListbox( GameWindow *listbox, Bool useSystemMaps, Bool isMultiplayer, AsciiString mapToSelect )
+Int populateMapListbox( GameWindow *listbox, Bool useSystemMaps, MapFilterMode mapFilterMode, AsciiString mapToSelect )
 {
 	if(!TheMapCache)
 		return -1;
@@ -998,9 +1108,16 @@ Int populateMapListbox( GameWindow *listbox, Bool useSystemMaps, Bool isMultipla
 	// reset the listbox content
 	GadgetListBoxReset( listbox );
 
-	return populateMapListboxNoReset( listbox, useSystemMaps, isMultiplayer, mapToSelect );
+	return populateMapListboxNoReset( listbox, useSystemMaps, mapFilterMode, mapToSelect );
 }
 
+//MODDD - old overloads to redirect to the modified ones (original logic) above
+Int populateMapListbox( GameWindow *listbox, Bool useSystemMaps, Bool isMultiplayer, AsciiString mapToSelect ) {
+	return populateMapListbox(listbox, useSystemMaps, isMultiplayer ? MAPFILTER_MULTIPLAYER_ONLY : MAPFILTER_SINGLEPLAYER_ONLY, mapToSelect);
+}
+Int populateMapListboxNoReset( GameWindow *listbox, Bool useSystemMaps, Bool isMultiplayer, AsciiString mapToSelect ) {
+	return populateMapListboxNoReset(listbox, useSystemMaps, isMultiplayer ? MAPFILTER_MULTIPLAYER_ONLY : MAPFILTER_SINGLEPLAYER_ONLY, mapToSelect);
+}
 
 
 //-------------------------------------------------------------------------------------------------
@@ -1016,10 +1133,24 @@ Bool isValidMap( AsciiString mapName, Bool isMultiplayer )
 	MapCache::iterator it = TheMapCache->find(mapName);
 	if (it != TheMapCache->end())
 	{
+		//MODDD - changing this block to disregard the 'isMultiplayer' check entirely if the 'isMultiplayer' param is false
+		// (retail never used this combo anyway)
+		/*
 		if (isMultiplayer == it->second.m_isMultiplayer)
 		{
 			return TRUE;
 		}
+		*/
+		// ----------------------------------------------------------
+		if (isMultiplayer) {
+			if (it->second.m_isMultiplayer) {
+				return TRUE;
+			}
+		} else {
+			// single-player & multi-player works
+			return TRUE;
+		}
+		// ----------------------------------------------------------
 	}
 
 	return FALSE;

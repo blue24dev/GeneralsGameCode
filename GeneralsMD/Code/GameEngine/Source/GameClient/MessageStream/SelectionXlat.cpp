@@ -1097,7 +1097,9 @@ GameMessageDisposition SelectionTranslator::translateGameMessage(const GameMessa
 						Squad *selectedSquad = player->getHotkeySquad(group);
 						if (selectedSquad != NULL)
 						{
-							VecObjectPtr objlist = selectedSquad->getLiveObjects();
+							//MODDD - add the player as a param so things that no longer belong to the player (ex: depiloted,
+							// hijacked) are removed - applies to all 'getLiveObjects' calls in this file
+							VecObjectPtr objlist = selectedSquad->getLiveObjects(player);
 							Int numObjs = objlist.size();
 							if (numObjs > 0)
 							{
@@ -1122,7 +1124,7 @@ GameMessageDisposition SelectionTranslator::translateGameMessage(const GameMessa
 						Squad *selectedSquad = player->getHotkeySquad(group);
 						if (selectedSquad != NULL)
 						{
-							VecObjectPtr objlist = selectedSquad->getLiveObjects();
+							VecObjectPtr objlist = selectedSquad->getLiveObjects(player);
 							Int numObjs = objlist.size();
 							for (Int i = 0; i < numObjs; ++i)
 							{
@@ -1174,7 +1176,7 @@ GameMessageDisposition SelectionTranslator::translateGameMessage(const GameMessa
 						Squad *selectedSquad = player->getHotkeySquad(group);
 						if (selectedSquad != NULL)
 						{
-							VecObjectPtr objlist = selectedSquad->getLiveObjects();
+							VecObjectPtr objlist = selectedSquad->getLiveObjects(player);
 							Int numObjs = objlist.size();
 							if (numObjs > 0)
 							{
@@ -1205,7 +1207,7 @@ GameMessageDisposition SelectionTranslator::translateGameMessage(const GameMessa
 						Squad *selectedSquad = player->getHotkeySquad(group);
 						if (selectedSquad != NULL)
 						{
-							VecObjectPtr objlist = selectedSquad->getLiveObjects();
+							VecObjectPtr objlist = selectedSquad->getLiveObjects(player);
 							Int numObjs = objlist.size();
 
 							// TheSuperHackers @bugfix skyaero 22/07/2025 Can't select other units if you have a structure selected. So deselect the structure to prevent group force attack exploit.
@@ -1250,7 +1252,7 @@ GameMessageDisposition SelectionTranslator::translateGameMessage(const GameMessa
 					Squad *selectedSquad = player->getHotkeySquad(group);
 					if (selectedSquad != NULL)
 					{
-						VecObjectPtr objlist = selectedSquad->getLiveObjects();
+						VecObjectPtr objlist = selectedSquad->getLiveObjects(player);
 						Int numObjs = objlist.size();
 						if (numObjs > 0)
 						{

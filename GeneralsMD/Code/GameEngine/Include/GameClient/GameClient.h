@@ -94,7 +94,8 @@ public:
 	virtual void reset( void );																					///< reset system
 
 	virtual void setFrame( UnsignedInt frame ) { m_frame = frame; }			///< Set the GameClient's internal frame number
-	virtual void registerDrawable( Drawable *draw );										///< Given a drawable, register it with the GameClient and give it a unique ID
+	//MODDD - added param 'drawableID'
+	virtual void registerDrawable( Drawable *draw, DrawableID drawableID );										///< Given a drawable, register it with the GameClient and give it a unique ID
 
 	void step(); ///< Do one fixed time step
 
@@ -128,7 +129,8 @@ public:
 
 	virtual void iterateDrawablesInRegion( Region3D *region, GameClientFuncPtr userFunc, void *userData );		///< Calls userFunc for each drawable contained within the region
 
-	virtual Drawable *friend_createDrawable( const ThingTemplate *thing, DrawableStatusBits statusBits = DRAWABLE_STATUS_DEFAULT ) = 0;
+	//MODDD - added param 'drawableID'
+	virtual Drawable *friend_createDrawable( const ThingTemplate *thing, DrawableID drawableID, DrawableStatusBits statusBits = DRAWABLE_STATUS_DEFAULT ) = 0;
 	virtual void destroyDrawable( Drawable *draw );											///< Destroy the given drawable
 
 	virtual void setTimeOfDay( TimeOfDay tod );													///< Tell all the drawables what time of day it is now

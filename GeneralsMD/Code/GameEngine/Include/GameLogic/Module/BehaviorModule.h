@@ -77,6 +77,8 @@ class WeaponTemplate;
 class DamageInfo;
 class ParticleSystemTemplate;
 class StealthUpdate;
+//MODDD
+class StealthDetectorUpdate;
 class SpyVisionUpdate;
 
 
@@ -164,7 +166,9 @@ public:
 	virtual UpdateModuleInterface* getUpdate() { return NULL; }
 	virtual UpgradeModuleInterface* getUpgrade() { return NULL; }
   virtual StealthUpdate* getStealth() { return NULL; }
-	virtual SpyVisionUpdate* getSpyVisionUpdate() { return NULL; }
+	//MODDD - missing?
+	virtual StealthDetectorUpdate* getStealthDetector() { return NULL; }
+	virtual SpyVisionUpdate* getSpyVision() { return NULL; }
 
 	virtual ParkingPlaceBehaviorInterface* getParkingPlaceBehaviorInterface() { return NULL; }
 	virtual RebuildHoleBehaviorInterface* getRebuildHoleBehaviorInterface() { return NULL; }

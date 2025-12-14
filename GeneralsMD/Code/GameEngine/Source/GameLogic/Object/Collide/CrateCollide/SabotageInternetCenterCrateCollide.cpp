@@ -135,7 +135,7 @@ static void disableInternetCenterSpyVision( Object *obj, void *userData )
 		//it's one of the few update modules that is actually properly sleepified.
 		for( BehaviorModule** u = obj->getBehaviorModules(); *u; ++u )
 		{
-			SpyVisionUpdate *svUpdate = (*u)->getSpyVisionUpdate();
+			SpyVisionUpdate *svUpdate = (*u)->getSpyVision();
 			if( svUpdate )
 			{
 				//Turn off the vision temporarily. When it recovers from being disabled, the

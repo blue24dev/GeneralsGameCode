@@ -60,7 +60,8 @@ class Object;
 */
 class Energy : public Snapshot
 {
-
+	//MODDD - let it call 'loadPostProcess' directly
+	friend class GameLogic;
 public:
 
 	Energy();

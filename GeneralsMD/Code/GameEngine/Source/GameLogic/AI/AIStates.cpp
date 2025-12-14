@@ -5302,6 +5302,9 @@ StateReturnType AIAttackFireWeaponState::update()
             obj->releaseWeaponLock(LOCKED_TEMPORARILY);// unlock, 'cause we're loaded
 
 	  	    obj->notifyFiringTrackerShotFired(weapon, INVALID_ID);
+
+					//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+					HandleWeaponFireQueuedOCL(weapon, obj);
         }
       }
     }
@@ -5976,6 +5979,8 @@ Object *AIAttackSquadState::chooseVictim(void)
 		case DIFFICULTY_EASY:
 		{
 			// pick a random unit
+			//MODDD - NOTE - not sure how to assume what player should own 'victimSquad' for using the not-changed-ownership
+			// filter.
 			VecObjectPtr objects = victimSquad->getLiveObjects();
 			Int numUnits = objects.size();
 			if (numUnits == 0)
@@ -5992,6 +5997,9 @@ Object *AIAttackSquadState::chooseVictim(void)
 		{
 			// pick the closest unit
 
+			//MODDD - TODO? If adding an ownership check to difficulties above/below ('Squad::getLiveObjects' calls),
+			// you might want to call 'victimSquad->getLiveObjects()' here just to update the object cache.
+			// I don't know if this 'PartitionFilter' thing triggers an update to remove dead/owernship-changed things.
 			PartitionFilterAcceptOnSquad f1(victimSquad);
 			PartitionFilterSameMapStatus filterMapStatus(getMachineOwner());
 			PartitionFilter *filters[] = { &f1, &filterMapStatus, NULL };
@@ -6747,6 +6755,18 @@ StateReturnType AIGuardState::update()
 	StateReturnType ret = m_guardMachine->updateStateMachine();
 	getMachine()->unlock();
 	return ret;
+}
+
+//MODDD
+Object *AIGuardState::getEnemyObject()
+{
+	if (m_guardMachine != NULL) {
+		Object* enemy = TheGameLogic->findObjectByID( m_guardMachine->getNemesisID() );
+		if (enemy != NULL) {
+			return enemy;
+		}
+	}
+	return State::getEnemyObject();
 }
 
 //----------------------------------------------------------------------------------------------------------

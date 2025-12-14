@@ -130,6 +130,8 @@ public:
 	virtual Bool isLetterBoxed(void);
 
 	virtual void clearShroud();
+	//MODDD
+	void shroudAreaOutsideActiveBorder();
 	virtual void setShroudLevel(Int x, Int y, CellShroudStatus setting);
 	virtual void setBorderShroudLevel(UnsignedByte level);	///<color that will appear in unused border terrain.
 #if defined(RTS_DEBUG)

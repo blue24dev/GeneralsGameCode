@@ -113,8 +113,9 @@ void W3DGameClient::reset( void )
 	* object and drawable storage it seems OK to have it be friends with the
 	* GameLogic/Client for those purposes, or we could put the allocation pools
 	* in the GameLogic and GameClient themselves */
+//MODDD - added param 'drawableID'
 //-------------------------------------------------------------------------------------------------
-Drawable *W3DGameClient::friend_createDrawable( const ThingTemplate *tmplate,
+Drawable *W3DGameClient::friend_createDrawable( const ThingTemplate *tmplate, DrawableID drawableID,
 																								DrawableStatusBits statusBits )
 {
 	Drawable *draw = NULL;
@@ -123,7 +124,7 @@ Drawable *W3DGameClient::friend_createDrawable( const ThingTemplate *tmplate,
 	if( tmplate == NULL )
 		return NULL;
 
-	draw = newInstance(Drawable)( tmplate, statusBits );
+	draw = newInstance(Drawable)( tmplate, drawableID, statusBits );
 
 	return draw;
 

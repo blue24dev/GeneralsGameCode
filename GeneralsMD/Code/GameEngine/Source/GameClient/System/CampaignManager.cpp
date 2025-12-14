@@ -455,7 +455,14 @@ void CampaignManager::xfer( Xfer *xfer )
 		// Singletons are bad.  THis is here because a) it is one of two blocks in a Mission Save
 		// b) It is not the block that is loaded for every save to get desc's in populating the saveload window.
 		// So it is here.  <sob> I've got nowhere else to go!
+		//MODDD - #if wrapper + alt
+#if !GENERALS_CHALLENGE_FORCE
 		Bool isChallengeCampaign = m_currentCampaign ? m_currentCampaign->m_isChallengeCampaign : FALSE;
+#else
+		// Force this off - never try to save 'TheChallengeGameInfo', the skirmish game info is used instead and
+		// already saved elsewhere
+		Bool isChallengeCampaign = FALSE;
+#endif
 		xfer->xferBool(&isChallengeCampaign);
 
 		if( isChallengeCampaign )

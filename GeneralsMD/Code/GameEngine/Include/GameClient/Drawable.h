@@ -299,7 +299,8 @@ class Drawable : public Thing,
 
 public:
 
-	Drawable( const ThingTemplate *thing, DrawableStatusBits statusBits = DRAWABLE_STATUS_DEFAULT );
+	//MODDD - added param 'drawableID'
+	Drawable( const ThingTemplate *thing, DrawableID drawableID, DrawableStatusBits statusBits = DRAWABLE_STATUS_DEFAULT );
 
 	void onDestroy( void );																							///< run from GameClient::destroyDrawable
   void onLevelStart();                                                ///< run from GameLogic::startNewGame

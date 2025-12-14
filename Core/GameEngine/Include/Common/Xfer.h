@@ -188,3 +188,9 @@ protected:
 	AsciiString m_identifier;				///< the string identifier
 
 };
+
+//MODDD - New global. Tell whether a game is currently being loaded, saved, or neither in any context.
+// Uses 'XFER_INVALID' to mean 'neither' (currently ingame, not in the middle of loading/saving).
+// There is also 'TheGameLogic->is/setLoadingSave', but it seems tied to 'GameStateMap::xfer' only
+// instead of all saving/loading, plus nothing even referred to 'isLoadingSave'.
+extern XferMode globalXferStatus;

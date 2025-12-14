@@ -208,7 +208,10 @@ void OCLSpecialPower::doSpecialPowerAtLocation( const Coord3D *loc, Real angle, 
 			break;
 		case USE_OWNER_OBJECT:
 			creationCoord.set( &targetCoord );
-			ObjectCreationList::create( ocl, getObject(), &creationCoord, &targetCoord, angle, false );
+			//MODDD - why 'false' as the last param? It expects a number for 'lifetimeFrames', not a bool
+			// Just rely on the default '0' from not sending a param
+			//ObjectCreationList::create( ocl, getObject(), &creationCoord, &targetCoord, angle, false );
+			ObjectCreationList::create( ocl, getObject(), &creationCoord, &targetCoord, angle);
 			break;
 		case CREATE_ABOVE_LOCATION:
 			// this is the case where the special power stuff originates above the location of the mouse click
@@ -292,5 +295,27 @@ void OCLSpecialPower::loadPostProcess( void )
 	// extend base class
 	SpecialPowerModule::loadPostProcess();
 
+}
+
+//MODDD - new
+Bool OCLSpecialPower::canBeSpecialPowerSource() const
+{
+	//MODDD - BUGFIX
+	// Override this to specifically deny if 'createLoc' is 'USE_OWNER_OBJECT'.
+	// Fixes a strange bug seen in Rise of the Reds where the plane-dropped anthrax bomb called for by AI
+	// generates at the location of the support power instead of from the edge of the command center / command truck
+	// source because the AI's sweep for any object that hosts the special power module finds a 'GLAJetCargoPlane_TechDrop'
+	// for reinforcement pads that happens to be on the map (this object has the special power module, strangely).
+	// So basically a bunch of support powers happening at the same time that use the same kind of object to deliver them
+	// could cause this issue too in theory. Strange indeed.
+	// Come to think of it, does anything even need the 'USE_OWNER_OBJECT' special power modules in the INI anyway?
+	// Leaving that to be tested separately, maybe the parser could even just ignore that if leaving it out there doesn't cause any issues?
+	// From what I can tell, there are no side effects to ignoring USE_OWNER_OBJECT-types for selecting a special power source, here.
+	const OCLSpecialPowerModuleData *modData = getOCLSpecialPowerModuleData();
+	if (modData->m_createLoc == USE_OWNER_OBJECT) {
+		return FALSE;
+	}
+
+	return SpecialPowerModule::canBeSpecialPowerSource();
 }
 

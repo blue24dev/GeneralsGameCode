@@ -121,11 +121,14 @@ Bool ConvertToHijackedVehicleCrateCollide::isValidToExecute( const Object *other
 		}
 	}
 
+	//MODDD - redundant, already checked for above
+	/*
 	//Kris: Make sure you can't hijack any aircraft (or hijack-enter).
 	if( other->isKindOf( KINDOF_AIRCRAFT ) )
 	{
 		return FALSE;
 	}
+	*/
 
 	//VeterancyLevel veterancyLevel = other->getVeterancyLevel();
 	//if( veterancyLevel >= LEVEL_ELITE )

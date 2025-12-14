@@ -192,6 +192,10 @@ void UpdateModule::loadPostProcess( void )
 }
 
 
-
+//MODDD - to make adding breakpoints easier
+#include "GameLogic/Object.h"
+void UpdateModule::friend_setIndexInLogic(Int i) {
+	m_indexInLogic = i;
+}
 
 

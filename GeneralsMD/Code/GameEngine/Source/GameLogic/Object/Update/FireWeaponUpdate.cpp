@@ -98,7 +98,8 @@ UpdateSleepTime FireWeaponUpdate::update( void )
 	// If my weapon is ready, shoot it.
 	if( isOkayToFire() )
 	{
-		m_weapon->forceFireWeapon( getObject(), getObject()->getPosition() );
+		//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+		ForceFireWeaponAndHandleOCL( m_weapon, getObject(), getObject()->getPosition() );
 	}
 	return UPDATE_SLEEP_NONE;
 }

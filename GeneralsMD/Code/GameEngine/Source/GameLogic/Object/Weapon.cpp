@@ -150,6 +150,43 @@ static void parseAllVetLevelsPSys( INI* ini, void* /*instance*/, void * store, c
 		s[i] = pst;
 }
 
+//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+// Convenience function for creating an OCL out of the weapon's 'weaponFireQueuedOcl' if this was set during
+// a recent 'fireWeapon' or similar call.
+void HandleWeaponFireQueuedOCL(Weapon* weapon, Object* source) {
+	// Check to see if this weapon should call for an OCL creation that could potentially delete the weapon
+	// (with memory debug, immediately replaces the weapon's memory block with 0xDEADBEEF repeated).
+	// This causes the weapon pointer to refer to garbage memory so this should only be done when the current
+	// pointer will no longer be needed (the next fresh 'm_weaponSet.getCurWeapon()' call or similar should be ok).
+	// Any 'fireWeapon' call, or a few similar choices, should do this check.
+	// Some global utility to handle this per 'fireWeapon'-like method would be nice.
+
+	if (weapon->getWeaponFireQueuedOcl() != NULL) {
+		ObjectCreationList::create( weapon->getWeaponFireQueuedOcl(), source, NULL );
+		weapon->setWeaponFireQueuedOcl( NULL );
+	}
+}
+
+//MODDD - some convenience methods that handle the corresponding 'weapon->fireWeapon' call and handle
+// the resulting OCL if applicable
+Bool FireWeaponAndHandleOCL(Weapon *weapon, Object *source, Object *target, ObjectID* projectileID) {
+	Bool reloaded = weapon->fireWeapon(source, target, projectileID);
+	HandleWeaponFireQueuedOCL(weapon, source);
+	return reloaded;
+}
+Bool FireWeaponAndHandleOCL(Weapon *weapon, Object *source, const Coord3D* pos, ObjectID* projectileID) {
+	Bool reloaded = weapon->fireWeapon(source, pos, projectileID);
+	HandleWeaponFireQueuedOCL(weapon, source);
+	return reloaded;
+}
+
+Object* ForceFireWeaponAndHandleOCL(Weapon *weapon, Object *source, const Coord3D *pos) {
+	Object *projectile = weapon->forceFireWeapon(source, pos);
+	HandleWeaponFireQueuedOCL(weapon, source);
+	return projectile;
+}
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // PUBLIC DATA ////////////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -741,6 +778,7 @@ Bool WeaponTemplate::shouldProjectileCollideWith(
 	return false;
 }
 
+//MODDD - Note - return value of this is never used. Seems to be 0 or some game frame (time)? What was it supposed to be used for?
 //-------------------------------------------------------------------------------------------------
 UnsignedInt WeaponTemplate::fireWeaponTemplate
 (
@@ -920,6 +958,18 @@ UnsignedInt WeaponTemplate::fireWeaponTemplate
 		Drawable* outerDrawable = sourceObj->getOuterObject()->getDrawable();
 		const Bool isVisible = outerDrawable && outerDrawable->isVisible();
 
+		//MODDD - fix for anthrax/radiation cloud effects missing?  Restoring the old 'isVisible' check logic too
+		// Nevermind - no longer needed since a later update. If this ever needs to be re-introduced, add '&& !isVisibleAlt'
+		// to the 'if' condition further down, after '!isVisible'.
+		/*
+		const Bool isVisibleAlt = (
+			sourceObj->isLocallyControlled()									// if user watching is the controller or
+			|| !sourceObj->testStatus(OBJECT_STATUS_STEALTHED)	// if unit is not stealthed
+			|| sourceObj->testStatus(OBJECT_STATUS_DETECTED)		// or detected...
+			|| sourceObj->testStatus(OBJECT_STATUS_DISGUISED)  // or disguised...
+		);
+		*/
+
 		if (!isVisible																				// if user watching cannot see us
 			&& sourceObj->testStatus(OBJECT_STATUS_STEALTHED)		// if unit is stealthed (like a Pathfinder)
 			&& !sourceObj->isKindOf(KINDOF_MINE)								// and not a mine (which always do the FX, even if hidden)...
@@ -950,18 +1000,50 @@ UnsignedInt WeaponTemplate::fireWeaponTemplate
 		}
 	}
 
+	/*
+	if(sourceObj && sourceObj->getTemplate()->getName().compare("ChinaInfantryJumpjetTrooper") == 0){
+		std::ofstream outputFile;
+		SYSTEMTIME lt;
+		outputFile.open("test_weapon.txt", std::ios::out | std::ios::app);
+		GetLocalTime(&lt);
+		outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << " - WeaponTemplate::fireWeaponTemplate - before1: " << this->m_name.str() << " --- " << this->m_projectileName.str() << " --- " << this->getAttackRange(bonus) << std::endl;
+		outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << " - WeaponTemplate::fireWeaponTemplate - before2: RAW: " << ((unsigned int)firingWeapon) << std::endl;
+		outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << " - WeaponTemplate::fireWeaponTemplate - before2: " << firingWeapon->m_ammoInClip << " --- " << ((unsigned int)firingWeapon->m_template) << std::endl;
+		outputFile.close();
+	}
+	*/
+
 	// Now do the FireOCL if there is one
 	if( sourceObj )
 	{
 		VeterancyLevel v = sourceObj->getVeterancyLevel();
+		//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'.
+		// Save this to a member var for the caller to invoke after it knows it won't need the current 'Weapon*'
+		// reference anymore in case it gets deleted by running this.
+		/*
 		const ObjectCreationList *oclToUse = isProjectileDetonation ? getProjectileDetonationOCL(v) : getFireOCL(v);
 		if( oclToUse )
 			ObjectCreationList::create( oclToUse, sourceObj, NULL );
+		*/
+		firingWeapon->setWeaponFireQueuedOcl(isProjectileDetonation ? getProjectileDetonationOCL(v) : getFireOCL(v));
 	}
+
+	/*
+	if(sourceObj && sourceObj->getTemplate()->getName().compare("ChinaInfantryJumpjetTrooper") == 0){
+		std::ofstream outputFile;
+		SYSTEMTIME lt;
+		outputFile.open("test_weapon.txt", std::ios::out | std::ios::app);
+		GetLocalTime(&lt);
+		outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << " - WeaponTemplate::fireWeaponTemplate - after1 : " << this->m_name.str() << " --- " << this->m_projectileName.str() << " --- " << this->getAttackRange(bonus) << std::endl;
+		outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << " - WeaponTemplate::fireWeaponTemplate - after2 : RAW: " << ((unsigned int)firingWeapon) << std::endl;
+		outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << " - WeaponTemplate::fireWeaponTemplate - after2 : " << firingWeapon->m_ammoInClip << " --- " << ((unsigned int)firingWeapon->m_template) << std::endl;
+		outputFile.close();
+	}
+	*/
 
 	Coord3D projectileDestination = *victimPos; //Need to copy this, as we have a pointer to their actual position
 	Real scatterRadius = 0.0f;
-	if( m_scatterRadius > 0.0f || m_infantryInaccuracyDist > 0.0f && victimObj && victimObj->isKindOf( KINDOF_INFANTRY ) )
+	if( m_scatterRadius > 0.0f || (m_infantryInaccuracyDist > 0.0f && victimObj && victimObj->isKindOf( KINDOF_INFANTRY )) )
 	{
 		// This weapon scatters, so clear the victimObj, as we are no longer shooting it directly,
 		// and find a random point within the radius to shoot at as victimPos
@@ -1240,7 +1322,8 @@ static Bool is2DDistSquaredLessThan(const Coord3D& a, const Coord3D& b, Real dis
 
 //-------------------------------------------------------------------------------------------------
 #if RETAIL_COMPATIBLE_CRC
-void WeaponTemplate::processHistoricDamage(const Object* source, const Coord3D* pos) const
+//MODDD - removed 'const' from 'source'
+void WeaponTemplate::processHistoricDamage(Object* source, const Coord3D* pos) const
 {
 	//
 	/** @todo We need to rewrite the historic stuff ... if you fire 5 missiles, and the 5th,
@@ -1289,7 +1372,8 @@ void WeaponTemplate::processHistoricDamage(const Object* source, const Coord3D* 
 	}
 }
 #else
-void WeaponTemplate::processHistoricDamage(const Object* source, const Coord3D* pos) const
+//MODDD - removed 'const' from 'source'
+void WeaponTemplate::processHistoricDamage(Object* source, const Coord3D* pos) const
 {
 	if (m_historicBonusCount > 0 && m_historicBonusWeapon != this)
 	{
@@ -1590,34 +1674,42 @@ WeaponStore::~WeaponStore()
 }
 
 //-------------------------------------------------------------------------------------------------
-void WeaponStore::handleProjectileDetonation(const WeaponTemplate* wt, const Object *source, const Coord3D* pos, WeaponBonusConditionFlags extraBonusFlags, Bool inflictDamage )
+void WeaponStore::handleProjectileDetonation(const WeaponTemplate* wt, Object *source, const Coord3D* pos, WeaponBonusConditionFlags extraBonusFlags, Bool inflictDamage )
 {
 	Weapon* w = TheWeaponStore->allocateNewWeapon(wt, PRIMARY_WEAPON);
 	w->loadAmmoNow(source);
 	w->fireProjectileDetonationWeapon( source, pos, extraBonusFlags, inflictDamage );
+
+	//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+	HandleWeaponFireQueuedOCL(w, source);
+
 	deleteInstance(w);
 }
 
 //-------------------------------------------------------------------------------------------------
-void WeaponStore::createAndFireTempWeapon(const WeaponTemplate* wt, const Object *source, const Coord3D* pos)
+void WeaponStore::createAndFireTempWeapon(const WeaponTemplate* wt, Object *source, const Coord3D* pos)
 {
 	if (wt == NULL)
 		return;
 	Weapon* w = TheWeaponStore->allocateNewWeapon(wt, PRIMARY_WEAPON);
 	w->loadAmmoNow(source);
-	w->fireWeapon(source, pos);
+	//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+	FireWeaponAndHandleOCL(w, source, pos);
+
 	deleteInstance(w);
 }
 
 //-------------------------------------------------------------------------------------------------
-void WeaponStore::createAndFireTempWeapon(const WeaponTemplate* wt, const Object *source, Object *target)
+void WeaponStore::createAndFireTempWeapon(const WeaponTemplate* wt, Object *source, Object *target)
 {
 	//CRCDEBUG_LOG(("WeaponStore::createAndFireTempWeapon() for %s", DescribeObject(source)));
 	if (wt == NULL)
 		return;
 	Weapon* w = TheWeaponStore->allocateNewWeapon(wt, PRIMARY_WEAPON);
 	w->loadAmmoNow(source);
-	w->fireWeapon(source, target);
+	//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+	FireWeaponAndHandleOCL(w, source, target);
+
 	deleteInstance(w);
 }
 
@@ -2486,6 +2578,17 @@ Real Weapon::estimateWeaponDamage(const Object *sourceObj, const Object *victimO
 //-------------------------------------------------------------------------------------------------
 void Weapon::newProjectileFired(const Object *sourceObj, const Object *projectile, const Object *victimObj, const Coord3D *victimPos )
 {
+	/*
+	if(sourceObj && sourceObj->getTemplate()->getName().compare("ChinaInfantryJumpjetTrooper") == 0){
+		std::ofstream outputFile;
+		SYSTEMTIME lt;
+		outputFile.open("test_weapon.txt", std::ios::out | std::ios::app);
+		GetLocalTime(&lt);
+		outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << " - newProjectileFired - proj name: " << m_template->getProjectileStreamName().str() << std::endl;
+		outputFile.close();
+	}
+	*/
+
 	// If I have a stream, I need to tell it about this new guy
 	if( m_template->getProjectileStreamName().isEmpty() )
 		return; // nope, no streak logic to do
@@ -2554,7 +2657,11 @@ void Weapon::createLaser( const Object *sourceObj, const Object *victimObj, cons
 // return true if we auto-reloaded our clip after firing.
 //DECLARE_PERF_TIMER(fireWeapon)
 Bool Weapon::privateFireWeapon(
-	const Object *sourceObj,
+	//MODDD - removed 'const' from param, applies to any other 'sourceObj' ones.
+	// Unfortunately this ended up trickling to removing 'const' on 'Object*' params in several other places that
+	// lead to here. Oh well. This was needed so disarming a mine can directly add promotion experience like
+	// destroying it normally.
+	Object *sourceObj,
 	Object *victimObj,
 	const Coord3D* victimPos,
 	Bool isProjectileDetonation,
@@ -2564,6 +2671,12 @@ Bool Weapon::privateFireWeapon(
 	Bool inflictDamage
 )
 {
+	//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'.
+	// Reset 'queuedOcl' in advance so this method somehow failing to set it doesn't leave a leftover value
+	// from some unrelated call to be run again. The caller should handle setting this back to null & ideally
+	// would be enough though.
+	this->setWeaponFireQueuedOcl( NULL );
+
 	//CRCDEBUG_LOG(("Weapon::privateFireWeapon() for %s", DescribeObject(sourceObj).str()));
 	//USE_PERF_TIMER(fireWeapon)
 	if (projectileID)
@@ -2609,6 +2722,9 @@ Bool Weapon::privateFireWeapon(
 		{
 			if (sourceObj && victimObj)
 			{
+				//MODDD - cleanup, replaced block
+				// ---
+				/*
 				Bool found = false;
 				for (BehaviorModule** bmi = victimObj->getBehaviorModules(); *bmi; ++bmi)
 				{
@@ -2636,6 +2752,45 @@ Bool Weapon::privateFireWeapon(
 				{
 					sourceObj->getControllingPlayer()->getAcademyStats()->recordMineCleared();
 				}
+				*/
+				// ---------
+				Bool isVictimMine = false;
+				LandMineInterface* foundLMI = NULL;
+				for (BehaviorModule** bmi = victimObj->getBehaviorModules(); *bmi; ++bmi)
+				{
+					LandMineInterface* lmi = (*bmi)->getLandMineInterface();
+					if (lmi)
+					{
+						foundLMI = lmi;
+						break;
+					}
+				}
+
+				// This is a mine if a LandMineInterface was found, or it has a certain KINDOF as a fallback
+				if (foundLMI != NULL || victimObj->isKindOf( KINDOF_MINE ) || victimObj->isKindOf( KINDOF_BOOBY_TRAP ) || victimObj->isKindOf( KINDOF_DEMOTRAP ) ) {
+					isVictimMine = TRUE;
+				}
+
+				if( isVictimMine )
+				{
+					VeterancyLevel v = sourceObj->getVeterancyLevel();
+					FXList::doFXPos(m_template->getFireFX(v), victimObj->getPosition(), victimObj->getTransformMatrix(), 0, victimObj->getPosition(), 0);
+
+					//MODDD - disarming mines gives experience
+					// Removing demo traps this way should still reward the player with promotion experience like typical
+					// kills. Otherwise you're missing out compared to destroying it any other way.
+					sourceObj->scoreTheKill(victimObj);
+
+					//MODDD - moved to before the 'disarm'/'destroyObject' calls below. Not necessary, but may as well be here now.
+					sourceObj->getControllingPlayer()->getAcademyStats()->recordMineCleared();
+
+					if (foundLMI != NULL) {
+						foundLMI->disarm();
+					} else {
+						TheGameLogic->destroyObject( victimObj );// douse this thing before somebody gets hurt!
+					}
+				}
+				// ---------
 			}
 
 			--m_maxShotCount;
@@ -2656,6 +2811,7 @@ Bool Weapon::privateFireWeapon(
 			//We're using a hacker unit to hack a target. Hacking has various effects and
 			//instead of inflicting damage, we are waiting for a period of time until the hack takes effect.
 			//return FALSE;
+			break;
 		}
 	}
 
@@ -2790,7 +2946,7 @@ void Weapon::preFireWeapon( const Object *source, const Object *victim )
 }
 
 //-------------------------------------------------------------------------------------------------
-Bool Weapon::fireWeapon(const Object *source, Object *target, ObjectID* projectileID)
+Bool Weapon::fireWeapon(Object *source, Object *target, ObjectID* projectileID)
 {
 	//CRCDEBUG_LOG(("Weapon::fireWeapon() for %s at %s", DescribeObject(source).str(), DescribeObject(target).str()));
 	return privateFireWeapon( source, target, NULL, false, false, 0, projectileID, TRUE );
@@ -2798,21 +2954,21 @@ Bool Weapon::fireWeapon(const Object *source, Object *target, ObjectID* projecti
 
 //-------------------------------------------------------------------------------------------------
 // return true if we auto-reloaded our clip after firing.
-Bool Weapon::fireWeapon(const Object *source, const Coord3D* pos, ObjectID* projectileID)
+Bool Weapon::fireWeapon(Object *source, const Coord3D* pos, ObjectID* projectileID)
 {
 	//CRCDEBUG_LOG(("Weapon::fireWeapon() for %s", DescribeObject(source).str()));
 	return privateFireWeapon( source, NULL, pos, false, false, 0, projectileID, TRUE );
 }
 
 //-------------------------------------------------------------------------------------------------
-void Weapon::fireProjectileDetonationWeapon(const Object *source, Object *target, WeaponBonusConditionFlags extraBonusFlags, Bool inflictDamage )
+void Weapon::fireProjectileDetonationWeapon(Object *source, Object *target, WeaponBonusConditionFlags extraBonusFlags, Bool inflictDamage )
 {
 	//CRCDEBUG_LOG(("Weapon::fireProjectileDetonationWeapon() for %sat %s", DescribeObject(source).str(), DescribeObject(target).str()));
 	privateFireWeapon( source, target, NULL, true, false, extraBonusFlags, NULL, inflictDamage );
 }
 
 //-------------------------------------------------------------------------------------------------
-void Weapon::fireProjectileDetonationWeapon(const Object *source, const Coord3D* pos, WeaponBonusConditionFlags extraBonusFlags, Bool inflictDamage )
+void Weapon::fireProjectileDetonationWeapon(Object *source, const Coord3D* pos, WeaponBonusConditionFlags extraBonusFlags, Bool inflictDamage )
 {
 	//CRCDEBUG_LOG(("Weapon::fireProjectileDetonationWeapon() for %s", DescribeObject(source).str()));
 	privateFireWeapon( source, NULL, pos, true, false, extraBonusFlags, NULL, inflictDamage );
@@ -2821,7 +2977,7 @@ void Weapon::fireProjectileDetonationWeapon(const Object *source, const Coord3D*
 //-------------------------------------------------------------------------------------------------
 //Currently, this function was added to allow a script to force fire a weapon,
 //and immediately gain control of the weapon that was fired to give it special orders...
-Object* Weapon::forceFireWeapon( const Object *source, const Coord3D *pos)
+Object* Weapon::forceFireWeapon( Object *source, const Coord3D *pos)
 {
 	//CRCDEBUG_LOG(("Weapon::forceFireWeapon() for %s", DescribeObject(source).str()));
 	//Force the ammo to load instantly.

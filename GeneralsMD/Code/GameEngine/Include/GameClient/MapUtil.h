@@ -45,6 +45,15 @@ struct DataChunkInfo;
 enum { SUPPLY_TECH_SIZE = 15};
 typedef std::list <ICoord2D> ICoord2DList;
 
+//MODDD - enum to replace 'isMultiplayer' bools in a few places, to allow doing both isMultiplayer=false/true in the same call as well
+enum MapFilterMode CPP_11(: Int)
+{
+	MAPFILTER_ANY = 0,
+	MAPFILTER_SINGLEPLAYER_ONLY,
+	MAPFILTER_MULTIPLAYER_ONLY
+};
+
+
 class TechAndSupplyImages
 {
 public:
@@ -139,6 +148,12 @@ extern TechAndSupplyImages TheSupplyAndTechImageLocations;
 
 Int populateMapListbox( GameWindow *listbox, Bool useSystemMaps, Bool isMultiplayer, AsciiString mapToSelect = AsciiString::TheEmptyString );		/// Read a list of maps from the run directory and fill in the listbox.  Return the selected index
 Int populateMapListboxNoReset( GameWindow *listbox, Bool useSystemMaps, Bool isMultiplayer, AsciiString mapToSelect = AsciiString::TheEmptyString );		/// Read a list of maps from the run directory and fill in the listbox.  Return the selected index
+
+//MODDD - overloads to take 'mapFilterMode' instead of 'isMultiplayer'
+Int populateMapListbox( GameWindow *listbox, Bool useSystemMaps, MapFilterMode mapFilterMode, AsciiString mapToSelect = AsciiString::TheEmptyString );		/// Read a list of maps from the run directory and fill in the listbox.  Return the selected index
+Int populateMapListboxNoReset( GameWindow *listbox, Bool useSystemMaps, MapFilterMode mapFilterMode, AsciiString mapToSelect = AsciiString::TheEmptyString );		/// Read a list of maps from the run directory and fill in the listbox.  Return the selected index
+// ----------------------------------------------------------------------
+
 Bool isValidMap( AsciiString mapName, Bool isMultiplayer );						/// Validate a map
 Image *getMapPreviewImage( AsciiString mapName );
 AsciiString getDefaultMap( Bool isMultiplayer );											/// Find a valid map

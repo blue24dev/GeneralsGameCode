@@ -90,7 +90,7 @@ public:
 	SpyVisionUpdate( Thing *thing, const ModuleData* moduleData );
 	// virtual destructor prototype provided by memory pool declaration
 
-	virtual SpyVisionUpdate* getSpyVisionUpdate() { return this; }
+	virtual SpyVisionUpdate* getSpyVision() { return this; }
 
 	// module methods
 	static Int getInterfaceMask() { return UpdateModule::getInterfaceMask() | MODULEINTERFACE_UPGRADE; }

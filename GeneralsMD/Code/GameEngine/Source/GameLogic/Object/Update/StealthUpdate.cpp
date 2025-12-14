@@ -862,12 +862,22 @@ void setWakeupIfInRange( Object *obj, void *userData)
 }
 
 
+//MODDD - IDEA. Currently, each call to here appears to cause the detected object to flash yellow once.
+// Multiple detectors detecting the same thing will each call 'markAsDetected' & trigger the flash,
+// causing more flashes on the detected obj than if one were detecting it.
+// I think the flash regularly happening per object if it is marked with some 'detected' status would be
+// better, so the effect is no different between 1 vs. 100 detectors (and with different detection scan
+// rates).
 //-------------------------------------------------------------------------------------------------
 void StealthUpdate::markAsDetected(UnsignedInt numFrames)
 {
 	Object *self = getObject();
 	Object *stealthOwner = calcStealthOwner();
 
+	//MODDD - cleaning this block up a bit, handling the odd case of not finding a 'StealthUpdate' from a
+	// non-self 'stealthOwner' (would be using uninitialized memory).
+	// ---
+	/*
 	UnsignedInt stealthDelay, orderIdlesToAttack;
 	if( self == stealthOwner )
 	{
@@ -887,7 +897,29 @@ void StealthUpdate::markAsDetected(UnsignedInt numFrames)
 			orderIdlesToAttack = stealthUpdate->getOrderIdleEnemiesToAttackMeUponReveal();
 		}
 	}
+	*/
+	// ---
+	// Which 'StealthUpdate' to use: mine by default, or the one for a separate 'stealthOwner'
+	// (ex: a bike preferring to use stealth behavior from its rider). 
+	StealthUpdate* stealthUpdateRef;
 
+	if( self == stealthOwner )
+	{
+		stealthUpdateRef = this;
+	}
+	else
+	{
+		//Extract the rules from the rider's stealthupdate module data instead
+		//of our own, because the rider determines if the container can stealth or not.
+		stealthUpdateRef = stealthOwner->getStealth();
+		//MODDD - logically, this is new: handles the case of having a 'stealthOwner' w/o a 'StealthUpdate' to get info from.
+		// Not that this should happen to begin with, a non-stealthed rider should mean this 'bike' isn't stealthed.
+		if ( stealthUpdateRef == NULL ) {
+			DEBUG_CRASH( ("StealthUpdate::markAsDetected - My object: \"%s\".\nstealthOwner \"%s\" doesn't have a StealthUpdate module!"), self->getTemplate()->getName().str(), stealthOwner->getTemplate()->getName().str() );
+			stealthUpdateRef = this;
+		}
+	}
+	// ---
 
 	Player *thisPlayer = self->getControllingPlayer();
 
@@ -902,14 +934,14 @@ void StealthUpdate::markAsDetected(UnsignedInt numFrames)
 	{
 		//Kris:
 		//If numFrames is zero (the default value), use the stealth delay specified in the ini file.
-		m_detectionExpiresFrame = now + stealthDelay;
+		m_detectionExpiresFrame = now + stealthUpdateRef->getStealthDelay();
 	}
 	else if ( m_detectionExpiresFrame < now + numFrames )
 	{
 		m_detectionExpiresFrame = now + numFrames;
 	}
 
-	if( orderIdlesToAttack )
+	if( stealthUpdateRef->getOrderIdleEnemiesToAttackMeUponReveal() )
 	{
 		// This can't be a partitionmanager thing, because we need to know which objects can see
 		// us. Therefore, walk the play list, and for each player that considers us an enemy,
@@ -1012,7 +1044,7 @@ void StealthUpdate::changeVisualDisguise()
 			if( self->getControllingPlayer()->getRelationship( clientPlayer->getDefaultTeam() ) != ALLIES && clientPlayer->isPlayerActive() )
 			{
 				//Neutrals and enemies will see this disguised unit as the team it's disguised as.
-				if (TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT)
+				if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
 					draw->setIndicatorColor( player->getPlayerNightColor() );
 				else
 					draw->setIndicatorColor( player->getPlayerColor() );
@@ -1020,7 +1052,7 @@ void StealthUpdate::changeVisualDisguise()
 			else
 			{
 				//If it's on our team or our ally's team, then show it's true colors.
-				if (TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT)
+				if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
 					draw->setIndicatorColor( self->getNightIndicatorColor() );
 				else
 					draw->setIndicatorColor( self->getIndicatorColor() );
@@ -1062,7 +1094,7 @@ void StealthUpdate::changeVisualDisguise()
 			draw->setModelConditionFlags( flags );
 			draw->updateDrawable();
 			self->getPhysics()->resetDynamicPhysics();
-			if (TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT)
+			if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
 				draw->setIndicatorColor( self->getNightIndicatorColor() );
 			else
 				draw->setIndicatorColor( self->getIndicatorColor() );

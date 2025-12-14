@@ -159,7 +159,7 @@ public:
 	PlayerRelationMap( void );
 	// virtual destructor provided by memory pool object
 
-	/** @todo I'm jsut wrappign this up in a nice snapshot object, we really should isolate
+	/** @todo I'm just wrapping this up in a nice snapshot object, we really should isolate
 		* m_map from public access and make access methods for our operations */
 	PlayerRelationMapType m_map;
 

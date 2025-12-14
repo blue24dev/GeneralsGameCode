@@ -61,12 +61,16 @@ void ObjectTypes::addObjectType(const AsciiString &objectType)
 //-------------------------------------------------------------------------------------------------
 void ObjectTypes::removeObjectType(const AsciiString &objectType)
 {
-	if (!isInSet(objectType)) {
+	//MODDD - use 'std::find' earlier and deal with the iterator from there
+	AsciiStringVec::iterator it = std::find(m_objectTypes.begin(), m_objectTypes.end(), objectType);
+	//if (!isInSet(objectType)) {
+	if (it == m_objectTypes.end()) {
 		DEBUG_CRASH(("Attempted to remove '%s' from '%s', but it wasn't there.", objectType.str(), m_listName.str()));
 		return;
 	}
 
-	AsciiStringVec::iterator it = std::find(m_objectTypes.begin(), m_objectTypes.end(), objectType);
+	//MODDD - moved up
+	//AsciiStringVec::iterator it = std::find(m_objectTypes.begin(), m_objectTypes.end(), objectType);
 
 	m_objectTypes.erase(it);
 }

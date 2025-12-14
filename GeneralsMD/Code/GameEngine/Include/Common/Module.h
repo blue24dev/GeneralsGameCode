@@ -153,8 +153,11 @@ protected: \
 
 //-------------------------------------------------------------------------------------------------
 // only use this macro for an ABC. for a real class, use MAKE_STANDARD_MODULE_MACRO_WITH_MODULE_DATA.
+//MODDD - TEMP HACK. Changed modifier above 'const clsmd* get##clsmd()' from 'private' to 'public'.
+// Be public instead in case I want to mock something for testing.
+// Note that normally, there really isn't a reason to reach into a module's 'moduleData' externally.
 #define MAKE_STANDARD_MODULE_DATA_MACRO_ABC( cls, clsmd ) \
-private: \
+public: \
 	const clsmd* get##clsmd() const { return (clsmd*)getModuleData(); } \
 public: \
 	static ModuleData* friend_newModuleData(INI* ini) \

@@ -81,19 +81,22 @@ public:
 		needed. Note that primary can be null, so you must check for this.
 		Bool useOwner determines whether we are creating the the master object or not (for deliverpayload)
 	*/
-	virtual Object* create( const Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const = 0;
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+	virtual Object* create( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const = 0;
 
 	/**
 		the object-based version... by default, just call the location-based implementation.
 		Note that primary can be null, so you must check for this.
 	*/
-	virtual Object* create( const Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const;
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primary'
+	virtual Object* create( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const;
 
 	/**
 		A variation used by DeliverPayload -- the createOwner Bool specifies whether we are creating the transport
 		object, or using the existing one.
 	*/
-	virtual Object* create( const Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 ) const;
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+	virtual Object* create( Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 ) const;
 };
 EMPTY_DTOR(ObjectCreationNugget)
 
@@ -134,7 +137,8 @@ public:
 
 	// Kris: August 23, 2003
 	// All OCLs return the first object that is created (or NULL if not applicable).
-	static Object* create( const ObjectCreationList* ocl, const Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 )
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+	static Object* create( const ObjectCreationList* ocl, Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 )
 	{
 		if( ocl )
 			return ocl->createInternal( primaryObj, primary, secondary, createOwner, lifetimeFrames );
@@ -144,7 +148,8 @@ public:
 	// Kris: August 23, 2003
 	// All OCLs return the first object that is created (or NULL if not applicable).
 	/// inline convenience method to avoid having to check for null.
-	static Object* create(const ObjectCreationList* ocl, const Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames = 0 )
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+	static Object* create(const ObjectCreationList* ocl, Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames = 0 )
 	{
 		if (ocl)
 			return ocl->createInternal( primaryObj, primary, secondary, angle, lifetimeFrames );
@@ -154,7 +159,8 @@ public:
 	// Kris: August 23, 2003
 	// All OCLs return the first object that is created (or NULL if not applicable).
 	/// inline convenience method to avoid having to check for null.
-	static Object* create( const ObjectCreationList* ocl, const Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 )
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primary'
+	static Object* create( const ObjectCreationList* ocl, Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 )
 	{
 		if (ocl)
 			return ocl->createInternal( primary, secondary, lifetimeFrames );
@@ -167,9 +173,12 @@ private:
 
 	// Kris: August 23, 2003
 	// All OCLs return the first object that is created (or NULL if not applicable).
-	Object* createInternal(const Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 ) const;
-	Object* createInternal(const Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const;
-	Object* createInternal(const Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const;
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+	Object* createInternal(Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 ) const;
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+	Object* createInternal(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const;
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primary'
+	Object* createInternal(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const;
 
 	// note, this list doesn't own the nuggets; all nuggets are owned by the Store.
 	typedef std::vector<ObjectCreationNugget*> ObjectCreationNuggetVector;

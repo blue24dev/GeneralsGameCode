@@ -1398,10 +1398,12 @@ void Radar::xfer( Xfer *xfer )
 	}
 	else
 	{
-		static_assert(sizeof(m_radarHidden) == 16, "Increase version if size changes");
+		//MODDD - changing these to expect 32 instead of 16 for my double-player-count change.
+		// Don't fool around with different savegames between fudging some preprocessor constants, needless to say.
+		static_assert(sizeof(m_radarHidden) == 32, "Increase version if size changes");
 		xfer->xferUser(&m_radarHidden, sizeof(m_radarHidden));
 
-		static_assert(sizeof(m_radarForceOn) == 16, "Increase version if size changes");
+		static_assert(sizeof(m_radarForceOn) == 32, "Increase version if size changes");
 		xfer->xferUser(&m_radarForceOn, sizeof(m_radarForceOn));
 	}
 
@@ -1608,11 +1610,19 @@ void Radar::linkRadarObject( RadarObject *newObj, RadarObject **list )
 // ------------------------------------------------------------------------------------------------
 void Radar::assignObjectColorToRadarObject( RadarObject *radarObj, Object *obj )
 {
-	const Player *player = obj->getControllingPlayer();
-	Player *clientPlayer = rts::getObservedOrLocalPlayer();
-	Bool useIndicatorColor = true;
+	//MODDD - renamed for clarity (player -> owningPlayer), and no longer re-assigned to (separate var)
+	const Player *owningPlayer = obj->getControllingPlayer();
 
-	if( obj->isKindOf( KINDOF_DISGUISER ) )
+	//MODDD - new
+	const Player *playerForColor = NULL;
+
+	Player *clientPlayer = rts::getObservedOrLocalPlayer();
+	//MODDD - removed
+	//Bool useIndicatorColor = true;
+
+	//MODDD - use this check instead. If it's something that can disguise, and, is, does the KINDOF even matter?
+	//if( obj->isKindOf( KINDOF_DISGUISER ) )
+	if (obj->testStatus( OBJECT_STATUS_DISGUISED ))
 	{
 		//Because we have support for disguised units pretending to be units from another
 		//team, we need to intercept it here and make sure it's rendered appropriately
@@ -1620,36 +1630,54 @@ void Radar::assignObjectColorToRadarObject( RadarObject *radarObj, Object *obj )
 		StealthUpdate *update = obj->getStealth();
 		if( update )
 		{
-			if( update->isDisguised() )
+			//MODDD - commented out, known at this point now
+			//if( update->isDisguised() )
 			{
 				Player *disguisedPlayer = ThePlayerList->getNthPlayer( update->getDisguisedPlayerIndex() );
-				if( player->getRelationship( clientPlayer->getDefaultTeam() ) != ALLIES && clientPlayer->isPlayerActive() )
+				//MODDD - removed the 'clientPlayer->isPlayerActive' check. Let's see...
+				// * Normal game: an inactive player is out of the game - could they look at the radar while defeated perhaps? Disguises can still fool them.
+				// * Observer looking through an inacive player's eyes: see above, why not continued to be fooled like they would have been?
+				if( owningPlayer->getRelationship( clientPlayer->getDefaultTeam() ) != ALLIES /*&& clientPlayer->isPlayerActive()*/ )
 				{
 					//Neutrals and enemies will see this disguised unit as the team it's disguised as.
-					player = disguisedPlayer;
-					if( player )
-						useIndicatorColor = false;
+					playerForColor = disguisedPlayer;
+					//MODDD - no longer necessary
+					//if( playerForColor )
+					//	useIndicatorColor = false;
 				}
 				//Otherwise, the color will show up as the team it really belongs to (already set above).
 			}
 		}
 	}
-
-	if( obj->getContain() )
+	//MODDD - joining this by an 'else'.
+	// Some mods give disguisable objects a 'contain' module. If disguised while containing stealthed units,
+	// those garrisoned units didn't want to affect the host's appearance ownership-wise anyway.
+	// This happening in addition to the disguise check above can override the 'player' assignment to be NULL
+	// and make the real-owning player appear on the minimap for disguised units no matter who's looking - not good.
+	else if( obj->getContain() )
 	{
 		// To handle Stealth garrison, ask containers what color they are drawing with to the local player.
 		// Local is okay because radar display is not synced.
+		//MODDD - NOTE - 'getApparentControllingPlayer' returns NULL for most OpenContain subclasses, which means
+		// 'use the common sense option: what actually owns it' - it doesn't fill that in for you.
+		//MODDD - acting on that a bit for clarity
+		/*
 		player = obj->getContain()->getApparentControllingPlayer( clientPlayer );
 		if( player )
 			useIndicatorColor = false;
+		*/
+		// If 'getApparentControllingPlayer' returns NULL, this still signals to use the original owning player color - this works out here
+		playerForColor = obj->getContain()->getApparentControllingPlayer( clientPlayer );
 	}
 
-	if( useIndicatorColor || (player == NULL) )
+	//MODDD - changing the condition
+	//if( useIndicatorColor || (player == NULL) )
+	if( playerForColor == NULL )
 	{
 		radarObj->setColor( obj->getIndicatorColor() );
 	}
 	else
 	{
-		radarObj->setColor( player->getPlayerColor() );
+		radarObj->setColor( playerForColor->getPlayerColor() );
 	}
 }

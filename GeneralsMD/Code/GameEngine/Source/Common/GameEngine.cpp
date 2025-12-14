@@ -706,10 +706,19 @@ void GameEngine::init()
 				// shutdown the top, but do not pop it off the stack
 	//			TheShell->hideShell();
 
+				//MODDD - adding difficulty
+				GameDifficulty difficulty;
+#if !defined(DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY)
+				difficulty = DIFFICULTY_NORMAL;
+#else
+				difficulty = DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY;
+#endif
+
 				// send a message to the logic for a new game
 				GameMessage *msg = TheMessageStream->appendMessage( GameMessage::MSG_NEW_GAME );
 				msg->appendIntegerArgument(GAME_SINGLE_PLAYER);
-				msg->appendIntegerArgument(DIFFICULTY_NORMAL);
+				//MODDD - DIFFICULTY_NORMAL -> difficulty
+				msg->appendIntegerArgument(difficulty);
 				msg->appendIntegerArgument(0);
 				InitRandom(0);
 			}
@@ -771,6 +780,8 @@ void GameEngine::init()
 	*/
 void GameEngine::reset( void )
 {
+	//MODDD
+	gameStatus = GAMESTATUS_TEARDOWN;
 
 	WindowLayout *background = TheWindowManager->winCreateLayout("Menus/BlankWindow.wnd");
 	DEBUG_ASSERTCRASH(background,("We Couldn't Load Menus/BlankWindow.wnd"));
@@ -795,6 +806,9 @@ void GameEngine::reset( void )
 		deleteInstance(background);
 		background = NULL;
 	}
+
+	//MODDD
+	gameStatus = GAMESTATUS_NONE;
 }
 
 /// -----------------------------------------------------------------------------------------------

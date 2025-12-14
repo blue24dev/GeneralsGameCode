@@ -588,6 +588,8 @@ public:
 	// If incoming is true, we're working on the incoming player, if its false, we're on the outgoing
 	// player. These are friend_s for player.
 	void friend_adjustPowerForPlayer( Bool incoming );
+	//MODDD - specify a player
+	void friend_adjustPowerForPlayer(Player* player, Bool incoming);
 
 	Bool isHero() const;
 

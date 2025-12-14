@@ -63,6 +63,10 @@ void PowerPlantUpgrade::onDelete( void )
 	if( isAlreadyUpgraded() == FALSE )
 		return;
 
+	//MODDD - BUGFIX - losing an upgraded powerplant while disabled adds negative power
+	// (surrounded with '!getObject()->isDisabled()' check)
+	// REVERTED - already handled in 'removePowerBonus' now
+
 	// remove the power bonus from the player
 	Player *player = getObject()->getControllingPlayer();
 	if( player )
@@ -154,6 +158,24 @@ void PowerPlantUpgrade::xfer( Xfer *xfer )
 	// extend base class
 	UpgradeModule::xfer( xfer );
 
+	//MODDD - moved from 'loadPostProcess' so that this runs before 'Energy::loadPostProcess'.
+	// The owner of this object is correctly set at the time so this is now feasible.
+	// ---
+	// Most upgrade modules have state change effects that are themselves saved.  This one is a fire and forget.
+	// So we need to re-fire on load if we are turned on.
+	if( xfer->getXferMode() == XFER_LOAD )
+	{
+		if( isAlreadyUpgraded() )
+		{
+			Player *player = getObject()->getControllingPlayer();
+
+			// add the new power production to the object
+			if( player )
+				player->addPowerBonus(getObject());
+		}
+	}
+	// ---
+
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -165,15 +187,6 @@ void PowerPlantUpgrade::loadPostProcess( void )
 	// extend base class
 	UpgradeModule::loadPostProcess();
 
-	// Most upgrade modules have state change effects that are themselves saved.  This one is a fire and forget.
-	// So we need to re-fire on load if we are turned on.
-	if( isAlreadyUpgraded() )
-	{
-		Player *player = getObject()->getControllingPlayer();
-
-		// add the new power production to the object
-		if( player )
-			player->addPowerBonus(getObject());
-	}
+	// MODDD - apply-on-load moved to 'xfer'
 
 }

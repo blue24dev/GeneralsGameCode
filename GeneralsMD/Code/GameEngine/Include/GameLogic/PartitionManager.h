@@ -253,7 +253,14 @@ public:
 	Real						m_howFar;
 	PlayerMaskType	m_forWhom;	// ask not for whom the sighting is masked; it masks for thee
 
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	Bool isJammable;
+#endif
+	
+#if !PARTITIONMANAGER_QUEUE_PER_CELL
+	// removed when this const is true - not needed for whole-look's anymore
 	UnsignedInt			m_data;			// Threat and value use as the value.  Sighting uses it for a Timestamp
+#endif
 
 protected:
 
@@ -263,6 +270,27 @@ protected:
 	virtual void loadPostProcess();
 
 };
+
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+// Note that this doesn't extend 'Snapshot'. The missing 'crc' is not handled; there is no equivalent.
+// If that's desired, see where 'crc' is called on SightingInfo's for 'm_pendingUndoShroudReveals', do
+// something similar for 'm_pendingUndoShroudRevealsForCells'.
+class CellInfo : public MemoryPoolObject
+{
+	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE( CellInfo, "CellInfo" );
+
+public:
+	UnsignedInt id;
+	Int m_x;
+	Int m_y;
+	Int	m_playerIndex;
+	Bool isJammable;
+	UnsignedInt			m_goalTime;
+	Bool m_goalTimeAdjustedForJamming;
+
+	CellInfo();
+};
+#endif
 
 //=====================================
 /**
@@ -282,6 +310,15 @@ struct ShroudStatusStoreRestore
 	std::vector<UnsignedByte> m_foggedOrRevealed[MAX_PLAYER_COUNT];
 	Int m_cellsWide;	// m_cellsHigh is computed by m_foggedOrRevealed[0].size() / m_cellsWide
 };
+
+/*
+class TempClass {
+public:
+	Bool inUse;
+	UnsignedInt id;
+	std::multimap<UnsignedInt, CellInfo*>::iterator cellInfo;
+};
+*/
 
 //=====================================
 /**
@@ -303,6 +340,14 @@ private:
 	Short													m_coiCount;					///< number of COIs in this cell.
 	Short													m_cellX;						///< x-coord of this cell within the Partition Mgr coords (NOT in world coords)
 	Short													m_cellY;						///< y-coord of this cell within the Partition Mgr coords (NOT in world coords)
+	
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+	//std::set<std::multimap<UnsignedInt, CellInfo*>::iterator> undoShroudRevealRefs;
+	//std::unordered_map<UnsignedInt, std::multimap<UnsignedInt, CellInfo*>::iterator> undoShroudRevealRefs;
+	//TempClass undoShroudRevealRefs[2000];
+	//UnsignedInt undoShroudRevealRefs_nextAvailable;
+	std::set<UnsignedInt> undoShroudRevealIds;
+#endif
 
 public:
 
@@ -326,9 +371,29 @@ public:
 
 	void addLooker( Int playerIndex );
 	void removeLooker( Int playerIndex );
+
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	void addLookerJammable( Int playerIndex );
+	void removeLookerJammable( Int playerIndex );
+#endif
 	void addShrouder( Int playerIndex );
 	void removeShrouder( Int playerIndex );
+
+	//MODDD
+	void setShroud( Int playerIndex );
+
+	//MODDD
+	ShroudLevel getShroudLevel( Int playerIndex );
+	
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS || PARTITIONMANAGER_QUEUE_PER_CELL
+	Bool isBeingJammed( Int playerIndex ) const;
+#endif
+
 	CellShroudStatus getShroudStatusForPlayer( Int playerIndex ) const;
+	//MODDD - new
+	void onActiveShroudLevelChanged( Bool oldActiveShroudStatus, Bool newActiveShroudStatus, Int playerIndex );
+	//MODDD - new
+	void onCellShroudStatusChanged( CellShroudStatus oldShroud, CellShroudStatus newShroud, Int playerIndex );
 
 	// @todo: All of these are inline candidates
 	UnsignedInt getThreatValue( Int playerIndex );
@@ -340,6 +405,13 @@ public:
 	void removeCashValue( Int playerIndex, UnsignedInt cashValue );
 
 	void invalidateShroudedStatusForAllCois(Int playerIndex);
+
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+	//void addUndoShroudReveal(const std::multimap<UnsignedInt, CellInfo*>::iterator& it);
+	void addUndoShroudReveal(UnsignedInt cellId);
+	void removeUndoShroudReveal(UnsignedInt cellInfoId);
+	void clearUndoShroudReveal();
+#endif
 
 #ifdef PM_CACHE_TERRAIN_HEIGHT
 	Real getLoTerrain() const { return m_loTerrainZ; }
@@ -1247,6 +1319,20 @@ private:
 	Bool						m_updatedSinceLastReset;	///< Used to force a return of OBJECTSHROUD_INVALID before update has been called.
 
 	std::queue<SightingInfo *> m_pendingUndoShroudReveals;	///< Anything can queue up an Undo to happen later. This is a queue, because "later" is a constant
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	// nevermind
+	//std::queue<SightingInfo *> m_pendingUndoShroudRevealsJammable;
+#endif
+
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+	std::unordered_map<UnsignedInt, CellInfo*> m_cellInfos;
+	std::multimap<UnsignedInt, UnsignedInt> m_pendingUndoShroudRevealsForCells;
+	//std::multimap<UnsignedInt, CellInfo *> m_pendingUndoShroudRevealsForCells;
+	//std::multimap<UnsignedInt, CellInfo *> m_pendingUndoShroudRevealsForCells;
+	//std::queue<CellInfo *> m_pendingUndoShroudRevealsForCells;
+	//std::vector<CellInfo *> m_pendingUndoShroudRevealsForCells;
+	//std::map<UnsignedInt, CellInfo *> m_pendingUndoShroudRevealsForCells;
+#endif
 
 #ifdef FASTER_GCO
 	Int							m_maxGcoRadius;
@@ -1294,8 +1380,16 @@ protected:
 	// the DiscreteCircle::drawCircle function.
 	friend void hLineAddLooker(Int x1, Int x2, Int y, void *playerIndex);
 	friend void hLineRemoveLooker(Int x1, Int x2, Int y, void *playerIndex);
+
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	friend void hLineAddLookerJammable(Int x1, Int x2, Int y, void *playerIndex);
+	friend void hLineRemoveLookerJammable(Int x1, Int x2, Int y, void *playerIndex);
+#endif
+
 	friend void hLineAddShrouder(Int x1, Int x2, Int y, void *playerIndex);
 	friend void hLineRemoveShrouder(Int x1, Int x2, Int y, void *playerIndex);
+	//MODDD
+	friend void hLineSetShroud(Int x1, Int x2, Int y, void *playerIndex);
 
 	friend void hLineAddThreat(Int x1, Int x2, Int y, void *threatValueParms);
 	friend void hLineRemoveThreat(Int x1, Int x2, Int y, void *threatValueParms);
@@ -1346,8 +1440,31 @@ public:
 	void undoShroudReveal( Real centerX, Real centerY, Real radius, PlayerMaskType playerMask);
 	void queueUndoShroudReveal( Real centerX, Real centerY, Real radius, PlayerMaskType playerMask );
 
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+	std::multimap<UnsignedInt, UnsignedInt>::iterator queueUndoShroudRevealCell(Int cellX, Int cellY, Int playerIndex, Bool isBeingJammed);
+#endif
+
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	void doShroudRevealJammable( Real centerX, Real centerY, Real radius, PlayerMaskType playerMask);
+	void undoShroudRevealJammable( Real centerX, Real centerY, Real radius, PlayerMaskType playerMask);
+	void queueUndoShroudRevealJammable( Real centerX, Real centerY, Real radius, PlayerMaskType playerMask );
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+	// (TODO - see if returning the iterator/not impacts performance, if it makes sense to do that?)
+	std::multimap<UnsignedInt, UnsignedInt>::iterator queueUndoShroudRevealCellJammable(Int cellX, Int cellY, Int playerIndex, Bool isBeingJammed);
+#endif
+#endif
+	
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+	std::multimap<UnsignedInt, UnsignedInt>::iterator queueUndoShroudRevealCell(CellInfo* cellInfo);
+#endif
+
 	void doShroudCover( Real centerX, Real centerY, Real radius, PlayerMaskType playerMask);
 	void undoShroudCover( Real centerX, Real centerY, Real radius, PlayerMaskType playerMask);
+	//MODDD
+	void doSetShroudArea( Real centerX, Real centerY, Real radius, PlayerMaskType playerMask);
+
+	//MODDD - new
+	void shroudRangeCells(int x1, int y1, int x2, int y2, int playerIndex);
 
 	/// Perform threat map and value map updates.
 	void doThreatAffect( Real centerX, Real centerY, Real radius, UnsignedInt threatVal, PlayerMaskType playerMask);
@@ -1528,6 +1645,13 @@ public:
 	// If saveToFog is false, then we are writing STORE_PERMENANT_REVEAL
 	void storeFoggedCells(ShroudStatusStoreRestore &outPartitionStore, Bool storeToFog) const;
 	void restoreFoggedCells(const ShroudStatusStoreRestore &inPartitionStore, Bool restoreToFog);
+	
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+	void addCellInfo(CellInfo* cellInfo);
+	CellInfo* getCellInfo(UnsignedInt cellInfoId);
+	void addPendingUndoShroudRevealForCell(CellInfo* cellInfo);
+	void removePendingUndoShroudRevealForCell(CellInfo* cellInfo);
+#endif
 };
 
 // -----------------------------------------------------------------------------

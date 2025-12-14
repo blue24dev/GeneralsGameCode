@@ -86,7 +86,8 @@ void FireWeaponCollide::onCollide( Object *other, const Coord3D *loc, const Coor
 	if( shouldFireWeapon() )
 	{
 		m_collideWeapon->loadAmmoNow( me );
-		m_collideWeapon->fireWeapon( me, other );
+		//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
+		FireWeaponAndHandleOCL( m_collideWeapon, me, other );
 	}
 }
 

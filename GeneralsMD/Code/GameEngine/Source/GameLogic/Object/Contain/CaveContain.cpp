@@ -311,7 +311,7 @@ void CaveContain::recalcApparentControllingPlayer( void )
 	const Player* controller = getApparentControllingPlayer(ThePlayerList->getLocalPlayer());
 	if (controller)
 	{
-		if (TheGlobalData->m_timeOfDay == TIME_OF_DAY_NIGHT)
+		if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
 			getObject()->getDrawable()->setIndicatorColor( controller->getPlayerNightColor() );
 		else
 			getObject()->getDrawable()->setIndicatorColor( controller->getPlayerColor() );

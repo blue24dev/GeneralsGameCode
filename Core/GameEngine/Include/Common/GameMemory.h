@@ -50,6 +50,14 @@
 	#define DISABLE_MEMORYPOOL_CHECKPOINTING 1
 #endif
 
+//MODDD - NOTE - As-is, this block enables memory debug if the current build is for debug.
+// Comment out this block to force memory debug to be disabled for closer-to-normal performance games in debug mode.
+// Also - going to allow a custom flag: 'MEMORYPOOL_DEBUG_GARBAGE_FILL_ONLY', mutually exclusive of 'MEMORYPOOL_DEBUG'.
+// If 'MEMORYPOOL_DEBUG_GARBAGE_FILL_ONLY' is on, only the '0xdeadbeef'-writes to give memory an obvious
+// default will take effect.
+// This should be a good compromise between performance and memory not being a complete mess in case of an exception.
+/*
+// ------------
 #if defined(RTS_DEBUG) && !defined(MEMORYPOOL_DEBUG_CUSTOM_NEW) && !defined(DISABLE_MEMORYPOOL_DEBUG_CUSTOM_NEW)
 	#define MEMORYPOOL_DEBUG_CUSTOM_NEW
 #endif
@@ -58,6 +66,17 @@
 #if defined(RTS_DEBUG) && !defined(MEMORYPOOL_DEBUG) && !defined(DISABLE_MEMORYPOOL_DEBUG)
 	#define MEMORYPOOL_DEBUG
 #endif
+// ------------
+*/
+
+//MODDD - the new flag, see above - again, mutually exclusive of MEMORYPOOL_DEBUG.
+// ---
+#if defined(RTS_DEBUG) && !defined(MEMORYPOOL_DEBUG) && !defined(DISABLE_MEMORYPOOL_DEBUG)
+  // ('MEMORYPOOL_DEBUG_CUSTOM_NEW' shouldn't be necessary for this)
+	#define MEMORYPOOL_DEBUG_GARBAGE_FILL_ONLY
+#endif
+// ---
+
 
 // SYSTEM INCLUDES ////////////////////////////////////////////////////////////
 

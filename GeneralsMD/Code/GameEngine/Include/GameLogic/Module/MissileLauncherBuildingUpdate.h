@@ -98,6 +98,9 @@ public:
 	MissileLauncherBuildingUpdate( Thing *thing, const ModuleData* moduleData );
 	// virtual destructor prototype provided by memory pool declaration
 
+	//MODDD - adding event
+	virtual void onObjectCreated();
+
 	//SpecialPowerUpdateInterface pure virtual implementations
 	virtual Bool initiateIntentToDoSpecialPower(const SpecialPowerTemplate *specialPowerTemplate, const Object *targetObj, const Coord3D *targetPos, const Waypoint *way, UnsignedInt commandOptions );
 	virtual Bool isSpecialAbility() const { return false; }

@@ -89,6 +89,18 @@ void Money::deposit(UnsignedInt amountToDeposit, Bool playSound, Bool trackIncom
 		triggerAudioEvent(TheAudio->getMiscAudio()->m_moneyDepositSound);
 	}
 
+	//MODDD - extra money hack for AI players (new way - scalar on income sources)
+	// ------------------------------------------------------
+#if defined(COMPUTER_PLAYER_MONEY_SCALAR):
+	if (amountToDeposit < 2500) {
+		Player* player = ThePlayerList->getNthPlayer(m_playerIndex);
+		if (player != NULL && player->getPlayerType() == PLAYER_COMPUTER) {
+			amountToDeposit = (UnsignedInt)(((Real)amountToDeposit) * COMPUTER_PLAYER_MONEY_SCALAR);
+		}
+	}
+#endif
+	// -----------------------------------------------------
+
 	if (trackIncome)
 	{
 		m_incomeBuckets[m_currentBucket] += amountToDeposit;

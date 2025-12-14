@@ -250,9 +250,19 @@ void LANAPI::OnGameStart( void )
 		// setup the Global Data with the Map and Seed
 		TheWritableGlobalData->m_pendingFile = m_currentGame->getMap();
 
+		//MODDD - adding difficulty to this MSG_NEW_GAME call
+		GameDifficulty difficulty;
+#if !defined(DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY)
+		difficulty = DIFFICULTY_NORMAL;
+#else
+		difficulty = DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY;
+#endif
+
 		// send a message to the logic for a new game
 		GameMessage *msg = TheMessageStream->appendMessage( GameMessage::MSG_NEW_GAME );
 		msg->appendIntegerArgument(GAME_LAN);
+		//MODDD - added
+		msg->appendIntegerArgument(difficulty);
 
 		TheWritableGlobalData->m_useFpsLimit = false;
 

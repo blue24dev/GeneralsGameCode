@@ -1761,6 +1761,12 @@ void BaseHeightMapRenderObjClass::initDestAlphaLUT(void)
 	}
 }
 
+//MODDD
+void BaseHeightMapRenderObjClass::assignMap(WorldHeightMap* pMap) {
+	//m_map = pMap;
+	REF_PTR_SET(m_map, pMap);
+}
+
 //=============================================================================
 // BaseHeightMapRenderObjClass::initHeightData
 //=============================================================================

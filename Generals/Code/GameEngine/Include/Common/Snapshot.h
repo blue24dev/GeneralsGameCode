@@ -45,6 +45,8 @@ friend class GameState;
 friend class XferLoad;
 friend class XferSave;
 friend class XferCRC;
+//MODDD - welcome to the club
+friend class GameLogic;
 
 public:
 

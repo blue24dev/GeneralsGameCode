@@ -770,6 +770,13 @@ Bool WorldHeightMap::ParseLightingDataChunk(DataChunkInput &file, DataChunkInfo 
 		Int i;
 		GlobalData::TerrainLighting	initLightValues	= { { 0,0,0},{0,0,0},{0,0,-1.0f}};
 
+		//MODDD - TODO - preprocessor constant for this?
+		// Note that the defaults in the GameData.ini file for lighting never take effect because the ones from
+		// the map are always used instead. To force the ones from GameData.ini instead, remove all the
+		// 'TheWritableGlobalData->...' assignments below and just replace them with the 'file.readReal()' call.
+		// Then if you get some time-of-day settings that are fine-tuned to look good for a real-time change once,
+		// you can just use that for all the maps instead.
+
 		// initialize the directions of the lights to not be totally invalid, in case old maps are read
 		for (i=0; i<4; i++) {
 			for (Int j=0;j<MAX_GLOBAL_LIGHTS; j++) {

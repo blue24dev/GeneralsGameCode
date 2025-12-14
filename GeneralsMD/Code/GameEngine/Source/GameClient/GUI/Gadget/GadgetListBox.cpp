@@ -1466,8 +1466,11 @@ WindowMsgHandledType GadgetListBoxSystem( GameWindow *window, UnsignedInt msg,
 				{
 					if( list->autoPurge )
 						TheWindowManager->winSendSystemMsg( window, GLM_SCROLL_BUFFER, 1, 0 );
-					else
-						success = FALSE;
+					else {
+						//MODDD - new behavior: automatically add 100 to the list
+						//success = FALSE;
+						GadgetListBoxSetListLength(window, list->listLength + 100);
+					}
 				}
 			}
 			else if (addInfo->row != -1 && !addInfo->overwrite && list->insertPos == list->listLength)
@@ -1475,8 +1478,11 @@ WindowMsgHandledType GadgetListBoxSystem( GameWindow *window, UnsignedInt msg,
 				// We're inserting into the middle with no space - see if we can scroll the window
 				if( list->autoPurge )
 					TheWindowManager->winSendSystemMsg( window, GLM_SCROLL_BUFFER, 1, 0 );
-				else
-					success = FALSE;
+				else {
+					//MODDD - new behavior: automatically add 100 to the list
+					//success = FALSE;
+					GadgetListBoxSetListLength(window, list->listLength + 100);
+				}
 			}
 
 			if(success)
@@ -2219,8 +2225,14 @@ Int GadgetListBoxAddEntryText( GameWindow *listbox,
 	ListboxData *listData = (ListboxData *)listbox->winGetUserData();
 	if (listData == NULL)
 		return -1;
-	Bool wasFull = (listData->listLength <= listData->endPos);
-	Int newEntryOffset = (wasFull)?0:1;
+
+	//MODDD - no longer needed, list resizes automatically if needed
+	//Bool wasFull = (listData->listLength <= listData->endPos);
+	//Int newEntryOffset = (wasFull)?0:1;
+	// --------------------------------------------------------------------
+	Int newEntryOffset = 1;
+	// --------------------------------------------------------------------
+
 	Int oldBottomIndex = GadgetListBoxGetBottomVisibleEntry(listbox);
 
 	/// @TODO: Don't do this type cast!

@@ -2123,6 +2123,18 @@ UpdateSleepTime JetAIUpdate::update()
 
 	positionLockon();
 
+	//MODDD - bugfix for the phantom aircraft glitch.
+	// In the as-is game, very rarely, killed aircraft will forever circle around (jet) or spin in place
+	// (helicopter) without ever falling toward the ground. The cause is changing the current locomotor
+	// (here) during the death state, which undoes the locomotor edit done by death-related modules (ex:
+	// 'JetSlowDeathBehavior' using 'setMaxLift' to a negative value to force falling).
+	// Other solutions include
+	// 1. Forcing the death-forced locomotor edits to persist through locomotor changes like this (more specific fix).
+	// 2. Changing 'chooseLocomotorSet' to deny any locomotor change after a death state has been declared (broader fix).
+	// Also replacing the original block with 'chooseLocomotorSet(LOCOMOTORSET_NORMAL);' since these checks seem
+	// redundant with behavior in 'chooseLocomotorSet' to force the loc set from the exact same conditions anyway.
+	// I haven't seen any difference while testing.
+	/*
 	if (m_attackLocoExpireFrame != 0)
 	{
 		chooseLocomotorSet(d->m_attackingLoco);
@@ -2131,7 +2143,10 @@ UpdateSleepTime JetAIUpdate::update()
 	{
 		chooseLocomotorSet(d->m_returningLoco);
 	}
-
+	*/
+	if ( !jet->isEffectivelyDead() ) {
+		chooseLocomotorSet(LOCOMOTORSET_NORMAL);
+	}
 
 	if( !jet->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )
 	{

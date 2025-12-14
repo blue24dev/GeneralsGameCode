@@ -300,8 +300,57 @@ ThingTemplate *ThingFactory::findTemplateInternal( const AsciiString& name, Bool
 
 }
 
+//MODDD - simpler overload to use the simpler Object constructor - see notes there
+Object *ThingFactory::newObject( const ThingTemplate *tmplate )
+{
+	// Going to copy things from the original overload below for now - can find a better way to condense things later
+	if (tmplate == NULL)
+		throw ERROR_BAD_ARG;
+
+	const std::vector<AsciiString>& asv = tmplate->getBuildVariations();
+	if (!asv.empty())
+	{
+		Int which = GameLogicRandomValue(0, asv.size()-1);
+		const ThingTemplate* tmp = findTemplate( asv[which] );
+		if (tmp != NULL)
+			tmplate = tmp;
+	}
+
+	DEBUG_ASSERTCRASH(!tmplate->isKindOf(KINDOF_DRAWABLE_ONLY), ("You may not create Objects with the template %s, only Drawables",tmplate->getName().str()));
+
+	// have the game logic create an object of the correct type.
+	// (this will throw an exception on failure.)
+	//Added ability to pass in optional statusBits. This is needed to be set prior to
+	//the onCreate() calls... in the case of constructing.
+	Object *obj = TheGameLogic->friend_createObject( tmplate );
+
+	//MODDD - handle elsewhere
+	/*
+	// run the create function for the thing
+	for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
+	{
+		CreateModuleInterface* create = (*m)->getCreate();
+		if (!create)
+			continue;
+
+		create->onCreate();
+	}
+
+	//
+	// all objects are part of the partition manager system, add it to that
+	// system now
+	//
+	ThePartitionManager->registerObject( obj );
+
+	obj->initObject();
+
+	*/
+	return obj;
+}
+
 //=============================================================================
-Object *ThingFactory::newObject( const ThingTemplate *tmplate, Team *team, ObjectStatusMaskType statusBits )
+//MODDD - added param 'objectInitLockLocalTemp'
+Object *ThingFactory::newObject( const ThingTemplate *tmplate, Team *team, ObjectStatusMaskType statusBits, Bool objectInitLockLocalTemp )
 {
 	if (tmplate == NULL)
 		throw ERROR_BAD_ARG;
@@ -321,8 +370,10 @@ Object *ThingFactory::newObject( const ThingTemplate *tmplate, Team *team, Objec
 	// (this will throw an exception on failure.)
 	//Added ability to pass in optional statusBits. This is needed to be set prior to
 	//the onCreate() calls... in the case of constructing.
-	Object *obj = TheGameLogic->friend_createObject( tmplate, statusBits, team );
+	Object *obj = TheGameLogic->friend_createObject( tmplate, team, statusBits, objectInitLockLocalTemp );
 
+	//MODDD - handle elsewhere
+	/*
 	// run the create function for the thing
 	for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
 	{
@@ -341,8 +392,8 @@ Object *ThingFactory::newObject( const ThingTemplate *tmplate, Team *team, Objec
 
 	obj->initObject();
 
+	*/
 	return obj;
-
 }
 
 //=============================================================================
@@ -351,7 +402,24 @@ Drawable *ThingFactory::newDrawable(const ThingTemplate *tmplate, DrawableStatus
 	if (tmplate == NULL)
 		throw ERROR_BAD_ARG;
 
-	Drawable *draw = TheGameClient->friend_createDrawable( tmplate, statusBits );
+	//MODDD - send 'INVALID_DRAWABLE_ID' to satisfy a new param
+	Drawable *draw = TheGameClient->friend_createDrawable( tmplate, INVALID_DRAWABLE_ID, statusBits );
+
+	/** @todo we should keep track of all the drawables we've allocated here
+	but we'll wait until we have an drawable storage to do that cause it will
+	all be tied together */
+
+	return draw;
+
+}
+
+//MODDD - added param 'drawableID'
+Drawable *ThingFactory::newDrawable(const ThingTemplate *tmplate, DrawableID drawableID, DrawableStatusBits statusBits)
+{
+	if (tmplate == NULL)
+		throw ERROR_BAD_ARG;
+
+	Drawable *draw = TheGameClient->friend_createDrawable( tmplate, drawableID, statusBits );
 
 	/** @todo we should keep track of all the drawables we've allocated here
 	but we'll wait until we have an drawable storage to do that cause it will

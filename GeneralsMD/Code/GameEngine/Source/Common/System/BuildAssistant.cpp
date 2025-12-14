@@ -415,6 +415,8 @@ Object *BuildAssistant::buildObjectNow( Object *constructorObject, const ThingTe
 
 		// Now onCreates were called at the constructor.  This magically created
 		// thing needs to be considered as Built for Game specific stuff.
+		//MODDD - condensed
+		/*
 		for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
 		{
 			CreateModuleInterface* create = (*m)->getCreate();
@@ -423,6 +425,8 @@ Object *BuildAssistant::buildObjectNow( Object *constructorObject, const ThingTe
 
 			create->onBuildComplete();
 		}
+		*/
+		call_objectOnBuildComplete(obj);
 
 		// Creation is another valid and essential time to call this. This building now Looks.
 		obj->handlePartitionCellMaintenance();

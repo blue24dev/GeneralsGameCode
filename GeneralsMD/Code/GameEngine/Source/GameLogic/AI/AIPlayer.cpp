@@ -1259,6 +1259,7 @@ Bool AIPlayer::computeSuperweaponTarget(const SpecialPowerTemplate *power, Coord
 	yCount = 11;
 	cash = -1;
 	Int count = 0;
+
 	for( x = 0; x < xCount; x++ )
 	{
 		for( y = 0; y < yCount; y++ )
@@ -1275,12 +1276,30 @@ Bool AIPlayer::computeSuperweaponTarget(const SpecialPowerTemplate *power, Coord
 			}
 			else if (curCash==cash)
 			{
-				veryBestPos.x += pos.x;
-				veryBestPos.y += pos.y;
+				//MODDD - add a check for count being set to 1 yet.
+				// If not, 'veryBestPos' is garbage memory and can't be added to - set to pos like above in that case.
+				if (count >= 1) {
+					// ---
+					veryBestPos.x += pos.x;
+					veryBestPos.y += pos.y;
+					// ---
+				} else {
+					// in case the starting 'current-best-cash-value' is reached in the first run-through?
+					veryBestPos = pos;
+				}
 				count++;
 			}
 		}
 	}
+
+	//MODDD - moved from below. Don't bother going any further if 'success==FALSE' at this point.
+	success = ( cash > -1 );
+	//MODDD - new
+	// ---
+	if (!success)
+		return false;
+	// ---
+
 	if (count>1) {
 		veryBestPos.x /= count;
 		veryBestPos.y /= count;
@@ -1288,7 +1307,8 @@ Bool AIPlayer::computeSuperweaponTarget(const SpecialPowerTemplate *power, Coord
 	veryBestPos.z = TheTerrainLogic->getGroundHeight(veryBestPos.x, veryBestPos.y);
 	*retPos = veryBestPos;
 
-  success = ( cash > -1 );
+	//MODDD - moved to above
+  //success = ( cash > -1 );
 
 
   return success;

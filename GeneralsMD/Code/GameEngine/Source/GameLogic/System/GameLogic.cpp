@@ -141,6 +141,24 @@ enum { OBJ_HASH_SIZE	= 8192 };
 /// The GameLogic singleton instance
 GameLogic *TheGameLogic = NULL;
 
+//MODDD
+GameStatus gameStatus = GAMESTATUS_NONE;
+Bool objectInitLock = FALSE;
+
+#if REAL_TIME_TOD_CHANGE
+// Goes from 0, counts up, and loops back to 0 on reaching 'TOD_CYCLE_LENGTH_FRAMES'
+//MODDD - TODO - save this the time of day value. This 'xfer' here will probably be fine.
+UnsignedInt tod_frame = 0;
+// Whether a 'setTimeOfDay' call should set 'tod_frame' (ex: loading a map), or let 'tod_frame'
+// decide the time of day instead.
+Bool tod_assign = TRUE;
+TimeOfDay tod_current;
+TimeOfDay tod_next;
+TimeOfDay tod_model;
+UnsignedInt tod_IntervalFrame;
+Real tod_IntervalPortion;
+#endif
+
 static void findAndSelectCommandCenter(Object *obj, void* alreadyFound);
 
 
@@ -232,7 +250,8 @@ GameLogic::GameLogic( void )
 
 	m_shouldValidateCRCs = FALSE;
 
-	m_startNewGame = FALSE;
+	//MODDD - this is already just below >:(
+	//m_startNewGame = FALSE;
 
 	m_frame = 0;
 	m_hasUpdated = FALSE;
@@ -274,14 +293,10 @@ void GameLogic::setDefaults( Bool loadingSaveGame )
 	m_width = DEFAULT_WORLD_WIDTH;
 	m_height = DEFAULT_WORLD_HEIGHT;
 	m_objList = NULL;
-#ifdef ALLOW_NONSLEEPY_UPDATES
-	m_normalUpdates.clear();
-#endif
-	for (std::vector<UpdateModulePtr>::iterator it = m_sleepyUpdates.begin(); it != m_sleepyUpdates.end(); ++it)
-	{
-		(*it)->friend_setIndexInLogic(-1);
-	}
-	m_sleepyUpdates.clear();
+
+	//MODDD - condensed
+	resetUpdateModuleQueues();
+
 	m_curUpdateModule = NULL;
 
 	//
@@ -292,6 +307,68 @@ void GameLogic::setDefaults( Bool loadingSaveGame )
 	if( loadingSaveGame == FALSE )
 		m_nextObjID = (ObjectID)1;
 
+}
+
+void GameLogic::resetUpdateModuleQueues() {
+	// blow away the sleepy update and normal update module lists
+	for (std::vector<UpdateModulePtr>::iterator it = m_sleepyUpdates.begin(); it != m_sleepyUpdates.end(); ++it)
+	{
+		(*it)->friend_setIndexInLogic(-1);
+	}
+	m_sleepyUpdates.clear();
+#ifdef ALLOW_NONSLEEPY_UPDATES
+	m_normalUpdates.clear();
+#endif
+}
+
+void GameLogic::addUpdateModulesToQueues(Object* obj, Bool rebalanceQueue) {
+
+	// This was found surrounded in an '#ifndef ALLOW_NONSLEEPY_UPDATES' preprocessor condition in one place and another without the condition.
+	// Looks like it was only the case without the condition so it could use 'now' in the 'u->friend_getNextCallFrame() >= now' assert further
+	// down. Going to just include it w/o the condition since this utility includes this condition always, though it does seem techincally impossible.
+	UnsignedInt now = TheGameLogic->getFrame();
+	if (now == 0)
+		now = 1;
+
+	// get the update list of modules for this object
+	for (BehaviorModule** b = obj->getBehaviorModules(); *b; ++b)
+	{
+#ifdef DIRECT_UPDATEMODULE_ACCESS
+		// evil, but necessary at this point. (srj)
+		UpdateModulePtr u = (UpdateModulePtr)((*b)->getUpdate());
+#else
+		UpdateModulePtr u = (*b)->getUpdate();
+#endif
+		if (!u)
+			continue;
+
+		// If the queue isn't being rebalanced within this call, it is assumed that this is called after
+		// the queue has been reset (all indeces should be -1). If this assumption changes, remove this assert.
+		if (!rebalanceQueue) {
+			DEBUG_ASSERTCRASH(u->friend_getIndexInLogic() == -1, ("Hmm, expected index to be -1 here"));
+		}
+
+		// check each update module
+		UnsignedInt when = u->friend_getNextCallFrame();
+#ifdef ALLOW_NONSLEEPY_UPDATES
+		if (when == 0)
+		{
+			// zero is the magic value for "never sleeps"
+			m_normalUpdates.push_back(u);
+		}
+		else
+#else
+		// For loading a game, note that 'when' will only be zero for legacy save files.
+		// For in-game, 'when' can be zero here for any update module that didn't bother to call setWakeFrame()
+		// in its ctor. This is legal.
+		if (when == 0)
+			u->friend_setNextCallFrame(now);
+#endif
+		{
+			DEBUG_ASSERTCRASH(u->friend_getNextCallFrame() >= now, ("you may not specify a zero initial sleep time for sleepy modules (%d %d)",u->friend_getNextCallFrame(),now));
+			pushSleepyUpdate(u, rebalanceQueue);
+		}
+	}
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -537,6 +614,8 @@ static Object * placeObjectAtPosition(Int slotNum, AsciiString objectTemplateNam
 		Team *team = pPlayer->getDefaultTeam();
 		// Now onCreates were called at the constructor.  This magically created
 		// thing needs to be considered as Built for Game specific stuff.
+		//MODDD - condensed
+		/*
 		for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
 		{
 			CreateModuleInterface* create = (*m)->getCreate();
@@ -544,6 +623,8 @@ static Object * placeObjectAtPosition(Int slotNum, AsciiString objectTemplateNam
 				continue;
 			create->onBuildComplete();
 		}
+		*/
+		call_objectOnBuildComplete(obj);
 
 		// Since the team now has members, activate it.
 		// srj sez: team should not be null, but could be for ill-formed user maps. so don't crash.
@@ -1147,6 +1228,13 @@ void GameLogic::setGameMode( GameMode mode )
 // ------------------------------------------------------------------------------------------------
 void GameLogic::startNewGame( Bool loadingSaveGame )
 {
+	//MODDD - if a game is being loaded, the caller will handle 'gameStatus' changes instead.
+	// Could also require 'm_startNewGame' to be true, since if it's false, this call does some other quick
+	// things and lets somewhere else call 'startNewGame' soon enough, but I think as soon as the intent's set
+	// is ok to declare that we're in 'setup mode'.
+	if (!loadingSaveGame) {
+		gameStatus = GAMESTATUS_SETUP;
+	}
 
 	#ifdef DUMP_PERF_STATS
 	__int64 startTime64;
@@ -1214,6 +1302,9 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 
 	}
 
+	//MODDD - moved from below
+	m_startNewGame = FALSE;
+
 	m_rankLevelLimit = 1000;	// this is reset every game.
 	setDefaults( loadingSaveGame );
 	TheWritableGlobalData->m_loadScreenRender = TRUE;	///< mark it so only a few select things are rendered during load
@@ -1224,9 +1315,12 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	m_showDynamicLOD = TRUE;
 	m_scriptHulkMaxLifetimeOverride = -1;
 
+#if !GENERALS_CHALLENGE_FORCE
+	// thanks, visual, studio...
 	Campaign* currentCampaign = TheCampaignManager->getCurrentCampaign();
 	Bool isChallengeCampaign = m_gameMode == GAME_SINGLE_PLAYER && currentCampaign && currentCampaign->m_isChallengeCampaign;
-
+#endif
+  
 	// Fill in the game color and Factions before we do the Load Screen
 	GameInfo *game = NULL;
 	TheGameInfo = NULL;
@@ -1246,18 +1340,32 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	}
 	else
 	{
+		//MODDD - adding a substitution for forcing a generals challenge to work in skirmish.
+	  // If the game mode is something other than SKIRMISH like SINGLE_PLAYER, as-is logic will
+		// cause there to be no 'game' even if 'isChallengeCampaign' is true because 'TheChallengeGameInfo'
+	  // hasn't been initialized. Just use the skirmish one unconditionally in that case.
 		if (TheRecorder && TheRecorder->isPlaybackMode())
 		{
 			TheGameInfo = game = TheRecorder->getGameInfo();
 		}
 		else if(m_gameMode == GAME_SKIRMISH)
 		{
+#if !CAMPAIGN_FORCE
 		  TheGameInfo = game = TheSkirmishGameInfo;
+#endif
 		}
+		//MODDD - #if wrapper. For GENERALS_CHALLENGE_FORCE, there is no need for this check as the skirmish game
+		// mode should be used instead for non-network games.
+		// For GENERALS_CHALLENGE_FORCE, it may be possible to generate a 'TheChallengeGameInfo' like the generals
+		// challenge menu normally does & populate it with anything from 'TheSkirmishGameInfo' in place of what
+		// the normal GC menu does, but this doesn't seem worth it considering how 'TheGameInfo' for network games
+		// would also need to be considered. Replacing a MP gamemode with a SP one might not turn out so good.
+#if !GENERALS_CHALLENGE_FORCE
 		else if(isChallengeCampaign)
 		{
 			TheGameInfo = game = TheChallengeGameInfo;
 		}
+#endif
 	}
 
   // On a NEW game, we need to copy the superweapon restrictions from the game info to here
@@ -1328,7 +1436,9 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	setFPMode();
 	if(TheCampaignManager)
 		TheCampaignManager->SetVictorious(FALSE);
-	m_startNewGame = FALSE;
+
+	//MODDD - why is this so far down here?? just be afer the 'return' above's scopes for clarity
+	//m_startNewGame = FALSE;
 
 	// update the loadscreen
 	if(m_loadScreen)
@@ -1359,7 +1469,12 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	if (game)
 	{
 
+		//MODDD - disabled
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 		if (TheGameEngine->isMultiplayerSession() || isSkirmishOrSkirmishReplay)
+#else
+		if (FALSE)
+#endif
 		{
 			// Saves off any player, and resets the sides to 0 players so we can add the skirmish players.
 			TheSidesList->prepareForMP_or_Skirmish();
@@ -1471,7 +1586,12 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			}
 */
 
+//MODDD - disabled
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 			if (isSkirmishOrSkirmishReplay)
+#else
+			if (FALSE)
+#endif
 			{
 				d.setBool(TheKey_playerIsSkirmish, true);
 				switch (slot->getState()) {
@@ -1549,7 +1669,14 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	// update the loadscreen
 	updateLoadProgress(LOAD_PROGRESS_POST_SCRIPT_ENGINE_NEW_MAP);
 
+
+
+	//MODDD - disabled
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 	if (TheGameEngine->isMultiplayerSession() || isSkirmishOrSkirmishReplay)
+#else
+	if (FALSE)
+#endif
 	{
 		// if there are no other teams (happens for debugging) don't end the game immediately
 		Int numTeams = 0; // this can be higher than expected, but is accurate for determining 0, 1, 2+
@@ -1812,6 +1939,18 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 					ThePartitionManager->revealMapForPlayer( player->getPlayerIndex() );
 			}
 		}
+
+#if REMOVE_FOG_OF_WAR
+		//MODDD - new loop, for all players, slot-or-not (though slot-only should suffice too?)
+		for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
+			Player* player = ThePlayerList->getNthPlayer(i);
+			//MODDD - CHANGE. Reveal the map for all players for now
+			//if (player && player->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(player->getPlayerNameKey()).getLength() != 0) {
+			if (player && player->getPlayerType() == PLAYER_HUMAN) {
+				ThePartitionManager->revealMapForPlayerPermanently( player->getPlayerIndex() );
+			}
+		}
+#endif
 	}
 
 	#ifdef DUMP_PERF_STATS
@@ -1839,6 +1978,12 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	progressCount = LOAD_PROGRESS_LOOP_ALL_THE_FREAKN_OBJECTS;
 	Int timer = timeGetTime();
 	if( loadingSaveGame ) {
+		//MODDD - NOTE
+		// Since this is loading a game, objects aren't created from the map, creating objects will be handled
+		// by the 'xfer' method of GameLogic, which is after 'startNewGame' is called (in 'GameStateMap') while
+		// loading a game. In 'GameLogic::xfer', objects are created from the save file as they were originally
+		// saved.
+
 		// Loading a loadingSaveGame, need to add the trees to the client. jba. [8/11/2003]
 		for (pMapObj = MapObject::getFirstMapObject(); pMapObj; pMapObj = pMapObj->getNext())
 		{
@@ -1850,17 +1995,28 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			if( thingTemplate->isKindOf( KINDOF_SHRUBBERY ) && !useTrees )
 				continue;
 
-			Coord3D pos = *pMapObj->getLocation();
-			pos.z += TheTerrainLogic->getGroundHeight( pos.x, pos.y );
-			Real angle = normalizeAngle(pMapObj->getAngle());
-
+			//MODDD - changed this condition to include some lines above, before this was noly for 'createOptimizedTree'.
+			// Why bother making 'pos' and 'angle' if you're not going to do anything with it?
 			if (thingTemplate->isKindOf(KINDOF_OPTIMIZED_TREE)) {
+				Coord3D pos = *pMapObj->getLocation();
+				pos.z += TheTerrainLogic->getGroundHeight( pos.x, pos.y );
+				Real angle = normalizeAngle(pMapObj->getAngle());
+
 				createOptimizedTree(thingTemplate, &pos, angle);
 			}
 		}
 	}
 	else
 	{
+		//MODDD - NOTE - this is significant.
+		// For a new game on this map (not loading a game), create all objects present in the map as seen in the
+		// world builder, such as one player's war factory here, a humvee here, civilian building here, etc.
+		//MODDD - set a lock to restrict some self-initializations on objects that expect all other objects to
+		// exist, such as applying upgrades ('Player'-type ones affect everything owned by the player) and most
+		// behavior module init (cross dependencies are possible, indirect calls to 'friend_awakenUpdateModule' are
+		// pointless when sleep-updates should be updated at the very end like they are post-load by
+		// 'GameLogic::loadPostProcess').
+		objectInitLock = TRUE;
 
 		for (pMapObj = MapObject::getFirstMapObject(); pMapObj; pMapObj = pMapObj->getNext())
 		{
@@ -1943,6 +2099,8 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 				obj->setLayer(layer);
 				// Now onCreates were called at the constructor.  This magically created
 				// thing needs to be considered as Built for Game specific stuff.
+				//MODDD - condensed
+				/*
 				for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
 				{
 					CreateModuleInterface* create = (*m)->getCreate();
@@ -1950,6 +2108,8 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 						continue;
 					create->onBuildComplete();
 				}
+				*/
+				call_objectOnBuildComplete(obj);
 
 				// Since the team now has members, activate it.
 				team->setActive();
@@ -1967,6 +2127,12 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 
 		}
 
+		//MODDD - unset the lock and run the per-object init that was skipped now that all objects are known.
+		// Any further object init will be treated as init in-game (run upgrade/behavior module init immediately
+		// as usual).
+		runPostInitOnObjects();
+		runPostInitOnObjectsExtra();
+		objectInitLock = FALSE;
 	}
 
 	#ifdef DUMP_PERF_STATS
@@ -2054,6 +2220,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	// will build and various damage states for all the structures on the map so that we
 	// don't have big pauses when building those objects or switching to those states
 	//
+#if !REAL_TIME_TOD_CHANGE
 	if( TheGlobalData->m_preloadAssets )
 	{
 		if (TheGlobalData->m_preloadEverything)
@@ -2066,6 +2233,12 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			TheGameClient->preloadAssets( TheGlobalData->m_timeOfDay );
 		}
 	}
+#else
+	//MODDD - Real-time time-of-day change
+	// Force preloading everything since the time-of-day change will go through day/night model states
+	for (Int td = TIME_OF_DAY_FIRST; td < TIME_OF_DAY_COUNT; ++td)
+		TheGameClient->preloadAssets((TimeOfDay)td);
+#endif
 
 	//put this here somewhat randomly.
 	TheControlBar->hideCommunicator( FALSE );
@@ -2140,7 +2313,14 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	if( loadingSaveGame == FALSE )
 		ThePlayerList->newMap();
 
+	//MODDD - replaced. This is on if you're trying to play a GC map in skirmish.
+	// Need to run the automatic relationship changes regardless of 'isChallengeCampaign' for things to run smoothly.
+#if !GENERALS_CHALLENGE_FORCE
 	if ( isChallengeCampaign )
+#else
+	// Const is on: If there is a 'game' alone, proceed
+	if (game)
+#endif
 	{
 		// Establish local player relationships with other teams as
 		// they're set up for "ThePlayer" in challenge mode map.
@@ -2161,14 +2341,39 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			{
 				// set local player enemy relationships based on "ThePlayer" enemy relationships
 				Player *thePlayerEnemy = ThePlayerList->getEachPlayerFromMask(thePlayerEnemysMask);
+
+				//MODDD - replaced this with the block below to iterate through all slot-players instead
+				/*
 				thePlayerEnemy->setPlayerRelationship(localPlayer, ENEMIES);
 				localPlayer->setPlayerRelationship(thePlayerEnemy, ENEMIES);
+				*/
+				///////////////////////////////////////////////////////////////
+				for (int i=0; i<MAX_SLOTS; ++i)
+				{
+					GameSlot *slot = game->getSlot(i);
+
+					if (!slot || !slot->isOccupied())
+						continue;
+
+					AsciiString playerName;
+					playerName.format("player%d", i);
+					Player *player = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(playerName));
+
+					if (player) {
+						thePlayerEnemy->setPlayerRelationship(player, ENEMIES);
+						player->setPlayerRelationship(thePlayerEnemy, ENEMIES);
+					}
+				}
+				///////////////////////////////////////////////////////////////
 			}
 		}
 		else
 		{
 			// This map has no "ThePlayer" by which to model the local player's
 			// relationships, so make assumptions.
+			
+			//MODDD - replaced this block to check each connected (slot) player agaist all other players instead
+			/*
 			for (Int i = 0; i < ThePlayerList->getPlayerCount(); i++)
 			{
 				Relationship rel = NEUTRAL;
@@ -2185,6 +2390,69 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 				thatPlayer->setPlayerRelationship(localPlayer, rel);
 				localPlayer->setPlayerRelationship(thatPlayer, rel);
 			}
+			*/
+			///////////////////////////////////////////////////////////////
+			for (int i=0; i<MAX_SLOTS; ++i)
+			{
+				GameSlot *slot = game->getSlot(i);
+
+				if (!slot || !slot->isOccupied())
+					continue;
+
+				AsciiString playerName;
+				playerName.format("player%d", i);
+				Player *player = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(playerName));
+
+				if (player) {
+					// Since there isn't a dummy "ThePlayer" to use to decide which player is the enemy (AI general that
+					// starts with map control), we'll just assume that each slot player should be enemies with non-slot
+					// players that aren't neutral or civilian.
+					// Basically, the multiplayer-set team alliances are unaffected (don't force them to be enemies with
+					// each other), and make all slot players enemies with players not assigned by a slot (AI general
+					// player baked into the map).
+
+					Player* civilianPlayer = ThePlayerList->findPlayerWithNameKey(NAMEKEY("PlyrCivilian"));
+
+					for (Int i2 = 0; i2 < ThePlayerList->getPlayerCount(); i2++)
+					{
+						Relationship rel;
+						Player *thatPlayer = ThePlayerList->getNthPlayer(i2);
+						if(thatPlayer == player) {
+							// Found the same 'thatPlayer' as 'player' - bound to happen on going through all players.
+							// Skip
+							continue;
+						}
+
+						if (thatPlayer == ThePlayerList->getNeutralPlayer() || thatPlayer == civilianPlayer) {
+							// Found the neutral or civilian player - naturally, we're neutral
+							rel = NEUTRAL;
+						} else {
+							// If the other player isn't neutral/civilian, decide if we're going to force them to be enemies.
+							// If the other player is a slot player, don't do anything (leave this up to defaults from multiplayer-assigned teams).
+							// Otherwise, they're enemies (assume they're enemies with anything else baked into the map).
+							// ---
+							// Get the other player's name.  If it starts with "player" and is followed by a single number, this is a slot player.
+							// There is a special place in hell for mappers that happen to name map-baked-in players exactly "player0", "player1", etc.
+
+							const char* thatPlayerName = TheNameKeyGenerator->keyToName(thatPlayer->getPlayerNameKey()).str();
+							if (
+								strlen(thatPlayerName) == 7 && strncmp("player", thatPlayerName, strlen("player")) == 0 &&
+								thatPlayerName[6] >= '0' && thatPlayerName[6] <= '9'
+								) {
+								// The other player is a slot player - don't do anything
+								continue;
+							} else {
+								// Other player isn't a slot player (baked in the map) - enemies, we are
+								rel = ENEMIES;
+							}
+						}
+
+						player->setPlayerRelationship(thatPlayer, rel);
+						thatPlayer->setPlayerRelationship(player, rel);
+					}
+				}
+			}
+			///////////////////////////////////////////////////////////////
 		}
 	}
 
@@ -2413,7 +2681,13 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 		TheInGameUI->messageNoFormat( TheGameText->FETCH_OR_SUBSTITUTE( "GUI:FastForwardInstructions", L"Press F to toggle Fast Forward" ) );
   }
 
-
+	//MODDD
+	// For loading a game, setting this will be left up to the caller instead.
+	// Loading a game calls 'startNewGame' early on and still has a lot more to go, so this call finishing isn't
+	// indicative of being done with setup.
+	if (!loadingSaveGame) {
+		gameStatus = GAMESTATUS_INGAME;
+	}
 }
 
 //-----------------------------------------------------------------------------------------
@@ -2443,9 +2717,32 @@ static void findAndSelectCommandCenter(Object *obj, void* alreadyFound)
 //-----------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------------------
 
+//MODDD - new
+// Run the parts of per-obj init that were waiting for all objects to be populated first from some major
+// object-loading event (fresh map start, loading a saved game)
+void GameLogic::runPostInitOnObjects() {
+	//MODDD - TEST - no
+	//return;
 
+	Object *obj;
+	for( obj = getFirstObject(); obj; obj = obj->getNextObject() )
+	{
+		obj->gamePostLoad();
+	}
+}
 
-
+//MODDD - handle some other behavior normally called by the load-system that non-loaded games
+// (fresh map start) now expects
+void GameLogic::runPostInitOnObjectsExtra() {
+	// Call this to setup sleepy updates, now that updates within objects would have been blocked
+	// uhh.. no, don't block sleepy updates for non-loaded games, somehow doing this here just isn't working
+	//TheGameLogic->loadPostProcess();
+	int i;
+	for (i = 0; i < ThePlayerList->getPlayerCount(); i++) {
+		Player* player = ThePlayerList->getNthPlayer(i);
+		player->getEnergy()->loadPostProcess();
+	}
+}
 
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
@@ -2728,7 +3025,12 @@ void GameLogic::selectObject(Object *obj, Bool createNewSelection, PlayerMaskTyp
 		group->removeAll();
 #endif
 
-		if( affectClient )
+		//MODDD - bugfix for being forced to select a spawned spectre gunship that belongs to a different player.
+		// Added a check for the player told to select the object being the local player.
+		// This appears to be a UI-only situation. Honestly the stuff above not automatically calling for something
+		// like this (making a player select something in game logic -> keep the UI in sync for the affected player
+		// locally) seems weird to me.
+		if( affectClient && player == ThePlayerList->getLocalPlayer() )
 		{
 			Drawable *draw = obj->getDrawable();
 			if( draw )
@@ -3005,7 +3307,8 @@ void GameLogic::remakeSleepyUpdate()
 }
 
 // ------------------------------------------------------------------------------------------------
-void GameLogic::pushSleepyUpdate(UpdateModulePtr u)
+//MODDD - added param
+void GameLogic::pushSleepyUpdate(UpdateModulePtr u, Bool rebalanceQueue)
 {
 	USE_PERF_TIMER(SleepyMaintenance)
 
@@ -3014,7 +3317,10 @@ void GameLogic::pushSleepyUpdate(UpdateModulePtr u)
 	m_sleepyUpdates.push_back(u);
 	u->friend_setIndexInLogic(m_sleepyUpdates.size() - 1);
 
-	rebalanceParentSleepyUpdate(m_sleepyUpdates.size()-1);
+	//MODDD - checked by param
+	if (rebalanceQueue) {
+		rebalanceParentSleepyUpdate(m_sleepyUpdates.size()-1);
+	}
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -3059,6 +3365,23 @@ void GameLogic::popSleepyUpdate()
 //DECLARE_PERF_TIMER(friend_awakenUpdateModule)
 void GameLogic::friend_awakenUpdateModule(Object* obj, UpdateModulePtr u, UnsignedInt whenToWakeUp)
 {
+	//MODDD - bugfix: crash on loading some games, unclear why.
+	// Ran into "fatal error! sleepy update module illegal index.", 'idx' of -1 but this script thinks that
+	// shouldn't have been the case since 'obj->isInList(&m_objList)' passed.
+	// Seems strange to depend on that as the list is being built during a load...
+	// see 'GameLogic::loadPostProcess', probably fine to just block calls during game loads and let that
+	// handle everything wake-related.
+	// For info, my scenario was loading a saved game on the Firestorm fortress GC map, fairly long game.
+	// All I got is a depiloted humvee and paladin(s?) on the map. 
+	// 'u->friend_getNextCallFrame()' was UPDATE_SLEEP_FOREVER, if that matters.
+	// Loading another save with just paladins didn't have the issue.
+	// How the base game never ran into this issue far more often is a mystery to me.
+	// Don't use 'gameStatus != GAMESTATUS_INGAME', or the game will fall to pieces.
+	//if (objectInitLock) {
+	if (objectInitLock && globalXferStatus == XFER_LOAD) {
+		return;
+	}
+
 	//USE_PERF_TIMER(friend_awakenUpdateModule)
 	UnsignedInt now = TheGameLogic->getFrame();
 	DEBUG_ASSERTCRASH(whenToWakeUp >= now, ("setWakeFrame frame is in the past... are you sure this is what you want?"));
@@ -3596,6 +3919,8 @@ static void unitTimings(void)
 
 						// Now onCreates were called at the constructor.  This magically created
 						// thing needs to be considered as Built for Game specific stuff.
+						//MODDD - condensed
+						/*
 						for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
 						{
 							CreateModuleInterface* create = (*m)->getCreate();
@@ -3603,6 +3928,8 @@ static void unitTimings(void)
 								continue;
 							create->onBuildComplete();
 						}
+						*/
+						call_objectOnBuildComplete(obj);
 						// Since the team now has members, activate it.
 						team->setActive();
 						TheAI->pathfinder()->addObjectToPathfindMap(obj);
@@ -3643,6 +3970,69 @@ extern __int64 Total_Create_Render_Obj_Time;
 extern __int64 Total_Load_3D_Assets;
 #endif
 
+#if REAL_TIME_TOD_CHANGE
+TimeOfDay determineTimeOfDayFromFrame( UnsignedInt frame )
+{
+	UnsignedInt timeOfDayPeriod = frame / (TOD_CYCLE_LENGTH_FRAMES / 4);
+	switch(timeOfDayPeriod) {
+		case 0: {
+			return TIME_OF_DAY_NIGHT;
+		}
+		case 1: {
+			return TIME_OF_DAY_MORNING;
+		}
+		case 2: {
+			return TIME_OF_DAY_AFTERNOON;
+		}
+		case 3: {
+			return TIME_OF_DAY_EVENING;
+		}
+		default: {
+			// ???
+			return TheGlobalData->m_timeOfDay;
+		}
+	}
+}
+
+TimeOfDay determineNextTimeOfDay( TimeOfDay tod )
+{
+	UnsignedInt todVal = ((UnsignedInt)tod) + 1;
+	if (todVal >= TIME_OF_DAY_COUNT) {
+		return TIME_OF_DAY_FIRST;
+	}
+	return (TimeOfDay)todVal;
+}
+
+void determineTimeOfDayGlobals()
+{
+	// Decide the time-of-day from 'tod_frame'.
+	tod_current = determineTimeOfDayFromFrame(tod_frame);
+	tod_next = determineNextTimeOfDay(tod_current);
+
+	// 'tod_model' is the time-of-day for models to use.
+	// Only '_NIGHT' / non-'_NIGHT' choices should ever be meaningful.
+	//tod_model = determineTimeOfDayFromFrame((tod_frame - ((TOD_CYCLE_LENGTH_FRAMES / 4) / 2)) % TOD_CYCLE_LENGTH_FRAMES);
+	if (
+		tod_frame >= (UnsignedInt)((TOD_CYCLE_LENGTH_FRAMES / 4) * (4 - 0.36)) ||
+		tod_frame <= (UnsignedInt)((TOD_CYCLE_LENGTH_FRAMES / 4) * 0.25)
+	) {
+		tod_model = TIME_OF_DAY_NIGHT;
+	} else {
+		// uhh, sure.  see if the dummied out version earlier works as expected too, doesn't seem to at the moment
+		// hm, might be more involved - if that jumps back to NIGHT when we don't want to be, won't be what we want.
+		tod_model = TIME_OF_DAY_AFTERNOON;
+	}
+
+	// Set some other globals for use in anywhere reached in deeper 'setTimeOfDay' calls, since there's no
+	// reason to re-compute this thousands of times
+	// ---
+	// Fine to use the 'tod' param as it should be set properly anyway, rounding down to the earlier time-of-day
+	// (ex: 80% of the way from night to morning is still 'night').
+	tod_IntervalFrame = tod_frame % (TOD_CYCLE_LENGTH_FRAMES / 4);
+	tod_IntervalPortion = (Real)tod_IntervalFrame / ((Real)(TOD_CYCLE_LENGTH_FRAMES / 4));
+}
+#endif
+
 // ------------------------------------------------------------------------------------------------
 /** Update all objects in the world by invoking their update() methods. */
 // ------------------------------------------------------------------------------------------------
@@ -3658,6 +4048,7 @@ void GameLogic::update( void )
 	setFPMode();
 
 	/// @todo remove this hack
+	//MODDD - hello, from the future.  you never removed this hack.  <:L
 	if ( m_startNewGame && !TheDisplay->isMoviePlaying())
 	{
 	#ifdef DUMP_PERF_STATS
@@ -3694,6 +4085,17 @@ void GameLogic::update( void )
 	// send the current time to the GameClient
 	UnsignedInt now = TheGameLogic->getFrame();
 	TheGameClient->setFrame(now);
+	
+#if REAL_TIME_TOD_CHANGE
+	if (tod_frame % TOD_UPDATE_INTERVAL == 0) {
+		determineTimeOfDayGlobals();
+
+		tod_assign = FALSE;
+		if( TheWritableGlobalData->setTimeOfDay( tod_current ) )
+			TheGameClient->setTimeOfDay( tod_current );
+		tod_assign = TRUE;
+	}
+#endif
 
 	// update (execute) scripts
 	{
@@ -3873,6 +4275,14 @@ void GameLogic::update( void )
 	{
 		m_frame++;
 		m_hasUpdated = TRUE;
+		
+#if REAL_TIME_TOD_CHANGE
+		tod_frame++;
+		if (tod_frame >= TOD_CYCLE_LENGTH_FRAMES) {
+			tod_frame = 0;
+		}
+#endif
+
 	}
 }
 
@@ -3953,48 +4363,19 @@ void GameLogic::removeObjectFromLookupTable( Object *obj )
 // ------------------------------------------------------------------------------------------------
 void GameLogic::registerObject( Object *obj )
 {
-
 	// add the object to the global list
 	obj->prependToList(&m_objList);
 
 	// add object to lookup table
 	addObjectToLookupTable( obj );
 
-	UnsignedInt now = TheGameLogic->getFrame();
-	if (now == 0)
-		now = 1;
-	for (BehaviorModule** b = obj->getBehaviorModules(); *b; ++b)
-	{
-#ifdef DIRECT_UPDATEMODULE_ACCESS
-		// evil, but necessary at this point. (srj)
-		UpdateModulePtr u = (UpdateModulePtr)((*b)->getUpdate());
-#else
-		UpdateModulePtr u = (*b)->getUpdate();
-#endif
-		if (!u)
-			continue;
-
-		UnsignedInt when = u->friend_getNextCallFrame();
-#ifdef ALLOW_NONSLEEPY_UPDATES
-		if (when == 0)
-		{
-			// zero is the magic value for "never sleeps"
-			m_normalUpdates.push_back(u);
-		}
-		else
-#else
-		// note that 'when' can be zero here for any update module
-		// that didn't bother to call setWakeFrame() in its ctor.
-		// this is legal.
-		if (when == 0)
-			u->friend_setNextCallFrame(now);
-#endif
-		{
-			DEBUG_ASSERTCRASH(u->friend_getNextCallFrame() >= now, ("you may not specify a zero initial sleep time for sleepy modules (%d %d)",u->friend_getNextCallFrame(),now));
-			pushSleepyUpdate(u);
-		}
+	//MODDD - This should only be done here if in-game, not on setup, including for a new game or loading a game.
+	// The end of setup can go through all objects and cover them that way.
+	//if (gameStatus == GAMESTATUS_INGAME) {
+	//if (!objectInitLock) {
+	if (!(objectInitLock && globalXferStatus == XFER_LOAD)) {
+		addUpdateModulesToQueues(obj, true);
 	}
-
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -4010,11 +4391,22 @@ void GameLogic::registerObject( Object *obj )
 	* GameLogic/Client for those purposes, or we could put the allocation pools
 	* in the GameLogic and GameClient themselves */
 // ------------------------------------------------------------------------------------------------
-Object *GameLogic::friend_createObject( const ThingTemplate *thing, const ObjectStatusMaskType &statusBits, Team *team )
+//MODDD - simpler overload added
+Object *GameLogic::friend_createObject( const ThingTemplate *thing )
 {
 	Object *obj;
 
-	obj = newInstance(Object)( thing, statusBits, team );
+	obj = newInstance(Object)( thing );
+
+	return obj;
+}
+
+//MODDD - added param 'objectInitLockLocalTemp', swapped 'team' and 'statusBits' order
+Object *GameLogic::friend_createObject( const ThingTemplate *thing, Team *team, const ObjectStatusMaskType &statusBits, Bool objectInitLockLocalTemp )
+{
+	Object *obj;
+
+	obj = newInstance(Object)( thing, team, statusBits, objectInitLockLocalTemp );
 
 	return obj;
 }
@@ -4223,6 +4615,18 @@ void GameLogic::sendObjectCreated( Object *obj )
 	Drawable *draw = TheThingFactory->newDrawable(obj->getTemplate());
 
 /// @todo COLIN ... shouldn't we have a check here for existing drawable!!!!!
+
+	// bind drawable to object and object to drawable
+	bindObjectAndDrawable(obj, draw);
+
+}
+
+//MODDD - overload that takes an ID for the drawable to use
+void GameLogic::sendObjectCreated( Object *obj, DrawableID drawableID )
+{
+	Drawable *draw = TheThingFactory->newDrawable(obj->getTemplate(), drawableID);
+
+	/// @todo COLIN ... shouldn't we have a check here for existing drawable!!!!!
 
 	// bind drawable to object and object to drawable
 	bindObjectAndDrawable(obj, draw);
@@ -4854,7 +5258,10 @@ void GameLogic::xfer( Xfer *xfer )
 {
 
 	// version
-	const XferVersion currentVersion = 10;
+	//MODDD - bump up the version
+	//const XferVersion currentVersion = 10;
+	const XferVersion currentVersion = 11;
+
 	XferVersion version = currentVersion;
 	xfer->xferVersion( &version, currentVersion );
 
@@ -4918,13 +5325,19 @@ void GameLogic::xfer( Xfer *xfer )
 	}
 	else
 	{
-		Team *defaultTeam = ThePlayerList->getNeutralPlayer()->getDefaultTeam();
+		//MODDD - should be no need for this now
+		//Team *defaultTeam = ThePlayerList->getNeutralPlayer()->getDefaultTeam();
 		const ThingTemplate *thingTemplate;
 
 		// read all objects
 		Int objectDataSize;
 		UnsignedShort tocID;
 		ObjectTOCEntry *tocEntry;
+
+		//MODDD - see notes above on 'objectInitLock', same applies here for being a for-loop that fills the list
+		// of objects and delaying some init until the end makes the most sense
+		objectInitLock = TRUE;
+
 		for( UnsignedInt i = 0; i < objectCount; ++i )
 		{
 
@@ -4957,7 +5370,9 @@ void GameLogic::xfer( Xfer *xfer )
 			}
 
 			// create new object
-			obj = TheThingFactory->newObject( thingTemplate, defaultTeam );
+			//MODDD - use a simpler constructor to defer most init to after obj's 'xfer'
+			//obj = TheThingFactory->newObject( thingTemplate, defaultTeam );
+			obj = TheThingFactory->newObject( thingTemplate );
 
 			// xfer the rest of the object data
 			xfer->xferSnapshot( obj );
@@ -4971,10 +5386,18 @@ void GameLogic::xfer( Xfer *xfer )
 
 		}
 
+		//MODDD
+		runPostInitOnObjects();
+		objectInitLock = FALSE;
+
 	}
 
 	// campaign info
-	xfer->xferSnapshot( TheCampaignManager );
+	//MODDD - removing this for current saves. This is already saved by GameState.cpp's 'SnapshotBlock' list, see GameState::init.
+	// Doing so here too is redundant.
+	if( version <= 10 ) {
+		xfer->xferSnapshot( TheCampaignManager );
+	}
 
 	// cave system info
 	xfer->xferSnapshot( TheCaveSystem );
@@ -5191,65 +5614,26 @@ void GameLogic::loadPostProcess( void )
 	// m_nextObjID from getting un-necessarily high we will set it to the next available
 	// id from the objects that are now in the world and actually in use
 	//
+	//MODDD - even since a fix for the above situation (IDs are set per save data sooner instead of allocated
+	// & then overwriten), still need to know what the 'next ID available' is, since uh, '1' probably isn't
+	// accurate. Still need '<greatest ID ever allocated> + 1' for this just like it was at the time of save.
+	// ...come to think of it, 'm_nextObjID' could be included in the save to this block isn't needed. *shrug*.
 	m_nextObjID = INVALID_ID;
 	Object *obj;
 	for( obj = getFirstObject(); obj; obj = obj->getNextObject() )
 		if( obj->getID() >= m_nextObjID )
 			m_nextObjID = (ObjectID)((UnsignedInt)obj->getID() + 1);
 
-	// blow away the sleepy update and normal update module lists
-	for (std::vector<UpdateModulePtr>::iterator it = m_sleepyUpdates.begin(); it != m_sleepyUpdates.end(); ++it)
-	{
-		(*it)->friend_setIndexInLogic(-1);
-	}
-	m_sleepyUpdates.clear();
-#ifdef ALLOW_NONSLEEPY_UPDATES
-	m_normalUpdates.clear();
-#else
-	UnsignedInt now = TheGameLogic->getFrame();
-	if (now == 0)
-		now = 1;
-#endif
+	//MODDD - condensed
+	resetUpdateModuleQueues();
 
 	// go through all objects, examine each update module and put it on the appropriate update list
 	for( obj = getFirstObject(); obj; obj = obj->getNextObject() )
 	{
-
-		// get the update list of modules for this object
-		for( BehaviorModule** b = obj->getBehaviorModules(); *b; ++b )
-		{
-#ifdef DIRECT_UPDATEMODULE_ACCESS
-			// evil, but necessary at this point. (srj)
-			UpdateModulePtr u = (UpdateModulePtr)((*b)->getUpdate());
-#else
-			UpdateModulePtr u = (*b)->getUpdate();
-#endif
-			if (!u)
-				continue;
-
-			DEBUG_ASSERTCRASH(u->friend_getIndexInLogic() == -1, ("Hmm, expected index to be -1 here"));
-
-			// check each update module
-			UnsignedInt when = u->friend_getNextCallFrame();
-#ifdef ALLOW_NONSLEEPY_UPDATES
-			if( when == 0 )
-			{
-				// zero if the magic value for "never sleeps"
-				m_normalUpdates.push_back(u);
-			}
-			else
-#else
-			// note that 'when' will only be zero for legacy save files.
-			if (when == 0)
-				u->friend_setNextCallFrame(now);
-#endif
-			{
-				m_sleepyUpdates.push_back(u);
-				u->friend_setIndexInLogic(m_sleepyUpdates.size() - 1);
-			}
-
-		}
-
+		//MODDD - condensed
+		// Don't rebalance the queue after each call since 'remakeSleepyUpdate' will handle that for every item
+		// after all objects are covered
+		addUpdateModulesToQueues(obj, false);
 	}
 
 	// re-sort the priority queue all at once now that all modules are on it
@@ -5257,4 +5641,53 @@ void GameLogic::loadPostProcess( void )
 
 }
 
+//MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
+// Condensed several snippets of copied script into this, with a few additions to fix the bug on buildings
+// with non-shared special powers (ex: strategy center, battle plans & CIA intelligence) starting with
+// endless cooldowns on RETAIL_COMPATIBLE_CRC=0.
+#include "GameLogic/Module/SpecialPowerModule.h"
+void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCreateCalls) {
+	// This for-loop is as-is behavior
+	for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
+	{
+		CreateModuleInterface* create = (*m)->getCreate();
+		if (!create)
+			continue;
 
+		create->onBuildComplete();
+	}
+
+	// The rest of below is new
+	// ---------------------------
+	if(!checkForSpecialPowerModuleCreateCalls) {
+		// skip further down - ex: made by a warfactory. The SpecialPowerModule constructor already calls 'onSpecialPowerCreation' if it
+		// isn't under construction at the time (structures block this since they start at in-construction / 0%-progress technically).
+		// So for vehicles, etc., as-is behavior already works.
+		return;
+	}
+
+	// First, see if there is a "SpecialPowerCreate" module.
+	// If so, this module's 'onBuildComplete' would have already run above, which would have called 'onSpecialPowerCreation' already
+	// (no need to do so manually further down).
+	Bool foundSpecialPowerCreateModule = FALSE;
+	static NameKeyType key_SpecialPowerCreate = NAMEKEY("SpecialPowerCreate");
+	for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
+	{
+		if ((*m)->getModuleNameKey() == key_SpecialPowerCreate) {
+			foundSpecialPowerCreateModule = TRUE;
+			break;
+		}
+	}
+
+	if (!foundSpecialPowerCreateModule) {
+		// Didn't find any 'SpecialPowerCreate' modules - call 'notifyBuildComplete'
+		for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
+		{
+			SpecialPowerModuleInterface* sp = (*m)->getSpecialPower();
+			if (!sp)
+				continue;
+
+			sp->notifyBuildComplete();
+		}
+	}
+}

@@ -71,8 +71,16 @@ class Shadow
 
 public:
 
-		struct	ShadowTypeInfo
+	  //MODDD - changing from class to struct so this can get a constructor to init 'm_ShadowName' to empty-string
+		// Also added 'public' access modifiers.
+		// This fixes a debug-build error(warning?) about the stack near 'texture_name' in
+		// 'W3DProjectedShadowManager::addShadow' being corrupted because of a call from 'TheW3DShadowManager->addShadow',
+		// seen in 'W3DDebrisDraw::setModelName'. Observed in the Rise of the Reds mod. No idea why not in vanilla Generals ZH.
+		// ----------
+		//struct ShadowTypeInfo
+	  class ShadowTypeInfo
 		{
+		public:
 				char	m_ShadowName[64];	//when set, overrides the default model shadow (used mostly for Decals).
 				ShadowType m_type;			//type of shadow
 				Bool	allowUpdates;			//whether to update the shadow image when object/light moves.
@@ -81,6 +89,15 @@ public:
 				Real	m_sizeY;			//world size of decal projection
 				Real	m_offsetX;			//world shift along x axis
 				Real	m_offsetY;			//world shift along y axis
+		public:
+				ShadowTypeInfo() {
+					// Everywhere that uses ShadowTypeInfo sets 'm_type' and 'm_sizeX/Y', so no need to default them
+					m_ShadowName[0] = '\0';
+					allowUpdates = FALSE;
+					allowWorldAlign = FALSE;
+					m_offsetX = 0;
+					m_offsetY = 0;
+				}
 		};
 
 		Shadow(void) : m_diffuse(0xffffffff), m_color(0xffffffff), m_opacity (0x000000ff), m_localAngle(0.0f) {}

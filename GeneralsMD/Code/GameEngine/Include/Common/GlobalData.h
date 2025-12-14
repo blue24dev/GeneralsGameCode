@@ -86,6 +86,17 @@ public:
 	virtual void init();
 	virtual void reset();
 	virtual void update() { }
+	
+	//MODDD - Real-time time-of-day change
+#if REAL_TIME_TOD_CHANGE
+	void setTodFrameFromParam( TimeOfDay tod );
+#endif
+	void determineTerrainLighting_ambient( TimeOfDay tod, int i );
+	void determineTerrainLighting_diffuse( TimeOfDay tod, int i );
+	void determineTerrainLighting_lightPos( TimeOfDay tod, int i );
+	RGBColor getTerrainObjectsLighting_ambient( TimeOfDay tod, int i ) const;
+	RGBColor getTerrainObjectsLighting_diffuse( TimeOfDay tod, int i ) const;
+  Coord3D getTerrainObjectsLighting_lightPos( TimeOfDay tod, int i ) const;
 
 	Bool setTimeOfDay( TimeOfDay tod );		///< Use this function to set the Time of day;
 

@@ -580,10 +580,17 @@ void DrawObject::updateBoundaryVB(void)
 	for (i = 0; i < numBoundaries; ++i) {
 		ICoord2D curBoundary;
 		pDoc->getBoundary(i, &curBoundary);
+
+		//MODDD - disagree with this block, disabling.
+		// Render single line blocks too so they can be dragged back to be removed.
+		// Old maps may still have otherwise invisible boundaries dragged against the left/bottom sides or even
+		// the bottom-left corner.
+		/*
 		if (curBoundary.x == 0 || curBoundary.y == 0) {
 			// do not show feedback, this is a defunct boundary
 			continue;
 		}
+		*/
 
 		for (j = 0; j < 4; ++j) {
 			Coord3D startPt, endPt;

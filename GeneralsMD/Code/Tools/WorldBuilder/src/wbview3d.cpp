@@ -1579,6 +1579,17 @@ void WbView3d::updateHeightMapInView(WorldHeightMap *htMap, Bool partial, const 
 		if (partial) {
 			m_heightMapRenderObj->doPartialUpdate(partialRange, htMap, &lightListIt);
 		} else {
+			//MODDD - bugfix test
+			// Since impassable terrain is better preserved on resizing the map, it seems more likely to run into an
+			// issue where 'initHeightData' immediately renders using a 'm_showAsVisibleCliff' sized for the old map
+			// size if impassible areas are visible at the time, causing it to refer to out-of-bounds memory.
+			// Updating that map in advance here instead of after 'initHeightData' appears to fix this.
+			// Also, the data structure ma (htMap) must be assigned earlier since this is usually done in 'initHeightData'
+			// so that the earlier called 'updateViewImpassableAreas' has context.
+			// -----------------------
+			m_heightMapRenderObj->assignMap(htMap);
+			m_heightMapRenderObj->updateViewImpassableAreas();
+			// -----------------------
 			if (m_showEntireMap) {
 				htMap->setDrawOrg(0, 0);
 				htMap->setDrawWidth(htMap->getXExtent());
@@ -1589,7 +1600,8 @@ void WbView3d::updateHeightMapInView(WorldHeightMap *htMap, Bool partial, const 
 				htMap->setDrawHeight(m_partialMapSize);
 				m_heightMapRenderObj->initHeightData(htMap->getDrawWidth(), htMap->getDrawHeight(), htMap, &lightListIt);
 			}
-			m_heightMapRenderObj->updateViewImpassableAreas();
+			//MODDD - moved up
+			//m_heightMapRenderObj->updateViewImpassableAreas();
 		}
 		curTicks = GetTickCount() - curTicks;
 		if (curTicks < 1) curTicks = 1;

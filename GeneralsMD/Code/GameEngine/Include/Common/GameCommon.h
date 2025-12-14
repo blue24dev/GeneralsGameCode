@@ -105,6 +105,9 @@ inline Real ConvertAngularVelocityInDegreesPerSecToRadsPerFrame(Real degPerSec)
 	return (degPerSec * (SECONDS_PER_LOGICFRAME_REAL * RADS_PER_DEGREE));
 }
 
+//MODDD
+#if DOUBLE_MAX_PLAYER_COUNT == FALSE
+// -----------------------------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------------
 enum
 {
@@ -122,6 +125,26 @@ enum
 #else
 	#error "this is the wrong size"
 #endif
+// -----------------------------------------------------------------------------------------------------------
+#else
+enum
+{
+	MAX_PLAYER_COUNT = 32											///< max number of Players.
+};
+
+// ----------------------------------------------------------------------------------------------
+/**
+	a bitmask that can uniquely represent each player.
+*/
+#if MAX_PLAYER_COUNT <= 32
+	typedef UnsignedInt PlayerMaskType;
+	const PlayerMaskType PLAYERMASK_ALL = 0xffffffff;
+	const PlayerMaskType PLAYERMASK_NONE = 0x0;
+#else
+	#error "this is the wrong size"
+#endif
+#endif
+
 
 // ----------------------------------------------------------------------------------------------
 enum

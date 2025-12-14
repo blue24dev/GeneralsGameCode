@@ -111,38 +111,28 @@ SpecialPowerModule::SpecialPowerModule( Thing *thing, const ModuleData *moduleDa
 	// if we're pre-built, start counting down
 	if( !getObject()->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ) )
 	{
-		//A sharedNSync special only startPowerRecharges when first scienced or when executed,
-		//Since a new modue with same SPTemplates may construct at any time.
-		if ( getSpecialPowerTemplate()->isSharedNSync() == FALSE )
-			startPowerRecharge();
+		//MODDD - script moved to there
+		startPowerRechargeInit(FALSE);
 	}
+
 	// WE USED TO DO THE POLL-EVERYBODY-AND-VOTE-ON-WHO-TO-SYNC-TO THING HERE,
 	// BUT NO MORE, NOW IT IS HANDLED IN PLAYER
 
+	//MODDD - this block is now handled by 'startPowerRechargeInit', but keeping it here in case some paths that
+	// reach there later (shared special powers, buildings at 0% construction) expect to begin paused.
+	// (Update - nevermind, being handled by 'startPowerRechargeInit' entirely works)
+	// ---
+	/*
 	// Some Special powers need to be activated by an Upgrade, so prevent the timer from going until then
-	const SpecialPowerModuleData *md = (const SpecialPowerModuleData *)moduleData;
+	const SpecialPowerModuleData *md = getSpecialPowerModuleData();
 	if( md->m_startsPaused )
 		pauseCountdown( TRUE );
+	*/
 
+	//MODDD - NOTE - should these be in 'startPowerRechargeInit' instead of the constructor?
 	resolveSpecialPower();
 
-	// Now, if we find that we have just come into being,
-	// but there is already a science granted for our shared superweapon,
-	// lets make sure TheIngameUI knows about our public timer
-	// add this weapon to the UI if it has a public timer for all to see
-	if( m_pausedCount == 0 &&
-			getSpecialPowerTemplate()->isSharedNSync() == TRUE &&
-			getSpecialPowerTemplate()->hasPublicTimer() == TRUE &&
-			getObject()->getControllingPlayer() &&
-			getObject()->isKindOf( KINDOF_STRUCTURE ) )
-	{
-		TheInGameUI->addSuperweapon( getObject()->getControllingPlayer()->getPlayerIndex(),
-																 getPowerName(),
-																 getObject()->getID(),
-																 getSpecialPowerModuleData()->m_specialPowerTemplate );
-	}
-
-
+	checkAddTimerForSharedSuperWeapon();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -175,6 +165,7 @@ void SpecialPowerModule::setReadyFrame( UnsignedInt frame )
 	m_pausedOnFrame = TheGameLogic->getFrame();
 }
 
+//MODDD - NOTE - this was commented out as-is, that isn't my doing.
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 void SpecialPowerModule::resolveSpecialPower( void )
@@ -203,26 +194,12 @@ void SpecialPowerModule::onSpecialPowerCreation( void )
 {
 	// THIS gets called by addScience(), that is, when the General has purchased a new special power,
 	// and this module is thus activated.
+	//MODDD - NOTE - this is also called by objects with a 'SpecialPowerCreate' module on finishing construction:
+	//  SpecialPowerCreate::onBuildComplete -> SpecialPowerModule::onSpecialPowerCreation
 
 	// start a power recharge going
-	startPowerRecharge();
-
-	// Dustin wants these special powers to start ready to fire,
-	// so here (and only here) we will expressly set them to ready-now.
-	if ( getSpecialPowerTemplate()->isSharedNSync())
-	{
-		Player *player = getObject()->getControllingPlayer();
-		if ( player )
-		{
-			player->expressSpecialPowerReadyFrame( getSpecialPowerTemplate(), TheGameLogic->getFrame() );
-			m_availableOnFrame = player->getOrStartSpecialPowerReadyFrame( getSpecialPowerTemplate() );
-		}
-	}
-
-	// Some Special powers need to be activated by an Upgrade, so prevent the timer from going until then
-	const SpecialPowerModuleData *md = getSpecialPowerModuleData();
-	if( md->m_startsPaused )
-		pauseCountdown( TRUE );
+	//MODDD - script moved to there
+	startPowerRechargeInit(TRUE);
 
 	// add this weapon to the UI if it has a public timer for all to see
 	if( getSpecialPowerModuleData()->m_specialPowerTemplate->hasPublicTimer() == TRUE &&
@@ -234,6 +211,27 @@ void SpecialPowerModule::onSpecialPowerCreation( void )
 																 getObject()->getID(),
 																 getSpecialPowerModuleData()->m_specialPowerTemplate );
 	}
+}
+
+//MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
+// Event when this module's building finishes construction.
+// Explanation: This is needed because of the 'm_availableOnFrame = 0xFFFFFFFF' change in
+// SpecialPowerModule's constructor. In retail, originally being 0 means this lazily persists until
+// construction is finished (0 -> less than the current game frame -> ready to use). However, the new value
+// reads as an absurdly high frame that will never be reached, so special powers are unusable.
+// Solution: call 'notifyBuildComplete' (runs the availableOnFrame-setting script missed for being at 0%
+// construction at the time of creation) when construction finishes if there isn't a 'SpecialPowerCreate'
+// that already does that:
+//   SpecialPowerCreate::onBuildComplete -> SpecialPowerModule::onSpecialPowerCreation -> startPowerRechargeInit
+// The only difference from retail now, is requiring an initial charge (see CIA intelligence, battle plans
+// have 0 second cooldowns) instead of starting ready-to-go from the lazy 'availableOnFrame=0' situation.
+// CIA intelligence was stranglely not a shared power in retail INI, though this initially-ready behavior
+// made it seem that way. See GLA radar van scans - they always require the 30 second cooldown the first time
+// from upgrade completion or making a new radar van.
+// Note that this doesn't need to be called for buildings that are instantly spawned (ex: map startup), since
+// the special power already starts charging properly there (construction is N/A at constructor time -> runs).
+void SpecialPowerModule::notifyBuildComplete() {
+	startPowerRechargeInit(FALSE);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -311,6 +309,13 @@ Bool SpecialPowerModule::isReady() const
 
 }
 
+//MODDD - new
+Bool SpecialPowerModule::canBeSpecialPowerSource() const
+{
+	// default behavior: no filtering, always allow
+	return TRUE;
+}
+
 //-------------------------------------------------------------------------------------------------
 /** Get the percentage ready a special power is to use
 	* 1.0f = ready now
@@ -382,6 +387,47 @@ Bool SpecialPowerModule::isScriptOnly() const
 }
 
 
+//MODDD - version of 'startPowerRecharge' for the first call to include some extra steps
+void SpecialPowerModule::startPowerRechargeInit(Bool fromOnSpecialPowerCreation)
+{
+	// There were two ways initialization was handled as of retail, preserved here by 'fromOnSpecialPowerCreation'.
+	if (!fromOnSpecialPowerCreation) {
+		// Non-shared powers start charging when a unit is created, or a building finishes construction
+		// ---
+		// A sharedNSync special only startPowerRecharges when first scienced or when executed,
+		// Since a new modue with same SPTemplates may construct at any time.
+		if ( getSpecialPowerTemplate()->isSharedNSync() == FALSE )
+		{
+			startPowerRecharge();
+		}
+	} else {
+		// Shared special powers start charging when 'OnSpecialPowerCreation' is called by an object having a
+		// 'SpecialPowerCreate' module, or spending a promotion point that ties to the special power.
+		// In retail, a non-shared special power that reached this path would still make these calls, so preserving
+		// that for now.
+		startPowerRecharge();
+
+		// Dustin wants these special powers to start ready to fire,
+		// so here (and only here) we will expressly set them to ready-now.
+		if ( getSpecialPowerTemplate()->isSharedNSync())
+		{
+			Player *player = getObject()->getControllingPlayer();
+			if ( player )
+			{
+				player->expressSpecialPowerReadyFrame( getSpecialPowerTemplate(), TheGameLogic->getFrame() );
+				//MODDD - disabled. Nothing here uses 'm_availableOnFrame' for shared special powers.
+				//m_availableOnFrame = player->getOrStartSpecialPowerReadyFrame( getSpecialPowerTemplate() );
+			}
+		}
+
+	}
+
+	// Some Special powers need to be activated by an Upgrade, so prevent the timer from going until then
+	const SpecialPowerModuleData *md = getSpecialPowerModuleData();
+	if( md->m_startsPaused )
+		pauseCountdown( TRUE );
+}
+
 //-------------------------------------------------------------------------------------------------
 /** A special power has been used ... start the recharge process by computing the frame
 	* we will become fully available on in the future again */
@@ -422,6 +468,14 @@ void SpecialPowerModule::startPowerRecharge()
 	{
 		// set the frame we will be 100% available on now
 		m_availableOnFrame = TheGameLogic->getFrame() + getSpecialPowerTemplate()->getReloadTime();
+		//MODDD STUPID HACK
+		/*
+		if (strstr(this->getPowerName().str(), "CIA") == NULL) {
+			m_availableOnFrame = TheGameLogic->getFrame() + getSpecialPowerTemplate()->getReloadTime();
+		} else {
+			m_availableOnFrame = TheGameLogic->getFrame() + 0;
+		}
+		*/
 	}
 }
 
@@ -665,6 +719,28 @@ void SpecialPowerModule::aboutToDoSpecialPower( const Coord3D *location )
 
 }
 
+//MODDD - new, helper made out of duplicate script.
+// Does retail even have any cases of a 'shared (special power?) superweapon'? Doesn't seem like it.
+// This logic was never called for outside of the constructor and 'loadPostProcess', this may have been
+// poorly tested.
+void SpecialPowerModule::checkAddTimerForSharedSuperWeapon() {
+	// Now, if we find that we have just come into being,
+	// but there is already a science granted for our shared superweapon,
+	// lets make sure TheIngameUI knows about our public timer
+	// add this weapon to the UI if it has a public timer for all to see
+	if( m_pausedCount == 0 &&
+			getSpecialPowerTemplate()->isSharedNSync() == TRUE &&
+			getSpecialPowerTemplate()->hasPublicTimer() == TRUE &&
+			getObject()->getControllingPlayer() &&
+			getObject()->isKindOf( KINDOF_STRUCTURE ) )
+	{
+		TheInGameUI->addSuperweapon( getObject()->getControllingPlayer()->getPlayerIndex(),
+																 getPowerName(),
+																 getObject()->getID(),
+																 getSpecialPowerModuleData()->m_specialPowerTemplate );
+	}
+}
+
 //-------------------------------------------------------------------------------------------------
 //By default, special powers are not triggered by it's update module -- in which case
 //it triggers it and resets its timer immediately. When the update module triggers it,
@@ -856,6 +932,14 @@ void SpecialPowerModule::xfer( Xfer *xfer )
 	// paused percent
 	xfer->xferReal( &m_pausedPercent );
 
+	//MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
+	// DOH I made a booboo, leave this out if you're not me!
+	/*
+	if (version >= 1 && xfer->getXferMode() == XFER_LOAD) {
+		Int waitingForInitCallAfterConstruction;
+		xfer->xferInt(&waitingForInitCallAfterConstruction);
+	}
+	*/
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -867,27 +951,5 @@ void SpecialPowerModule::loadPostProcess( void )
 	// extend base class
 	BehaviorModule::loadPostProcess();
 
-
-
-	// Now, if we find that we have just come into being,
-	// but there is already a science granted for our shared superweapon,
-	// lets make sure TheIngameUI knows about our public timer
-	// add this weapon to the UI if it has a public timer for all to see
-	if( m_pausedCount == 0 &&
-			getSpecialPowerTemplate()->isSharedNSync() == TRUE &&
-			getSpecialPowerTemplate()->hasPublicTimer() == TRUE &&
-			getObject()->getControllingPlayer() &&
-			getObject()->isKindOf( KINDOF_STRUCTURE ) )
-	{
-		TheInGameUI->addSuperweapon( getObject()->getControllingPlayer()->getPlayerIndex(),
-																 getPowerName(),
-																 getObject()->getID(),
-																 getSpecialPowerModuleData()->m_specialPowerTemplate );
-	}
-
-
-
-
-
-
+	checkAddTimerForSharedSuperWeapon();
 }

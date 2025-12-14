@@ -107,6 +107,12 @@ const Real HUGE_DIST_SQR = (HUGE_DIST*HUGE_DIST);
 //#include "Common/PerfMetrics.h"
 //#include "Common/PerfTimer.h"
 
+
+//MODDD - NOTE - also see the new 'W3DDisplay::shroudAreaOutsideActiveBorder()' that shrouds all cells
+// outside of the active border in case of border changes, called anytime the border is changed, see comments
+// there.
+
+
 //-------------------------------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //         Defines
@@ -114,6 +120,10 @@ const Real HUGE_DIST_SQR = (HUGE_DIST*HUGE_DIST);
 
 //-----------------------------------------------------------------------------
 static PartitionContactList* TheContactList = NULL;
+
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+UnsignedInt m_nextCellInfoID = 0;
+#endif
 
 //-----------------------------------------------------------------------------
 //         Local Types
@@ -334,8 +344,17 @@ inline Real maxReal(Real a, Real b)
 //-----------------------------------------------------------------------------
 static void hLineAddLooker(Int x1, Int x2, Int y, void *playerIndexVoid);
 static void hLineRemoveLooker(Int x1, Int x2, Int y, void *playerIndexVoid);
+
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+static void hLineAddLookerJammable(Int x1, Int x2, Int y, void *playerIndexVoid);
+static void hLineRemoveLookerJammable(Int x1, Int x2, Int y, void *playerIndexVoid);
+#endif
+
 static void hLineAddShrouder(Int x1, Int x2, Int y, void *playerIndexVoid);
 static void hLineRemoveShrouder(Int x1, Int x2, Int y, void *playerIndexVoid);
+//MODDD
+static void hLineSetShroud(Int x1, Int x2, Int y, void *playerIndexVoid);
+
 static void hLineAddThreat(Int x1, Int x2, Int y, void *threatValueParms);
 static void hLineRemoveThreat(Int x1, Int x2, Int y, void *threatValueParms);
 static void hLineAddValue(Int x1, Int x2, Int y, void *threatValueParms);
@@ -358,7 +377,8 @@ static void testRotatedPointsAgainstRect(
 static Bool xy_collideTest_Rect_Rect(const CollideInfo *a, const CollideInfo *b, CollideLocAndNormal *cinfo);
 static Bool xy_collideTest_Rect_Circle(const CollideInfo *a, const CollideInfo *b, CollideLocAndNormal *cinfo);
 static Bool xy_collideTest_Circle_Rect(const CollideInfo *a, const CollideInfo *b, CollideLocAndNormal *cinfo);
-static Bool xy_collideTest_Circle_Circle(const Coord3D *a_pos, const Coord3D *b_pos, const Real a_radius, const Real b_radius, CollideLocAndNormal *cinfo);
+//MODDD - wrong signature found as-is, whoops - luckily nothing ever referred to this one before it was defined correctly anyway
+//static Bool xy_collideTest_Circle_Circle(const Coord3D *a_pos, const Coord3D *b_pos, const Real a_radius, const Real b_radius, CollideLocAndNormal *cinfo);
 
 static Bool collideTest_Sphere_Sphere(const CollideInfo *a, const CollideInfo *b, CollideLocAndNormal *cinfo);
 static Bool collideTest_Sphere_Cylinder(const CollideInfo *a, const CollideInfo *b, CollideLocAndNormal *cinfo);
@@ -1242,6 +1262,9 @@ PartitionCell::PartitionCell()
 	{
 		// Default is "passive shroud".  1,0.
 		m_shroudLevel[i].m_currentShroud = 1;
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+		m_shroudLevel[i].m_currentShroudJammable = 1;
+#endif
 		m_shroudLevel[i].m_activeShroudLevel = 0;
 
 		// default cash value is 0
@@ -1268,12 +1291,84 @@ void PartitionCell::invalidateShroudedStatusForAllCois(Int playerIndex)
 	}
 }
 
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+//void PartitionCell::addUndoShroudReveal(const std::multimap<UnsignedInt, CellInfo*>::iterator& it) {
+void PartitionCell::addUndoShroudReveal(UnsignedInt cellId) {
+	undoShroudRevealIds.insert(cellId);
+	/*
+	//undoShroudRevealRefs.insert(std::make_pair(it->second->id, it));
+	//undoShroudRevealRefs.clear();
+	undoShroudRevealRefs[undoShroudRevealRefs_nextAvailable].id = it->second->id;
+	undoShroudRevealRefs[undoShroudRevealRefs_nextAvailable].cellInfo = it;
+	undoShroudRevealRefs[undoShroudRevealRefs_nextAvailable].inUse = true;
+			return;
+	for(int i = undoShroudRevealRefs_nextAvailable + 1; i < 2000; ++i) {
+		if(!undoShroudRevealRefs[i].inUse) {
+			undoShroudRevealRefs_nextAvailable = i;
+			return;
+		}
+	}
+	// didn't find an available ID earlier? start over from 0 then
+	for(int i = 0; i < undoShroudRevealRefs_nextAvailable; i++) {
+		if(!undoShroudRevealRefs[i].inUse) {
+			undoShroudRevealRefs_nextAvailable = i;
+			return;
+		}
+	}
+	// still no? that's not good
+	throw ERROR_BUG;
+	*/
+}
+
+void PartitionCell::removeUndoShroudReveal(UnsignedInt cellInfoId) {
+	undoShroudRevealIds.erase(cellInfoId);
+	/*
+		int x = 0;
+	for(int i = 0; i < 5; ++i) {
+		x++;
+	}
+			return;
+	//undoShroudRevealRefs.erase(cellInfoId);
+	//undoShroudRevealRefs.clear();
+	for(int i = 0; i < 2000; ++i) {
+		if (undoShroudRevealRefs[i].id == cellInfoId) {
+			undoShroudRevealRefs[i].inUse = false;
+			if (i < undoShroudRevealRefs_nextAvailable) {
+				undoShroudRevealRefs_nextAvailable = i;
+			}
+			return;
+		}
+	}
+	*/
+}
+
+void PartitionCell::clearUndoShroudReveal() {
+	undoShroudRevealIds.clear();
+	/*
+			return;
+	//undoShroudRevealRefs.clear();
+	for(int i = 0; i < 2000; ++i) {
+		undoShroudRevealRefs[i].inUse = false;
+	}
+	undoShroudRevealRefs_nextAvailable = 0;
+	*/
+}
+#endif
+
 //-----------------------------------------------------------------------------
 void PartitionCell::addLooker(Int playerIndex)
 {
+	//MODDD - rearranged to be easier to understand
 	CellShroudStatus oldShroud = getShroudStatusForPlayer( playerIndex );
-	// The decreasing Algorithm: A 1 will go straight to -1, otherwise it just gets decremented
-	m_shroudLevel[playerIndex].m_currentShroud = min( m_shroudLevel[playerIndex].m_currentShroud - 1, -1 );
+
+	if (m_shroudLevel[playerIndex].m_currentShroud >= 0) {
+		// This cell is shrouded (1) or fogged (0).
+		// Being looked at makes the cell completely visible with 1 looker (change to -1).
+		m_shroudLevel[playerIndex].m_currentShroud = -1;
+	} else {
+		// The cell is already visible & looked at by at least 1 looker. Add another looker (decrement).
+		m_shroudLevel[playerIndex].m_currentShroud--;
+	}
 
 	CellShroudStatus newShroud = getShroudStatusForPlayer( playerIndex );
 
@@ -1285,33 +1380,28 @@ void PartitionCell::addLooker(Int playerIndex)
 //							playerIndex
 //							));
 
-	if( oldShroud != newShroud )
-	{
-		// On an edge trigger, tell all objects to think about their shroudedness
-		invalidateShroudedStatusForAllCois( playerIndex );
-
-		if( playerIndex == rts::getObservedOrLocalPlayer()->getPlayerIndex() )
-		{
-			// and if this is the local player, do the Client update.
-			TheDisplay->setShroudLevel(m_cellX, m_cellY, newShroud);
-			TheRadar->setShroudLevel(m_cellX, m_cellY, newShroud);
-		}
-	}
+	//MODDD - script condensed
+	onCellShroudStatusChanged(oldShroud, newShroud, playerIndex);
 }
 
 //-----------------------------------------------------------------------------
 void PartitionCell::removeLooker(Int playerIndex)
 {
+	//MODDD - rearranged to be easier to understand
+	DEBUG_ASSERTCRASH( m_shroudLevel[playerIndex].m_currentShroud < 0, ("Someone is RemoveLooker-ing on a cell that is not looked at.  This will make a permanent shroud blob.") );
+
 	CellShroudStatus oldShroud = getShroudStatusForPlayer( playerIndex );
-	// the increasing Algorithm: a -1 goes up to min(1,activeLevel), otherwise it just gets incremented
-	if( m_shroudLevel[playerIndex].m_currentShroud == -1 )
-		m_shroudLevel[playerIndex].m_currentShroud = min( m_shroudLevel[playerIndex].m_activeShroudLevel, (Short)1 );
-	else
-	{
-		DEBUG_ASSERTCRASH( m_shroudLevel[playerIndex].m_currentShroud < 0, ("Someone is RemoveLooker-ing on a cell that is not looked at.  This will make a permanent shroud blob.") );
-		m_shroudLevel[playerIndex].m_currentShroud++;
+	m_shroudLevel[playerIndex].m_currentShroud++;
+
+#if !PARTITIONMANAGER_SHROUD_NONPERSISTENT
+	// If there are no lookers, and something is actively shrouding, turn to shroud
+	if( m_shroudLevel[playerIndex].m_currentShroud == 0 && m_shroudLevel[playerIndex].m_activeShroudLevel > 0 ) {
+		m_shroudLevel[playerIndex].m_currentShroud = 1;
 	}
+#endif
+
 	CellShroudStatus newShroud = getShroudStatusForPlayer( playerIndex );
+	
 
 //	DEBUG_LOG(( "REMOVE %d, %d.  CS = %d, AS = %d for player %d.",
 //							m_cellX,
@@ -1321,55 +1411,154 @@ void PartitionCell::removeLooker(Int playerIndex)
 //							playerIndex
 //							));
 
-	if( oldShroud != newShroud )
-	{
-		// On an edge trigger, tell all objects to think about their shroudedness
-		invalidateShroudedStatusForAllCois( playerIndex );
-
-		if( playerIndex == rts::getObservedOrLocalPlayer()->getPlayerIndex() )
-		{
-			// and if this is the local player, do the Client update.
-			TheDisplay->setShroudLevel(m_cellX, m_cellY, newShroud);
-			TheRadar->setShroudLevel(m_cellX, m_cellY, newShroud);
-		}
-	}
+	//MODDD - script condensed
+	onCellShroudStatusChanged(oldShroud, newShroud, playerIndex);
 }
+
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+void PartitionCell::addLookerJammable(Int playerIndex)
+{
+	CellShroudStatus oldShroud = getShroudStatusForPlayer( playerIndex );
+
+	if (m_shroudLevel[playerIndex].m_currentShroudJammable >= 0) {
+		// This cell is shrouded (1) or fogged (0).
+		// Being looked at makes the cell completely visible with 1 looker (change to -1).
+		m_shroudLevel[playerIndex].m_currentShroudJammable = -1;
+	} else {
+		// The cell is already visible & looked at by at least 1 looker. Add another looker (decrement).
+		m_shroudLevel[playerIndex].m_currentShroudJammable--;
+	}
+
+	CellShroudStatus newShroud = getShroudStatusForPlayer( playerIndex );
+
+	//MODDD - script condensed
+	onCellShroudStatusChanged(oldShroud, newShroud, playerIndex);
+}
+
+void PartitionCell::removeLookerJammable(Int playerIndex)
+{
+	DEBUG_ASSERTCRASH( m_shroudLevel[playerIndex].m_currentShroudJammable < 0, ("Someone is RemoveLooker-ing on a cell that is not looked at.  This will make a permanent shroud blob.") );
+
+	CellShroudStatus oldShroud = getShroudStatusForPlayer( playerIndex );
+
+	m_shroudLevel[playerIndex].m_currentShroudJammable++;
+
+#if !PARTITIONMANAGER_SHROUD_NONPERSISTENT
+	// If there are no lookers, and something is actively shrouding, turn to shroud
+	if( m_shroudLevel[playerIndex].m_currentShroudJammable == 0 && m_shroudLevel[playerIndex].m_activeShroudLevel > 0 ) {
+		m_shroudLevel[playerIndex].m_currentShroudJammable = 1;
+	}
+#endif
+
+	CellShroudStatus newShroud = getShroudStatusForPlayer( playerIndex );
+
+	onCellShroudStatusChanged(oldShroud, newShroud, playerIndex);
+}
+#endif
 
 //-----------------------------------------------------------------------------
 void PartitionCell::addShrouder( Int playerIndex )
 {
 	CellShroudStatus oldShroud = getShroudStatusForPlayer( playerIndex );
-	// Increasing active shroud: activeLevel gets incremented, and CS is set to 1 if at zero
-	// do the algorithm
+
+	Bool oldActiveShroudStatus = (m_shroudLevel[playerIndex].m_activeShroudLevel != 0);
 	m_shroudLevel[playerIndex].m_activeShroudLevel++;
+	Bool newActiveShroudStatus = (m_shroudLevel[playerIndex].m_activeShroudLevel != 0);
+
+#if !PARTITIONMANAGER_SHROUD_NONPERSISTENT
+	// If the cell is fog-of-war, turn it to shroud
 	if( m_shroudLevel[playerIndex].m_currentShroud == 0 )
 	{
 		m_shroudLevel[playerIndex].m_currentShroud = 1;
 	}
-	CellShroudStatus newShroud = getShroudStatusForPlayer( playerIndex );
-
-	if( oldShroud != newShroud )
+	#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	// Is there someone you're forgetting?
+	if( m_shroudLevel[playerIndex].m_currentShroudJammable == 0 )
 	{
-		// On an edge trigger, tell all objects to think about their shroudedness
-		invalidateShroudedStatusForAllCois( playerIndex );
-
-		// and update the client if we are on the local player
-		if( playerIndex == rts::getObservedOrLocalPlayer()->getPlayerIndex() )
-		{
-			TheDisplay->setShroudLevel(m_cellX, m_cellY, newShroud);
-			TheRadar->setShroudLevel(m_cellX, m_cellY, newShroud);
-		}
+		m_shroudLevel[playerIndex].m_currentShroudJammable = 1;
 	}
+	#endif
+#endif
+	
+	CellShroudStatus newShroud = getShroudStatusForPlayer( playerIndex );
+	
+	onActiveShroudLevelChanged(oldActiveShroudStatus, newActiveShroudStatus, playerIndex);
+	//MODDD - script condensed
+	onCellShroudStatusChanged(oldShroud, newShroud, playerIndex);
 }
 
 //-----------------------------------------------------------------------------
 void PartitionCell::removeShrouder( Int playerIndex )
 {
+	//MODDD - rearranged to be easier to understand
+	DEBUG_ASSERTCRASH( m_shroudLevel[playerIndex].m_activeShroudLevel > 0, ("'removeShrouder' called on a cell that does not have any shrouders.") );
+
+	// original block for reference
+	/*
 	// Decreasing active shroud: just decrement activeLevel.  This will never result in a client change.
 	// Either it was passive shroud and is now active, or it was being looked at and still is.
 	m_shroudLevel[playerIndex].m_activeShroudLevel--;
-	DEBUG_ASSERTCRASH( m_shroudLevel[playerIndex].m_activeShroudLevel >= 0, ("Shroud generation has gone negative.  This can't happen.") );
+	*/
+
+	//MODDD - need to update in this case for proper behavior.
+	// Ex: in REMOVE_FOG_OF_WAR, a lone jamming (shroud-generating) unit is destroyed. The area behind it should become visible as it normally would be.
+	// And even outside of that mode, this lets the shroud behind moving jamming units return to fog-of-war if it was that way to begin with.
+	CellShroudStatus oldShroud = getShroudStatusForPlayer( playerIndex );
+	
+	Bool oldActiveShroudStatus = (m_shroudLevel[playerIndex].m_activeShroudLevel != 0);
+	m_shroudLevel[playerIndex].m_activeShroudLevel--;
+	Bool newActiveShroudStatus = (m_shroudLevel[playerIndex].m_activeShroudLevel != 0);
+
+	CellShroudStatus newShroud = getShroudStatusForPlayer( playerIndex );
+	
+	onActiveShroudLevelChanged(oldActiveShroudStatus, newActiveShroudStatus, playerIndex);
+	onCellShroudStatusChanged(oldShroud, newShroud, playerIndex);
 }
+
+//MODDD
+// Alternative to calling 'add/removeShrouder' to turn fog cells into shroud. That won't work since that no
+// longer affects the shroud level persistently, shroud is immediately reverted to fog before any effect can
+// be observed (good for jammers, shroud disappears as they leave).
+// This sets fogged cells to stay shrouded after the call, similar to retail's intent for map scripts that
+// want particular areas to be shroud instead of fog until revealed (or fill individual holes in shroud from
+// temporary reveals).
+//-----------------------------------------------------------------------------
+void PartitionCell::setShroud( Int playerIndex )
+{
+	CellShroudStatus oldShroud = getShroudStatusForPlayer( playerIndex );
+
+	// If 0 (fog), be shroud (1) instead. If someone is actively looking (<0), this would wrongly override that.
+	// That also means cells being visibly shrouded because they're jammed will just stay shrouded even if
+	// the jammer moves, since that kind of shroud isn't from changing 'currentShroud' directly (activeShrouders
+	// at the time of currentShroud being 0).
+	if( m_shroudLevel[playerIndex].m_currentShroud == 0 )
+	{
+		m_shroudLevel[playerIndex].m_currentShroud = 1;
+	}
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	if( m_shroudLevel[playerIndex].m_currentShroudJammable == 0 )
+	{
+		m_shroudLevel[playerIndex].m_currentShroudJammable = 1;
+	}
+#endif
+
+	CellShroudStatus newShroud = getShroudStatusForPlayer( playerIndex );
+
+	onCellShroudStatusChanged(oldShroud, newShroud, playerIndex);
+}
+
+//MODDD
+ShroudLevel PartitionCell::getShroudLevel( Int playerIndex )
+{
+	return m_shroudLevel[playerIndex];
+}
+
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS || PARTITIONMANAGER_QUEUE_PER_CELL
+Bool PartitionCell::isBeingJammed( Int playerIndex ) const
+{
+	return (m_shroudLevel[playerIndex].m_activeShroudLevel > 0);
+}
+#endif
 
 //-----------------------------------------------------------------------------
 //Bool PartitionCell::isShroudedForPlayer( Int playerIndex ) const
@@ -1382,13 +1571,144 @@ void PartitionCell::removeShrouder( Int playerIndex )
 CellShroudStatus PartitionCell::getShroudStatusForPlayer( Int playerIndex ) const
 {
 	// There are now three answers, but the question still requires "to whom"
-
-	if( m_shroudLevel[playerIndex].m_currentShroud == 1 )
+	
+	//MODDD - retail check replaced
+	/*
+	if( currentShroud == 1 )
 		return CELLSHROUD_SHROUDED;
-	else if( m_shroudLevel[playerIndex].m_currentShroud == 0 )
+	else if( currentShroud == 0 )
 		return CELLSHROUD_FOGGED;// ie Nobody actively looking
 	else
 		return CELLSHROUD_CLEAR;
+	*/
+
+	Short currentShroud = m_shroudLevel[playerIndex].m_currentShroud;
+
+// Note - this check happening here only makes sense if there is such a thing as jammable shroud.
+// The check happening this early means the involvement of 'currentShroudJammable' will be skipped.
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	if ( isBeingJammed(playerIndex) )
+	{
+		// Someone is jamming the cell. As far as we're concerned, jammable look says 'shroud'.
+		// This means, even if someone is looking (m_currentShroudJammable of -1 or less), but the cell
+		// is being jammed, this can't be what makes the cell clear or fogged, all up to non-jammable
+		// 'currentShroud'.
+		// Changing the approach
+		//currentShroudJammable = 1;
+		if ( currentShroud < 0 )
+		{
+			// non-jammable look: see through the jammed area anyway
+			return CELLSHROUD_CLEAR;
+		}
+		else
+		{
+			// anything else: shroud it
+			return CELLSHROUD_SHROUDED;
+		}
+	}
+#endif
+
+#if REMOVE_FOG_OF_WAR_ALT
+	// always clear (with advanced shroud mechanics, not being jammed -> clear)
+	return CELLSHROUD_CLEAR;
+#endif
+
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	Short currentShroudJammable = m_shroudLevel[playerIndex].m_currentShroudJammable;
+	// If we're not being jammed and the jammable shroud value is more clear, use it instead
+	if ( currentShroudJammable < currentShroud )
+	{
+		currentShroud = currentShroudJammable;
+	}
+#endif
+
+	if ( currentShroud < 0 )
+	{
+		return CELLSHROUD_CLEAR;
+	}
+	else if ( currentShroud == 0 )
+	{
+		return CELLSHROUD_FOGGED;
+	}
+	else
+	{
+		return CELLSHROUD_SHROUDED;
+	}
+}
+
+//MODDD - new
+void PartitionCell::onActiveShroudLevelChanged( Bool oldActiveShroudStatus, Bool newActiveShroudStatus, Int playerIndex ) {
+	// If there is at least 1 shrouder, and the current cell is fogged (no lookers), change it to shroud.
+	//MODDD - moving this check to 'getShroudStatusForPlayer' instead so that the underlying shroud-val for this
+	// cell isn't affected, it's just interpreted differently in this situation. See above.
+	// For retail behavior (terrain shrouded by jamming remains that way until explicitly looked at), re-enable
+	// below and remove the similar check in 'getShroudStatusForPlayer'. Note that 'REMOVE_FOG_OF_WAR'-mode
+	// should still use the check over there instead of in here (surrounding with #if here for safety)
+	/*
+#if !REMOVE_FOG_OF_WAR
+	if( m_shroudLevel[playerIndex].m_activeShroudLevel > 0 )
+	{
+		if (m_shroudLevel[playerIndex].m_currentShroud == 0) {
+			m_shroudLevel[playerIndex].m_currentShroud = 1;
+		}
+	}
+	// if you really want to re-enable this here, don't forget the '#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS' -> '...m_currentShroudJammable = 1' bit
+#endif
+	*/
+	
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+	
+	// ---Nevermind, the desired effect appears to be achieved without doing below. Below is prone to crashing anyway.
+#if 0
+	if (oldActiveShroudStatus == newActiveShroudStatus) {
+		return;
+	}
+
+	if (oldActiveShroudStatus) {
+		// Changed from actively shrouded to passively shrouded
+		std::set<UnsignedInt>::iterator it;
+		for (it = undoShroudRevealIds.begin(); it != undoShroudRevealIds.end(); ++it) {
+			CellInfo* cellInfo = ThePartitionManager->getCellInfo(*it);
+			// If the goal time was set for jamming (20%), take that amount out & replace with 100%
+			if (cellInfo->m_goalTimeAdjustedForJamming) {
+				ThePartitionManager->removePendingUndoShroudRevealForCell(cellInfo);
+				cellInfo->m_goalTime = cellInfo->m_goalTime - ((UnsignedInt)((float)TheGlobalData->m_unlookPersistDuration * 0.2f)) + TheGlobalData->m_unlookPersistDuration;
+				ThePartitionManager->addPendingUndoShroudRevealForCell(cellInfo);
+				cellInfo->m_goalTimeAdjustedForJamming = false;
+			}
+		}
+	} else {
+		// Changed from passively shrouded to actively shrouded
+		std::set<UnsignedInt>::iterator it;
+		for (it = undoShroudRevealIds.begin(); it != undoShroudRevealIds.end(); ++it) {
+			CellInfo* cellInfo = ThePartitionManager->getCellInfo(*it);
+			// If the goal time was set for passive (100%), take that amount out & replace with 20%
+			if (!cellInfo->m_goalTimeAdjustedForJamming) {
+				ThePartitionManager->removePendingUndoShroudRevealForCell(cellInfo);
+				cellInfo->m_goalTime = cellInfo->m_goalTime - TheGlobalData->m_unlookPersistDuration + ((UnsignedInt)((float)TheGlobalData->m_unlookPersistDuration * 0.2f));
+				ThePartitionManager->addPendingUndoShroudRevealForCell(cellInfo);
+				cellInfo->m_goalTimeAdjustedForJamming = true;
+			}
+		}
+	}
+#endif
+#endif
+}
+
+//MODDD - new
+void PartitionCell::onCellShroudStatusChanged( CellShroudStatus oldShroud, CellShroudStatus newShroud, Int playerIndex ) {
+	if( oldShroud != newShroud )
+	{
+		// On an edge trigger, tell all objects to think about their shroudedness
+		invalidateShroudedStatusForAllCois( playerIndex );
+
+		// if this is the local player, do the Client update.
+		if( playerIndex == rts::getObservedOrLocalPlayer()->getPlayerIndex() )
+		{
+			TheDisplay->setShroudLevel(m_cellX, m_cellY, newShroud);
+			TheRadar->setShroudLevel(m_cellX, m_cellY, newShroud);
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -2996,8 +3316,14 @@ void PartitionManager::revealMapForPlayer( Int playerIndex )
 	// By adding a looker directly I don't hit the Ally logic of the normal look/doShroudReveal
 	for (int i = 0; i < m_totalCellCount; ++i)
 	{
+#if !PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
 		m_cells[i].addLooker( playerIndex );
 		m_cells[i].removeLooker( playerIndex );
+#else
+		// Use the jammable variants so there isn't a blip where somewhere jammed is revealed before realizing it has no lookers and re-jams.
+		m_cells[i].addLookerJammable( playerIndex );
+		m_cells[i].removeLookerJammable( playerIndex );
+#endif
 	}
 }
 
@@ -3012,6 +3338,13 @@ void PartitionManager::revealMapForPlayerPermanently( Int playerIndex )
 	for (int i = 0; i < m_totalCellCount; ++i)
 	{
 		m_cells[i].addLooker( playerIndex );
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+		// Adding a looker for the normal & jammable variants is acceptable as long as 'undoReveal...' reverts the same things.
+		// The final logic for determining cell shroud status is 'Or'-based between the variants, so there isn't a problem in doing this.
+		// Maps often reveal the map for cinematic effect, and as of retail, don't expect there to be blobs of shroud,
+		// so it makes sense to keep them out during permanent reveals.
+		m_cells[i].addLookerJammable( playerIndex );
+#endif
 	}
 }
 
@@ -3028,6 +3361,13 @@ void PartitionManager::undoRevealMapForPlayerPermanently( Int playerIndex )
 	for (int i = 0; i < m_totalCellCount; ++i)
 	{
 		m_cells[i].removeLooker( playerIndex );
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+		// On maps that intend to begin with stealthed superweapons, they reveal themselves to all players for 1
+		// frame before they realized they're stealthed.
+		// Some maps also start with shroud instead of fog by calling 'undoRevealMap...' twice.
+		// The global-reveal is done with the 'jammable' variant so this ought to work.
+		m_cells[i].removeLookerJammable( playerIndex );
+#endif
 	}
 }
 
@@ -3042,8 +3382,20 @@ void PartitionManager::shroudMapForPlayer( Int playerIndex )
 	// By pulsing a blast of shroud like this, we will set everything not actively looked at as Passive Shroud
 	for (int i = 0; i < m_totalCellCount; ++i)
 	{
+		//MODDD - nevermind, do the new way regardless, should work out
+		/*
+#if !PARTITIONMANAGER_SHROUD_NONPERSISTENT
 		m_cells[i].addShrouder( playerIndex );
 		m_cells[i].removeShrouder( playerIndex );
+#else
+		// 'add/removeShrouder' won't achieve the same effect anymore - the shroud effect is no longer persistent
+		// since it is intended for things actively jamming an area, so 'removeShrouder' will cause the shroud to
+		// instantly revert to fog.
+		// Use a new call to set a cell that is fog to shroud persistently like retail did here
+		m_cells[i].setShroud( playerIndex );
+#endif
+		*/
+		m_cells[i].setShroud( playerIndex );
 	}
 }
 
@@ -4025,16 +4377,84 @@ void PartitionManager::processPendingUndoShroudRevealQueue( Bool considerTimesta
 		compareTime = TheGameLogic->getFrame();
 	else
 		compareTime = UINT_MAX;
-
+	
+#if !PARTITIONMANAGER_QUEUE_PER_CELL
 	while( !m_pendingUndoShroudReveals.empty() && (m_pendingUndoShroudReveals.front()->m_data < compareTime) )
+#else
+	// Do all undo-shroud-reveal requests unconditionally. Actual undo-shroud-reveal's will be done per cell instead.
+	while( !m_pendingUndoShroudReveals.empty() )
+#endif
 	{
 		SightingInfo *thisInfo = m_pendingUndoShroudReveals.front();
 
+#if !PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
 		undoShroudReveal( thisInfo->m_where.x, thisInfo->m_where.y, thisInfo->m_howFar, thisInfo->m_forWhom );
+#else
+		// Check 'isJammable' to see if the jammable variant should be used instead
+		if (!thisInfo->isJammable) {
+			undoShroudReveal( thisInfo->m_where.x, thisInfo->m_where.y, thisInfo->m_howFar, thisInfo->m_forWhom );
+		} else {
+			undoShroudRevealJammable( thisInfo->m_where.x, thisInfo->m_where.y, thisInfo->m_howFar, thisInfo->m_forWhom );
+		}
+#endif
 
 		deleteInstance(thisInfo);
 		m_pendingUndoShroudReveals.pop();
 	}
+	
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+	// Process the per-cell unlook queue
+	std::multimap<UnsignedInt, UnsignedInt>::const_iterator it;
+	for( it = m_pendingUndoShroudRevealsForCells.begin(); it != m_pendingUndoShroudRevealsForCells.end(); )
+	{
+		//CellInfo *thisInfo = it->second;
+		CellInfo *thisInfo = m_cellInfos[it->second];
+		
+		int x = thisInfo->m_x;
+		int y = thisInfo->m_y;
+		UnsignedInt playerIndex = thisInfo->m_playerIndex;
+		PartitionCell* cell = &ThePartitionManager->m_cells[y * ThePartitionManager->m_cellCountX + x];
+
+		/*
+		// If the start-time of the look + unlook-time has been reached, proceed (do remove-looker for the cell).
+		// If the cell is being jammed, this unlook-time is reduced, so that jammed territory returns to shroud more quickly than non-jammed territory to fog-of-war.
+
+		UnsignedInt cellGoalTime;
+		if (!cell->isBeingJammed(playerIndex)) {
+			cellGoalTime = thisInfo->m_startTime + TheGlobalData->m_unlookPersistDuration;
+		} else {
+			cellGoalTime = thisInfo->m_startTime + TheGlobalData->m_unlookPersistDuration * 0.2;
+		}
+
+		if (cellGoalTime >= compareTime) {
+			++it;
+			continue;
+		}
+		*/
+		if (thisInfo->m_goalTime >= compareTime) {
+			// since items are in order, the first one not hit means don't bother searching the rest
+			break;
+		}
+
+		if (!thisInfo->isJammable) {
+			cell->removeLooker(playerIndex);
+		} else {
+			cell->removeLookerJammable(playerIndex);
+		}
+
+		// Also need to remove the reference from the cell's internal list
+		cell->removeUndoShroudReveal(thisInfo->id);
+
+		/*
+		deleteInstance(thisInfo);
+		//m_pendingUndoShroudRevealsForCells.pop();
+		m_pendingUndoShroudRevealsForCells.erase(m_pendingUndoShroudRevealsForCells.begin());
+		*/
+		m_cellInfos.erase(it->second);
+		deleteInstance(thisInfo);
+		it = m_pendingUndoShroudRevealsForCells.erase(it);
+	}
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -4056,6 +4476,29 @@ void PartitionManager::resetPendingUndoShroudRevealQueue()
 		deleteInstance(thisInfo);
 		m_pendingUndoShroudReveals.pop();
 	}
+
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+	//while( !m_pendingUndoShroudRevealsForCells.empty() )
+	std::multimap<UnsignedInt, UnsignedInt>::const_iterator it;
+	for ( it = m_pendingUndoShroudRevealsForCells.begin(); it != m_pendingUndoShroudRevealsForCells.end(); )
+	{
+		//CellInfo *thisInfo = m_pendingUndoShroudRevealsForCells.front();
+		//std::multimap<UnsignedInt, CellInfo*>::const_iterator it;
+		//it = m_pendingUndoShroudRevealsForCells.begin();
+		//CellInfo *thisInfo = it->second;
+		CellInfo *thisInfo = m_cellInfos[it->second];
+		deleteInstance(thisInfo);
+		//m_pendingUndoShroudRevealsForCells.pop();
+		it = m_pendingUndoShroudRevealsForCells.erase(it);
+	}
+
+	//MODDD - also clear each cell's 'undo-shroud-reveal' list
+	for (int i = 0; i < m_totalCellCount; ++i)
+	{
+		m_cells[i].clearUndoShroudReveal();
+	}
+	m_cellInfos.clear();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -4083,17 +4526,155 @@ void PartitionManager::undoShroudReveal(Real centerX, Real centerY, Real radius,
 //-----------------------------------------------------------------------------
 void PartitionManager::queueUndoShroudReveal(Real centerX, Real centerY, Real radius, PlayerMaskType playerMask)
 {
+#if !PARTITIONMANAGER_QUEUE_PER_CELL
 	UnsignedInt now = TheGameLogic->getFrame();
+#endif
 	SightingInfo *newInfo = newInstance(SightingInfo);
 
 	newInfo->m_where.x = centerX;
 	newInfo->m_where.y = centerY;
 	newInfo->m_howFar = radius;
 	newInfo->m_forWhom = playerMask;
+
+#if !PARTITIONMANAGER_QUEUE_PER_CELL
+	// Do the delay per cell instead of the entire radius for one 'unlook' request
 	newInfo->m_data = now + TheGlobalData->m_unlookPersistDuration;
+#endif
 
 	m_pendingUndoShroudReveals.push(newInfo);
 }
+
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+std::multimap<UnsignedInt, UnsignedInt>::iterator PartitionManager::queueUndoShroudRevealCell(Int cellX, Int cellY, Int playerIndex, Bool isBeingJammed) {
+	CellInfo *newInfo = newInstance(CellInfo);
+	newInfo->id = m_nextCellInfoID;
+	++m_nextCellInfoID;
+	ThePartitionManager->addCellInfo(newInfo);
+
+	newInfo->m_x = cellX;
+	newInfo->m_y = cellY;
+	newInfo->m_playerIndex = playerIndex;
+	newInfo->isJammable = false;
+	if (!isBeingJammed) {
+		newInfo->m_goalTime = TheGameLogic->getFrame() + TheGlobalData->m_unlookPersistDuration;
+	} else {
+		newInfo->m_goalTime = TheGameLogic->getFrame() + (UnsignedInt)((float)TheGlobalData->m_unlookPersistDuration * 0.2f);
+	}
+	newInfo->m_goalTimeAdjustedForJamming = isBeingJammed;
+
+	return queueUndoShroudRevealCell(newInfo);
+}
+#endif
+
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+void PartitionManager::doShroudRevealJammable(Real centerX, Real centerY, Real radius, PlayerMaskType playerMask)
+{
+	Int cellCenterX, cellCenterY;
+	ThePartitionManager->worldToCell(centerX, centerY, &cellCenterX, &cellCenterY);
+
+	Int cellRadius = ThePartitionManager->worldToCellDist(radius);
+	if (cellRadius < 1)
+		cellRadius = 1;
+
+	DiscreteCircle circle(cellCenterX, cellCenterY, cellRadius);
+
+	for( Int currentIndex = ThePlayerList->getPlayerCount() - 1; currentIndex >=0; currentIndex-- )
+	{
+		// Object's Look is the one who knows about allies.  Anyone can pask a player mask to me and all
+		// of those players will have an active looker applied to a bunch of cells
+		const Player *currentPlayer = ThePlayerList->getNthPlayer( currentIndex );
+		if( BitIsSet( playerMask, currentPlayer->getPlayerMask() ) )
+		{
+			circle.drawCircle(hLineAddLookerJammable, (void*)currentIndex);
+		}
+	}
+}
+
+void PartitionManager::undoShroudRevealJammable(Real centerX, Real centerY, Real radius, PlayerMaskType playerMask)
+{
+	Int cellCenterX, cellCenterY;
+	ThePartitionManager->worldToCell(centerX, centerY, &cellCenterX, &cellCenterY);
+
+	Int cellRadius = ThePartitionManager->worldToCellDist(radius);
+	if (cellRadius < 1)
+		cellRadius = 1;
+
+	DiscreteCircle circle(cellCenterX, cellCenterY, cellRadius);
+
+	for( Int currentIndex = ThePlayerList->getPlayerCount() - 1; currentIndex >=0; currentIndex-- )
+	{
+		const Player *currentPlayer = ThePlayerList->getNthPlayer( currentIndex );
+		if( BitIsSet( playerMask, currentPlayer->getPlayerMask() ) )
+		{
+			circle.drawCircle(hLineRemoveLookerJammable, (void*)currentIndex);
+		}
+	}
+}
+
+void PartitionManager::queueUndoShroudRevealJammable(Real centerX, Real centerY, Real radius, PlayerMaskType playerMask)
+{
+#if !PARTITIONMANAGER_QUEUE_PER_CELL
+	UnsignedInt now = TheGameLogic->getFrame();
+#endif
+	SightingInfo *newInfo = newInstance(SightingInfo);
+
+	newInfo->m_where.x = centerX;
+	newInfo->m_where.y = centerY;
+	newInfo->m_howFar = radius;
+	newInfo->m_forWhom = playerMask;
+	newInfo->isJammable = true;
+
+#if !PARTITIONMANAGER_QUEUE_PER_CELL
+	// Do the delay per cell instead of the entire radius for one 'unlook' request
+	newInfo->m_data = now + TheGlobalData->m_unlookPersistDuration;
+#endif
+
+	m_pendingUndoShroudReveals.push(newInfo);
+}
+
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+std::multimap<UnsignedInt, UnsignedInt>::iterator PartitionManager::queueUndoShroudRevealCellJammable(Int cellX, Int cellY, Int playerIndex, Bool isBeingJammed) {
+	CellInfo *newInfo = newInstance(CellInfo);
+	newInfo->id = m_nextCellInfoID;
+	++m_nextCellInfoID;
+	ThePartitionManager->addCellInfo(newInfo);
+
+	newInfo->m_x = cellX;
+	newInfo->m_y = cellY;
+	newInfo->m_playerIndex = playerIndex;
+	newInfo->isJammable = true;
+	if (!isBeingJammed) {
+		newInfo->m_goalTime = TheGameLogic->getFrame() + TheGlobalData->m_unlookPersistDuration;
+	} else {
+		newInfo->m_goalTime = TheGameLogic->getFrame() + (UnsignedInt)((float)TheGlobalData->m_unlookPersistDuration * 0.2f);
+	}
+	newInfo->m_goalTimeAdjustedForJamming = isBeingJammed;
+	
+	return queueUndoShroudRevealCell(newInfo);
+}
+#endif
+#endif
+
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+// Don't just add this cell info to the front. Check to see where it fits to keep the list in order for efficiency on per-frame checks.
+std::multimap<UnsignedInt, UnsignedInt>::iterator PartitionManager::queueUndoShroudRevealCell(CellInfo* newInfo) {
+	/*
+	std::vector<CellInfo*>::const_iterator it;
+	for( it = m_pendingUndoShroudRevealsForCells.begin(); it != m_pendingUndoShroudRevealsForCells.end(); )
+	{
+		CellInfo *thisInfo = *it;
+		if (newInfo->m_goalTime < thisInfo->m_goalTime) {
+			// add the new one before 'it' - done
+			m_pendingUndoShroudRevealsForCells.insert(it, newInfo);
+			return;
+		}
+		++it;
+	}
+	*/
+	// Still haven't added the item? It occurs after all existing ones, add to the very end then.
+	return m_pendingUndoShroudRevealsForCells.insert(std::make_pair(newInfo->m_goalTime, newInfo->id));
+}
+#endif
 
 //-----------------------------------------------------------------------------
 void PartitionManager::doShroudCover(Real centerX, Real centerY, Real radius, PlayerMaskType playerMask)
@@ -4137,6 +4718,47 @@ void PartitionManager::undoShroudCover(Real centerX, Real centerY, Real radius, 
 		if( BitIsSet( playerMask, currentPlayer->getPlayerMask() ) )
 		{
 			circle.drawCircle(hLineRemoveShrouder, (void*)currentIndex);
+		}
+	}
+}
+
+//MODDD
+// See the earlier "'add/removeShrouder' won't achieve..." comment.
+// Scripts can use this instead, things actively jamming territory should use the original variant.
+void PartitionManager::doSetShroudArea(Real centerX, Real centerY, Real radius, PlayerMaskType playerMask)
+{
+	Int cellCenterX, cellCenterY;
+	ThePartitionManager->worldToCell(centerX, centerY, &cellCenterX, &cellCenterY);
+
+	Int cellRadius = ThePartitionManager->worldToCellDist(radius);
+	if (cellRadius < 1)
+		cellRadius = 1;
+
+	DiscreteCircle circle(cellCenterX, cellCenterY, cellRadius);
+
+	for( Int currentIndex = ThePlayerList->getPlayerCount() - 1; currentIndex >=0; currentIndex-- )
+	{
+		// Object's Shroud is the one who knows about allies.  Anyone can pask a player mask to me and all
+		// of those players will have an active shrouder applied to a bunch of cells
+		const Player *currentPlayer = ThePlayerList->getNthPlayer( currentIndex );
+		if( BitIsSet( playerMask, currentPlayer->getPlayerMask() ) )
+		{
+			circle.drawCircle(hLineSetShroud, (void*)currentIndex);
+		}
+	}
+}
+
+//MODDD
+// Helper for shrouding a rectangular area of cells given a start x/y(inclusive) and end
+// x/y(exclusive).
+void PartitionManager::shroudRangeCells(int x1, int y1, int x2, int y2, int playerIndex)
+{
+	for(int y = y1; y < y2; y++)
+	{
+		for(int x = x1; x < x2; x++)
+		{
+			PartitionCell* cell = ThePartitionManager->getCellAt(x, y);
+			cell->setShroud(playerIndex);
 		}
 	}
 }
@@ -4617,7 +5239,8 @@ void PartitionManager::xfer( Xfer *xfer )
 {
 
 	// version
-	XferVersion currentVersion = 2;
+	//MODDD - bumped version, was 2
+	XferVersion currentVersion = 3;
 	XferVersion version = currentVersion;
 	xfer->xferVersion( &version, currentVersion );
 
@@ -4718,6 +5341,59 @@ void PartitionManager::xfer( Xfer *xfer )
 		// Version 1 save games will just not have any SightingInfos in the queue to be undone.
 	}
 
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+	// Load/save the new queue for per-cell unlooks
+	if (version >= 3) {
+		Int queueSize = m_pendingUndoShroudRevealsForCells.size();
+		xfer->xferInt(&queueSize);
+
+		if(xfer->getXferMode() == XFER_LOAD)
+		{
+			for( Int infoIndex = 0; infoIndex < queueSize; infoIndex++ )
+			{
+				CellInfo *newInfo = newInstance(CellInfo);
+				// There's going to be a lot of these. No overhead for 'xfer' please.
+				// ---
+				xfer->xferUnsignedInt( &newInfo->id );
+				ThePartitionManager->addCellInfo(newInfo);
+				xfer->xferInt( &newInfo->m_x );
+				xfer->xferInt( &newInfo->m_y );
+				xfer->xferInt( &newInfo->m_playerIndex );
+				xfer->xferBool( &newInfo->isJammable );
+				xfer->xferUnsignedInt( &newInfo->m_goalTime );
+				xfer->xferBool( &newInfo->m_goalTimeAdjustedForJamming );
+				// ---
+				m_pendingUndoShroudRevealsForCells.insert(std::make_pair(newInfo->m_goalTime, newInfo->id));
+			}
+		}
+		else
+		{
+			// Save
+			//for( Int infoIndex = 0; infoIndex < queueSize; infoIndex++ )
+			std::multimap<UnsignedInt, UnsignedInt>::const_iterator it;
+			for( it = m_pendingUndoShroudRevealsForCells.begin(); it != m_pendingUndoShroudRevealsForCells.end(); )
+			{
+				//CellInfo *saveInfo = m_pendingUndoShroudRevealsForCells[infoIndex];
+				//CellInfo *saveInfo = it->second;
+				CellInfo *saveInfo = m_cellInfos[it->second];
+				
+				// There's going to be a lot of these. No overhead for 'xfer' please.
+				// ---
+				xfer->xferUnsignedInt( &saveInfo->id );
+				xfer->xferInt( &saveInfo->m_x );
+				xfer->xferInt( &saveInfo->m_y );
+				xfer->xferInt( &saveInfo->m_playerIndex );
+				xfer->xferBool( &saveInfo->isJammable );
+				xfer->xferUnsignedInt( &saveInfo->m_goalTime );
+				xfer->xferBool( &saveInfo->m_goalTimeAdjustedForJamming );
+				// ---
+				//m_pendingUndoShroudRevealsForCells.pop();
+				//m_pendingUndoShroudRevealsForCells.push(saveInfo);
+				++it;
+			}
+		}
+	}
+#endif
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -5651,9 +6327,57 @@ static void hLineRemoveLooker(Int x1, Int x2, Int y, void *playerIndexVoid)
 	{
 		if (x < 0 || x >= ThePartitionManager->m_cellCountX)
 			continue;
+
+#if !PARTITIONMANAGER_QUEUE_PER_CELL
 		cell->removeLooker(playerIndex);
+#else
+		// Add the cell to the unlook queue instead
+		std::multimap<UnsignedInt, UnsignedInt>::iterator it = ThePartitionManager->queueUndoShroudRevealCell(x, y, playerIndex, cell->isBeingJammed(playerIndex));
+		cell->addUndoShroudReveal(it->second);
+#endif
 	}
 }
+
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+static void hLineAddLookerJammable(Int x1, Int x2, Int y, void *playerIndexVoid)
+{
+	if (y < 0 || y >= ThePartitionManager->m_cellCountY || x1 >= ThePartitionManager->m_cellCountX || x2 < 0)
+		return;
+
+	Int playerIndex = (Int)(playerIndexVoid);
+
+	PartitionCell* cell = &ThePartitionManager->m_cells[y * ThePartitionManager->m_cellCountX + x1];	// yes, this could be invalid. we'll skip the bad ones.
+	for (Int x = x1; x <= x2; ++x, ++cell)
+	{
+		if (x < 0 || x >= ThePartitionManager->m_cellCountX)
+			continue;
+		cell->addLookerJammable(playerIndex);
+	}
+}
+
+static void hLineRemoveLookerJammable(Int x1, Int x2, Int y, void *playerIndexVoid)
+{
+	if (y < 0 || y >= ThePartitionManager->m_cellCountY || x1 >= ThePartitionManager->m_cellCountX || x2 < 0)
+		return;
+
+	Int playerIndex = (Int)(playerIndexVoid);
+
+	PartitionCell* cell = &ThePartitionManager->m_cells[y * ThePartitionManager->m_cellCountX + x1];	// yes, this could be invalid. we'll skip the bad ones.
+	for (Int x = x1; x <= x2; ++x, ++cell)
+	{
+		if (x < 0 || x >= ThePartitionManager->m_cellCountX)
+			continue;
+
+#if !PARTITIONMANAGER_QUEUE_PER_CELL
+		cell->removeLookerJammable(playerIndex);
+#else
+		// Add the cell to the unlook queue instead
+		std::multimap<UnsignedInt, UnsignedInt>::iterator it = ThePartitionManager->queueUndoShroudRevealCellJammable(x, y, playerIndex, cell->isBeingJammed(playerIndex));
+		cell->addUndoShroudReveal(it->second);
+#endif
+	}
+}
+#endif
 
 // -----------------------------------------------------------------------------
 static void hLineAddShrouder(Int x1, Int x2, Int y, void *playerIndexVoid)
@@ -5686,6 +6410,23 @@ static void hLineRemoveShrouder(Int x1, Int x2, Int y, void *playerIndexVoid)
 		if (x < 0 || x >= ThePartitionManager->m_cellCountX)
 			continue;
 		cell->removeShrouder( playerIndex );
+	}
+}
+
+//MODDD
+static void hLineSetShroud(Int x1, Int x2, Int y, void *playerIndexVoid)
+{
+	if (y < 0 || y >= ThePartitionManager->m_cellCountY || x1 >= ThePartitionManager->m_cellCountX || x2 < 0)
+		return;
+
+	Int playerIndex = (Int)(playerIndexVoid);
+
+	PartitionCell* cell = &ThePartitionManager->m_cells[y * ThePartitionManager->m_cellCountX + x1];	// yes, this could be invalid. we'll skip the bad ones.
+	for (Int x = x1; x <= x2; ++x, ++cell)
+	{
+		if (x < 0 || x >= ThePartitionManager->m_cellCountX)
+			continue;
+		cell->setShroud( playerIndex );
 	}
 }
 
@@ -5816,7 +6557,12 @@ void SightingInfo::reset()
 	m_where.zero();
 	m_howFar = 0.0f;
 	m_forWhom = 0;
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	isJammable = false;
+#endif
+#if !PARTITIONMANAGER_QUEUE_PER_CELL
 	m_data = 0;
+#endif
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -5843,7 +6589,8 @@ void SightingInfo::xfer( Xfer *xfer )
 {
 
 	// version
-	XferVersion currentVersion = 1;
+	//MODDD - was 1
+	XferVersion currentVersion = 2;
 	XferVersion version = currentVersion;
 	xfer->xferVersion( &version, currentVersion );
 
@@ -5856,9 +6603,19 @@ void SightingInfo::xfer( Xfer *xfer )
 	// for whom
 	xfer->xferUser( &m_forWhom, sizeof( PlayerMaskType ) );
 
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	if (currentVersion >= 2) {
+		xfer->xferBool( &isJammable );
+	} else {
+		isJammable = false;
+	}
+#endif
+	
+	// removing if this is on
+#if !PARTITIONMANAGER_QUEUE_PER_CELL
 	// how much
 	xfer->xferUnsignedInt( &m_data );
-
+#endif
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -5875,3 +6632,39 @@ SightingInfo::~SightingInfo()
 
 }
 
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+void PartitionManager::addCellInfo(CellInfo* cellInfo) {
+	m_cellInfos.insert(std::make_pair(cellInfo->id, cellInfo));
+}
+CellInfo* PartitionManager::getCellInfo(UnsignedInt cellInfoId) {
+	return m_cellInfos[cellInfoId];
+}
+void PartitionManager::addPendingUndoShroudRevealForCell(CellInfo* cellInfo) {
+	m_pendingUndoShroudRevealsForCells.insert(std::make_pair(cellInfo->m_goalTime, cellInfo->id));
+}
+void PartitionManager::removePendingUndoShroudRevealForCell(CellInfo* cellInfo) {
+	std::pair< std::multimap<UnsignedInt, UnsignedInt>::iterator, std::multimap<UnsignedInt, UnsignedInt>::iterator > range = m_pendingUndoShroudRevealsForCells.equal_range('y');
+	std::multimap<UnsignedInt, UnsignedInt>::iterator it;
+	// This is kind of crappy, having to find the cell info among a lot with the same time that has this one's ID.
+	// would saving a copy of the cursor inserted into the map be better, or cause massive performance issues somehow?
+	for (it = range.first; it != range.second; ++it) {
+		if (it->second == cellInfo->id) {
+			// found it! remove this one
+			m_pendingUndoShroudRevealsForCells.erase(it);
+			return;
+		}
+	}
+}
+#endif
+
+#if PARTITIONMANAGER_QUEUE_PER_CELL
+//MODDD
+CellInfo::CellInfo()
+{
+}
+
+//MODDD
+CellInfo::~CellInfo()
+{
+}
+#endif

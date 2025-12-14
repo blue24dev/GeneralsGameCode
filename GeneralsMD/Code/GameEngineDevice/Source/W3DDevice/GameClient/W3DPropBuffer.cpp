@@ -326,11 +326,20 @@ void W3DPropBuffer::drawProps(RenderInfoClass &rinfo)
 	if (m_doCull) {
 		cull(&rinfo.Camera);
 	}
-	const GlobalData::TerrainLighting *objectLighting = TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay];
+	
+	//MODDD - real-time time-of-day change
+	//const GlobalData::TerrainLighting *objectLighting = TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay];
+	// ---
+	RGBColor ambientCol = TheGlobalData->getTerrainObjectsLighting_ambient(TheGlobalData->m_timeOfDay, 0);
+	// ---
 
 	LightEnvironmentClass lightEnv;
 	Vector3 center(0,0,0); // arbitrary center point. [6/6/2003]
-	Vector3 ambient(objectLighting[0].ambient.red, objectLighting[0].ambient.green, objectLighting[0].ambient.blue);
+	
+	//MODDD - real-time time-of-day change
+	//Vector3 ambient(objectLighting[0].ambient.red, objectLighting[0].ambient.green, objectLighting[0].ambient.blue);
+	Vector3 ambient(ambientCol.red, ambientCol.green, ambientCol.blue);
+
 	lightEnv.Reset(center, ambient);
 
 	Matrix3D mtx;
@@ -340,12 +349,28 @@ void W3DPropBuffer::drawProps(RenderInfoClass &rinfo)
 
 	for (i = 0; i < MAX_GLOBAL_LIGHTS; ++i)
 	{
+			//MODDD - real-time time-of-day change	
+			RGBColor diffuseCol = TheGlobalData->getTerrainObjectsLighting_diffuse(TheGlobalData->m_timeOfDay, i);
+			Coord3D lightPos = TheGlobalData->getTerrainObjectsLighting_lightPos(TheGlobalData->m_timeOfDay, i);
+
 			m_light->Set_Ambient(zeroVector);
+
+			//MODDD - real-time time-of-day change
+			/*
 			m_light->Set_Diffuse(Vector3(objectLighting[i].diffuse.red,
 																		 objectLighting[i].diffuse.green,
 																		 objectLighting[i].diffuse.blue));
+			*/
+			// ---
+			m_light->Set_Diffuse(Vector3(diffuseCol.red, diffuseCol.green, diffuseCol.blue));
+			// ---
+
 			m_light->Set_Specular(zeroVector);
-			mtx.Set(xVector, yVector, Vector3(objectLighting[i].lightPos.x, objectLighting[i].lightPos.y, objectLighting[i].lightPos.z), zeroVector);
+
+			//MODDD - real-time time-of-day change
+			//mtx.Set(xVector, yVector, Vector3(objectLighting[i].lightPos.x, objectLighting[i].lightPos.y, objectLighting[i].lightPos.z), zeroVector);
+			mtx.Set(xVector, yVector, Vector3(lightPos.x, lightPos.y, lightPos.z), zeroVector);
+
 			m_light->Set_Transform(mtx);
 			lightEnv.Add_Light(*m_light);
 	}

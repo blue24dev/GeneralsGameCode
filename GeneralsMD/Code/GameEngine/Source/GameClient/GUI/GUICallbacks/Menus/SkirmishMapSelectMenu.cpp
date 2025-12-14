@@ -244,6 +244,29 @@ void showSkirmishGameOptionsUnderlyingGUIElements( Bool show )
 	win->winEnable( show );
 }
 
+//MODDD - simple helpers
+void showSystemMaps() {
+	//MODDD - In debug mode, go ahead and show all maps.
+#if defined(DEBUG) || SHOW_SP_OFFICIAL_MAPS_IN_RELEASE
+	populateMapListbox( mapList, TRUE, MAPFILTER_ANY, TheSkirmishGameInfo->getMap() );
+#else
+	populateMapListbox( mapList, TRUE, TRUE, TheSkirmishGameInfo->getMap() );
+#endif
+}
+
+void showUserMaps() {
+	//MODDD - now possible to do both in one call.
+	// This fixes the slight issue of single player maps not being selected / scrolled to when the map-select-menu is returned to,
+	// because it's seen in the first run-through of 'populateMapListBox' (sets the selection properly) but the 2nd fails to find it
+	// (isMultiplayer=FALSE) and so resets the selection to 0 -> user sees the map on top is unconditionally selected.
+	// ---
+	//populateMapListbox( mapList, FALSE, FALSE, TheSkirmishGameInfo->getMap() );
+	//populateMapListboxNoReset( mapList, FALSE, TRUE, TheSkirmishGameInfo->getMap() );
+	// ---
+	populateMapListbox( mapList, FALSE, MAPFILTER_ANY, TheSkirmishGameInfo->getMap() );
+	// ---
+}
+
 //-------------------------------------------------------------------------------------------------
 /** Initialize the MapSelect menu */
 //-------------------------------------------------------------------------------------------------
@@ -304,12 +327,11 @@ void SkirmishMapSelectMenuInit( WindowLayout *layout, void *userData )
 			TheMapCache->updateCache();
 		if (usesSystemMapDir)
 		{
-			populateMapListbox( mapList, TRUE, TRUE, TheSkirmishGameInfo->getMap() );
+			showSystemMaps();
 		}
 		else
 		{
-			populateMapListbox( mapList, FALSE, FALSE, TheSkirmishGameInfo->getMap() );
-			populateMapListboxNoReset( mapList, FALSE, TRUE, TheSkirmishGameInfo->getMap() );
+			showUserMaps();
 		}
 		mapList->winSetTooltipFunc(mapListTooltipFunc);
 	}
@@ -505,7 +527,9 @@ WindowMsgHandledType SkirmishMapSelectMenuSystem( GameWindow *window, UnsignedIn
 			{
 				if (TheMapCache)
 					TheMapCache->updateCache();
-				populateMapListbox( mapList, TRUE, TRUE, TheSkirmishGameInfo->getMap() );
+
+				showSystemMaps();
+
 				//LANPreferences pref;
 				//pref["UseSystemMapDir"] = "yes";
 				//pref.write();
@@ -514,8 +538,9 @@ WindowMsgHandledType SkirmishMapSelectMenuSystem( GameWindow *window, UnsignedIn
 			{
 				if (TheMapCache)
 					TheMapCache->updateCache();
-				populateMapListbox( mapList, FALSE, FALSE, TheSkirmishGameInfo->getMap() );
-				populateMapListboxNoReset( mapList, FALSE, TRUE, TheSkirmishGameInfo->getMap() );
+
+				showUserMaps();
+
 				//LANPreferences pref;
 				//pref["UseSystemMapDir"] = "no";
 				//pref.write();

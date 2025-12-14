@@ -52,7 +52,9 @@ enum UpgradeStatusType CPP_11(: Int)
 };
 
 //The maximum number of upgrades.
-#define UPGRADE_MAX_COUNT 128
+//MODDD - it isn't 2003 anymore
+//#define UPGRADE_MAX_COUNT 128
+#define UPGRADE_MAX_COUNT 1024
 
 typedef BitFlags<UPGRADE_MAX_COUNT>	UpgradeMaskType;
 

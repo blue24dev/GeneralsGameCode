@@ -469,6 +469,13 @@ Bool Particle::update( void )
 
 	DEBUG_ASSERTCRASH( m_lifetimeLeft, ( "A particle has an infinite lifetime..." ));
 
+	//MODDD - debugging, see if any 'lifetimeLeft == 0' particles ever persist too long
+	// (doesn't seem to be the case?)
+	if (m_lifetimeLeft == 0) {
+		int x;
+		x = 0;
+	}
+
 	// if we've gone totally invisible, destroy ourselves
 	if (isInvisible())
 		return false;

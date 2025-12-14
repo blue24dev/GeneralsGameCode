@@ -81,11 +81,21 @@ void Squad::clearSquad() {
 	m_objectsCached.clear();
 }
 
+//MODDD - TODO - consider replacing 'getLiveObjects' with this completely, and leave out 'getAllObjects'?
+// There isn't a case that only calling one or the other makes sense externally, nor internally.
+// Always need to see what game objects are no longer available, as well as just not currently selectable.
+// ---
 // getAllObjects //////////////////////////////////////////////////////////////////////////////////
-const VecObjectPtr& Squad::getAllObjects(void) // Not a const function cause we clear away dead object here too
+const VecObjectPtr& Squad::getAllObjects(Player *player) // Not a const function cause we clear away dead object here too
 {
 	// prunes all NULL objects
+	//MODDD - NOTE. Elaboration. Removes everything so each thing from 'm_objectIDs' can be added back as found
+	// & on matching criteria.
 	m_objectsCached.clear();
+
+	//MODDD - block replaced
+	// ---
+	/*
 	for (VecObjectIDIt it = m_objectIDs.begin(); it != m_objectIDs.end(); ) {
 		Object *obj = TheGameLogic->findObjectByID(*it);
 		if (obj) {
@@ -95,23 +105,66 @@ const VecObjectPtr& Squad::getAllObjects(void) // Not a const function cause we 
 			it = m_objectIDs.erase(it);
 		}
 	}
+	*/
+	// ---
+	for (VecObjectIDIt it = m_objectIDs.begin(); it != m_objectIDs.end(); ) {
+		Object *obj = TheGameLogic->findObjectByID(*it);
+		if (obj == NULL) {
+			it = m_objectIDs.erase(it);
+			continue;
+		}
+
+		// Adding a check in this method so that being marked dead is enough to drop it from the objectIDs.
+		// Why bother re-looking up something later that's not coming back, unlike from 'isSelectable()' failing?
+		if (obj->isEffectivelyDead()) {
+			it = m_objectIDs.erase(it);
+			continue;
+		}
+		//MODDD - Bugfix for control group selections still leading to units the player has lost ownership of.
+		// Ex: camera can still show depiloted/hijacked units on double-tapping the control group key.
+		// Added a check for the object's player matching the expected 'player', if provided.
+		if (player != NULL && obj->getControllingPlayer() != player) {
+			it = m_objectIDs.erase(it);
+			continue;
+		}
+
+		// Check if an object is selectable here instead. If not, don't erase from objectIDs, in case it becomes
+		// selectable at another time, but leaving out of obects select this time (objectsCached) is fine.
+		if (!obj->isSelectable()) {
+			++it;
+			continue;
+		}
+
+		// you passed - woohoo
+		m_objectsCached.push_back(obj);
+		++it;
+	}
 
 	return m_objectsCached;
 }
 
+//MODDD - TODO - rename to 'getObjects'?  Since it's the only public method, and there's ever a use case for
+// getting non-selectable objects externally, it makes sense for this to have a generic name.
+// ---
 // getLiveObjects /////////////////////////////////////////////////////////////////////////////////
-const VecObjectPtr& Squad::getLiveObjects(void)
+const VecObjectPtr& Squad::getLiveObjects(Player *player)
 {
 	// first get all the objects.
 	// cheat, since we are a member function, and just use m_objectsCached
-	getAllObjects();
+	getAllObjects(player);
+
+	//MODDD - redundant with additions to 'getAllObjects' now. Pending replacing this whole method with
+	// 'getAllObjects' most likely.
+	/*
 	for (VecObjectPtrIt it = m_objectsCached.begin(); it != m_objectsCached.end(); ) {
 		if (!(*it)->isSelectable()) {
 			it = m_objectsCached.erase(it);
-		} else {
-			++it;
+			continue;
 		}
+
+		++it;
 	}
+	*/
 
 	return m_objectsCached;
 }

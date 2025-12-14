@@ -84,7 +84,9 @@ class PolygonTrigger;
 class ProductionUpdateInterface;
 class ProjectileUpdateInterface;
 class RadarObject;
-class SightingInfo;
+//MODDD - replaced
+//class SightingInfo;
+class ObjectThreatValueParms;
 class SpawnBehaviorInterface;
 class SpecialAbilityUpdate;
 class SpecialPowerCompletionDie;
@@ -163,10 +165,27 @@ class Object : public Thing, public Snapshot
 
 public:
 
+	//MODDD - new constructor
+	Object(const ThingTemplate *tt);
 	/// Object constructor automatically attaches all objects to "TheGameLogic"
-	Object(const ThingTemplate *thing, const ObjectStatusMaskType &objectStatusMask, Team *team);
+	//MODDD - added param 'objectInitLockLocalTemp', swapped 'team' and 'objectStatusMask' order
+	Object(const ThingTemplate *thing, Team *team, const ObjectStatusMaskType &objectStatusMask, Bool objectInitLockLocalTemp);
 
+	//MODDD
+	void earlyConstructor(const ThingTemplate* tt);
+	void createBehaviorModules_PRE(const ThingTemplate* tt);
+	void createBehaviorModules(const ThingTemplate* tt);
+	void loadInit();
+	void initHookup();
+	void constructorEnd();
+	void constructorOnActualTeamAssigned();
+	void setStartVeterancy();
+	void callModuleOnObjectCreated();
+	void runCreateModules();
+	void gamePostLoad();
 	void initObject();
+	Bool isInitLocked();
+	Bool isInitLockedHard();
 
 	void onDestroy();																							///< run during TheGameLogic::destroyObject
 
@@ -285,6 +304,8 @@ public:
 	BodyModuleInterface* getBodyModule() const { return m_body; }
 	ContainModuleInterface* getContain() const { return m_contain; }
   StealthUpdate*          getStealth() const { return m_stealth; }
+	//MODDD
+	StealthDetectorUpdate*          getStealthDetector() const { return m_stealthDetector; }
 	SpawnBehaviorInterface* getSpawnBehaviorInterface() const;
 	ProjectileUpdateInterface* getProjectileUpdateInterface() const;
 
@@ -618,6 +639,14 @@ public:
 
 	Bool isHero(void) const;
 
+	//MODDD - New
+	Bool isRecognizableToEnemy() const;
+
+	//MODDD - New
+	Bool canClearMines() const;
+	//MODDD - moved from AIUpdate
+	Bool isClearingMines() const;
+
 	Bool getReceivingDifficultyBonus() const { return m_isReceivingDifficultyBonus; }
 	void setReceivingDifficultyBonus(Bool receive);
 
@@ -629,6 +658,8 @@ public:
 	// If incoming is true, we're working on the incoming player, if its false, we're on the outgoing
 	// player. These are friend_s for player.
 	void friend_adjustPowerForPlayer( Bool incoming );
+	//MODDD - specify a player
+	void friend_adjustPowerForPlayer(Player* player, Bool incoming);
 
 protected:
 
@@ -636,7 +667,6 @@ protected:
 
 	void onDisabledEdge(Bool becomingDisabled);
 	// All of our cheating for radars and power go here.
-
 
 	// snapshot methods
 	void crc( Xfer *xfer );
@@ -662,6 +692,12 @@ protected:
 
 	void updateTriggerAreaFlags(void);
 	void setTriggerAreaFlagsForChangeInPosition(void);
+	
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	Real determineNonJammableShroudClearingRange( Real shroudClearingRangeJammable );
+#endif
+	//MODDD
+	PlayerMaskType getFilteredVisionSpiedMask();
 
 	/// Look and unlook are protected.  They should be called from Object::reasonToLook.  Like Capture, or death.
 	void look();
@@ -708,15 +744,20 @@ private:
 	RefCountPtr<AIGroup> m_group; ///< if non-NULL, we are part of this group of agents
 #endif
 
+	//MODDD - replaced all usages of 'SightingInfo' below with 'ObjectThreatValueParms'
+
 	// These will last for my lifetime.  I will reuse them and reset them.  The truly dynamic ones are in PartitionManager
-	SightingInfo		*m_partitionLastLook;								///< Where and for whom I last looked, so I can undo its effects when I stop
-	SightingInfo		*m_partitionRevealAllLastLook;			///< And a seperate look to reveal at a different range if so marked
+	ObjectThreatValueParms		*m_partitionLastLook;								///< Where and for whom I last looked, so I can undo its effects when I stop
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	ObjectThreatValueParms    *m_partitionLastLookJammable;
+#endif
+	ObjectThreatValueParms		*m_partitionRevealAllLastLook;			///< And a seperate look to reveal at a different range if so marked
 	Int							m_visionSpiedBy[MAX_PLAYER_COUNT];  ///< Reference count of having units spied on by players.
 	PlayerMaskType	m_visionSpiedMask;									///< For quick lookup and edge triggered maintenance
 
-	SightingInfo	*m_partitionLastShroud;	///< Where and for whom I last shrouded, so I can undo its effects when I stop
-	SightingInfo	*m_partitionLastThreat;	///< Where and for whom I last delt with threat, so I can undo its effects when I stop
-	SightingInfo	*m_partitionLastValue;	///< Where and for whom I last delt with value, so I can undo its effects when I stop
+	ObjectThreatValueParms	*m_partitionLastShroud;	///< Where and for whom I last shrouded, so I can undo its effects when I stop
+	ObjectThreatValueParms	*m_partitionLastThreat;	///< Where and for whom I last delt with threat, so I can undo its effects when I stop
+	ObjectThreatValueParms	*m_partitionLastValue;	///< Where and for whom I last delt with value, so I can undo its effects when I stop
 
 	Real					m_visionRange;										///< looking range
 	Real					m_shroudClearingRange;						///< looking range for shroud ONLY
@@ -744,6 +785,8 @@ private:
 	ContainModuleInterface*				m_contain;
 	BodyModuleInterface*					m_body;
   StealthUpdate*                m_stealth;
+	//MODDD
+	StealthDetectorUpdate*        m_stealthDetector;
 
 	AIUpdateInterface*						m_ai;	///< ai interface (if any), cached for handy access. (duplicate of entry in the module array!)
 	PhysicsBehavior*							m_physics;	///< physics interface (if any), cached for handy access. (duplicate of entry in the module array!)
@@ -810,6 +853,9 @@ private:
 	Byte													m_numTriggerAreasActive;
 	Bool													m_singleUseCommandUsed;
 	Bool													m_isReceivingDifficultyBonus;
+	//MODDD - new
+	Bool objectInitLockLocal;
+	Bool objectInitLockLocalTemp;
 
 };
 

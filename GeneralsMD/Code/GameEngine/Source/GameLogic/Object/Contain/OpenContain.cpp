@@ -347,6 +347,14 @@ void OpenContain::addToContain( Object *rider )
 	// trigger an onContaining event for the object that just "ate" something
 	if( getObject()->getContain() )
 	{
+		//MODDD - NOTE. Notice that this occurs after 'addToContainList(rider)' called above, without checking
+		// to see if anything is already within the object, i.e. if this is a 'RiderChangeContain', this leads to
+		// 'RiderChangeContain::onContaining' -> 'obj->getAI()->aiEvacuateInstantly( TRUE, CMD_FROM_AI )'.
+		// I would think this would evacuate both the existing rider (correct) and the one added just above (wrong!),
+		// but no, this is stopped by 'OpenContain::removeFromContain' -> 'containedBy != getObject()' check.
+		// If it weren't for the newly added object not having its 'containedBy' hooked up yet, OCLs that call for
+		// rider swaps would produce an empty bike instead of giving the rider they intend to.
+		// This isn't terrible, but still smells a bit funny to me. In any case, tread lightly.
 		getObject()->getContain()->onContaining( rider, wasSelected );
 	}
 
@@ -409,7 +417,13 @@ void OpenContain::removeFromContain( Object *rider, Bool exposeStealthUnits )
 	if (it != m_containList.end())
 	{
 		// note that this invalidates the iterator!
-		removeFromContainViaIterator( it, exposeStealthUnits );
+		//MODDD - NOTE - this is OK if the iterator won't be re-used, like for a single 'std::find' & not in a loop
+		//MODDD - doing size number change & list removal here.
+		// Change the order of these things at your own peril.
+		Object* rider = *it;
+		m_containList.erase(it);
+		m_containListSize--;
+		onRemoveFromContain( rider, exposeStealthUnits );
 	}
 
 }
@@ -421,12 +435,26 @@ void OpenContain::removeAllContained( Bool exposeStealthUnits )
 {
 	ContainedItemsList::iterator it;
 
- 	while ((it = m_containList.begin()) != m_containList.end())
+	//MODDD
+ 	//while ((it = m_containList.begin()) != m_containList.end())
+	for (it = m_containList.begin(); it != m_containList.end(); )
 	{
 
  		// note that this invalidates the iterator!
- 		removeFromContainViaIterator( it, exposeStealthUnits );
-
+		//MODDD - hm, this shouldn't be ignored. Added a param to let this loop handle setting the iterator instead.
+		// Oh, I now see that the old loop header set 'it' to 'list.begin()' every time. Ah well, this is more standard anyway.
+ 		//removeFromContainViaIterator( it, exposeStealthUnits );
+		//MODDD - However. It still isn't good to move the actual erasure after this, as this call leads to an eventual call for
+		// this object to remove itself from the container, which then sees a mismatch between the containerList contents and the
+		// containerListSize var, as the very next line to erase this hasn't run yet.
+		// ...I think it's best for this to not even be a convenience method for changing those things, leave this as an event
+		// to do alongside those things, AFTER they are updated. This is a lot easier to understand.
+		//removeFromContainViaIterator( it, exposeStealthUnits);
+		//it = m_containList.erase(it);
+		Object* rider = *it;
+		it = m_containList.erase(it);
+		m_containListSize--;
+		onRemoveFromContain( rider, exposeStealthUnits );
 	}
 
 }
@@ -628,10 +656,11 @@ struct DropData
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 //-------------------------------------------------------------------------------------------------
-/** Remove an object from the containment of this module given the item
-	* to remove and trigger the proper callback events */
+/** Event on removing an object from the containment of this module given the item
+	* removed and trigger the proper callback events */
 //-------------------------------------------------------------------------------------------------
-void OpenContain::removeFromContainViaIterator( ContainedItemsList::iterator it, Bool exposeStealthUnits )
+//MODDD - 1st param replaced
+void OpenContain::onRemoveFromContain( Object *rider, Bool exposeStealthUnits )
 {
 
 /*
@@ -643,11 +672,13 @@ void OpenContain::removeFromContainViaIterator( ContainedItemsList::iterator it,
 													itemToRemove->m_object->getID() );
 	#endif
 */
-	Object *rider = *it;
+	//MODDD - supplied as a param instead now
+	//Object *rider = *it;
 
 	// remove item from list
-	m_containList.erase(it);
-	m_containListSize--;
+	//MODDD - don't handle here
+	//m_containList.erase(it);
+	//m_containListSize--;
 	if( rider->isKindOf( KINDOF_STEALTH_GARRISON ) )
 	{
 		m_stealthUnitsContained--;

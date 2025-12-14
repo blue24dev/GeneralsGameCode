@@ -344,7 +344,8 @@ public:
 	// AI Interface implementation -----------------------------------------------------------------------
 	virtual Bool isIdle() const;
 	virtual Bool isAttacking() const;
-	virtual Bool isClearingMines() const;
+	//MODDD - moved to Object
+	//virtual Bool isClearingMines() const;
 	virtual Bool isTaxiingToParking() const { return FALSE; } //only applies to jets interacting with runways.
 
 	//Definition of busy -- when explicitly in the busy state. Moving or attacking is not considered busy!

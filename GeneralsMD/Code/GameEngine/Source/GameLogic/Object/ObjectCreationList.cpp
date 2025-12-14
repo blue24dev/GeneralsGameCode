@@ -101,20 +101,23 @@ static void adjustVector(Coord3D *vec, const Matrix3D* mtx)
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 //-------------------------------------------------------------------------------------------------
-Object* ObjectCreationNugget::create( const Object* primary, const Object* secondary, UnsignedInt lifetimeFrames ) const
+//MODDD - disarming mines gives experience. Removed 'const' on 'primary'
+Object* ObjectCreationNugget::create( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames ) const
 {
 	return create( primary, primary ? primary->getPosition() : NULL, secondary ? secondary->getPosition() : NULL, INVALID_ANGLE, lifetimeFrames );
 }
 
 //-------------------------------------------------------------------------------------------------
-//void ObjectCreationNugget::create( const Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames ) const
+//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+//void ObjectCreationNugget::create( Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames ) const
 //{
 //	create( primaryObj, primary ? primary->getPosition() : NULL, secondary ? secondary->getPosition() : NULL, angle, lifetimeFrames );
 //}
 
 //-------------------------------------------------------------------------------------------------
 //This one is called only when we have a nugget that doesn't care about createOwner.
-Object* ObjectCreationNugget::create( const Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Bool createOwner, UnsignedInt lifetimeFrames ) const
+//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+Object* ObjectCreationNugget::create( Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Bool createOwner, UnsignedInt lifetimeFrames ) const
 {
 	return create( primaryObj, primary, secondary, INVALID_ANGLE, lifetimeFrames );
 }
@@ -132,7 +135,8 @@ public:
 	{
 	}
 
-	virtual Object* create( const Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+	virtual Object* create( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const
 	{
 		if (!primaryObj || !primary || !secondary)
 		{
@@ -179,7 +183,8 @@ public:
 	{
 	}
 
-	virtual Object* create( const Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+	virtual Object* create( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const
 	{
 		if (!primaryObj || !primary || !secondary)
 		{
@@ -261,12 +266,14 @@ public:
 		m_transportName.clear();
 	}
 
-	virtual Object* create(const Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+	virtual Object* create(Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const
 	{
 		return create( primaryObj, primary, secondary, true, lifetimeFrames );
 	}
 
-	virtual Object* create(const Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 ) const
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+	virtual Object* create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 ) const
 	{
 		if (!primaryObj || !primary || !secondary)
 		{
@@ -619,7 +626,8 @@ public:
 	{
 	}
 
-	virtual Object* create( const Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primary'
+	virtual Object* create( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const
 	{
 		if (primary)
 		{
@@ -650,7 +658,8 @@ public:
 		return NULL;
 	}
 
-	virtual Object* create(const Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+	virtual Object* create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const
 	{
 		DEBUG_CRASH(("You must call this effect with an object, not a location"));
 		return NULL;
@@ -775,7 +784,8 @@ public:
 		m_offset.zero();
 	}
 
-	virtual Object* create(const Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primary'
+	virtual Object* create(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const
 	{
 		if (primary)
 		{
@@ -791,7 +801,8 @@ public:
 		return NULL;
 	}
 
-	virtual Object* create(const Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const
+	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+	virtual Object* create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const
 	{
 		if (primary)
 		{
@@ -1414,8 +1425,11 @@ protected:
 		}
 
 #if !RETAIL_COMPATIBLE_CRC && !PRESERVE_RETAIL_BEHAVIOR
-		ObjectID sinkID = sourceObj->getExperienceTracker()->getExperienceSink();
-		firstObject->getExperienceTracker()->setExperienceSink(sinkID != INVALID_ID ? sinkID : sourceObj->getID());
+		//MODDD - added null check. 'firstObject' can be null during the Generals ZH shell map, at least in the ProGen mod.
+		if(firstObject != NULL) {
+			ObjectID sinkID = sourceObj->getExperienceTracker()->getExperienceSink();
+			firstObject->getExperienceTracker()->setExperienceSink(sinkID != INVALID_ID ? sinkID : sourceObj->getID());
+		}
 #endif
 
 		if (container)
@@ -1523,7 +1537,8 @@ void ObjectCreationList::addObjectCreationNugget(ObjectCreationNugget* nugget)
 }
 
 //-------------------------------------------------------------------------------------------------
-Object* ObjectCreationList::createInternal( const Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames ) const
+//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+Object* ObjectCreationList::createInternal( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames ) const
 {
 	DEBUG_ASSERTCRASH(primaryObj != NULL, ("You should always call OCLs with a non-null primary Obj, even for positional calls, to get team ownership right"));
 	Object *theFirstObject = NULL;
@@ -1538,7 +1553,8 @@ Object* ObjectCreationList::createInternal( const Object* primaryObj, const Coor
 }
 
 //-------------------------------------------------------------------------------------------------
-Object* ObjectCreationList::createInternal( const Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames ) const
+//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+Object* ObjectCreationList::createInternal( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames ) const
 {
 	DEBUG_ASSERTCRASH(primaryObj != NULL, ("You should always call OCLs with a non-null primary Obj, even for positional calls, to get team ownership right"));
 	Object *theFirstObject = NULL;
@@ -1553,7 +1569,8 @@ Object* ObjectCreationList::createInternal( const Object* primaryObj, const Coor
 }
 
 //-------------------------------------------------------------------------------------------------
-Object* ObjectCreationList::createInternal( const Object* primary, const Object* secondary, UnsignedInt lifetimeFrames ) const
+//MODDD - disarming mines gives experience. Removed 'const' on 'primary'
+Object* ObjectCreationList::createInternal( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames ) const
 {
 	DEBUG_ASSERTCRASH(primary != NULL, ("You should always call OCLs with a non-null primary Obj, even for positional calls, to get team ownership right"));
 	Object *theFirstObject = NULL;

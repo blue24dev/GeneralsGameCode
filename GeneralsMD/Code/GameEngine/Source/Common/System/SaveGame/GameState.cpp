@@ -529,11 +529,20 @@ AsciiString GameState::findNextSaveFilename( UnicodeString desc )
 
 }
 
+//MODDD - convenience wrapper for the new global
+SaveCode GameState::saveGame( AsciiString filename, UnicodeString desc,
+															SaveFileType saveType, SnapshotType which ) {
+	globalXferStatus = XFER_SAVE;
+	SaveCode result = _saveGame(filename, desc, saveType, which);
+	globalXferStatus = XFER_INVALID;
+	return result;
+}
+
 // ------------------------------------------------------------------------------------------------
 /** Save the current state of the engine in a save file
 	* NOTE: filename is a *filename only* */
 // ------------------------------------------------------------------------------------------------
-SaveCode GameState::saveGame( AsciiString filename, UnicodeString desc,
+SaveCode GameState::_saveGame( AsciiString filename, UnicodeString desc,
 															SaveFileType saveType, SnapshotType which )
 {
 
@@ -554,8 +563,10 @@ SaveCode GameState::saveGame( AsciiString filename, UnicodeString desc,
 	// construct path to file
 	AsciiString filepath = getFilePathInSaveDirectory(filename);
 
+	SaveGameInfo *gameInfo = getSaveGameInfo();
+
 	// save description as current description in the game state
-	m_gameInfo.description = desc;
+	gameInfo->description = desc;
 
 	// open the save file
 	XferSave xferSave;
@@ -569,7 +580,6 @@ SaveCode GameState::saveGame( AsciiString filename, UnicodeString desc,
 	}
 
 	// save our save file type
-	SaveGameInfo *gameInfo = getSaveGameInfo();
 	gameInfo->saveFileType = saveType;
 
 	// save our mission map name if applicable
@@ -640,10 +650,18 @@ SaveCode GameState::missionSave( void )
 
 }
 
+//MODDD - convenience wrapper for the new global
+SaveCode GameState::loadGame( AvailableGameInfo gameInfo ) {
+	globalXferStatus = XFER_LOAD;
+	SaveCode result = _loadGame(gameInfo);
+	globalXferStatus = XFER_INVALID;
+	return result;
+}
+
 // ------------------------------------------------------------------------------------------------
 /** Load the save game pointed to by filename */
 // ------------------------------------------------------------------------------------------------
-SaveCode GameState::loadGame( AvailableGameInfo gameInfo )
+SaveCode GameState::_loadGame( AvailableGameInfo gameInfo )
 {
 
 	// sanity check for file
@@ -651,6 +669,12 @@ SaveCode GameState::loadGame( AvailableGameInfo gameInfo )
 		return SC_FILE_NOT_FOUND;
 
 	// clear game data just like loading from the debug map load screen for mission saves
+	//MODDD - NOTE - note that 'TheGameEngine->reset()' is already called by 'clearGameData'.
+	// Could 'clearGameData' just be called here unconditionally & remove the 'reset' call
+	// originally further down?
+	//MODDD - you know what let's try it.
+	// ---
+	/*
 	if( gameInfo.saveGameInfo.saveFileType == SAVE_FILE_TYPE_MISSION )
 	{
 
@@ -658,6 +682,15 @@ SaveCode GameState::loadGame( AvailableGameInfo gameInfo )
 			TheGameLogic->clearGameData( FALSE );
 
 	}
+	*/
+	// ---
+	// This call sets 'gameStatus' at the beginning and at the end to signify 'TEARDOWN' - let it pass
+	TheGameLogic->clearGameData( FALSE );
+	// ---
+
+	//MODDD - Consider this 'setup'. See further down - loading most games ends up calling
+	// 'TheGameLogic->startNewGame( TRUE )' and loading the rest of the objects/etc. afterwards.
+	gameStatus = GAMESTATUS_SETUP;
 
 	//
 	// clear the save directory of any temporary "scratch pad" maps that were extracted
@@ -673,11 +706,13 @@ SaveCode GameState::loadGame( AvailableGameInfo gameInfo )
 	xferLoad.open( filepath );
 
 	// clear out the game engine
-	TheGameEngine->reset();
+	//MODDD - disabled, guaranteed to be called in 'TheGameLogic->clearGameData' above
+	//TheGameEngine->reset();
 
 	// lock creation of new ghost objects
 	TheGhostObjectManager->saveLockGhostObjects( TRUE );
 
+	//MODDD - NOTE - ?
 	LatchRestore<Bool> inLoadGame(m_isInLoadGame, TRUE);
 
 	// load the save data
@@ -685,7 +720,11 @@ SaveCode GameState::loadGame( AvailableGameInfo gameInfo )
 	try
 	{
 
-		// load file
+		//MODDD - NOTE - a deeper call leads to the first block 'CHUNK_GameStateMap' which leads to
+		// 'GameStateMap::xfer' -> 'TheGameLogic->startNewGame( TRUE )'.
+		// This is how loading most saved games starts a game, reaching further blocks continues setup for this
+		// game.
+		// Exception to this is mission-start-only saves, game-starts there are handled further down.
 		xferSaveData( &xferLoad, SNAPSHOT_SAVELOAD );
 
 	}
@@ -714,9 +753,17 @@ SaveCode GameState::loadGame( AvailableGameInfo gameInfo )
 	if( error == TRUE )
 	{
 		// clear it out, again
+		//MODDD - replacing this block. 'clearGameData' will skip to calling 'reset' if not in-game and, and did
+		// call it when in-game to begin with.
+		// ---
+		/*
 		if (TheGameLogic->isInGame())
 			TheGameLogic->clearGameData( FALSE );
 		TheGameEngine->reset();
+		*/
+		// ---
+		TheGameLogic->clearGameData( FALSE );
+		// ---
 
 		// print error message to the user
 		UnicodeString ufilepath;
@@ -727,6 +774,8 @@ SaveCode GameState::loadGame( AvailableGameInfo gameInfo )
 
 		MessageBoxOk(TheGameText->fetch("GUI:Error"), msg, NULL);
 
+		//MODDD - NOTE - no need to set 'gameStatus' here, 'clearGameData' above already handled that.
+
 		return SC_INVALID_DATA;	// you can't use a naked "throw" outside of a catch statement!
 
 	}
@@ -736,6 +785,8 @@ SaveCode GameState::loadGame( AvailableGameInfo gameInfo )
 	// can cause we don't have any real save game data to load other than the
 	// game state map info and campaign manager stuff
 	//
+	//MODDD - NOTE - any reason why 'getSaveGameInfo' instead of 'gameInfo.saveGameInfo'?
+	// seems weird to suddenly not use the param.
 	if( getSaveGameInfo()->saveFileType == SAVE_FILE_TYPE_MISSION )
 	{
 
@@ -754,6 +805,12 @@ SaveCode GameState::loadGame( AvailableGameInfo gameInfo )
 
 	}
 
+	//MODDD - complementary for the 'gameStatus' assignment toward the start.
+	// The deeper 'startNewGame' call didn't change 'gameStatus' in that case, so it's up to the end of
+	// 'loadGame' here to do that.
+	if( gameInfo.saveGameInfo.saveFileType != SAVE_FILE_TYPE_MISSION ) {
+		gameStatus = GAMESTATUS_INGAME;
+	}
 	return SC_OK;
 
 }

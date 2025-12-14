@@ -106,6 +106,8 @@ void ReplaceObjectUpgrade::upgradeImplementation( )
 
 	// Now onCreates were called at the constructor.  This magically created
 	// thing needs to be considered as Built for Game specific stuff.
+	//MODDD - condensed
+	/*
 	for (BehaviorModule** m = replacementObject->getBehaviorModules(); *m; ++m)
 	{
 		CreateModuleInterface* create = (*m)->getCreate();
@@ -113,6 +115,8 @@ void ReplaceObjectUpgrade::upgradeImplementation( )
 			continue;
 		create->onBuildComplete();
 	}
+	*/
+	call_objectOnBuildComplete(replacementObject);
 
 	if( replacementObject->getControllingPlayer() )
 	{

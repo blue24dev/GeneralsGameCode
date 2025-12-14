@@ -634,22 +634,51 @@ UnsignedInt W3DTreeBuffer::doLighting(const Vector3 *normal,
 
 	Real shadeR, shadeG, shadeB;
 	Real shade;
+
+	//MODDD - real-time time-of-day change
+	RGBColor ambientCol = TheGlobalData->getTerrainObjectsLighting_ambient(TheGlobalData->m_timeOfDay, 0);
+	
+	//MODDD - real-time time-of-day change
+	//MODDD - TODO - fine to remove the 'objectLighting' param
+	/*
 	shadeR = objectLighting[0].ambient.red+emissive->X;	//only the first light contributes to ambient
 	shadeG = objectLighting[0].ambient.green+emissive->Y;
 	shadeB = objectLighting[0].ambient.blue+emissive->Z;
+	*/
+	// ---
+	shadeR = ambientCol.red+emissive->X;	//only the first light contributes to ambient
+	shadeG = ambientCol.green+emissive->Y;
+	shadeB = ambientCol.blue+emissive->Z;
+	// ---
 
 	Int i;
 	for	(i=0; i<MAX_GLOBAL_LIGHTS; i++) {
-		Vector3 lightDirection(objectLighting[i].lightPos.x, objectLighting[i].lightPos.y, objectLighting[i].lightPos.z);
+		//MODDD - real-time time-of-day change
+		RGBColor diffuseCol = TheGlobalData->getTerrainObjectsLighting_diffuse(TheGlobalData->m_timeOfDay, i);
+		Coord3D lightPos = TheGlobalData->getTerrainObjectsLighting_lightPos(TheGlobalData->m_timeOfDay, i);
+		
+		//MODDD - real-time time-of-day change
+		//Vector3 lightDirection(objectLighting[i].lightPos.x, objectLighting[i].lightPos.y, objectLighting[i].lightPos.z);
+		Vector3 lightDirection(lightPos.x, lightPos.y, lightPos.z);
+
 		lightDirection.Normalize();
 		Vector3 lightRay(-lightDirection.X, -lightDirection.Y, -lightDirection.Z);
 		shade = Vector3::Dot_Product(lightRay, *normal);
 
 		if (shade > 1.0) shade = 1.0;
 		if(shade < 0.0f) shade = 0.0f;
+
+		//MODDD - real-time time-of-day change
+		/*
 		shadeR += shade*objectLighting[i].diffuse.red;
 		shadeG += shade*objectLighting[i].diffuse.green;
 		shadeB += shade*objectLighting[i].diffuse.blue;
+		*/
+		// ---
+		shadeR += shade*diffuseCol.red;
+		shadeG += shade*diffuseCol.green;
+		shadeB += shade*diffuseCol.blue;
+		// ---
 	}
 
 	shadeR *= scale;

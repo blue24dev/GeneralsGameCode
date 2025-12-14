@@ -431,6 +431,10 @@ W3DBufferManager::W3DIndexBufferSlot * W3DBufferManager::allocateSlotStorage(Int
 		Int ibSize=__max(DEFAULT_INDEX_BUFFER_SIZE,size);
 
 		pIB->m_DX8IndexBuffer=NEW_REF(DX8IndexBufferClass,(ibSize,DX8IndexBufferClass::USAGE_DEFAULT));
+
+		//MODDD - adding
+		DEBUG_ASSERTCRASH( pIB->m_DX8IndexBuffer, ("Failed to create index buffer"));
+
 		pIB->m_startFreeIndex=size;
 		pIB->m_size=ibSize;
 		ibSlot=&m_W3DIndexBufferEmptySlots[m_numEmptyIndexSlotsAllocated];

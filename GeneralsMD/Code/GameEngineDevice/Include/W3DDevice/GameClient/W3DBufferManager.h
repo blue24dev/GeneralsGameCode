@@ -33,6 +33,9 @@
 #include "dx8vertexbuffer.h"
 #include "dx8indexbuffer.h"
 
+//MODDD - original (as of TheSuperHackers changes)
+// ---
+/*
 // TheSuperHackers @info The max sizes correspond to a number of vertices and indices of a mesh casting shadows
 // in the scene. The more vertices the meshes are supposed to have, the higher these limits need to be.
 // Multiplying these numbers by MIN_SLOT_SIZE gives the max supported amount of vertices and indices.
@@ -52,6 +55,23 @@
 
 #define DEFAULT_VERTEX_BUFFER_SIZE 8192 //this size ends up generating VB's of about 256Kbytes
 #define DEFAULT_INDEX_BUFFER_SIZE 32768
+*/
+// ---
+//MODDD - it isn't 2003 anymore
+// My customizations
+#define MAX_VB_SIZES 1024
+#define MAX_IB_SIZES 1024
+#define MIN_SLOT_SIZE_SHIFT 8
+#define MIN_SLOT_SIZE (1 << MIN_SLOT_SIZE_SHIFT)
+#define SLOTS_MULTIPLIER 8
+#define MAX_NUMBER_SLOTS (4096 * SLOTS_MULTIPLIER)
+#define MAX_VERTEX_BUFFERS_CREATED (32 * SLOTS_MULTIPLIER)
+#define MAX_INDEX_BUFFERS_CREATED (32 * SLOTS_MULTIPLIER)
+#define DEFAULT_VERTEX_BUFFER_SIZE 16384
+// even 2 decades after 2003, doubling this past the original '32768' makes a direct3D call fail.
+// (see "pIB->m_DX8IndexBuffer=NEW_REF" - returns NULL if you double this)
+#define DEFAULT_INDEX_BUFFER_SIZE 32768
+
 
 class W3DBufferManager
 {

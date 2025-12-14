@@ -49,6 +49,10 @@ public:
 
 	virtual Bool isModuleForPower( const SpecialPowerTemplate *specialPowerTemplate ) const = 0;
 	virtual Bool isReady( void ) const = 0;
+
+	//MODDD - new
+	virtual Bool canBeSpecialPowerSource() const = 0;
+
 //  This is the althernate way to one-at-a-time BlackLotus' specials; we'll keep it commented her until Dustin decides, or until 12/10/02
 //	virtual Bool isBusy( void ) const = 0;
 	virtual Real getPercentReady( void ) const = 0;
@@ -57,6 +61,8 @@ public:
 	virtual const SpecialPowerTemplate* getSpecialPowerTemplate( void ) const = 0;
 	virtual ScienceType getRequiredScience( void ) const = 0;
 	virtual void onSpecialPowerCreation( void ) = 0;
+	//MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
+	virtual void notifyBuildComplete() = 0;
 	virtual void setReadyFrame( UnsignedInt frame ) = 0;
 	virtual void pauseCountdown( Bool pause ) = 0;
 	virtual void doSpecialPower( UnsignedInt commandOptions ) = 0;
@@ -64,12 +70,15 @@ public:
 	virtual void doSpecialPowerAtLocation( const Coord3D *loc, Real angle, UnsignedInt commandOptions ) = 0;
 	virtual void doSpecialPowerUsingWaypoints( const Waypoint *way, UnsignedInt commandOptions ) = 0;
 	virtual void markSpecialPowerTriggered( const Coord3D *location ) = 0;
+	//MODDD
+	virtual void startPowerRechargeInit(Bool fromOnSpecialPowerCreation) = 0;
 	virtual void startPowerRecharge() = 0;
 	virtual const AudioEventRTS& getInitiateSound() const = 0;
 	virtual Bool isScriptOnly() const = 0;
 
 	//If the special power launches a construction site, we need to know the final product for placement purposes.
 	virtual const ThingTemplate* getReferenceThingTemplate() const = 0;
+
 };
 
 //-------------------------------------------------------------------------------------------------
@@ -109,6 +118,10 @@ public:
 
 	Bool isModuleForPower( const SpecialPowerTemplate *specialPowerTemplate ) const;	///< is this module for the specified special power
 	Bool isReady( void ) const; 						///< is this special power available now
+
+	//MODDD - new
+	virtual Bool canBeSpecialPowerSource() const;
+
 //  This is the althernate way to one-at-a-time BlackLotus' specials; we'll keep it commented her until Dustin decides, or until 12/10/02
 //	Bool isBusy( void ) const { return FALSE; }
 
@@ -116,12 +129,17 @@ public:
 
 	UnsignedInt getReadyFrame( void ) const;		///< get the frame at which we are ready
 	AsciiString getPowerName( void ) const;
-	void syncReadyFrameToStatusQuo( void );
+	//MODDD - never implemented?
+	//void syncReadyFrameToStatusQuo( void );
 
 	const SpecialPowerTemplate* getSpecialPowerTemplate( void ) const;
 	ScienceType getRequiredScience( void ) const;
 
 	void onSpecialPowerCreation( void );	// called by a create module to start our countdown
+
+	//MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
+	void notifyBuildComplete();
+
 	//
 	// The following methods are for use by the scripting engine ONLY
 	//
@@ -152,6 +170,9 @@ public:
 	*/
 	virtual void markSpecialPowerTriggered( const Coord3D *location );
 
+	//MODDD
+	virtual void startPowerRechargeInit(Bool fromOnSpecialPowerCreation);
+	
 	/** start the recharge process for this special power. public because some powers call it repeatedly.
 	*/
 	virtual void startPowerRecharge();
@@ -169,6 +190,8 @@ protected:
 	void createViewObject( const Coord3D *location );
 	void resolveSpecialPower( void );
 	void aboutToDoSpecialPower( const Coord3D *location );
+	//MODDD
+	void checkAddTimerForSharedSuperWeapon();
 
 	UnsignedInt m_availableOnFrame;			///< on this frame, this special power is available
 	Int m_pausedCount;									///< Reference count of sources pausing me

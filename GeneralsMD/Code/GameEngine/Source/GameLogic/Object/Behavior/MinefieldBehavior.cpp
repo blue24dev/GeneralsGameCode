@@ -335,6 +335,30 @@ static Real calcDistSquared(const Coord3D& a, const Coord3D& b)
 	return sqr(a.x - b.x) + sqr(a.y - b.y) + sqr(a.z - b.z);
 }
 
+//MODDD - helper to get a slot in 'm_immunes' for the given 'objectID'.
+// Gets the existing slot the objectID is using if it is already in the list. Otherwise, get the first
+// empty one. Returns 'NULL' if not already in the list & there are no empty slots left.
+// This stops the potential in the as-is script to give the same object multiple slots if an earlier
+// index expired (became empty).  Ex: already has slot #2 but #0 is empty and so assigned to... not right.
+MinefieldBehavior::ImmuneInfo* MinefieldBehavior::getAvailableImmuneInfoSlot(ObjectID objectID) {
+	// First sweep: is this ID already in the list?
+	for (Int i = 0; i < MAX_IMMUNITY; ++i)
+	{
+		if (m_immunes[i].id == objectID) {
+			return &m_immunes[i];
+		}
+	}
+	// Second sweep: first empty slot?
+	for (Int i = 0; i < MAX_IMMUNITY; ++i)
+	{
+		if (m_immunes[i].id == INVALID_ID) {
+			return &m_immunes[i];
+		}
+	}
+	// welp
+	return NULL;
+}
+
 // ------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 void MinefieldBehavior::onCollide( Object *other, const Coord3D *loc, const Coord3D *normal )
@@ -363,6 +387,9 @@ void MinefieldBehavior::onCollide( Object *other, const Coord3D *loc, const Coor
 
 	if (!d->m_workersDetonate)
 	{
+		//MODDD - NOTE. Specifically workers? Why not all dozers / mine sweeping things?
+		// Even immunity to undetected stealth mines?? Seems strange to me. At least retail didn't use this.
+		// ---
 		// infantry+dozer=worker.
 		if (other->isKindOf(KINDOF_INFANTRY) && other->isKindOf(KINDOF_DOZER))
 			return;
@@ -385,12 +412,26 @@ void MinefieldBehavior::onCollide( Object *other, const Coord3D *loc, const Coor
 	// have a real mine they area trying to clear... it's possible they could be trying to
 	// clear a position where there is no mine, in which case we grant them no immunity, muwahahaha)
 	AIUpdateInterface* otherAI = other->getAI();
-	if (otherAI && otherAI->isClearingMines() && otherAI->getGoalObject() != NULL)
+
+	//MODDD - NOTE
+	// I'll leave the 'm_immunes' system alone for now, but it seems unnecessary.
+	// Why not just check the unit each time, the checks seem simple enough.
+	// (replacement)
+	// ---
+	//if (otherAI && otherAI->isClearingMines() && otherAI->getGoalObject() != NULL)
+	// ---
+	// Leaving the retail check in, see note in 'canClearMines'
+	if ((other->canClearMines() && getObject()->isRecognizableToEnemy()) || (otherAI && other->isClearingMines() && otherAI->getGoalObject() != NULL))
+	// ---
 	{
 		// mine-clearers are granted immunity to us for as long as they continuously
 		// collide, even if no longer clearing mines. (this prevents the problem
 		// of a guy who touches two close-together mines while clearing, then puts up his
 		// detector and is blown to smithereens by the other one.)
+		
+		//MODDD - replacing this block, search for the existing/new slot moved to a helper
+		// ---
+		/*
 		for (Int i = 0; i < MAX_IMMUNITY; ++i)
 		{
 			if (m_immunes[i].id == INVALID_ID || m_immunes[i].id == other->getID())
@@ -405,6 +446,20 @@ void MinefieldBehavior::onCollide( Object *other, const Coord3D *loc, const Coor
 				break;
 			}
 		}
+		*/
+		// ---
+		ImmuneInfo* availableImmuneInfoSlot = getAvailableImmuneInfoSlot(other->getID());
+		if (availableImmuneInfoSlot != NULL) {
+			// Assign/update it, no difference whether it's the same object going to its own slot or adding a new obect.
+			//DEBUG_LOG(("add/update immunity %d",availableImmuneInfoSlot->id));
+			availableImmuneInfoSlot->id = other->getID();
+			availableImmuneInfoSlot->collideTime = now;
+
+			// wake up
+			setWakeFrame( obj, calcSleepTime() );
+		}
+		// ---
+
 		return;
 	}
 
