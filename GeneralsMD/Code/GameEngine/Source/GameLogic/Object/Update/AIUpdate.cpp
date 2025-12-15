@@ -3381,7 +3381,7 @@ void AIUpdateInterface::privateFollowPath( const std::vector<Coord3D>* path, Obj
 	// clear current state machine
 	getStateMachine()->clear();
 
-	if (path->size()>0) {
+	if (!path->empty()) {
 		const Coord3D goal = (*path)[path->size()-1];
 		getStateMachine()->setGoalPosition(&goal);
 	}
