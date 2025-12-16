@@ -29,6 +29,7 @@ The steps to set up this repo and build any executables/libraries are the same a
 # Important Info
 The changes made by this fork are not guaranteed to maintain any kind of CRC/save compatibility, even if some constants toward the top of GameDefines.h meant for controlling such are reverted. The goal of this fork is to fix as many bugs as possible, including enabling all TheSuperHackers compatibility-breaking fixes, and add additional features.
 Anyone using builds from this fork for multiplayer should ensure all players are using identical builds, or builds compiled locally with the exact same state of the repo, including all constant config settings (mainly GameDefines.h).
+Loading saved game should be treated similarly
 
 Most changes made by this fork are for Zero Hour (the GeneralsMD folder) only for easier testing - updating the 'Generals' folder with these changes may be done at a later date so they transfer to the original 'CNC Generals' game.
 
@@ -55,5 +56,5 @@ Example: the 'GENERALS_CHALLENGE_FORCE' changes some context about how maps are 
 - Does the current forced-precache approach for real-time time-of-day change also precache normal/snow variations? That would be 4x the memory when only day/night variations (2x) is necessary.
 - Fuel air bomb projectiles from aurora bombers in ProGen, most often the Airforce General's variant, are sometimes duds (no fuel air bomb detonation). Is this observed in the vanilla EXE / TheSuperHackers build too?
 - Exiting some games while in debug mode can cause a crash in OpenContain or subclasses, possibly because something is being deleted twice or contained objects (garrisoned infantry, overlord turret?) are trying to do logic after having been deleted from a parent deleting is children (pending more detail).
-	- Seems common on exiting the Rise of the Reds mod's splash map after letting it play for more than 30 seconds, such as quitting the program or starting a game (ex: skirmish) as usual - observed in TheSuperHackers build as well
-	- Rarely occurs on exiting the game after loading some saved games, sometimes sometime consistently after playing them. This was on a Generals Challenge map several versions ago, so it is unsure if a source of the bug like this has been fixed completely by now.
+	- Seems common on exiting the Rise of the Reds mod's splash map after letting it play for more than 30 seconds, such as quitting the program or starting a game (ex: skirmish) as usual - observed in TheSuperHackers build as well.
+	- Rarely occurs on exiting the game after loading some saved games, sometimes consistently after playing for the same amount of time from loading the same saved game. This was observed on a Generals Challenge map several versions ago, so it is unsure if this source of the bug has since been fixed.
