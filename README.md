@@ -11,6 +11,11 @@ The steps to set up this repo and build any executables/libraries are the same a
 - Fix bugs more apparent in mods
 	- Crashes more likely to happen in general in mods (object too close when firing a dumb projectile -> trying to use an arc with 0 points, poorly understood rare crash when sound cache peaks)
 	- Crashes in debug mode (Talon/jumpjet troops using the jump ability in the Firestorm mod)
+- General stability/organizational improvements
+	- Object script is greatly overhauled to split the originally large 'Object' constructor into several smaller named methods to call differen parts of initialization as needed.
+		- Several things when loading a game per object, such as sweeping through all other player-owned objects to see where a previously purchased upgrade applies, and affecting the current player's power, no longer uselessly run under the temporarily assigned neutral player before the correct team is assigned by the load process.
+		- Low power events can no longer occur while loading objects from a saved game - this check is done after all objects are finished being loaded (cause of low-power/power-restored sounds playing when loading some games, as well as somewhat common crashes loading games under the Firestorm mod).
+	- Several smaller examples
 - Add additional features/compatability
 	- Generals Challenge maps in Zero Hour - multiplayer compatibility
 	- Real-time time-of-day change
@@ -28,8 +33,10 @@ The steps to set up this repo and build any executables/libraries are the same a
 
 # Important Info
 The changes made by this fork are not guaranteed to maintain any kind of CRC/save compatibility, even if some constants toward the top of GameDefines.h meant for controlling such are reverted. The goal of this fork is to fix as many bugs as possible, including enabling all TheSuperHackers compatibility-breaking fixes, and add additional features.
-Anyone using builds from this fork for multiplayer should ensure all players are using identical builds, or builds compiled locally with the exact same state of the repo, including all constant config settings (mainly GameDefines.h).
-Loading saved game should be treated similarly
+To use builds from this fork for multiplayer, all players must be using identical builds, or builds compiled locally with the exact same state of the repo, including all constant config settings (mainly GameDefines.h).
+Loading saved games should be treated similarly.
+- It is best to only load games when running the same/equivalent build (see above) the games were saved under, unless the differences between the builds are not substantial.
+- Crossing the build being run and the build a game was saved under between builds made with entirely different repos, such as between this fork, TheSuperHacker's repo, or the retail generals EXE, will almost certainly not work.
 
 Most changes made by this fork are for Zero Hour (the GeneralsMD folder) only for easier testing - updating the 'Generals' folder with these changes may be done at a later date so they transfer to the original 'CNC Generals' game.
 
