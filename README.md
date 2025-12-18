@@ -24,6 +24,7 @@ The steps to set up this repo and build any executables/libraries are the same a
 	- Advanced shroud mechanics, to make generating shroud a more useful tactic in multiplayer
 		- Most units must move closer into player-induced shroud to reveal the area than their normal fog-of-war clearing range, particularly aircraft. The exception to this is stealth detectors, which reveal any shroud in their fog-clearing range regardless of the source.
 		- Large-scale fog-clearing abilities, such as CIA Intelligence or Satellite Hack 2 (and likely similar abilities in mods), do not reveal player-induced shroud. You must get up close and personal to reveal what's behind deliberately jammed territory.
+	- Decals on the ground for in-progress support powers are visible to allied players as well for better coordination
  - Optional/configurable: quick convenience features - adjust all units without having to edit many objects throughout the INI files (not all are active as of repo checkout)
 	- All-around slower buildtimes to slow down the pace of the game
 	- Increased health for all units to change the dynamics of the game
