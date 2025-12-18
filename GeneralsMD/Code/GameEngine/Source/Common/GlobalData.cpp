@@ -1324,6 +1324,10 @@ void GlobalData::parseGameDataDefinition( INI* ini )
 	// parse the ini weapon definition
 	ini->initFromINI( TheWritableGlobalData, s_GlobalDataFieldParseTable );
 
+	//MODDD - for me only. Always have a greater MaxCameraHeight
+	if (TheWritableGlobalData->m_maxCameraHeight < 900) {
+		TheWritableGlobalData->m_maxCameraHeight = 900;
+	}
 
 	// override INI values with user preferences
 	OptionPreferences optionPref;
