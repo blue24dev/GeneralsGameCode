@@ -955,12 +955,9 @@ UnsignedInt WeaponTemplate::fireWeaponTemplate
 
 		// TheSuperHackers @todo: Remove hardcoded KINDOF_MINE check and apply PlayFXWhenStealthed = Yes to the mine weapons instead.
 
-		Drawable* outerDrawable = sourceObj->getOuterObject()->getDrawable();
-		const Bool isVisible = outerDrawable && outerDrawable->isVisible();
-
 		//MODDD - fix for anthrax/radiation cloud effects missing?  Restoring the old 'isVisible' check logic too
-		// Nevermind - no longer needed since a later update. If this ever needs to be re-introduced, add '&& !isVisibleAlt'
-		// to the 'if' condition further down, after '!isVisible'.
+		// Nevermind - no longer needed since a later update. If this ever needs to be re-introduced, add '!isVisibleAlt'
+		// to the condition below here.
 		/*
 		const Bool isVisibleAlt = (
 			sourceObj->isLocallyControlled()									// if user watching is the controller or
@@ -970,8 +967,7 @@ UnsignedInt WeaponTemplate::fireWeaponTemplate
 		);
 		*/
 
-		if (!isVisible																				// if user watching cannot see us
-			&& sourceObj->testStatus(OBJECT_STATUS_STEALTHED)		// if unit is stealthed (like a Pathfinder)
+		if (!sourceObj->isLogicallyVisible()									// if user watching cannot see us
 			&& !sourceObj->isKindOf(KINDOF_MINE)								// and not a mine (which always do the FX, even if hidden)...
 			&& !isPlayFXWhenStealthed()													// and not a weapon marked to playwhenstealthed
 			)
