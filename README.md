@@ -4,8 +4,9 @@ The steps to set up this repo and build any executables/libraries are the same a
 
 # Goals of this fork
 - Fix additional bugs in the base game
-	- Example: the phantom-dead-aircraft bug (more apparent on playing with 'AttackersMissPersistTime' for aurora bombers in the INI files)
-	- Example: freeze/non-responsiveness due to an endless loop in map script indirection (poorly understood)
+	- The phantom-dead-aircraft bug (more apparent on playing with 'AttackersMissPersistTime' for aurora bombers in the INI files)
+	- Freeze/non-responsiveness due to an endless loop in map script indirection (poorly understood)
+	- Disguised unit bugs in the radar (bottom-left minimap) from the perspective of an enemy player that's supposed to be fooled, such as blinking like a stealth unit despite not appearing stealthed, or still using the original player's color over the disguised intent due to an 'OpenContain' subclass inheritance issue seen in some mods (ex: Rise of the Reds mod).
 - Fix bug(s) seen in preprocessor constant choices to enable additional changes as of TheSuperHackers repo (GameDefines.h: setting 'RETAIL_COMPATIBLE_CRC' to 0)
 	- Strategy center's building-specific abilities, such as CIA Intelligence and any battle plan changes, do not function (cooldown appears endless). Fixed by adding explicit initialization to a unit's local special powers when construction is finished, so that the cooldown in such a case doesn't remain at the default '0xffffffff' under the 'RETAIL_COMPATIBLE_CRC 0' change.
 - Fix bugs more apparent in mods
@@ -60,7 +61,8 @@ Example: the 'GENERALS_CHALLENGE_FORCE' changes some context about how maps are 
 	- A bug observed in TheSuperHackers repo has been fixed in this fork related to this. Make a debug build with TheSuperHackers repo and try ordering a Talon jumpjet unit to jump in the FireStorm mod. The game crashes only in debug mode, not release mode nor the vanilla executable. This is because an OCL calls for deleting the current weapon while it is in the middle of performing other logic - this is fixed for debug mode by queueing the deletion for after the weapon logic is done.
 	- See the "Exiting some games while in debug mode" issue below - there could be an issue similar to this in OpenContain/subclasses left to fix.
 
-# Notable issues to be fixed
+# Notable issues to be fixed or points of concern
+Which issues occur in / are reproducible in / have a cause within the retail generals EXE, TheSuperHackers repo's build, or this fork's build is not always clear. Points below may be non-exhaustive.
 - Does the current forced-precache approach for real-time time-of-day change also precache normal/snow variations? That would be 4x the memory when only day/night variations (2x) is necessary.
 - Fuel air bomb projectiles from aurora bombers in ProGen, most often the Airforce General's variant, are sometimes duds (no fuel air bomb detonation). Is this observed in the vanilla EXE / TheSuperHackers build too?
 - Exiting some games while in debug mode can cause a crash in OpenContain or subclasses, possibly because something is being deleted twice or contained objects (garrisoned infantry, overlord turret?) are trying to do logic after having been deleted from a parent deleting is children (pending more detail).
