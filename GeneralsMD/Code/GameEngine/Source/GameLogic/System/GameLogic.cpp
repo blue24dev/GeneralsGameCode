@@ -318,13 +318,6 @@ void GameLogic::resetUpdateModuleQueues() {
 	m_sleepyUpdates.clear();
 #ifdef ALLOW_NONSLEEPY_UPDATES
 	m_normalUpdates.clear();
-#else
-	//MODDD - ??? added by TheSuperHackers, but this local var 'now' isn't used anywhere?
-	/*
-	UnsignedInt now = getFrame();
-	if (now == 0)
-		now = 1;
-	*/
 #endif
 }
 
@@ -365,9 +358,9 @@ void GameLogic::addUpdateModulesToQueues(Object* obj, Bool rebalanceQueue) {
 		}
 		else
 #else
-		// note that 'when' can be zero here for any update module
-		// that didn't bother to call setWakeFrame() in its ctor.
-		// this is legal.
+		// For loading a game, note that 'when' will only be zero for legacy save files.
+		// For in-game, 'when' can be zero here for any update module that didn't bother to call setWakeFrame()
+		// in its ctor. This is legal.
 		if (when == 0)
 			u->friend_setNextCallFrame(now);
 #endif
