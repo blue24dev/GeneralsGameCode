@@ -1672,7 +1672,7 @@ WeaponStore::~WeaponStore()
 //-------------------------------------------------------------------------------------------------
 void WeaponStore::handleProjectileDetonation(const WeaponTemplate* wt, Object *source, const Coord3D* pos, WeaponBonusConditionFlags extraBonusFlags, Bool inflictDamage )
 {
-	Weapon* w = TheWeaponStore->allocateNewWeapon(wt, PRIMARY_WEAPON);
+	Weapon* w = allocateNewWeapon(wt, PRIMARY_WEAPON);
 	w->loadAmmoNow(source);
 	w->fireProjectileDetonationWeapon( source, pos, extraBonusFlags, inflictDamage );
 
@@ -1687,7 +1687,7 @@ void WeaponStore::createAndFireTempWeapon(const WeaponTemplate* wt, Object *sour
 {
 	if (wt == NULL)
 		return;
-	Weapon* w = TheWeaponStore->allocateNewWeapon(wt, PRIMARY_WEAPON);
+	Weapon* w = allocateNewWeapon(wt, PRIMARY_WEAPON);
 	w->loadAmmoNow(source);
 	//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
 	FireWeaponAndHandleOCL(w, source, pos);
@@ -1701,7 +1701,7 @@ void WeaponStore::createAndFireTempWeapon(const WeaponTemplate* wt, Object *sour
 	//CRCDEBUG_LOG(("WeaponStore::createAndFireTempWeapon() for %s", DescribeObject(source)));
 	if (wt == NULL)
 		return;
-	Weapon* w = TheWeaponStore->allocateNewWeapon(wt, PRIMARY_WEAPON);
+	Weapon* w = allocateNewWeapon(wt, PRIMARY_WEAPON);
 	w->loadAmmoNow(source);
 	//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'
 	FireWeaponAndHandleOCL(w, source, target);

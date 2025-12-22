@@ -1064,9 +1064,16 @@ Bool ChinookAIUpdate::chooseLocomotorSet(LocomotorSetType wst)
 UpdateSleepTime ChinookAIUpdate::update()
 {
 	ParkingPlaceBehaviorInterface* pp = getPP(m_airfieldForHealing);
+	const ContainModuleInterface* contain = getObject()->getContain();
+	const Bool waitingToEnterOrExit = contain && contain->hasObjectsWantingToEnterOrExit();
+
 	if (pp != NULL)
 	{
 		if (m_flightStatus == CHINOOK_LANDED &&
+#if !RETAIL_COMPATIBLE_CRC
+				// TheSuperHackers @bugfix Stubbjax 03/11/2025 Prevent Chinooks from taking off while there are still units wanting to enter or exit.
+				!waitingToEnterOrExit &&
+#endif
 				!m_hasPendingCommand &&
 				getObject()->getBodyModule()->getHealth() == getObject()->getBodyModule()->getMaxHealth())
 		{
@@ -1088,12 +1095,10 @@ UpdateSleepTime ChinookAIUpdate::update()
 
 	// have to call our parent's isIdle, because we override it to never return true
 	// when we have a pending command...
-	ContainModuleInterface* contain = getObject()->getContain();
 	if( contain )
 	{
 	  if (SupplyTruckAIUpdate::isIdle())
 		{
-			Bool waitingToEnterOrExit = contain->hasObjectsWantingToEnterOrExit();
 			if (m_hasPendingCommand)
 			{
 				AICommandParms parms(AICMD_MOVE_TO_POSITION, CMD_FROM_AI);	// values don't matter, will be wiped by next line
@@ -1258,8 +1263,14 @@ void ChinookAIUpdate::privateCombatDrop( Object* target, const Coord3D& pos, Com
 //-------------------------------------------------------------------------------------------------
 void ChinookAIUpdate::aiDoCommand(const AICommandParms* parms)
 {
+#if RETAIL_COMPATIBLE_CRC
 	// this gets reset every time a command is issued.
 	setAirfieldForHealing(INVALID_ID);
+#else
+	// TheSuperHackers @bugfix Stubbjax 31/10/2025 Don't leave healing state for evacuation commands.
+	if (parms->m_cmd != AICMD_EVACUATE && parms->m_cmd != AICMD_EXIT)
+		setAirfieldForHealing(INVALID_ID);
+#endif
 
 	if (!isAllowedToRespondToAiCommands(parms))
 		return;

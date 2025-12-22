@@ -318,6 +318,13 @@ void GameLogic::resetUpdateModuleQueues() {
 	m_sleepyUpdates.clear();
 #ifdef ALLOW_NONSLEEPY_UPDATES
 	m_normalUpdates.clear();
+#else
+	//MODDD - ??? added by TheSuperHackers, but this local var 'now' isn't used anywhere?
+	/*
+	UnsignedInt now = getFrame();
+	if (now == 0)
+		now = 1;
+	*/
 #endif
 }
 
@@ -326,7 +333,7 @@ void GameLogic::addUpdateModulesToQueues(Object* obj, Bool rebalanceQueue) {
 	// This was found surrounded in an '#ifndef ALLOW_NONSLEEPY_UPDATES' preprocessor condition in one place and another without the condition.
 	// Looks like it was only the case without the condition so it could use 'now' in the 'u->friend_getNextCallFrame() >= now' assert further
 	// down. Going to just include it w/o the condition since this utility includes this condition always, though it does seem techincally impossible.
-	UnsignedInt now = TheGameLogic->getFrame();
+	UnsignedInt now = getFrame();
 	if (now == 0)
 		now = 1;
 
@@ -358,9 +365,9 @@ void GameLogic::addUpdateModulesToQueues(Object* obj, Bool rebalanceQueue) {
 		}
 		else
 #else
-		// For loading a game, note that 'when' will only be zero for legacy save files.
-		// For in-game, 'when' can be zero here for any update module that didn't bother to call setWakeFrame()
-		// in its ctor. This is legal.
+		// note that 'when' can be zero here for any update module
+		// that didn't bother to call setWakeFrame() in its ctor.
+		// this is legal.
 		if (when == 0)
 			u->friend_setNextCallFrame(now);
 #endif
@@ -1829,8 +1836,8 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	Region3D extent;
 	TheTerrainLogic->getExtent( &extent );
 
-	TheGameLogic->setWidth( extent.hi.x - extent.lo.x );
-	TheGameLogic->setHeight( extent.hi.y - extent.lo.y );
+	setWidth( extent.hi.x - extent.lo.x );
+	setHeight( extent.hi.y - extent.lo.y );
 
 	// anytime the world's size changes, must reset the partition mgr
 	ThePartitionManager->init();
@@ -3383,7 +3390,7 @@ void GameLogic::friend_awakenUpdateModule(Object* obj, UpdateModulePtr u, Unsign
 	}
 
 	//USE_PERF_TIMER(friend_awakenUpdateModule)
-	UnsignedInt now = TheGameLogic->getFrame();
+	UnsignedInt now = getFrame();
 	DEBUG_ASSERTCRASH(whenToWakeUp >= now, ("setWakeFrame frame is in the past... are you sure this is what you want?"));
 
 	if (u == m_curUpdateModule)
@@ -4083,7 +4090,7 @@ void GameLogic::update( void )
 	}
 
 	// send the current time to the GameClient
-	UnsignedInt now = TheGameLogic->getFrame();
+	UnsignedInt now = getFrame();
 	TheGameClient->setFrame(now);
 	
 #if REAL_TIME_TOD_CHANGE
@@ -4298,7 +4305,7 @@ void GameLogic::preUpdate()
 		Bool pause = TRUE;
 		Bool pauseMusic = FALSE;
 		Bool pauseInput = FALSE;
-		TheGameLogic->setGamePaused(pause, pauseMusic, pauseInput);
+		setGamePaused(pause, pauseMusic, pauseInput);
 	}
 }
 
