@@ -159,6 +159,12 @@ const char* const KindOfMaskType::s_bitNameList[] =
 	"CONSERVATIVE_BUILDING",
 	"IGNORE_DOCKING_BONES",
 
+	//MODDD - NEW - see KindOf.h for notes as usual
+	// ---
+	"FS_NAVALFACTORY",
+	"FACTORY_EXIT_IN_WATER",
+	// ---
+
 	NULL
 };
 static_assert(ARRAY_SIZE(KindOfMaskType::s_bitNameList) == KindOfMaskType::NumBits + 1, "Incorrect array size");
@@ -182,4 +188,6 @@ void initKindOfMasks()
 	KINDOFMASK_FS.set( KINDOF_FS_BARRACKS );
 	KINDOFMASK_FS.set( KINDOF_FS_WARFACTORY );
 	KINDOFMASK_FS.set( KINDOF_FS_AIRFIELD );
+	//MODDD - suppose this makes sense to be here too?
+	KINDOFMASK_FS.set( KINDOF_FS_NAVALFACTORY );
 }

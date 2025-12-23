@@ -1021,6 +1021,15 @@ LegalBuildCode BuildAssistant::isLocationLegalToBuild( const Coord3D *worldPos,
 
 	}
 
+	//MODDD - this is a cheezy hack for now: unconditionally skip the terrain check (i.e. allow the structure to be placed on water partially/entirely) if the building has that KINDOF.
+	//MODDD - TODO - check to see if the exit point from the building is on water. How to do this isn't obvious to me.
+	//MODDD - TODO - let rally points work in water for structures with this KINDOF too. I don't recall if something else
+	// is missing to cause rally points for a naval yard with an exit on land to not even work (Red Alert Redux mod).
+	if(build->isKindOf(KINDOF_FACTORY_EXIT_IN_WATER))
+	{
+		return LBC_OK;
+	}
+
 	// check basic terrain restrctions
 	if( BitIsSet( options, TERRAIN_RESTRICTIONS ) )
 	{

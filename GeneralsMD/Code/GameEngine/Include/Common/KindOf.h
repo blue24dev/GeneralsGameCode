@@ -37,6 +37,7 @@
 //-------------------------------------------------------------------------------------------------
 /** Kind of flags for determining groups of things that belong together
 	* NOTE: You *MUST* keep this in the same order as the KindOfNames[] below */
+//MODDD - NOTE - the above is outdated even as-is, see 'KindOf.cpp' for 'KindOfMaskType::s_bitNameList''s assignment instead.
 //-------------------------------------------------------------------------------------------------
 enum KindOfType CPP_11(: Int)
 {
@@ -167,6 +168,16 @@ enum KindOfType CPP_11(: Int)
 	KINDOF_DEMOTRAP,								///< Added strictly only for disarming purposes. They don't act like mines which have rendering and selection implications!
 	KINDOF_CONSERVATIVE_BUILDING,		///< Conservative structures aren't considered part of your base for sneak attack boundary calculations...
 	KINDOF_IGNORE_DOCKING_BONES,		///< Structure will not look up docking bones. Patch 1.03 hack.
+
+	//MODDDD - new
+	// ---
+	KINDOF_FS_NAVALFACTORY,         ///< A production structure for naval units, likely placed on water or a coast (does not affect placement requirements - see next flag)
+	                                //   (also, this flag has no effect yet, just bookkeeping)
+	KINDOF_FACTORY_EXIT_IN_WATER,///< Requires the exit to lead to water, so placing this (presumably) naval-unit-producing structure is guaranteed to place naval units
+	                                //   in water. Placing the structure on a coast facing the water or in the water not existing on land should work. Whether the dozer can
+																	//   actually get there in the latter case is another question.
+																	//   Accuracy of this requirement isn't guaranteed since mods aren't expected to use this new feature too often.
+	// ---
 
 	KINDOF_COUNT,										// total number of kindofs
 	KINDOF_FIRST = 0,
