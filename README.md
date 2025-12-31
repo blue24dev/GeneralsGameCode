@@ -26,12 +26,16 @@ The steps to set up this repo and build any executables/libraries are the same a
 		- Most units must move closer into player-induced shroud to reveal the area than their normal fog-of-war clearing range, particularly aircraft. The exception to this is stealth detectors, which reveal any shroud in their fog-clearing range regardless of the source.
 		- Large-scale fog-clearing abilities, such as CIA Intelligence or Satellite Hack 2 (and likely similar abilities in mods), do not reveal player-induced shroud. You must get up close and personal to reveal what's behind deliberately jammed territory.
 	- Decals on the ground for in-progress support powers are visible to allied players as well for better coordination
- - Optional/configurable: quick convenience features - adjust all units without having to edit many objects throughout the INI files (not all are active as of repo checkout)
+- Optional/configurable: quick convenience features - adjust all units without having to edit many objects throughout the INI files (not all are active as of repo checkout)
 	- All-around slower buildtimes to slow down the pace of the game
 	- Increased health for all units to change the dynamics of the game
 	- Increased sight (fog-of-war clearing) to reduce the AI opponent's advantage
 	- An extra income multiplier for AI players to keep the game from stagnating
 	- A forced starting-money amount for the often unforgiving Generals Challenge maps on hard difficulty
+- World Builder fixes
+	- The border feature is significantly improved in several ways. There is finally a way to delete unwanted borders: dragging them so that they have size 0 in any/both directions and releasing the mouse.
+	- On map resize, areas made with the water and polygon tools maintain their positions as expected instead of being awkwardly shifted on resizing the map from anywhere but the bottom-left corner.
+	- Impassable areas are better preserved on resizing the map. Instead of being re-calculated from the new terrain, existing impassable states are shifted onto the new terrain so that manual changes to impassable states are preserved.
 
 # Important Info
 The changes made by this fork are not guaranteed to maintain any kind of CRC/save compatibility, even if some constants toward the top of GameDefines.h meant for controlling such are reverted. The goal of this fork is to fix as many bugs as possible, including enabling all TheSuperHackers compatibility-breaking fixes, and add additional features.
