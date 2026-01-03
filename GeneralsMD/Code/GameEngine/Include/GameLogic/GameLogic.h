@@ -393,8 +393,6 @@ private:
 
 	ObjectID m_nextObjID;																		///< For allocating object id's
 
-	void setDefaults( Bool loadSaveGame );									///< Set default values of class object
-
 	//MODDD
 	void resetUpdateModuleQueues();
 	void addUpdateModulesToQueues(Object* obj, Bool rebalanceQueue);
