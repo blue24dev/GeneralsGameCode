@@ -1170,8 +1170,8 @@ void HeightMapRenderObjClass::oversizeTerrain(Int tilesToOversize)
 	Int height = WorldHeightMap::NORMAL_DRAW_HEIGHT;
 	if (tilesToOversize>0 && tilesToOversize<5)
 	{
-		width += 32*tilesToOversize;
-		height += 32*tilesToOversize;
+		width += VERTEX_BUFFER_TILE_LENGTH * tilesToOversize;
+		height += VERTEX_BUFFER_TILE_LENGTH * tilesToOversize;
 		if (width>m_map->getXExtent())
 			width = m_map->getXExtent();
 		if (height>m_map->getYExtent())
@@ -1677,8 +1677,8 @@ void HeightMapRenderObjClass::updateCenter(CameraClass *camera , RefRenderObjLis
 
 	Real intersectionZ;
 	minHt = m_map->getMaxHeightValue();
-	for (i=0; i<m_x; i++) {
-		for (j=0; j<m_y; j++) {
+	for (j=0; j<m_y; j+=4) {
+		for (i=0; i<m_x; i+=4) {
 			Short cur = m_map->getDisplayHeight(i,j);
 			if (cur<minHt) minHt = cur;
 		}
@@ -1777,68 +1777,66 @@ void HeightMapRenderObjClass::updateCenter(CameraClass *camera , RefRenderObjLis
 			return;
 		}
 
-		if (abs(deltaX)>CENTER_LIMIT || abs(deltaY)>CENTER_LIMIT) {
-			if (abs(deltaY) >= CENTER_LIMIT) {
-				if (m_map->setDrawOrg(m_map->getDrawOrgX(), newOrgY)) {
-					Int minY = 0;
-					Int maxY = 0;
-					deltaY -= newOrgY - m_map->getDrawOrgY();
-					m_originY += deltaY;
-					if (m_originY >= m_y-1) m_originY -= m_y-1;
-					if (deltaY<0) {
-						minY = m_originY;
-						maxY = m_originY-deltaY;
-					} else {
-						minY = m_originY - deltaY;
-						maxY = m_originY;
-					}
-					minY-=cellOffset;
-					if (m_originY < 0) m_originY += m_y-1;
-					if (minY<0) {
-						minY += m_y-1;
-						if (minY<0) minY = 0;
-						updateBlock(0, minY, m_x-1, m_y-1, m_map, pLightsIterator);
-						updateBlock(0, 0, m_x-1, maxY, m_map, pLightsIterator);
-					} else {
-						updateBlock(0, minY, m_x-1, maxY, m_map, pLightsIterator);
-					}
+		if (abs(deltaY) > CENTER_LIMIT) {
+			if (m_map->setDrawOrg(m_map->getDrawOrgX(), newOrgY)) {
+				Int minY = 0;
+				Int maxY = 0;
+				deltaY -= newOrgY - m_map->getDrawOrgY();
+				m_originY += deltaY;
+				if (m_originY >= m_y-1) m_originY -= m_y-1;
+				if (deltaY<0) {
+					minY = m_originY;
+					maxY = m_originY-deltaY;
+				} else {
+					minY = m_originY - deltaY;
+					maxY = m_originY;
 				}
-				// It is much more efficient to update a cople of columns one frame, and then
-				// a couple of rows.  So if we aren't "jumping" to a new view, and have done X
-				// recently, return.
-				if (abs(deltaX) < BIG_JUMP && !m_doXNextTime) {
-					m_updating = false;
-					m_doXNextTime = true;
-					return;	// Only do the y this frame.  Do x next frame.  jba.
+				minY-=cellOffset;
+				if (m_originY < 0) m_originY += m_y-1;
+				if (minY<0) {
+					minY += m_y-1;
+					if (minY<0) minY = 0;
+					updateBlock(0, minY, m_x-1, m_y-1, m_map, pLightsIterator);
+					updateBlock(0, 0, m_x-1, maxY, m_map, pLightsIterator);
+				} else {
+					updateBlock(0, minY, m_x-1, maxY, m_map, pLightsIterator);
 				}
 			}
-			if (abs(deltaX) > CENTER_LIMIT) {
-				m_doXNextTime = false;
-				newOrgX = m_map->getDrawOrgX() + deltaX;
-				if (m_map->setDrawOrg(newOrgX, m_map->getDrawOrgY())) {
-					Int minX = 0;
-					Int maxX = 0;
-					deltaX -= newOrgX - m_map->getDrawOrgX();
-					m_originX += deltaX;
-					if (m_originX >= m_x-1) m_originX -= m_x-1;
-					if (deltaX<0) {
-						minX = m_originX;
-						maxX = m_originX-deltaX;
-					} else {
-						minX = m_originX - deltaX;
-						maxX = m_originX;
-					}
-					minX-=cellOffset;
-					maxX+=cellOffset;
-					if (m_originX < 0) m_originX += m_x-1;
-					if (minX<0) {
-						minX += m_x-1;
-						if (minX<0) minX = 0;
-						updateBlock(minX,0,m_x-1, m_y-1, m_map, pLightsIterator);
-						updateBlock(0,0,maxX, m_y-1, m_map, pLightsIterator);
-					} else {
-						updateBlock(minX,0,maxX, m_y-1, m_map, pLightsIterator);
-					}
+			// It is much more efficient to update a couple of columns one frame, and then
+			// a couple of rows.  So if we aren't "jumping" to a new view, and have done X
+			// recently, return.
+			if (abs(deltaX) < BIG_JUMP && !m_doXNextTime) {
+				m_updating = false;
+				m_doXNextTime = true;
+				return;	// Only do the y this frame.  Do x next frame.  jba.
+			}
+		}
+		if (abs(deltaX) > CENTER_LIMIT) {
+			m_doXNextTime = false;
+			newOrgX = m_map->getDrawOrgX() + deltaX;
+			if (m_map->setDrawOrg(newOrgX, m_map->getDrawOrgY())) {
+				Int minX = 0;
+				Int maxX = 0;
+				deltaX -= newOrgX - m_map->getDrawOrgX();
+				m_originX += deltaX;
+				if (m_originX >= m_x-1) m_originX -= m_x-1;
+				if (deltaX<0) {
+					minX = m_originX;
+					maxX = m_originX-deltaX;
+				} else {
+					minX = m_originX - deltaX;
+					maxX = m_originX;
+				}
+				minX-=cellOffset;
+				maxX+=cellOffset;
+				if (m_originX < 0) m_originX += m_x-1;
+				if (minX<0) {
+					minX += m_x-1;
+					if (minX<0) minX = 0;
+					updateBlock(minX,0,m_x-1, m_y-1, m_map, pLightsIterator);
+					updateBlock(0,0,maxX, m_y-1, m_map, pLightsIterator);
+				} else {
+					updateBlock(minX,0,maxX, m_y-1, m_map, pLightsIterator);
 				}
 			}
 		}
