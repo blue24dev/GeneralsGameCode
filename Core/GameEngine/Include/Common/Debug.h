@@ -45,8 +45,6 @@
 
 #pragma once
 
-#include <Utility/CppMacros.h>
-
 class AsciiString;
 
 //MODDD NOTE - looks like this should be "RELEASE_DEBUG_LOGGING" to disable assert calls for testing
