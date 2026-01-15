@@ -333,8 +333,10 @@ Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& 
 	// sanity
 	if( TheGameLogic == nullptr || tt == nullptr )
 	{
+
 		assert( 0 );
 		return;
+
 	}
 
 	this->objectInitLockLocal = TRUE;
@@ -1408,9 +1410,6 @@ void Object::setStatus( ObjectStatusMaskType objectStatus, Bool set )
 		// Damaged repulsable civilians scare (repulse) other civs, but only
 		// for a short amount of time... use the repulsor helper to turn off repulsion shortly.
 		m_repulsorHelper->sleepUntil(TheGameLogic->getFrame() + 2*LOGICFRAMES_PER_SECOND);
-
-		//MODDD - TODO - is a recent pull-down suggesting to replace the line above with this?  Don't understand this.
-		//handlePartitionCellMaintenance();
 	}
 
 	//MODDD - replaced block
