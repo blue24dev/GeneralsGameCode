@@ -37,7 +37,6 @@
  *   SurfaceClass::Clear -- Clears a surface to 0                                              *
  *   SurfaceClass::Copy -- Copies a region from one surface to another of the same format      *
  *   SurfaceClass::FindBBAlpha -- Finds the bounding box of non zero pixels in the region (x0, *
- *   PixelSize -- Helper Function to find the size in bytes of a pixel                         *
  *   SurfaceClass::Is_Transparent_Column -- Tests to see if the column is transparent or not   *
  *   SurfaceClass::Copy -- Copies from a byte array to the surface                             *
  *   SurfaceClass::CreateCopy -- Creates a byte array copy of the surface                      *
@@ -55,57 +54,6 @@
 #include "colorspace.h"
 #include "bound.h"
 #include <d3dx8.h>
-
-/***********************************************************************************************
- * PixelSize -- Helper Function to find the size in bytes of a pixel                           *
- *                                                                                             *
- *                                                                                             *
- *                                                                                             *
- *                                                                                             *
- * INPUT:                                                                                      *
- *                                                                                             *
- * OUTPUT:                                                                                     *
- *                                                                                             *
- * WARNINGS:                                                                                   *
- *                                                                                             *
- * HISTORY:                                                                                    *
- *   2/13/2001  hy : Created.                                                                  *
- *=============================================================================================*/
-
-unsigned int PixelSize(const SurfaceClass::SurfaceDescription &sd)
-{
-	unsigned int size=0;
-
-	switch (sd.Format)
-	{
-	case WW3D_FORMAT_A8R8G8B8:
-	case WW3D_FORMAT_X8R8G8B8:
-		size=4;
-		break;
-	case WW3D_FORMAT_R8G8B8:
-		size=3;
-		break;
-	case WW3D_FORMAT_R5G6B5:
-	case WW3D_FORMAT_X1R5G5B5:
-	case WW3D_FORMAT_A1R5G5B5:
-	case WW3D_FORMAT_A4R4G4B4:
-	case WW3D_FORMAT_A8R3G3B2:
-	case WW3D_FORMAT_X4R4G4B4:
-	case WW3D_FORMAT_A8P8:
-	case WW3D_FORMAT_A8L8:
-		size=2;
-		break;
-	case WW3D_FORMAT_R3G3B2:
-	case WW3D_FORMAT_A8:
-	case WW3D_FORMAT_P8:
-	case WW3D_FORMAT_L8:
-	case WW3D_FORMAT_A4L4:
-		size=1;
-		break;
-	}
-
-	return size;
-}
 
 void Convert_Pixel(Vector3 &rgb, const SurfaceClass::SurfaceDescription &sd, const unsigned char * pixel)
 {
@@ -257,11 +205,27 @@ void SurfaceClass::Get_Description(SurfaceDescription &surface_desc)
 	surface_desc.Width = d3d_desc.Width;
 }
 
-void * SurfaceClass::Lock(int * pitch)
+void *SurfaceClass::Lock(int *pitch)
 {
 	D3DLOCKED_RECT lock_rect;
 	::ZeroMemory(&lock_rect, sizeof(D3DLOCKED_RECT));
 	DX8_ErrorCode(D3DSurface->LockRect(&lock_rect, nullptr, 0));
+	*pitch = lock_rect.Pitch;
+	return (void *)lock_rect.pBits;
+}
+
+void *SurfaceClass::Lock(int *pitch, const Vector2i &min, const Vector2i &max)
+{
+	D3DLOCKED_RECT lock_rect;
+	::ZeroMemory(&lock_rect, sizeof(D3DLOCKED_RECT));
+
+	RECT rect;
+	rect.left = min.I;
+	rect.top = min.J;
+	rect.right = max.I;
+	rect.bottom = max.J;
+	DX8_ErrorCode(D3DSurface->LockRect(&lock_rect, &rect, 0));
+
 	*pitch = lock_rect.Pitch;
 	return (void *)lock_rect.pBits;
 }
@@ -292,7 +256,7 @@ void SurfaceClass::Clear()
 	Get_Description(sd);
 
 	// size of each pixel in bytes
-	unsigned int size=PixelSize(sd);
+	unsigned int size=Get_Bytes_Per_Pixel(sd.Format);
 
 	D3DLOCKED_RECT lock_rect;
 	::ZeroMemory(&lock_rect, sizeof(D3DLOCKED_RECT));
@@ -331,7 +295,7 @@ void SurfaceClass::Copy(const unsigned char *other)
 	Get_Description(sd);
 
 	// size of each pixel in bytes
-	unsigned int size=PixelSize(sd);
+	unsigned int size=Get_Bytes_Per_Pixel(sd.Format);
 
 	D3DLOCKED_RECT lock_rect;
 	::ZeroMemory(&lock_rect, sizeof(D3DLOCKED_RECT));
@@ -364,13 +328,13 @@ void SurfaceClass::Copy(const unsigned char *other)
  * HISTORY:                                                                                    *
  *   5/2/2001   hy : Created.                                                                  *
  *=============================================================================================*/
-void SurfaceClass::Copy(Vector2i &min,Vector2i &max, const unsigned char *other)
+void SurfaceClass::Copy(const Vector2i &min, const Vector2i &max, const unsigned char *other)
 {
 	SurfaceDescription sd;
 	Get_Description(sd);
 
 	// size of each pixel in bytes
-	unsigned int size=PixelSize(sd);
+	unsigned int size=Get_Bytes_Per_Pixel(sd.Format);
 
 	D3DLOCKED_RECT lock_rect;
 	::ZeroMemory(&lock_rect, sizeof(D3DLOCKED_RECT));
@@ -415,7 +379,7 @@ unsigned char *SurfaceClass::CreateCopy(int *width,int *height,int*size,bool fli
 	Get_Description(sd);
 
 	// size of each pixel in bytes
-	unsigned int mysize=PixelSize(sd);
+	unsigned int mysize=Get_Bytes_Per_Pixel(sd.Format);
 
 	*width=sd.Width;
 	*height=sd.Height;
@@ -595,7 +559,7 @@ void SurfaceClass::FindBB(Vector2i *min,Vector2i*max)
 	DX8_ErrorCode(D3DSurface->LockRect(&lock_rect,&rect,D3DLOCK_READONLY));
 
 	int x,y;
-	unsigned int size=PixelSize(sd);
+	unsigned int size=Get_Bytes_Per_Pixel(sd.Format);
 	Vector2i realmin=*max;
 	Vector2i realmax=*min;
 
@@ -658,7 +622,7 @@ bool SurfaceClass::Is_Transparent_Column(unsigned int column)
 		break;
 	}
 
-	unsigned int size=PixelSize(sd);
+	unsigned int size=Get_Bytes_Per_Pixel(sd.Format);
 
 	D3DLOCKED_RECT lock_rect;
 	::ZeroMemory(&lock_rect, sizeof(D3DLOCKED_RECT));
@@ -808,7 +772,7 @@ void SurfaceClass::DrawPixel(const unsigned int x,const unsigned int y, unsigned
 	SurfaceDescription sd;
 	Get_Description(sd);
 
-	unsigned int size=PixelSize(sd);
+	unsigned int size=Get_Bytes_Per_Pixel(sd.Format);
 
 	D3DLOCKED_RECT lock_rect;
 	::ZeroMemory(&lock_rect, sizeof(D3DLOCKED_RECT));
@@ -862,7 +826,7 @@ void SurfaceClass::DrawHLine(const unsigned int y,const unsigned int x1, const u
 	SurfaceDescription sd;
 	Get_Description(sd);
 
-	unsigned int size=PixelSize(sd);
+	unsigned int size=Get_Bytes_Per_Pixel(sd.Format);
 
 	D3DLOCKED_RECT lock_rect;
 	::ZeroMemory(&lock_rect, sizeof(D3DLOCKED_RECT));
@@ -963,7 +927,7 @@ bool SurfaceClass::Is_Monochrome(void)
 
 	int pitch,size;
 
-	size=PixelSize(sd);
+	size=Get_Bytes_Per_Pixel(sd.Format);
 	unsigned char *bits=(unsigned char*) Lock(&pitch);
 
 	Vector3 rgb;
@@ -1013,7 +977,7 @@ void SurfaceClass::Hue_Shift(const Vector3 &hsv_shift)
 	Get_Description(sd);
 	int pitch,size;
 
-	size=PixelSize(sd);
+	size=Get_Bytes_Per_Pixel(sd.Format);
 	unsigned char *bits=(unsigned char*) Lock(&pitch);
 
 	Vector3 rgb;
