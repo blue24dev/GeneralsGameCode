@@ -2273,7 +2273,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	if ( isChallengeCampaign )
 #else
 	// Const is on: If there is a 'game' alone, proceed
-	if (game)
+	if (TheGameInfo)
 #endif
 	{
 		// Establish local player relationships with other teams as

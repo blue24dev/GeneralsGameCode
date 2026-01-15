@@ -1426,7 +1426,7 @@ protected:
 
 #if !RETAIL_COMPATIBLE_CRC && !PRESERVE_RETAIL_BEHAVIOR
 		//MODDD - added null check. 'firstObject' can be null during the Generals ZH shell map, at least in the ProGen mod.
-		if(firstObject != NULL) {
+		if(firstObject != nullptr) {
 			ObjectID sinkID = sourceObj->getExperienceTracker()->getExperienceSink();
 			firstObject->getExperienceTracker()->setExperienceSink(sinkID != INVALID_ID ? sinkID : sourceObj->getID());
 		}

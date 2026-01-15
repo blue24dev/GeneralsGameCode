@@ -8902,6 +8902,25 @@ void Pathfinder::prependCells( Path *path, const Coord3D *fromPos,
 		prevCell = cell;
 	}
 
+
+	//MODDD - a fix. 'cell' is null at this point very rarely.
+	// Taking inspiration from the 'RETAIL_COMPATIBLE_PATHFINDING' fix below, hopefully this is ok in a pinch?
+	if (!cell) {
+		// Try 'prevCell'.
+		cell = prevCell;
+
+		// Probably paranoid, but just in case.
+		if (!cell) {
+			return;
+		}
+
+		// If the cell from 'cell = prevCell' isn't null, should be fine to proceed.
+		// Whether the method should just return here at this point instead, I have no idea.
+		// Little point of concern here: is the 's_useFixedPathfinding = true;', 'forceCleanCells();' thing needed if 'RETAIL_COMPATIBLE_PATHFINDING'
+		// isn't on? I can't tell if the implication below is that '!cell->hasInfo()' is the only time that specific fix would be needed, or if the
+		// aforementioned follow-up is needed for any issue where 'cell' isn't non-null at this point.
+	}
+
 #if RETAIL_COMPATIBLE_PATHFINDING
 	// TheSuperHackers @info This pathway is here for retail compatibility, it is to catch when a starting cell has a dangling parent that contains no pathing information
 	// Beyond this point a retail client will crash due to a null pointer access within cell->getXIndex()

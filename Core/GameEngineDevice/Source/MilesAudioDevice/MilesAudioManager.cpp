@@ -774,7 +774,7 @@ void MilesAudioManager::playAudioEvent( AudioEventRTS *event )
 
 				H3DSAMPLE sample3D;
 				//MODDD - init this to null for safety?
-				sample3D = NULL;
+				sample3D = nullptr;
 
 				if( !handleToKill || foundSoundToReplace )
 				{
@@ -2644,8 +2644,8 @@ void MilesAudioManager::closeAnySamplesUsingFile( const void *fileToClose )
 	// Instead of deleting a sound here, scheduled it to be deleted at the end instead.
 	// This way, there isn't a chance of 'releasePlayingAudio' being called on the same thing twice.
 	// (Assuming that is the issue)
-	PlayingAudio* playingSoundToBeDeleted = NULL;
-	PlayingAudio* playingSound3DToBeDeleted = NULL;
+	PlayingAudio* playingSoundToBeDeleted = nullptr;
+	PlayingAudio* playingSound3DToBeDeleted = nullptr;
 
 	for (it = m_playingSounds.begin(); it != m_playingSounds.end(); ) {
 		playing = *it;
@@ -2658,7 +2658,7 @@ void MilesAudioManager::closeAnySamplesUsingFile( const void *fileToClose )
 		if (playing->m_file == fileToClose) {
 			//MODDD - debugging
 			//releasePlayingAudio(playing);
-			if(playingSoundToBeDeleted != NULL) {
+			if(playingSoundToBeDeleted != nullptr) {
 				// is this supposed to ever happen?
 				SYSTEMTIME lt;
 				std::ofstream outputFile;
@@ -2686,7 +2686,7 @@ void MilesAudioManager::closeAnySamplesUsingFile( const void *fileToClose )
 		if (playing->m_file == fileToClose) {
 			//MODDD - debugging
 			//releasePlayingAudio(playing);
-			if(playingSoundToBeDeleted != NULL) {
+			if(playingSoundToBeDeleted != nullptr) {
 				// is this supposed to ever happen?
 				SYSTEMTIME lt;
 				std::ofstream outputFile;
@@ -2714,7 +2714,7 @@ void MilesAudioManager::closeAnySamplesUsingFile( const void *fileToClose )
 			outputFile.open("test_crash_MilesAudioManager.txt", std::ios::out | std::ios::app);
 			outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << "." << std::setw(3) << std::setfill('0') << lt.wMilliseconds << " - closeAnySamplesUsingFile: Double deletion!" << std::endl;
 			outputFile << "* Same memory address? " << (playingSoundToBeDeleted == playingSound3DToBeDeleted) << std::endl;
-			if (playingSoundToBeDeleted->m_audioEventRTS != NULL) {
+			if (playingSoundToBeDeleted->m_audioEventRTS != nullptr) {
 				outputFile << "* playingSoundToBeDeleted - "
 					<< "** eventName: " << playingSoundToBeDeleted->m_audioEventRTS->getEventName().str()
 					<< "** fileName: " << playingSoundToBeDeleted->m_audioEventRTS->getFilename().str()
@@ -2724,7 +2724,7 @@ void MilesAudioManager::closeAnySamplesUsingFile( const void *fileToClose )
 			} else {
 				outputFile << "* playingSoundToBeDeleted - m_audioEventRTS is NULL" << std::endl;
 			}
-			if (playingSound3DToBeDeleted->m_audioEventRTS != NULL) {
+			if (playingSound3DToBeDeleted->m_audioEventRTS != nullptr) {
 				outputFile << "* playingSound3DToBeDeleted - "
 					<< "** eventName: " << playingSound3DToBeDeleted->m_audioEventRTS->getEventName().str()
 					<< "** fileName: " << playingSound3DToBeDeleted->m_audioEventRTS->getFilename().str()
@@ -3283,7 +3283,7 @@ void *AudioFileCache::openFile( AudioEventRTS *eventToOpenFrom )
 	if (fileSize >= m_maxSize) {
 		// TODO - debug assert?
 		file->close();
-		return NULL;
+		return nullptr;
 	}
 
 	// Just in case 'freeEnoughSpaceForSample' finds files to close to free up enough space.
@@ -3302,7 +3302,7 @@ void *AudioFileCache::openFile( AudioEventRTS *eventToOpenFrom )
 		// by moving this block up here. Also changed params sent to no longer need the whole 'openedAudioFile' yet.
 		if (!freeEnoughSpaceForSample(filesToClose, fileSize, eventToOpenFrom->getAudioEventInfo()->m_priority)) {
       file->close();
-			return NULL;
+			return nullptr;
 		}
 	}
 

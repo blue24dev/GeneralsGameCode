@@ -4565,7 +4565,7 @@ void Player::xfer( Xfer *xfer )
 		{
 
 			// allocate squad if needed
-			//MODDD - this is a contradiction. If 'm_currentSelection' were NULL, this block would not be reached...
+			//MODDD - this is a contradiction. If 'm_currentSelection' were null, this block would not be reached...
 			/*
 			if( m_currentSelection == nullptr && xfer->getXferMode() == XFER_LOAD )
 				m_currentSelection = newInstance( Squad );

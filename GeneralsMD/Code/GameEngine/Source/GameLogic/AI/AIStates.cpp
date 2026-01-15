@@ -6770,9 +6770,9 @@ StateReturnType AIGuardState::update()
 //MODDD
 Object *AIGuardState::getEnemyObject()
 {
-	if (m_guardMachine != NULL) {
+	if (m_guardMachine != nullptr) {
 		Object* enemy = TheGameLogic->findObjectByID( m_guardMachine->getNemesisID() );
-		if (enemy != NULL) {
+		if (enemy != nullptr) {
 			return enemy;
 		}
 	}

@@ -219,8 +219,7 @@ void WBDocUndoable::_Undo(void) {
 		// Don't adjust the borders - see note further above.
 	}
 
-	//MODDD - TODO - did a recent pull-down change this from 'mPNewHeightMapData' to 'mPOldHeightMapData'?
-	mPNewHeightMapData->dbgVerifyAfterUndo();
+	mPOldHeightMapData->dbgVerifyAfterUndo();
 }
 
 

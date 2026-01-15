@@ -173,7 +173,7 @@ Player* getRandomSlotPlayer() {
 
 	if (availablePlayerListSoftCount <= 0) {
 		// Nothing available?
-		return NULL;
+		return nullptr;
 	}
 
 	// Randomly pick a player from the list
@@ -8073,7 +8073,7 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 
 		//MODDD - new, debug test
 		if (
-			seqScript->m_scriptToExecuteSequentially != NULL &&
+			seqScript->m_scriptToExecuteSequentially != nullptr &&
 			(seqScript->m_scriptToExecuteSequentially->getName() == "Call Attack WPGround1" || seqScript->m_scriptToExecuteSequentially->getName() == "Attack WPGround1")
 		){
 			std::ofstream outputFile;

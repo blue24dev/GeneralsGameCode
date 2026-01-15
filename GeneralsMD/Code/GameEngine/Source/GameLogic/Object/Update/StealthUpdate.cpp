@@ -914,7 +914,7 @@ void StealthUpdate::markAsDetected(UnsignedInt numFrames)
 		stealthUpdateRef = stealthOwner->getStealth();
 		//MODDD - logically, this is new: handles the case of having a 'stealthOwner' w/o a 'StealthUpdate' to get info from.
 		// Not that this should happen to begin with, a non-stealthed rider should mean this 'bike' isn't stealthed.
-		if ( stealthUpdateRef == NULL ) {
+		if ( stealthUpdateRef == nullptr ) {
 			DEBUG_CRASH( ("StealthUpdate::markAsDetected - My object: \"%s\".\nstealthOwner \"%s\" doesn't have a StealthUpdate module!"), self->getTemplate()->getName().str(), stealthOwner->getTemplate()->getName().str() );
 			stealthUpdateRef = this;
 		}

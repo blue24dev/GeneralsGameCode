@@ -81,9 +81,9 @@ public:
 	void clearSquad();																// remove all objects from this squad.
 
 	//MODDD - added 'player' params, made getAllObjects 'protected' since it is never called externally
-	protected: const VecObjectPtr& getAllObjects(Player *player = NULL);					// get all objects on the list that haven't been deleted
+	protected: const VecObjectPtr& getAllObjects(Player *player = nullptr);					// get all objects on the list that haven't been deleted
 public:
-	const VecObjectPtr& getLiveObjects(Player *player = NULL);					// get all objects that pass "isEffectivelyDead" test
+	const VecObjectPtr& getLiveObjects(Player *player = nullptr);					// get all objects that pass "isEffectivelyDead" test
 	// ---
 
 	Int getSizeOfGroup(void) const;										// get the current number of objects, including dead objects

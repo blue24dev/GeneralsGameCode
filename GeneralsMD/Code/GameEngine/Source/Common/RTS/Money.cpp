@@ -94,7 +94,7 @@ void Money::deposit(UnsignedInt amountToDeposit, Bool playSound, Bool trackIncom
 #if defined(COMPUTER_PLAYER_MONEY_SCALAR):
 	if (amountToDeposit < 2500) {
 		Player* player = ThePlayerList->getNthPlayer(m_playerIndex);
-		if (player != NULL && player->getPlayerType() == PLAYER_COMPUTER) {
+		if (player != nullptr && player->getPlayerType() == PLAYER_COMPUTER) {
 			amountToDeposit = (UnsignedInt)(((Real)amountToDeposit) * COMPUTER_PLAYER_MONEY_SCALAR);
 		}
 	}

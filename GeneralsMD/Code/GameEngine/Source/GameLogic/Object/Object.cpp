@@ -467,7 +467,7 @@ void Object::callModuleOnObjectCreated()
 {
 	//MODDD - important to call this at the right time.
 	// For AIUpdate, does 'm_stateMachine = makeStateMachine();'. Missing that in time can cause problems, most
-	// places don't check that for being NULL.
+	// places don't check that for being null.
 	for (BehaviorModule** b = m_behaviors; *b; ++b)
 	{
 		(*b)->onObjectCreated();
@@ -5787,6 +5787,7 @@ Real Object::determineNonJammableShroudClearingRange( Real shroudClearingRangeJa
 // Undetected stealthed units shouldn't be spied on, they are unfairly revealed by clearing shroud/fog around them.
 // Disguised units can be treated as the player they're disguised as instead (disguised successfully as something
 // the spying player is still enemies with -> stays spied on, otherwise no, that would be unfairly revealed like stealth).
+//MODDD - TODO - '#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS' this since it's only used in that case, same for in Object.h
 PlayerMaskType Object::getFilteredVisionSpiedMask() {
 	Bool stealthed = (testStatus( OBJECT_STATUS_STEALTHED ) && !testStatus( OBJECT_STATUS_DETECTED ) && !testStatus( OBJECT_STATUS_DISGUISED ) );
 	if (stealthed) {

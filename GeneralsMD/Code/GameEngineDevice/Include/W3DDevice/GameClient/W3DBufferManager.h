@@ -69,7 +69,7 @@
 #define MAX_INDEX_BUFFERS_CREATED (32 * SLOTS_MULTIPLIER)
 #define DEFAULT_VERTEX_BUFFER_SIZE 16384
 // even 2 decades after 2003, doubling this past the original '32768' makes a direct3D call fail.
-// (see "pIB->m_DX8IndexBuffer=NEW_REF" - returns NULL if you double this)
+// (see "pIB->m_DX8IndexBuffer=NEW_REF" - returns null if you double this)
 #define DEFAULT_INDEX_BUFFER_SIZE 32768
 
 

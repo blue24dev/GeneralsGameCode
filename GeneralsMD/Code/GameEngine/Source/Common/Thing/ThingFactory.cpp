@@ -310,7 +310,7 @@ ThingTemplate *ThingFactory::findTemplateInternal( const AsciiString& name, Bool
 Object *ThingFactory::newObject( const ThingTemplate *tmplate )
 {
 	// Going to copy things from the original overload below for now - can find a better way to condense things later
-	if (tmplate == NULL)
+	if (tmplate == nullptr)
 		throw ERROR_BAD_ARG;
 
 	const std::vector<AsciiString>& asv = tmplate->getBuildVariations();
@@ -318,7 +318,7 @@ Object *ThingFactory::newObject( const ThingTemplate *tmplate )
 	{
 		Int which = GameLogicRandomValue(0, asv.size()-1);
 		const ThingTemplate* tmp = findTemplate( asv[which] );
-		if (tmp != NULL)
+		if (tmp != nullptr)
 			tmplate = tmp;
 	}
 
@@ -422,7 +422,7 @@ Drawable *ThingFactory::newDrawable(const ThingTemplate *tmplate, DrawableStatus
 //MODDD - added param 'drawableID'
 Drawable *ThingFactory::newDrawable(const ThingTemplate *tmplate, DrawableID drawableID, DrawableStatusBits statusBits)
 {
-	if (tmplate == NULL)
+	if (tmplate == nullptr)
 		throw ERROR_BAD_ARG;
 
 	Drawable *draw = TheGameClient->friend_createDrawable( tmplate, drawableID, statusBits );

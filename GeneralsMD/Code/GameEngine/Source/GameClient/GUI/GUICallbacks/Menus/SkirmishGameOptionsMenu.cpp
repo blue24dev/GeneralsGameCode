@@ -444,7 +444,7 @@ void reallyDoStart( void )
 		//MODDD - I am going to change this to set 'isSkirmish' to TRUE unconditionally.
 		// I think the suggestion from the original comment here is from some earlier point of development
 		// before playing maps in single player through the skirmish menu must have been broken.
-		// True single player (campaign, original generals challenge with some exceptions) works with 'TheGameInfo' being NULL.
+		// True single player (campaign, original generals challenge with some exceptions) works with 'TheGameInfo' being null.
 		// For a 1-player skirmish map where you are meant to impact the starting player with your in-menu choice, this means
 		// that game info configured in the skirmish menu can't be used.
 		// Plus, look at saving a game: if the game mode at the time isn't SKIRMISH, it deletes the skirmish game info, which
@@ -1852,7 +1852,7 @@ const Image* lookupRankImage(AsciiString side, Int rank)
 		return TheMappedImageCollection->findImageByName("NewPlayer");
 
 	if (rank < 0 || rank >= MAX_RANKS)
-		return NULL;
+		return nullptr;
 
 	// dirty hack rather than try to get artists to follow a naming convention
 	if (side == "USA")
@@ -1875,7 +1875,7 @@ const Image* lookupRankImage(AsciiString side, Int rank)
 
 void testHonors(void) {
 	static int countah = 0;
-	GameWindow *list = TheWindowManager->winGetWindowFromId(NULL, NAMEKEY("SkirmishGameOptionsMenu.wnd:ListboxInfo"));
+	GameWindow *list = TheWindowManager->winGetWindowFromId(nullptr, NAMEKEY("SkirmishGameOptionsMenu.wnd:ListboxInfo"));
 	if (!list)
 		return;
 
@@ -1888,25 +1888,25 @@ void testHonors(void) {
 	//Int honors = stats.getHonors();
 
 	UnicodeString uStr;
-	GameWindow *streakWindow = TheWindowManager->winGetWindowFromId( NULL, NAMEKEY("SkirmishGameOptionsMenu.wnd:StaticTextStreakValue") );
+	GameWindow *streakWindow = TheWindowManager->winGetWindowFromId( nullptr, NAMEKEY("SkirmishGameOptionsMenu.wnd:StaticTextStreakValue") );
 	if (streakWindow)
 	{
 		uStr.format(L"%d", stats.getWinStreak());
 		GadgetStaticTextSetText(streakWindow, uStr);
 	}
-	GameWindow *bestStreakWindow = TheWindowManager->winGetWindowFromId( NULL, NAMEKEY("SkirmishGameOptionsMenu.wnd:StaticTextBestStreakValue") );
+	GameWindow *bestStreakWindow = TheWindowManager->winGetWindowFromId( nullptr, NAMEKEY("SkirmishGameOptionsMenu.wnd:StaticTextBestStreakValue") );
 	if (bestStreakWindow)
 	{
 		uStr.format(L"%d", stats.getBestWinStreak());
 		GadgetStaticTextSetText(bestStreakWindow, uStr);
 	}
-	GameWindow *winsWindow = TheWindowManager->winGetWindowFromId( NULL, NAMEKEY("SkirmishGameOptionsMenu.wnd:StaticTextWinsValue") );
+	GameWindow *winsWindow = TheWindowManager->winGetWindowFromId( nullptr, NAMEKEY("SkirmishGameOptionsMenu.wnd:StaticTextWinsValue") );
 	if (winsWindow)
 	{
 		uStr.format(L"%d", stats.getWins());
 		GadgetStaticTextSetText(winsWindow, uStr);
 	}
-	GameWindow *lossesWindow = TheWindowManager->winGetWindowFromId( NULL, NAMEKEY("SkirmishGameOptionsMenu.wnd:StaticTextLossesValue") );
+	GameWindow *lossesWindow = TheWindowManager->winGetWindowFromId( nullptr, NAMEKEY("SkirmishGameOptionsMenu.wnd:StaticTextLossesValue") );
 	if (lossesWindow)
 	{
 		uStr.format(L"%d", stats.getLosses());
@@ -1914,7 +1914,7 @@ void testHonors(void) {
 	}
 
 	ResetBattleHonorInsertion();
-	GadgetListBoxAddEntryImage(list, NULL, 0, 0, 10, 10, TRUE, GameMakeColor(255,255,255,255));
+	GadgetListBoxAddEntryImage(list, nullptr, 0, 0, 10, 10, TRUE, GameMakeColor(255,255,255,255));
 
 	// FIRST ROW OF HONORS
 	row = 1; column = 0;

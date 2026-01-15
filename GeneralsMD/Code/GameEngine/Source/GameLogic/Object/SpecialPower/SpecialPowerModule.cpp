@@ -470,7 +470,7 @@ void SpecialPowerModule::startPowerRecharge()
 		m_availableOnFrame = TheGameLogic->getFrame() + getSpecialPowerTemplate()->getReloadTime();
 		//MODDD STUPID HACK
 		/*
-		if (strstr(this->getPowerName().str(), "CIA") == NULL) {
+		if (strstr(this->getPowerName().str(), "CIA") == nullptr) {
 			m_availableOnFrame = TheGameLogic->getFrame() + getSpecialPowerTemplate()->getReloadTime();
 		} else {
 			m_availableOnFrame = TheGameLogic->getFrame() + 0;

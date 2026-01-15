@@ -63,7 +63,7 @@ State::State( StateMachine *machine, AsciiString name )
 
 //MODDD - new
 Object* State::getEnemyObject() {
-	return NULL;
+	return nullptr;
 }
 
 //-----------------------------------------------------------------------------
