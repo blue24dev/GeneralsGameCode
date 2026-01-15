@@ -165,7 +165,7 @@ const char* const KindOfMaskType::s_bitNameList[] =
 	"FACTORY_EXIT_IN_WATER",
 	// ---
 
-	NULL
+	nullptr
 };
 static_assert(ARRAY_SIZE(KindOfMaskType::s_bitNameList) == KindOfMaskType::NumBits + 1, "Incorrect array size");
 

@@ -61,7 +61,7 @@
 SpecialPowerModuleData::SpecialPowerModuleData()
 {
 
-	m_specialPowerTemplate = NULL;
+	m_specialPowerTemplate = nullptr;
 	m_updateModuleStartsAttack = false;
 	m_startsPaused = FALSE;
 	m_scriptedSpecialPowerOnly = FALSE;
@@ -76,12 +76,12 @@ SpecialPowerModuleData::SpecialPowerModuleData()
 
 	static const FieldParse dataFieldParse[] =
 	{
-		{ "SpecialPowerTemplate",			INI::parseSpecialPowerTemplate, NULL, offsetof( SpecialPowerModuleData, m_specialPowerTemplate ) },
-		{ "UpdateModuleStartsAttack", INI::parseBool,									NULL, offsetof( SpecialPowerModuleData, m_updateModuleStartsAttack ) },
-		{ "StartsPaused",							INI::parseBool,									NULL, offsetof( SpecialPowerModuleData, m_startsPaused ) },
-		{ "InitiateSound",						INI::parseAudioEventRTS,				NULL, offsetof( SpecialPowerModuleData, m_initiateSound ) },
-		{ "ScriptedSpecialPowerOnly", INI::parseBool,									NULL, offsetof( SpecialPowerModuleData, m_scriptedSpecialPowerOnly ) },
-		{ 0, 0, 0, 0 }
+		{ "SpecialPowerTemplate",			INI::parseSpecialPowerTemplate, nullptr, offsetof( SpecialPowerModuleData, m_specialPowerTemplate ) },
+		{ "UpdateModuleStartsAttack", INI::parseBool,									nullptr, offsetof( SpecialPowerModuleData, m_updateModuleStartsAttack ) },
+		{ "StartsPaused",							INI::parseBool,									nullptr, offsetof( SpecialPowerModuleData, m_startsPaused ) },
+		{ "InitiateSound",						INI::parseAudioEventRTS,				nullptr, offsetof( SpecialPowerModuleData, m_initiateSound ) },
+		{ "ScriptedSpecialPowerOnly", INI::parseBool,									nullptr, offsetof( SpecialPowerModuleData, m_scriptedSpecialPowerOnly ) },
+		{ nullptr, nullptr, nullptr, 0 }
 	};
 	p.add(dataFieldParse);
 
@@ -349,7 +349,7 @@ Real SpecialPowerModule::getPercentReady() const
 	const SpecialPowerModuleData *modData = getSpecialPowerModuleData();
 
 	// sanity
-	if( modData->m_specialPowerTemplate == NULL )
+	if( modData->m_specialPowerTemplate == nullptr )
 		return 0.0f;
 
 	UnsignedInt readyFrame = m_availableOnFrame;
@@ -443,7 +443,7 @@ void SpecialPowerModule::startPowerRecharge()
 	const SpecialPowerModuleData *modData = getSpecialPowerModuleData();
 
 	// sanity
-	if( modData->m_specialPowerTemplate == NULL )
+	if( modData->m_specialPowerTemplate == nullptr )
 	{
 		DEBUG_CRASH(("special power not found"));
 		return;
@@ -551,7 +551,7 @@ void SpecialPowerModule::createViewObject( const Coord3D *location )
 	const SpecialPowerModuleData *modData = getSpecialPowerModuleData();
 	const SpecialPowerTemplate *powerTemplate = modData->m_specialPowerTemplate;
 
-	if( modData == NULL  ||  powerTemplate == NULL )
+	if( modData == nullptr  ||  powerTemplate == nullptr )
 		return;
 
 	Real visionRange = powerTemplate->getViewObjectRange();
@@ -565,12 +565,12 @@ void SpecialPowerModule::createViewObject( const Coord3D *location )
 		return;
 
 	const ThingTemplate *viewObjectTemplate = TheThingFactory->findTemplate( objectName );
-	if( viewObjectTemplate == NULL )
+	if( viewObjectTemplate == nullptr )
 		return;
 
 	Object *viewObject = TheThingFactory->newObject( viewObjectTemplate, getObject()->getControllingPlayer()->getDefaultTeam() );
 
-	if( viewObject == NULL )
+	if( viewObject == nullptr )
 		return;
 
 	viewObject->setPosition( location );
@@ -755,7 +755,7 @@ void SpecialPowerModule::doSpecialPower( UnsignedInt commandOptions )
 
 	//This tells the update module that we want to do our special power. The update modules
 	//will then start processing each frame.
-	initiateIntentToDoSpecialPower( NULL, NULL, NULL, commandOptions );
+	initiateIntentToDoSpecialPower( nullptr, nullptr, nullptr, commandOptions );
 
 	//Only trigger the special power immediately if the updatemodule doesn't start the attack.
 	//An example of a case that wouldn't trigger immediately is for a unit that needs to
@@ -763,7 +763,7 @@ void SpecialPowerModule::doSpecialPower( UnsignedInt commandOptions )
 	//is the napalm strike. If we don't call this now, it's up to the update module to do so.
 	if( !getSpecialPowerModuleData()->m_updateModuleStartsAttack )
 	{
-		triggerSpecialPower( NULL );// Location-less trigger
+		triggerSpecialPower( nullptr );// Location-less trigger
 	}
 }
 
@@ -777,7 +777,7 @@ void SpecialPowerModule::doSpecialPowerAtObject( Object *obj, UnsignedInt comman
 
 	//This tells the update module that we want to do our special power. The update modules
 	//will then start processing each frame.
-	initiateIntentToDoSpecialPower( obj, NULL, NULL, commandOptions );
+	initiateIntentToDoSpecialPower( obj, nullptr, nullptr, commandOptions );
 
 	//Only trigger the special power immediately if the updatemodule doesn't start the attack.
 	//An example of a case that wouldn't trigger immediately is for a unit that needs to
@@ -799,7 +799,7 @@ void SpecialPowerModule::doSpecialPowerAtLocation( const Coord3D *loc, Real angl
 
 	//This tells the update module that we want to do our special power. The update modules
 	//will then start processing each frame.
-	initiateIntentToDoSpecialPower( NULL, loc, NULL, commandOptions );
+	initiateIntentToDoSpecialPower( nullptr, loc, nullptr, commandOptions );
 
 #if RETAIL_COMPATIBLE_CRC
 	// TheSuperHackers @info we need to leave early if we are in the MissileLauncherBuildingUpdate crash fix codepath
@@ -827,7 +827,7 @@ void SpecialPowerModule::doSpecialPowerUsingWaypoints( const Waypoint *way, Unsi
 
 	//This tells the update module that we want to do our special power. The update modules
 	//will then start processing each frame.
-	initiateIntentToDoSpecialPower( NULL, NULL, way, commandOptions );
+	initiateIntentToDoSpecialPower( nullptr, nullptr, way, commandOptions );
 
 	//Only trigger the special power immediately if the updatemodule doesn't start the attack.
 	//An example of a case that wouldn't trigger immediately is for a unit that needs to
@@ -835,7 +835,7 @@ void SpecialPowerModule::doSpecialPowerUsingWaypoints( const Waypoint *way, Unsi
 	//is the napalm strike. If we don't call this now, it's up to the update module to do so.
 	if( !getSpecialPowerModuleData()->m_updateModuleStartsAttack )
 	{
-		triggerSpecialPower( NULL );// This type doesn't create view objects
+		triggerSpecialPower( nullptr );// This type doesn't create view objects
 	}
 }
 

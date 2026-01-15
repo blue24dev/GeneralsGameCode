@@ -77,7 +77,7 @@ protected:
 
 public:
 		//MODDD - added  'm_absChange'
-		WBDocUndoable(CWorldBuilderDoc *pDoc, WorldHeightMapEdit *pNewHtMap, Coord3D *pObjOffset = NULL, Coord3D *pAbsChange = NULL);
+		WBDocUndoable(CWorldBuilderDoc *pDoc, WorldHeightMapEdit *pNewHtMap, Coord3D *pObjOffset = nullptr, Coord3D *pAbsChange = nullptr);
 
 		// destructor.
 		~WBDocUndoable(void);
@@ -237,7 +237,7 @@ public:
 
 	// if you want to just add/modify/remove a single dict item, pass the item's key.
 	// if you want to substitute the entire contents of the new dict, pass NAMEKEY_INVALID.
-	DictItemUndoable(Dict **d, Dict data, NameKeyType key, Int dictsToModify = 1, CWorldBuilderDoc *pDoc = NULL, Bool inval = false);
+	DictItemUndoable(Dict **d, Dict data, NameKeyType key, Int dictsToModify = 1, CWorldBuilderDoc *pDoc = nullptr, Bool inval = false);
 	// destructor.
 	~DictItemUndoable(void);
 

@@ -53,7 +53,7 @@
 
 #include "Common/GlobalData.h"			// for camera pitch angle only
 
-LookAtTranslator *TheLookAtTranslator = NULL;
+LookAtTranslator *TheLookAtTranslator = nullptr;
 
 enum
 {
@@ -158,7 +158,7 @@ LookAtTranslator::LookAtTranslator() :
 LookAtTranslator::~LookAtTranslator()
 {
 	if (TheLookAtTranslator == this)
-		TheLookAtTranslator = NULL;
+		TheLookAtTranslator = nullptr;
 }
 
 const ICoord2D* LookAtTranslator::getRMBScrollAnchor(void)
@@ -167,7 +167,7 @@ const ICoord2D* LookAtTranslator::getRMBScrollAnchor(void)
 	{
 		return &m_anchor;
 	}
-	return NULL;
+	return nullptr;
 }
 
 Bool LookAtTranslator::hasMouseMovedRecently( void )
@@ -671,12 +671,12 @@ GameMessageDisposition LookAtTranslator::translateGameMessage(const GameMessage 
 #if defined(RTS_DEBUG)
 		case GameMessage::MSG_META_DEMO_LOCK_CAMERA_TO_PLANES:
 		{
-			Drawable *first = NULL;
+			Drawable *first = nullptr;
 
 			if (m_lastPlaneID)
 				first = TheGameClient->findDrawableByID( m_lastPlaneID );
 
-			if (first == NULL)
+			if (first == nullptr)
 				first = TheGameClient->firstDrawable();
 
 			if (first)
@@ -688,7 +688,7 @@ GameMessageDisposition LookAtTranslator::translateGameMessage(const GameMessage 
 				{
 					// get next Drawable, wrapping around to head of list if necessary
 					d = d->getNextDrawable();
-					if (d == NULL)
+					if (d == nullptr)
 						d = TheGameClient->firstDrawable();
 
 					// if we've found an airborne object, lock onto it
@@ -701,10 +701,10 @@ GameMessageDisposition LookAtTranslator::translateGameMessage(const GameMessage 
 						Bool doLock = true;
 
 						// but don't lock onto projectiles
-						ProjectileUpdateInterface* pui = NULL;
+						ProjectileUpdateInterface* pui = nullptr;
 						for (BehaviorModule** u = d->getObject()->getBehaviorModules(); *u; ++u)
 						{
-							if ((pui = (*u)->getProjectileUpdateInterface()) != NULL)
+							if ((pui = (*u)->getProjectileUpdateInterface()) != nullptr)
 							{
 								doLock = false;
 								break;

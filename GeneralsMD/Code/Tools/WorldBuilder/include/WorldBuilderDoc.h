@@ -96,7 +96,7 @@ public:
 	void removeBoundary(Int ndx);
 	void removeLastBoundary(void);
 
-	// outNdx must not be NULL, but outHandle can be.
+	// outNdx must not be null, but outHandle can be.
 	// outHandle: 0 means BL, 1 means TL, 2 means TR, 3 means BR
 	//MODDD - use the enum for outHandle, in fact just call it 'outMod' too
 	void findBoundaryNear(Coord3D *pt, float okDistance, Int *outNdx, BorderModificationType *outMod);

@@ -80,12 +80,12 @@ struct PlayingAudio
 		m_type(PAT_INVALID),
 		//MODDD - adding initializer
 		m_status(PS_Playing),
-		m_audioEventRTS(NULL),
+		m_audioEventRTS(nullptr),
 		//MODDD - adding initializer
-		m_file(NULL),
+		m_file(nullptr),
 		m_requestStop(false),
 		m_cleanupAudioEventRTS(true),
-		m_sample(NULL),
+		m_sample(nullptr),
 		m_framesFaded(0)
 	{ }
 };
@@ -151,7 +151,7 @@ class MilesAudioManager : public AudioManager
 
 	public:
 #if defined(RTS_DEBUG)
-		virtual void audioDebugDisplay(DebugDisplayInterface *dd, void *, FILE *fp = NULL );
+		virtual void audioDebugDisplay(DebugDisplayInterface *dd, void *, FILE *fp = nullptr );
 		virtual AudioHandle addAudioEvent( const AudioEventRTS *eventToAdd );	///< Add an audio event (event must be declared in an INI file)
 #endif
 

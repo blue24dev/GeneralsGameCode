@@ -88,7 +88,7 @@ void Squad::clearSquad() {
 // getAllObjects //////////////////////////////////////////////////////////////////////////////////
 const VecObjectPtr& Squad::getAllObjects(Player *player) // Not a const function cause we clear away dead object here too
 {
-	// prunes all NULL objects
+	// prunes all null objects
 	//MODDD - NOTE. Elaboration. Removes everything so each thing from 'm_objectIDs' can be added back as found
 	// & on matching criteria.
 	m_objectsCached.clear();
@@ -109,7 +109,7 @@ const VecObjectPtr& Squad::getAllObjects(Player *player) // Not a const function
 	// ---
 	for (VecObjectIDIt it = m_objectIDs.begin(); it != m_objectIDs.end(); ) {
 		Object *obj = TheGameLogic->findObjectByID(*it);
-		if (obj == NULL) {
+		if (obj == nullptr) {
 			it = m_objectIDs.erase(it);
 			continue;
 		}
@@ -123,7 +123,7 @@ const VecObjectPtr& Squad::getAllObjects(Player *player) // Not a const function
 		//MODDD - Bugfix for control group selections still leading to units the player has lost ownership of.
 		// Ex: camera can still show depiloted/hijacked units on double-tapping the control group key.
 		// Added a check for the object's player matching the expected 'player', if provided.
-		if (player != NULL && obj->getControllingPlayer() != player) {
+		if (player != nullptr && obj->getControllingPlayer() != player) {
 			it = m_objectIDs.erase(it);
 			continue;
 		}

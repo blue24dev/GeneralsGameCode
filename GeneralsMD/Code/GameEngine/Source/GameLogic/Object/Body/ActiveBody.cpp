@@ -141,13 +141,13 @@ void ActiveBodyModuleData::buildFieldParse(MultiIniFieldParse& p)
 
 	static const FieldParse dataFieldParse[] =
 	{
-		{ "MaxHealth",						INI::parseReal,						NULL,		offsetof( ActiveBodyModuleData, m_maxHealth ) },
-		{ "InitialHealth",				INI::parseReal,						NULL,		offsetof( ActiveBodyModuleData, m_initialHealth ) },
+		{ "MaxHealth",						INI::parseReal,						nullptr,		offsetof( ActiveBodyModuleData, m_maxHealth ) },
+		{ "InitialHealth",				INI::parseReal,						nullptr,		offsetof( ActiveBodyModuleData, m_initialHealth ) },
 
-		{ "SubdualDamageCap",					INI::parseReal,									NULL,		offsetof( ActiveBodyModuleData, m_subdualDamageCap ) },
-		{ "SubdualDamageHealRate",		INI::parseDurationUnsignedInt,	NULL,		offsetof( ActiveBodyModuleData, m_subdualDamageHealRate ) },
-		{ "SubdualDamageHealAmount",	INI::parseReal,									NULL,		offsetof( ActiveBodyModuleData, m_subdualDamageHealAmount ) },
-		{ 0, 0, 0, 0 }
+		{ "SubdualDamageCap",					INI::parseReal,									nullptr,		offsetof( ActiveBodyModuleData, m_subdualDamageCap ) },
+		{ "SubdualDamageHealRate",		INI::parseDurationUnsignedInt,	nullptr,		offsetof( ActiveBodyModuleData, m_subdualDamageHealRate ) },
+		{ "SubdualDamageHealAmount",	INI::parseReal,									nullptr,		offsetof( ActiveBodyModuleData, m_subdualDamageHealAmount ) },
+		{ nullptr, nullptr, nullptr, 0 }
 	};
   p.add(dataFieldParse);
 }
@@ -156,8 +156,8 @@ void ActiveBodyModuleData::buildFieldParse(MultiIniFieldParse& p)
 //-------------------------------------------------------------------------------------------------
 ActiveBody::ActiveBody( Thing *thing, const ModuleData* moduleData ) :
 	BodyModule(thing, moduleData),
-	m_curDamageFX(NULL),
-	m_curArmorSet(NULL),
+	m_curDamageFX(nullptr),
+	m_curArmorSet(nullptr),
 	m_frontCrushed(false),
 	m_backCrushed(false),
 	m_lastDamageTimestamp(0xffffffff),// So we don't think we just got damaged on the first frame
@@ -166,7 +166,7 @@ ActiveBody::ActiveBody( Thing *thing, const ModuleData* moduleData ) :
 	m_nextDamageFXTime(0),
 	m_lastDamageFXDone((DamageType)-1),
 	m_lastDamageCleared(false),
-	m_particleSystems(NULL),
+	m_particleSystems(nullptr),
 	m_currentSubdualDamage(0),
 	m_indestructible(false)
 {
@@ -370,7 +370,7 @@ void ActiveBody::attemptDamage( DamageInfo *damageInfo )
 	validateArmorAndDamageFX();
 
 	// sanity
-	if( damageInfo == NULL )
+	if( damageInfo == nullptr )
 		return;
 
 	if ( m_indestructible )
@@ -725,7 +725,7 @@ void ActiveBody::attemptDamage( DamageInfo *damageInfo )
 		{
 			PartitionFilterPlayerAffiliation f1( controllingPlayer, ALLOW_ALLIES, true );
 			PartitionFilterOnMap filterMapStatus;
-			PartitionFilter *filters[] = { &f1, &filterMapStatus, 0 };
+			PartitionFilter *filters[] = { &f1, &filterMapStatus, nullptr };
 
 
 			Real distance = TheAI->getAiData()->m_retaliateFriendsRadius + obj->getGeometryInfo().getBoundingCircleRadius();
@@ -737,7 +737,7 @@ void ActiveBody::attemptDamage( DamageInfo *damageInfo )
 					continue;
 				}
 				AIUpdateInterface *ai = them->getAI();
-				if (ai==NULL) {
+				if (ai==nullptr) {
 					continue;
 				}
 				//If we have AI and we're mobile, then assist!
@@ -762,7 +762,7 @@ Bool ActiveBody::shouldRetaliateAgainstAggressor(Object *obj, Object *damager)
 	/* This considers whether obj should invoke his friends to retaliate against damager.
 		 Note that obj could be a structure, so we don't actually check whether obj will
 		 retaliate, as in many cases he wouldn't. */
-	if (damager==NULL) {
+	if (damager==nullptr) {
 		return false;
 	}
 	if (damager->isAirborneTarget()) {
@@ -828,7 +828,7 @@ void ActiveBody::attemptHealing( DamageInfo *damageInfo )
 	validateArmorAndDamageFX();
 
 	// sanity
-	if( damageInfo == NULL )
+	if( damageInfo == nullptr )
 		return;
 
 	if( damageInfo->in.m_damageType != DAMAGE_HEALING )
@@ -1012,7 +1012,7 @@ void ActiveBody::createParticleSystems( const AsciiString &boneBaseName,
 	Object *us = getObject();
 
 	// sanity
-	if( systemTemplate == NULL )
+	if( systemTemplate == nullptr )
 		return;
 
 	// get the bones
@@ -1021,7 +1021,7 @@ void ActiveBody::createParticleSystems( const AsciiString &boneBaseName,
 	Int numBones = us->getMultiLogicalBonePosition( boneBaseName.str(),
 																									MAX_BONES,
 																									bonePositions,
-																									NULL,
+																									nullptr,
 																									FALSE );
 
 	// if no bones found nothing else to do
@@ -1653,7 +1653,7 @@ void ActiveBody::xfer( Xfer *xfer )
 		ParticleSystemID particleSystemID;
 
 		// the list should be empty at this time
-		if( m_particleSystems != NULL )
+		if( m_particleSystems != nullptr )
 		{
 
 			DEBUG_CRASH(( "ActiveBody::xfer - m_particleSystems should be empty, but is not" ));
