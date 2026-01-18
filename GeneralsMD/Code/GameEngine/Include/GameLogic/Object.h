@@ -331,7 +331,7 @@ public:
 
 	//
 	// Find us our production update interface if we have one.  This method exists simply
-	// because we do this in a lot of places in the code and I want a convenient way to get thsi (CBD)
+	// because we do this in a lot of places in the code and I want a convenient way to get this (CBD)
 	//
 	ProductionUpdateInterface* getProductionUpdateInterface( void );
 
@@ -374,7 +374,7 @@ public:
 
 	// Selectable is individually controlled on an object by object basis for design now.
 	// It defaults to the thingTemplate->isKindof(KINDOF_SELECTABLE), however, it can be overridden on an
-	// object by object basis.  Finally, it can be temporarily overriden by the OBJECT_STATUS_UNSELECTABLE.
+	// object by object basis.  Finally, it can be temporarily overridden by the OBJECT_STATUS_UNSELECTABLE.
 	// jba.
 	void setSelectable(Bool selectable);
 	Bool isSelectable() const;
@@ -438,7 +438,7 @@ public:
 	const PartitionData *friend_getConstPartitionData() const { return m_partitionData; }
 	Bool hasGhostObject() const; ///< This object has a ghost object. This does not imply that a ghost snapshot is taken or active.
 
-	void onPartitionCellChange();///< We have moved a 'significant' amount, so do maintenence that can be considered 'cell-based'
+	void onPartitionCellChange();///< We have moved a 'significant' amount, so do maintenance that can be considered 'cell-based'
 	void handlePartitionCellMaintenance();					///< Undo and redo all shroud actions.  Call when something has changed, like position or ownership or Death
 
 	Real getVisionRange() const;				///< How far can you see?  This is dynamic so it is in Object.
@@ -754,13 +754,13 @@ private:
 #if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
 	ObjectThreatValueParms    *m_partitionLastLookJammable;
 #endif
-	ObjectThreatValueParms		*m_partitionRevealAllLastLook;			///< And a seperate look to reveal at a different range if so marked
+	ObjectThreatValueParms		*m_partitionRevealAllLastLook;			///< And a separate look to reveal at a different range if so marked
 	Int							m_visionSpiedBy[MAX_PLAYER_COUNT];  ///< Reference count of having units spied on by players.
 	PlayerMaskType	m_visionSpiedMask;									///< For quick lookup and edge triggered maintenance
 
 	ObjectThreatValueParms	*m_partitionLastShroud;	///< Where and for whom I last shrouded, so I can undo its effects when I stop
-	ObjectThreatValueParms	*m_partitionLastThreat;	///< Where and for whom I last delt with threat, so I can undo its effects when I stop
-	ObjectThreatValueParms	*m_partitionLastValue;	///< Where and for whom I last delt with value, so I can undo its effects when I stop
+	ObjectThreatValueParms	*m_partitionLastThreat;	///< Where and for whom I last dealt with threat, so I can undo its effects when I stop
+	ObjectThreatValueParms	*m_partitionLastValue;	///< Where and for whom I last dealt with value, so I can undo its effects when I stop
 
 	Real					m_visionRange;										///< looking range
 	Real					m_shroudClearingRange;						///< looking range for shroud ONLY

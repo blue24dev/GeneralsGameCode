@@ -395,7 +395,7 @@ void SpecialPowerModule::startPowerRechargeInit(Bool fromOnSpecialPowerCreation)
 		// Non-shared powers start charging when a unit is created, or a building finishes construction
 		// ---
 		// A sharedNSync special only startPowerRecharges when first scienced or when executed,
-		// Since a new modue with same SPTemplates may construct at any time.
+		// Since a new module with same SPTemplates may construct at any time.
 		if ( getSpecialPowerTemplate()->isSharedNSync() == FALSE )
 		{
 			startPowerRecharge();

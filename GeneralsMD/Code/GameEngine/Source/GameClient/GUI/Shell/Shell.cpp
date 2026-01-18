@@ -163,7 +163,7 @@ void Shell::reset( void )
 {
 
 	if (TheIMEManager)
-		TheIMEManager->detatch();
+		TheIMEManager->detach();
 
 	// pop all screens
 	while( m_screenCount )
@@ -184,7 +184,7 @@ void Shell::update( void )
 	Int now = timeGetTime();
 
 	//
-	// we keep the shell updates fixed in time so that we can write consitent animation
+	// we keep the shell updates fixed in time so that we can write consistent animation
 	// speeds during the screen update functions
 	//
 	if( now - lastUpdate >= ((1000.0f / shellUpdateDelay ) - 1) )
@@ -312,7 +312,7 @@ void Shell::hide( Bool hide )
 			m_screenStack[ i ]->hide( hide );
 
 	if (TheIMEManager)
-		TheIMEManager->detatch();
+		TheIMEManager->detach();
 
 }
 
@@ -355,7 +355,7 @@ void Shell::push( AsciiString filename, Bool shutdownImmediate )
 	WindowLayout *currentTop = top();
 
 	//
-	// if we have someting on the top of the stack we won't do the push
+	// if we have something on the top of the stack we won't do the push
 	// right now, we will instead shutdown the top, and when the top tells
 	// us it's done shutting down (via the shutdownComplete() method) we do
 	// the push then
@@ -376,7 +376,7 @@ void Shell::push( AsciiString filename, Bool shutdownImmediate )
 	}
 
 //	if (TheIMEManager)
-//		TheIMEManager->detatch();
+//		TheIMEManager->detach();
 
 }
 
@@ -416,7 +416,7 @@ void Shell::pop( void )
 	screen->runShutdown( &immediatePop );
 
 	if (TheIMEManager)
-		TheIMEManager->detatch();
+		TheIMEManager->detach();
 
 }
 
@@ -454,7 +454,7 @@ void Shell::popImmediate( void )
 	doPop( FALSE );
 
 	if (TheIMEManager)
-		TheIMEManager->detatch();
+		TheIMEManager->detach();
 
 }
 
@@ -593,7 +593,7 @@ void Shell::hideShell( void )
 	}
 
 	if (TheIMEManager)
-		TheIMEManager->detatch();
+		TheIMEManager->detach();
 
 	// Mark that the shell is no longer up.
 	m_isShellActive = FALSE;
@@ -676,7 +676,7 @@ void Shell::doPush( AsciiString layoutFile )
 	linkScreen( newScreen );
 
 	if (TheIMEManager)
-		TheIMEManager->detatch();
+		TheIMEManager->detach();
 
 	// run the init function automatically
 	newScreen->runInit( nullptr );
@@ -716,7 +716,7 @@ void Shell::doPop( Bool impendingPush )
 	}
 
 	if (TheIMEManager)
-		TheIMEManager->detatch();
+		TheIMEManager->detach();
 
 }
 

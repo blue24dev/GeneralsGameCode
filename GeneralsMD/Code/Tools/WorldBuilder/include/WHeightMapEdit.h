@@ -140,8 +140,8 @@ public: // Editing methods.
 	void showTileStatusInfo(void); ///< pops up a dialog box with tile mem usage.
 
 
-	Bool selectDuplicates(void); ///< Selects any dupicate map objects.
-	Bool selectSimilar(void); ///< Selects any dupicate map objects.
+	Bool selectDuplicates(void); ///< Selects any duplicate map objects.
+	Bool selectSimilar(void); ///< Selects any duplicate map objects.
 	Bool selectInvalidTeam(void); ///< Selects any objects with invalid teams.
 
 	//MODDD - added 'pAbsChange'

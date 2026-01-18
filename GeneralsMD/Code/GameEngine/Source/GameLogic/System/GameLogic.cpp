@@ -1092,7 +1092,7 @@ static void populateRandomStartPosition( GameInfo *game )
 						closestIdx = n;
 					}
 				}
-				DEBUG_ASSERTCRASH( closestDist < FLT_MAX, ("Couldn't find a closest starting positon!"));
+				DEBUG_ASSERTCRASH( closestDist < FLT_MAX, ("Couldn't find a closest starting position!"));
 				slot->setStartPos(closestIdx);
 				taken[closestIdx] = TRUE;
 			}
