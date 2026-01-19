@@ -7996,6 +7996,11 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 	// we don't get stuck.
 	// Also - only going to do this whenever 'cleanupSequentialScript' is called with 2nd param 'cleanDanglers' set to 'false', just since that's when I
 	// noticed the issue (3rd call to be specific, but doing this everywhere until I understand the issue better).
+	// ---
+	// MODDD - TODO
+	// UPDATE - since an update from TheSuperHackers (Commit desc: "Restore retail compatibility for sequential scripts...", SHA: fcc193a66a7c575e95ee2f201622aca55e581267),
+	// it's possible that my bugfix is entirely unneeded.  Verify if this is the case.
+	// ---
 	Bool calledCleanupSequentialScriptThisFrame = false;
 	// And something extra for me - give an assertion if an endless loop was detected and the above var was ever flipped on. Just curious.
 	Bool calledCleanupSequentialScriptThisSpinCycle = false;
