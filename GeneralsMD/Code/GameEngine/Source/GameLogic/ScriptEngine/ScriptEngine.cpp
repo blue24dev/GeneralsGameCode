@@ -7986,7 +7986,8 @@ void ScriptEngine::setSequentialTimer(Team *team, Int frameCount)
 void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 {
 	VecSequentialScriptPtrIt it;
-	SequentialScript* lastScript = nullptr;
+	size_t currIndex = 0;
+	size_t prevIndex = ~0u;
 	Bool itAdvanced = false;
 
 	//MODDD - bugfix - endless sequential script loop
@@ -8002,7 +8003,7 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 	Int spinCount = 0;
 	for (it = m_sequentialScripts.begin(); it != m_sequentialScripts.end(); /* empty */) {
 		//MODDD - bugfix - endless sequential script loop - added 'calledCleanupSequentialScriptThisFrame'
-		if ((*it) == lastScript || calledCleanupSequentialScriptThisFrame) {
+		if (currIndex == prevIndex || calledCleanupSequentialScriptThisFrame) {
 			++spinCount;
 		} else {
 			spinCount = 0;
@@ -8056,11 +8057,11 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 				// ------------------------------------------------------------
 			}
 			++it;
+			++currIndex;
 			continue;
 		}
 
-		lastScript = (*it);
-
+		prevIndex = currIndex;
 		itAdvanced = false;
 
 		SequentialScript *seqScript = (*it);
@@ -8185,6 +8186,7 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 					// Check to see if executing our action told us to wait. If so, skip to the next Sequential script
 					if (seqScript->m_dontAdvanceInstruction) {
 						++it;
+						++currIndex;
 						itAdvanced = true;
 						continue;
 					}
@@ -8240,6 +8242,7 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 
 		if (!itAdvanced) {
 			++it;
+			++currIndex;
 		}
 	}
 	m_currentPlayer = nullptr;
