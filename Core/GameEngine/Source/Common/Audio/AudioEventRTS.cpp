@@ -81,7 +81,7 @@ AudioEventRTS::AudioEventRTS()
 										m_allCount(0),
 										m_playerIndex(-1),
 										m_delay(0.0f),
-										m_uninterruptable(FALSE)
+										m_uninterruptible(FALSE)
 {
 	m_attackName.clear();
 	m_decayName.clear();
@@ -108,7 +108,7 @@ AudioEventRTS::AudioEventRTS( const AsciiString& eventName )
 										m_allCount(0),
 										m_playerIndex(-1),
 										m_delay(0.0f),
-										m_uninterruptable(FALSE)
+										m_uninterruptible(FALSE)
 {
 	m_attackName.clear();
 	m_decayName.clear();
@@ -136,7 +136,7 @@ AudioEventRTS::AudioEventRTS( const AsciiString& eventName, ObjectID ownerID )
 										m_allCount(0),
 										m_playerIndex(-1),
 										m_delay(0.0f),
-										m_uninterruptable(FALSE)
+										m_uninterruptible(FALSE)
 {
 	m_attackName.clear();
 	m_decayName.clear();
@@ -172,7 +172,7 @@ AudioEventRTS::AudioEventRTS( const AsciiString& eventName, DrawableID drawableI
 										m_allCount(0),
 										m_playerIndex(-1),
 										m_delay(0.0f),
-										m_uninterruptable(FALSE)
+										m_uninterruptible(FALSE)
 {
 	m_attackName.clear();
 	m_decayName.clear();
@@ -207,7 +207,7 @@ AudioEventRTS::AudioEventRTS( const AsciiString& eventName, const Coord3D *posit
 										m_allCount(0),
 										m_playerIndex(-1),
 										m_delay(0.0f),
-										m_uninterruptable(FALSE)
+										m_uninterruptible(FALSE)
 {
 	m_positionOfAudio.set( positionOfAudio );
 	m_attackName.clear();
@@ -238,7 +238,7 @@ AudioEventRTS::AudioEventRTS( const AudioEventRTS& right )
 	m_attackName					= right.m_attackName;
 	m_decayName						= right.m_decayName;
 	m_portionToPlayNext		= right.m_portionToPlayNext;
-	m_uninterruptable			= right.m_uninterruptable;
+	m_uninterruptible			= right.m_uninterruptible;
 
 	if( m_ownerType == OT_Positional || m_ownerType == OT_Dead )
 	{
@@ -279,7 +279,7 @@ AudioEventRTS& AudioEventRTS::operator=( const AudioEventRTS& right )
 	m_attackName					= right.m_attackName;
 	m_decayName						= right.m_decayName;
 	m_portionToPlayNext		= right.m_portionToPlayNext;
-	m_uninterruptable			= right.m_uninterruptable;
+	m_uninterruptible			= right.m_uninterruptible;
 
 	if( m_ownerType == OT_Positional || m_ownerType == OT_Dead )
 	{
