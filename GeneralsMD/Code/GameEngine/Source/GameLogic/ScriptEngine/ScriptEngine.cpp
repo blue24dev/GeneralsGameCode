@@ -8000,27 +8000,33 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 	// MODDD - TODO
 	// UPDATE - since an update from TheSuperHackers (Commit desc: "Restore retail compatibility for sequential scripts...", SHA: fcc193a66a7c575e95ee2f201622aca55e581267),
 	// it's possible that my bugfix is entirely unneeded.  Verify if this is the case.
+	// Testing this now - removed my inclusions, see if the issue never happens on the co-op vs. AirForce general map by Sriracha, or on Firestorm vs. Dr Thrax.
+	// If the game never freezes on those maps, thesuperhackers fix works alone & my stuff can be ripped out for tidiness.
 	// ---
-	Bool calledCleanupSequentialScriptThisFrame = false;
+	//Bool calledCleanupSequentialScriptThisFrame = false;
 	// And something extra for me - give an assertion if an endless loop was detected and the above var was ever flipped on. Just curious.
-	Bool calledCleanupSequentialScriptThisSpinCycle = false;
+	//Bool calledCleanupSequentialScriptThisSpinCycle = false;
 
 	Int spinCount = 0;
 	for (it = m_sequentialScripts.begin(); it != m_sequentialScripts.end(); /* empty */) {
 		//MODDD - bugfix - endless sequential script loop - added 'calledCleanupSequentialScriptThisFrame'
-		if (currIndex == prevIndex || calledCleanupSequentialScriptThisFrame) {
+		// (revert)
+		//if (currIndex == prevIndex || calledCleanupSequentialScriptThisFrame) {
+		if (currIndex == prevIndex) {
 			++spinCount;
 		} else {
 			spinCount = 0;
 		}
 
 		//MODDD - see below
+		/*
 		if (calledCleanupSequentialScriptThisFrame) {
 			calledCleanupSequentialScriptThisSpinCycle = true;
 		}
 
 		//MODDD - bugfix - endless sequential script loop - reset each frame
 		calledCleanupSequentialScriptThisFrame = false;
+		*/
 
 		if (spinCount > MAX_SPIN_COUNT) {
 			SequentialScript *seqScript = (*it);
@@ -8028,6 +8034,7 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 				DEBUG_LOG(("Sequential script %s appears to be in an infinite loop.",
 					seqScript->m_scriptToExecuteSequentially->getName().str()));
 
+				/*
 				//MODDD - see above
 				if (calledCleanupSequentialScriptThisSpinCycle) {
 					SYSTEMTIME lt;
@@ -8059,6 +8066,7 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 					outputFile << "------" << std::endl;
 					outputFile.close();
 				}
+				*/
 				// ------------------------------------------------------------
 			}
 			++it;
@@ -8073,10 +8081,11 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 		if (seqScript == nullptr) {
 			it = cleanupSequentialScript(it, false);
 			//MODDD
-			calledCleanupSequentialScriptThisFrame = true;
+			//calledCleanupSequentialScriptThisFrame = true;
 			continue;
 		}
 
+		/*
 		//MODDD - new, debug test
 		if (
 			seqScript->m_scriptToExecuteSequentially != nullptr &&
@@ -8089,13 +8098,14 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 			outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << " - "<< seqScript->m_scriptToExecuteSequentially->getName().str() << std::endl;
 			outputFile.close();
 		}
+		*/
 
 		Team *team = seqScript->m_teamToExecOn;
 		Object *obj = TheGameLogic->findObjectByID(seqScript->m_objectID);
 		if (!(obj || team)) {
 			it = cleanupSequentialScript(it, false);
 			//MODDD
-			calledCleanupSequentialScriptThisFrame = true;
+			//calledCleanupSequentialScriptThisFrame = true;
 			itAdvanced = true;
 			continue;
 		}
@@ -8237,7 +8247,7 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts( void )
 
 					it = cleanupSequentialScript(it, false);
 					//MODDD
-					calledCleanupSequentialScriptThisFrame = true;
+					//calledCleanupSequentialScriptThisFrame = true;
 					itAdvanced = true;
 				}
 			} else if (seqScript->m_framesToWait > 0) {
