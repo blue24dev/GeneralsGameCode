@@ -178,7 +178,22 @@ void UpgradeMux::giveSelfUpgrade()
 	// If I have an activation condition, and I haven't activated, and this key matches my condition.
 	performUpgradeFX();
 	processUpgradeRemoval();// Need to execute removals first, to prevent both being on for a moment.
+	
+	upgradeImplementation();
 
+	//MODDD - UPDATE. Below is referring to an earlier point where I moved 'setUpgradeExecuted' above 'upgradeImplementation'.
+	// However, this caused a bug: China satelite hack upgrades (basically 'SpyVisionSpecialPower' - see that '.h' file)
+	// no longer work because that file's 'upgradeImplementation' checks 'isAlreadyUpgraded()' for not being the case,
+	// which would be the case even the very first time upgradeImplementation is called when
+	// 'upgradeImplementation'/'setUpgradeExecuted' are swapped.
+	// As for why bugs weren't far more common for other upgrades (or why they lack similar 'isAlreadyUpgraded()' checks),
+	// I have no idea. You could argue 'upgradeImplementation' for any upgrade should never need that check if that's
+	// already handled in whatever's calling there but I'm not sure I can prove that.
+	// Long story short, a more acute fix is in RiderChangeContain.h/.cpp - changing its 'm_containing' field type
+	// to be a number instead of a bool so it can be incremented/decremented on calling 'RiderChangeContain::onContaining'
+	// instead of only to true/false. This better copes with recursive 'onContaining' calls instead of trying to prevent
+	// them entirely & doesn't require the 'upgradeImplementation'/'setUpgradeExecuted' swap in here - best of both worlds.
+	// ---
 	//MODDD - moved this from after 'upgradeImplementation' to here, before.
 	// It is possible for an upgrade to change the current rider (bike/using that logic), leading to reaching
 	// this same 'giveSelfUpgrade' recursively as sending veterency re-runs upgrade checks if the veterency
@@ -193,9 +208,10 @@ void UpgradeMux::giveSelfUpgrade()
 	// 'bikeTracker->setExperienceAndLevel( 0, FALSE )'.
 	// I doubt making the 'ExperienceTracker::setExperienceAndLevel' -> 'm_parent->onVeterancyLevelChanged' call
 	// skip 'updateUpgradeModules()' is necessary, but just an idea - not sure what the purpose of that is here.
+	// ---
+
 	setUpgradeExecuted(true);
 
-	upgradeImplementation();
 }
 
 //-------------------------------------------------------------------------------------------------

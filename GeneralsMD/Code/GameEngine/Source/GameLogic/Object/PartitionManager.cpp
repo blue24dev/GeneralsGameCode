@@ -6345,7 +6345,7 @@ void hLineRemoveLooker(Int x1, Int x2, Int y, void *playerIndexVoid)
 }
 
 #if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
-static void hLineAddLookerJammable(Int x1, Int x2, Int y, void *playerIndexVoid)
+void hLineAddLookerJammable(Int x1, Int x2, Int y, void *playerIndexVoid)
 {
 	if (y < 0 || y >= ThePartitionManager->m_cellCountY || x1 >= ThePartitionManager->m_cellCountX || x2 < 0)
 		return;
@@ -6361,7 +6361,7 @@ static void hLineAddLookerJammable(Int x1, Int x2, Int y, void *playerIndexVoid)
 	}
 }
 
-static void hLineRemoveLookerJammable(Int x1, Int x2, Int y, void *playerIndexVoid)
+void hLineRemoveLookerJammable(Int x1, Int x2, Int y, void *playerIndexVoid)
 {
 	if (y < 0 || y >= ThePartitionManager->m_cellCountY || x1 >= ThePartitionManager->m_cellCountX || x2 < 0)
 		return;
@@ -6420,7 +6420,7 @@ void hLineRemoveShrouder(Int x1, Int x2, Int y, void *playerIndexVoid)
 }
 
 //MODDD
-static void hLineSetShroud(Int x1, Int x2, Int y, void *playerIndexVoid)
+void hLineSetShroud(Int x1, Int x2, Int y, void *playerIndexVoid)
 {
 	if (y < 0 || y >= ThePartitionManager->m_cellCountY || x1 >= ThePartitionManager->m_cellCountX || x2 < 0)
 		return;

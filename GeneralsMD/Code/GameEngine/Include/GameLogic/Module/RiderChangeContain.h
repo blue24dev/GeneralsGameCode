@@ -113,6 +113,7 @@ private:
 	UnsignedInt m_frameExitNotBusy;
 	UnsignedInt m_scuttledOnFrame;
 
-	Bool m_containing; //doesn't require xfer.
+	//MODDD - changed type from 'Bool' to 'int' to count call depth instead in case of recursive calls
+	int m_containing; //doesn't require xfer.
 
 };

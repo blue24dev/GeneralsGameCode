@@ -136,7 +136,9 @@ RiderChangeContain::RiderChangeContain( Thing *thing, const ModuleData *moduleDa
 {
 	m_extraSlotsInUse = 0;
 	m_frameExitNotBusy = 0;
-	m_containing = FALSE;
+	//MODDD - 'm_containing' Bool -> Int
+	//m_containing = FALSE;
+	m_containing = 0;
 	m_scuttledOnFrame = 0;
 }
 
@@ -192,7 +194,9 @@ Bool RiderChangeContain::isValidContainerFor(const Object* rider, Bool checkCapa
 void RiderChangeContain::onContaining( Object *rider, Bool wasSelected )
 {
 	Object *obj = getObject();
-	m_containing = TRUE;
+	//MODDD - 'm_containing' Bool -> Int
+	//m_containing = TRUE;
+	m_containing++;
 	//Remove our existing rider
 	if( m_payloadCreated )
 	{
@@ -272,7 +276,9 @@ void RiderChangeContain::onContaining( Object *rider, Bool wasSelected )
 	//Extend base class
 	TransportContain::onContaining( rider, wasSelected );
 
-	m_containing = FALSE;
+	//MODDD - 'm_containing' Bool -> Int
+	//m_containing = FALSE;
+	m_containing--;
 }
 
 //-------------------------------------------------------------------------------------------------
