@@ -740,8 +740,6 @@ void GameEngine::init()
 		if(!TheGlobalData->m_playIntro)
 			TheWritableGlobalData->m_afterIntro = TRUE;
 
-		//initDisabledMasks();
-
 	}
 	catch (ErrorCode ec)
 	{
@@ -765,10 +763,6 @@ void GameEngine::init()
 
 	if(!TheGlobalData->m_playIntro)
 		TheWritableGlobalData->m_afterIntro = TRUE;
-
-	initKindOfMasks();
-	initDisabledMasks();
-	initDamageTypeFlags();
 
 	resetSubsystems();
 
