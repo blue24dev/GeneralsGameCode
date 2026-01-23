@@ -184,6 +184,8 @@ static const Int fsList[] = {
 	KINDOF_FS_BARRACKS,
 	KINDOF_FS_WARFACTORY,
 	KINDOF_FS_AIRFIELD,
+	//MODDD - added
+	KINDOF_FS_NAVALFACTORY,
 };
 
 KindOfMaskType KINDOFMASK_NONE;	// inits to all zeroes
