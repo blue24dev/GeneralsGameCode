@@ -121,7 +121,7 @@ set(GAMEENGINE_SRC
 #    Include/Common/UnicodeString.h
     Include/Common/UnitTimings.h
     Include/Common/Upgrade.h
-    Include/Common/UserPreferences.h
+#    Include/Common/UserPreferences.h
     Include/Common/version.h
     Include/Common/WellKnownKeys.h
 #    Include/Common/WorkerProcess.h
@@ -132,6 +132,7 @@ set(GAMEENGINE_SRC
 #    Include/Common/XferSave.h
     Include/GameClient/Anim2D.h
     Include/GameClient/AnimateWindowManager.h
+    Include/GameClient/ChallengeGenerals.h
     Include/GameClient/CampaignManager.h
     Include/GameClient/CDCheck.h
     Include/GameClient/ClientInstance.h
@@ -635,7 +636,7 @@ set(GAMEENGINE_SRC
     Source/Common/Thing/Thing.cpp
     Source/Common/Thing/ThingFactory.cpp
     Source/Common/Thing/ThingTemplate.cpp
-    Source/Common/UserPreferences.cpp
+#    Source/Common/UserPreferences.cpp
     Source/Common/version.cpp
 #    Source/Common/WorkerProcess.cpp
     Source/GameClient/ClientInstance.cpp
@@ -657,6 +658,7 @@ set(GAMEENGINE_SRC
     Source/GameClient/GlobalLanguage.cpp
     Source/GameClient/GraphDraw.cpp
     Source/GameClient/GUI/AnimateWindowManager.cpp
+    Source/GameClient/GUI/ChallengeGenerals.cpp
     Source/GameClient/GUI/ControlBar/ControlBar.cpp
     Source/GameClient/GUI/ControlBar/ControlBarBeacon.cpp
     Source/GameClient/GUI/ControlBar/ControlBarCommand.cpp
