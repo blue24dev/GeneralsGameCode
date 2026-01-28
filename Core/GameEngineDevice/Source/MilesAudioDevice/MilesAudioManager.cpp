@@ -452,7 +452,7 @@ void MilesAudioManager::init()
 
 	//MODDD - enforce a minimum of 128 meg in audio cache size.
 	// See the description at the preprocessor constant definition.
-#if !ENFORCE_HIGHER_AUDIO_CACHE_SIZE
+#if !FORCE_HIGHER_AUDIO_CACHE_SIZE
 	m_audioCache->setMaxSize(getAudioSettings()->m_maxCacheSize);
 #else
 	UnsignedInt maxCache = getAudioSettings()->m_maxCacheSize;

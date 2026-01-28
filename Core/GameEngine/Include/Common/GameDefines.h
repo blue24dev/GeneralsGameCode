@@ -237,7 +237,7 @@
 // As a quick fix, changing 'AudioFootprintInBytes' from retail's 5 MB to 128 MB appears to stop the crash -
 // the shell map scenario above did not crash for a solid 8 hours with this change applied.
 // This constant enforces the minimum of '128 MB' used over the config value if needed so the crash is prevented.
-#define ENFORCE_HIGHER_AUDIO_CACHE_SIZE TRUE
+#define FORCE_HIGHER_AUDIO_CACHE_SIZE TRUE
 
 // Context: shroud generation is a mechanic in Generals that the retail game never used, but has
 // been used by some mods like ProGen (stealth general radar van upgrade, ActiveShroudUpgrade in the INI).
