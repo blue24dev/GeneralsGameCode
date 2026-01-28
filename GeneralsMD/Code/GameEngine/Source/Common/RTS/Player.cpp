@@ -3413,8 +3413,9 @@ UnsignedInt Player::getOrStartSpecialPowerReadyFrame( const SpecialPowerTemplate
 //-------------------------------------------------------------------------------------------------
 void Player::friend_applyDifficultyBonusesForObject(Object* obj, Bool apply) const
 {
-	//MODDD - HAHAHA no thanks, hard mode is beyond hard enough without this nonsense
+#if DISABLE_UNIT_HEALTH_WEAPON_DIFFICULTY_BONUSES == TRUE
 	return;
+#endif
 
 	if (TheGameLogic->isInSinglePlayerGame())
 	{

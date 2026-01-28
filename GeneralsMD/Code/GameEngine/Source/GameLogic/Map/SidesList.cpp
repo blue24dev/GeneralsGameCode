@@ -505,6 +505,7 @@ void SidesList::prepareForMP_or_Skirmish(void)
 		}
 
 		//MODDD - print out sides automatically removed for info
+		/*
 		//////////////////////////////////////////////////////////////////////////////////////////////
 		WideChar buf[ UnicodeString::MAX_FORMAT_BUF_LEN ];
 		UnicodeString formattedMessage;
@@ -514,6 +515,7 @@ void SidesList::prepareForMP_or_Skirmish(void)
 
 		TheInGameUI->messageNoFormat(formattedMessage);
 		//////////////////////////////////////////////////////////////////////////////////////////////
+		*/
 
 		//MODDD - NOTE - this removes the sides, this behavior is expected for skirmish/multiplayer maps.
 		// However, for generals challenge maps loaded as skirmish, this isn't good.

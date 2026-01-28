@@ -4141,8 +4141,7 @@ void ScriptActions::doNamedSetStoppingDistance(const AsciiString& unit, Real sto
 //-------------------------------------------------------------------------------------------------
 void ScriptActions::doDisableSpecialPowerDisplay(void)
 {
-	//MODDD - no.
-	//TheInGameUI->setSuperweaponDisplayEnabledByScript(false);
+	TheInGameUI->setSuperweaponDisplayEnabledByScript(false);
 }
 
 //-------------------------------------------------------------------------------------------------

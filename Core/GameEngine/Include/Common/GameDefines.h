@@ -187,6 +187,19 @@
 // Hard-coded check for faction name for this. This is the opposite of professional. 
 //#define NOOB_MODE FALSE
 
+// Forces extra modifiers based on the current game difficulty, such as reduced unit health/damage for hard
+// difficulty, to be disabled regardless of the setting in the GameData.ini file.
+#define DISABLE_UNIT_HEALTH_WEAPON_DIFFICULTY_BONUSES TRUE
+
+// Setting added in the hopes of preventing a major source of hardware lag: adding to a continually building
+// '<documents>/Command and... Data/Replays/00000000.REP' file for a replay the user may never intend to save/look at anyway.
+// Assuming the issue is what I think it is (hard drive writes becoming obnoxious in long-running games,
+// possibly worse in mods for this reason), a better fix would probably be to try and hold the entire replay
+// in memory & do write operations to there instead since modern machines can handle this, hopefully without
+// this having to be a 64-bit program (needing over 4 gig of memory).
+// Also, consider a yes/no option for whether a game should record for a replay before starting the game.
+#define BLOCK_REPLAY_RECORDING_ALWAYS TRUE
+
 // Double the max player count from 16 to 32. Needed for multiplayer for the retail Laser General challenge map to work,
 // since as-is, the map uses enough players to only allow for adding 1 more.
 // Toggling this causes a tiny compile error that shows save compatibility being broken.

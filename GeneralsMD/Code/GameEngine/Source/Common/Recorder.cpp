@@ -428,6 +428,11 @@ void RecorderClass::reset() {
  */
 void RecorderClass::update() {
 	if (m_mode == RECORDERMODETYPE_RECORD || m_mode == RECORDERMODETYPE_NONE) {
+		//MODDD - added this preprocessor constant in the hopes of preventing a major source of hardware lag.
+		#if BLOCK_REPLAY_RECORDING_ALWAYS == TRUE
+			// Not allowed - stop lagging my game bro!
+			return;
+		#endif
 		updateRecord();
 	} else if (isPlaybackMode()) {
 		updatePlayback();
