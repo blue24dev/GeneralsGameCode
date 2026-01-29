@@ -1553,7 +1553,7 @@ ShroudLevel PartitionCell::getShroudLevel( Int playerIndex )
 	return m_shroudLevel[playerIndex];
 }
 
-#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS || PARTITIONMANAGER_QUEUE_PER_CELL
+#if PARTITIONMANAGER_SHROUD_NONPERSISTENT || PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS || PARTITIONMANAGER_QUEUE_PER_CELL
 Bool PartitionCell::isBeingJammed( Int playerIndex ) const
 {
 	return (m_shroudLevel[playerIndex].m_activeShroudLevel > 0);
@@ -1584,9 +1584,9 @@ CellShroudStatus PartitionCell::getShroudStatusForPlayer( Int playerIndex ) cons
 
 	Short currentShroud = m_shroudLevel[playerIndex].m_currentShroud;
 
-// Note - this check happening here only makes sense if there is such a thing as jammable shroud.
 // The check happening this early means the involvement of 'currentShroudJammable' will be skipped.
-#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+// (assuming PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS is the case for that to be possible in the first place)
+#if PARTITIONMANAGER_SHROUD_NONPERSISTENT || PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
 	if ( isBeingJammed(playerIndex) )
 	{
 		// Someone is jamming the cell. As far as we're concerned, jammable look says 'shroud'.
@@ -4551,7 +4551,7 @@ void PartitionManager::queueUndoShroudReveal(Real centerX, Real centerY, Real ra
 }
 
 #if PARTITIONMANAGER_QUEUE_PER_CELL
-std::multimap<UnsignedInt, UnsignedInt>::iterator PartitionManager::queueUndoShroudRevealCell(Int cellX, Int cellY, Int playerIndex, Bool isBeingJammed) {
+std::multimap<UnsignedInt, UnsignedInt>::iterator PartitionManager::queueUndoShroudRevealCell(Int cellX, Int cellY, Int playerIndex, Bool beingJammed) {
 	CellInfo *newInfo = newInstance(CellInfo);
 	newInfo->id = m_nextCellInfoID;
 	++m_nextCellInfoID;
@@ -4561,12 +4561,12 @@ std::multimap<UnsignedInt, UnsignedInt>::iterator PartitionManager::queueUndoShr
 	newInfo->m_y = cellY;
 	newInfo->m_playerIndex = playerIndex;
 	newInfo->isJammable = false;
-	if (!isBeingJammed) {
+	if (!beingJammed) {
 		newInfo->m_goalTime = TheGameLogic->getFrame() + TheGlobalData->m_unlookPersistDuration;
 	} else {
 		newInfo->m_goalTime = TheGameLogic->getFrame() + (UnsignedInt)((float)TheGlobalData->m_unlookPersistDuration * 0.2f);
 	}
-	newInfo->m_goalTimeAdjustedForJamming = isBeingJammed;
+	newInfo->m_goalTimeAdjustedForJamming = beingJammed;
 
 	return queueUndoShroudRevealCell(newInfo);
 }
@@ -4639,7 +4639,7 @@ void PartitionManager::queueUndoShroudRevealJammable(Real centerX, Real centerY,
 }
 
 #if PARTITIONMANAGER_QUEUE_PER_CELL
-std::multimap<UnsignedInt, UnsignedInt>::iterator PartitionManager::queueUndoShroudRevealCellJammable(Int cellX, Int cellY, Int playerIndex, Bool isBeingJammed) {
+std::multimap<UnsignedInt, UnsignedInt>::iterator PartitionManager::queueUndoShroudRevealCellJammable(Int cellX, Int cellY, Int playerIndex, Bool beingJammed) {
 	CellInfo *newInfo = newInstance(CellInfo);
 	newInfo->id = m_nextCellInfoID;
 	++m_nextCellInfoID;
@@ -4649,12 +4649,12 @@ std::multimap<UnsignedInt, UnsignedInt>::iterator PartitionManager::queueUndoShr
 	newInfo->m_y = cellY;
 	newInfo->m_playerIndex = playerIndex;
 	newInfo->isJammable = true;
-	if (!isBeingJammed) {
+	if (!beingJammed) {
 		newInfo->m_goalTime = TheGameLogic->getFrame() + TheGlobalData->m_unlookPersistDuration;
 	} else {
 		newInfo->m_goalTime = TheGameLogic->getFrame() + (UnsignedInt)((float)TheGlobalData->m_unlookPersistDuration * 0.2f);
 	}
-	newInfo->m_goalTimeAdjustedForJamming = isBeingJammed;
+	newInfo->m_goalTimeAdjustedForJamming = beingJammed;
 	
 	return queueUndoShroudRevealCell(newInfo);
 }

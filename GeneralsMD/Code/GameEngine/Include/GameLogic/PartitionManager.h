@@ -385,7 +385,7 @@ public:
 	//MODDD
 	ShroudLevel getShroudLevel( Int playerIndex );
 	
-#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS || PARTITIONMANAGER_QUEUE_PER_CELL
+#if PARTITIONMANAGER_SHROUD_NONPERSISTENT || PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS || PARTITIONMANAGER_QUEUE_PER_CELL
 	Bool isBeingJammed( Int playerIndex ) const;
 #endif
 
@@ -1441,7 +1441,7 @@ public:
 	void queueUndoShroudReveal( Real centerX, Real centerY, Real radius, PlayerMaskType playerMask );
 
 #if PARTITIONMANAGER_QUEUE_PER_CELL
-	std::multimap<UnsignedInt, UnsignedInt>::iterator queueUndoShroudRevealCell(Int cellX, Int cellY, Int playerIndex, Bool isBeingJammed);
+	std::multimap<UnsignedInt, UnsignedInt>::iterator queueUndoShroudRevealCell(Int cellX, Int cellY, Int playerIndex, Bool beingJammed);
 #endif
 
 #if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
@@ -1450,7 +1450,7 @@ public:
 	void queueUndoShroudRevealJammable( Real centerX, Real centerY, Real radius, PlayerMaskType playerMask );
 #if PARTITIONMANAGER_QUEUE_PER_CELL
 	// (TODO - see if returning the iterator/not impacts performance, if it makes sense to do that?)
-	std::multimap<UnsignedInt, UnsignedInt>::iterator queueUndoShroudRevealCellJammable(Int cellX, Int cellY, Int playerIndex, Bool isBeingJammed);
+	std::multimap<UnsignedInt, UnsignedInt>::iterator queueUndoShroudRevealCellJammable(Int cellX, Int cellY, Int playerIndex, Bool beingJammed);
 #endif
 #endif
 	
