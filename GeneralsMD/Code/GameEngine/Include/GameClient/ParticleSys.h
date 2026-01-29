@@ -61,6 +61,10 @@ enum ParticleSystemID CPP_11(: Int)
 #define DEFAULT_VOLUME_PARTICLE_DEPTH ( 0 )//The Default is not to do the volume thing!
 #define OPTIMUM_VOLUME_PARTICLE_DEPTH ( 6 )
 
+// TheSuperHackers @info The X and Y angles are not necessary for particles because there are only 2 placement modes:
+// Billboard (always facing camera) and Ground Aligned, which overwrite any rotations on the X and Y axis by design.
+// Therefore particles can only be rotated on the Z axis. Zero Hour never had X and Y angles, but Generals did.
+#define PARTICLE_USE_XY_ROTATION (0)
 
 //--------------------------------------------------------------------------------------------------------------
 
@@ -122,7 +126,15 @@ public:
 	Coord3D m_emitterPos;												///< position of the emitter
 	Real m_velDamping;													///< velocity damping coefficient
 
+#if PARTICLE_USE_XY_ROTATION
+	Real m_angleX;															///< initial angle around X axis
+	Real m_angleY;															///< initial angle around Y axis
+#endif
 	Real m_angleZ;															///< initial angle around Z axis
+#if PARTICLE_USE_XY_ROTATION
+	Real m_angularRateX;												///< initial angle around X axis
+	Real m_angularRateY;												///< initial angle around Y axis
+#endif
 	Real m_angularRateZ;												///< initial angle around Z axis
 	Real m_angularDamping;											///< angular velocity damping coefficient
 
@@ -166,7 +178,7 @@ public:
 
 	Particle( ParticleSystem *system, const ParticleInfo *data );
 
-	inline Bool update( void );												///< update this particle's behavior - return false if dead
+	Bool update( void );												///< update this particle's behavior - return false if dead
 	void doWindMotion( void );									///< do wind motion (if present) from particle system
 
 	void applyForce( const Coord3D *force );		///< add the given acceleration
@@ -178,7 +190,7 @@ public:
 	const RGBColor *getColor( void ) { return &m_color; }
 	void setColor( RGBColor *color ) { m_color = *color; }
 
-	inline Bool isInvisible( void );										///< return true if this particle is invisible
+	Bool isInvisible( void );										///< return true if this particle is invisible
 	Bool isCulled (void) {return m_isCulled;}				///< return true if the particle falls off the edge of the screen
 	void setIsCulled (Bool enable) { m_isCulled = enable;}		///< set particle to not visible because it's outside view frustum
 
@@ -274,7 +286,15 @@ public:
 
 	AsciiString m_particleTypeName;							///< if PARTICLE, texture filename, if DRAWABLE, Drawable name
 
+#if PARTICLE_USE_XY_ROTATION
+	GameClientRandomVariable m_angleX;										///< initial angle around X axis
+	GameClientRandomVariable m_angleY;										///< initial angle around Y axis
+#endif
 	GameClientRandomVariable m_angleZ;										///< initial angle around Z axis
+#if PARTICLE_USE_XY_ROTATION
+	GameClientRandomVariable m_angularRateX;							///< initial angle around X axis
+	GameClientRandomVariable m_angularRateY;							///< initial angle around Y axis
+#endif
 	GameClientRandomVariable m_angularRateZ;							///< initial angle around Z axis
 	GameClientRandomVariable m_angularDamping;						///< angular velocity damping coefficient
 
@@ -451,7 +471,7 @@ static_assert(ARRAY_SIZE(ParticleShaderTypeNames) == ParticleSystemInfo::PARTICL
 
 static const char *const ParticleTypeNames[] =
 {
-	"NONE", "PARTICLE", "DRAWABLE", "STREAK", "VOLUME_PARTICLE","SMUDGE", nullptr
+	"NONE", "PARTICLE", "DRAWABLE", "STREAK", "VOLUME_PARTICLE", "SMUDGE", nullptr
 };
 static_assert(ARRAY_SIZE(ParticleTypeNames) == ParticleSystemInfo::PARTICLE_TYPE_COUNT + 1, "Incorrect array size");
 
@@ -549,7 +569,7 @@ public:
 	void rotateLocalTransformX( Real x );				///< rotate local transform matrix
 	void rotateLocalTransformY( Real y );				///< rotate local transform matrix
 	void rotateLocalTransformZ( Real z );				///< rotate local transform matrix
-  void setSkipParentXfrm(Bool enable) { m_skipParentXfrm = enable; } ///<disable transforming particle system with parent matrix.
+	void setSkipParentXfrm(Bool enable) { m_skipParentXfrm = enable; } ///<disable transforming particle system with parent matrix.
 
 	const Coord3D *getDriftVelocity( void ) { return &m_driftVelocity; }	///< get the drift velocity of the system
 
@@ -703,7 +723,7 @@ protected:
 	Bool							m_isDestroyed;												///< are we destroyed and waiting for particles to die
 	Bool							m_isFirstPos;													///< true if this system hasn't been drawn before.
 	Bool							m_isSaveable;													///< true if this system should be saved/loaded
-  Bool              m_skipParentXfrm;                     ///< true if this system is already in world space.
+	Bool							m_skipParentXfrm;											///< true if this system is already in world space.
 
 
 	// the actual particle system data is inherited from ParticleSystemInfo
