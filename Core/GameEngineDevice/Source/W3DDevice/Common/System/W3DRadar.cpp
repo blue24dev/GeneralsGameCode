@@ -746,12 +746,12 @@ void W3DRadar::renderObjectList( const RadarObject *listHead, TextureClass *text
 			// ---
 
 			//MODDD - require this condition. Might want to make this a small helper method to break up some complexity here.
-			if (doStealthEffect) {				
+			if (doStealthEffect) {
 				UnsignedByte r, g, b, a;
 				GameGetColorComponents( argbColor, &r, &g, &b, &a );
-
-				UnsignedByte r, g, b, a;
-				GameGetColorComponents( c, &r, &g, &b, &a );
+				
+				const UnsignedInt framesForTransition = LOGICFRAMES_PER_SECOND;
+				const UnsignedByte minAlpha = 32;
 
 				Real alphaScale = INT_TO_REAL(TheGameLogic->getFrame() % framesForTransition) / (framesForTransition / 2.0f);
 				if( alphaScale > 0.0f )
