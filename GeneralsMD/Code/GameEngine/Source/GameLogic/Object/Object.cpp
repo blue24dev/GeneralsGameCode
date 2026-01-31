@@ -1141,6 +1141,41 @@ const Object* Object::getOuterObject() const
 void Object::onDestroy()
 {
 
+	//MODDD - adding support for partial automatic refunds when in-progress/under-construction buildings are destroyed.
+	// This is a compromise between refunding 100% for being under construction at all (would reward spamming build
+	// sites around enemies just to be disruptive), and the annoying 0% for being taken out by fast attacks before a
+	// dozer gets there or has barely started (retail behavior).
+	// Though, the refund-100%-regardless idea might work out if 0% build sites worked like age of empires:
+	// the build site doesn't technically exist until a builder reaches it; it's an imaginary marker until then:
+	// unaffected by damage / invisible to non-allied players, should not block any collision so spamming doesn't cause adverse effects.
+	// Anyway, this should reduce frustration, particularly against the AI in the campaign/generals challenges
+	// when you're against an opponent that starts out borderline owning the map while you're building up.
+	// ---
+	// Check to see if this unit beint destroyed was under construction at the time.
+	// Is a 'this->isKindOf( KINDOF_STRUCTURE )' test needed? I don't think so?
+	// Note that refunds for production, AKA internal build queues like a war factory has, are handled elsewhere already.
+	// The 'OBJECT_STATUS_RECONSTRUCTING' check is for being a GLA hole that's rebuilding - not part of this feature.
+	// Also, if I understand right, buildings being sold use a construction percent below 100 to steadily count down
+	// but lack the '..._UNDER_CONSTRUCTION' status. So redundant refunds shouldn't be an issue.
+	if ( this->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION) && !this->testStatus(OBJECT_STATUS_RECONSTRUCTING) ) {
+		Player *thisPlayer = this->getControllingPlayer();
+		Money *money = thisPlayer->getMoney();
+		UnsignedInt rawAmount = this->getTemplate()->calcCostToBuild( thisPlayer );
+		// Instead of always refunding 100% of the money, use a formula:
+		//   (100 - <construction progress %>) * 0.90 * total cost.
+		// That means you get the best refund (90%) at 0% construction progress, and it decreases up until 100% (nothing).
+		// And, sanity check: require a percent between 0 and 100 (do nothing if it's below 0, how did that happen)
+		Real constructionPercent = this->getConstructionPercent();
+		if (constructionPercent >= 0.0f) {
+			if (constructionPercent > 100.0f) {
+				// clip it (still, how?)
+				constructionPercent = 100.0f;
+			}
+			UnsignedInt amount = (100.0f - constructionPercent) * 0.90f * 0.01f * rawAmount;
+			money->deposit( amount, TRUE, FALSE );
+		}
+	}
+	
 	// This is the old cleanUpContain safeguard.  Say goodbye so they don't try to look us up.
 	if( m_containedBy && m_containedBy->getContain() )
 	{
