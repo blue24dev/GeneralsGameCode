@@ -3146,6 +3146,28 @@ Bool AIUpdateInterface::isBusy() const
 	return getStateMachine()->isInBusyState();
 }
 
+//MODDD - moved to Object.cpp
+/*
+//----------------------------------------------------------------------------------------
+Bool AIUpdateInterface::isClearingMines() const
+{
+	// if we are attacking with an anti-mine weapon, we are clearing mines, regardless
+	// of our target.
+
+	if (!getObject()->testStatus(OBJECT_STATUS_IS_ATTACKING))
+		return FALSE;
+
+	const Weapon* weapon = getObject()->getCurrentWeapon();
+	if (!weapon)
+		return FALSE;
+
+	if ((weapon->getAntiMask() & WEAPON_ANTI_MINE) == 0)
+		return FALSE;
+
+	return TRUE;
+}
+*/
+
 //----------------------------------------------------------------------------------------
 /**
  * Take the shortest path towards pos in order to tighten up a formation
