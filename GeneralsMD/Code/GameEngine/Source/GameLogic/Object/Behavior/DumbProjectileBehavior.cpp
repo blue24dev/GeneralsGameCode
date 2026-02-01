@@ -450,10 +450,41 @@ Bool DumbProjectileBehavior::calcFlightPath(Bool recalcNumSegments)
 		// The BezierSegment class gives up on a path of less than 2 steps, leaving 1 point at the origin (0,0,0).
 		// Somewhere later assumes a flight path has at least 2 points and crashes if that isn't the case.
 		// This is demo'able on a helicopter that can attack other aircraft attacking a support-power-delivering aircraft flying through it.
+		// UPDATE - replacing with below. In some mods (ex: Contra, stealth general sniper units), the projectile
+		// begins where it needs to be and so has a 'm_flightPathSegments' of 0. Forcing this to a path of 2 will
+		// cause it to unnecessarily travel for a frame and miss where it's supposed to hit.
+		/*
 		if (m_flightPathSegments < 2) {
 			m_flightPathSegments = 2;
 		}
+		*/
+		if (m_flightPathSegments == 0) {
+			// Already at the destination exactly or close enough?
+			// Set the position to the end for safety and detonate now - first update frame would've done this anyway.
+			// I don't think there is a difference between detonating here and waiting for that first update frame to do it
+			// from seeing a 'm_flightPath' size of 0.
+			// Would it make sense to do this for 'm_flightPathSegments=1' too? Unsure.
+			getObject()->setPosition(&m_flightPathEnd);
+			detonate();
+			return false;
+		} else if (m_flightPathSegments == 1) {
+			// Setting the target segment count to 2 should be the same effect as the lines below
+			// (path from start to end, made up of only the start & end points with nothing inbetween)
+			m_flightPathSegments = 2;
+			// ---
+			/*
+			m_flightPath.clear();
+			m_flightPath.resize(2);
+			m_flightPath[0] = m_flightPathStart;
+			m_flightPath[1] = m_flightPathEnd;
+			return true;
+			*/
+			// ---
+		}
 	}
+	// MODDD - NOTE - the BezierSegment algorithm doesn't do anything if 'numSegments' (first param) is under 2 -
+	// 'm_flightPath' would be left empty (seg=0) or with 1 point with a lazy default of (0,0,0) (seg=1).
+	// Hence the handling above.
 	flightCurve.getSegmentPoints( m_flightPathSegments, &m_flightPath );
 	DEBUG_ASSERTCRASH(m_flightPathSegments == m_flightPath.size(), ("m_flightPathSegments mismatch"));
 

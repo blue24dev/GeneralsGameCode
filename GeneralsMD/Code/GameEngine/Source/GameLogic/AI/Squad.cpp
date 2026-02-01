@@ -116,10 +116,16 @@ const VecObjectPtr& Squad::getAllObjects(Player *player) // Not a const function
 
 		// Adding a check in this method so that being marked dead is enough to drop it from the objectIDs.
 		// Why bother re-looking up something later that's not coming back, unlike from 'isSelectable()' failing?
+		// UPDATE - Nevermind! Some body types (ex: MultiplayerBeacons have an 'InactiveBody' module) call
+		// 'getObject()->setEffectivelyDead(true)' even though they're still meant to be selectable.
+		// Be careful assuming too much from just this, broadly speaking.
+		/*
 		if (obj->isEffectivelyDead()) {
 			it = m_objectIDs.erase(it);
 			continue;
 		}
+		*/
+
 		//MODDD - Bugfix for control group selections still leading to units the player has lost ownership of.
 		// Ex: camera can still show depiloted/hijacked units on double-tapping the control group key.
 		// Added a check for the object's player matching the expected 'player', if provided.
