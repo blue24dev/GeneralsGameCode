@@ -76,13 +76,14 @@ public:
 		// This fixes a debug-build error(warning?) about the stack near 'texture_name' in
 		// 'W3DProjectedShadowManager::addShadow' being corrupted because of a call from 'TheW3DShadowManager->addShadow',
 		// seen in 'W3DDebrisDraw::setModelName'. Observed in the Rise of the Reds mod. No idea why not in vanilla Generals ZH.
+		// UPDATE - looks like the super hackers got this since and didn't need to change this to a class. Whoops.
 		// ----------
-		//struct ShadowTypeInfo
-	  class ShadowTypeInfo
+		struct ShadowTypeInfo
 		{
-		public:
 				ShadowTypeInfo()
 				{
+						//MODDD - NOTE - Everywhere that uses ShadowTypeInfo sets 'm_type' and 'm_sizeX/Y', so no need to default them
+					  // (at least at the time of this comment)
 						m_ShadowName[0] = '\0';
 						m_type = SHADOW_NONE;
 						allowUpdates = false;
@@ -101,15 +102,6 @@ public:
 				Real	m_sizeY;			//world size of decal projection
 				Real	m_offsetX;			//world shift along x axis
 				Real	m_offsetY;			//world shift along y axis
-		public:
-				ShadowTypeInfo() {
-					// Everywhere that uses ShadowTypeInfo sets 'm_type' and 'm_sizeX/Y', so no need to default them
-					m_ShadowName[0] = '\0';
-					allowUpdates = FALSE;
-					allowWorldAlign = FALSE;
-					m_offsetX = 0;
-					m_offsetY = 0;
-				}
 		};
 
 		Shadow(void) : m_diffuse(0xffffffff), m_color(0xffffffff), m_opacity (0x000000ff), m_localAngle(0.0f) {}
