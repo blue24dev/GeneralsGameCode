@@ -83,7 +83,7 @@ public:
 				ShadowTypeInfo()
 				{
 						//MODDD - NOTE - Everywhere that uses ShadowTypeInfo sets 'm_type' and 'm_sizeX/Y', so no need to default them
-					  // (at least at the time of this comment)
+						// (at least at the time of this comment)
 						m_ShadowName[0] = '\0';
 						m_type = SHADOW_NONE;
 						allowUpdates = false;
