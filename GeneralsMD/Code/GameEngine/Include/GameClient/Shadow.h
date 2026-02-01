@@ -78,7 +78,7 @@ public:
 		// seen in 'W3DDebrisDraw::setModelName'. Observed in the Rise of the Reds mod. No idea why not in vanilla Generals ZH.
 		// UPDATE - looks like the super hackers got this since and didn't need to change this to a class. Whoops.
 		// ----------
-		struct ShadowTypeInfo
+		struct	ShadowTypeInfo
 		{
 				ShadowTypeInfo()
 				{
