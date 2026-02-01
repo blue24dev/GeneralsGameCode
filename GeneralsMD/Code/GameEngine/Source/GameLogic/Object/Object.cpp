@@ -263,9 +263,6 @@ AsciiString DebugDescribeObject(const Object *obj)
 // caller afterwards, followed by 'constructorEnd' after other info is known.
 // This allows logic that depends on the template and nothing else to run first, instead of running team-
 // related script for the neutral player's team once regardless of whether the object actually belongs to that.
-// TODO (for somewhere): don't apply power-based events such as low-power-disabling-things until after
-// post-load to avoid a crash in 'OverlordContain' from dependency objects not being found from IDs yet.
-// Note that even as-is, the template-to-use is known before the constructor is called, so it can be involved.
 Object::Object( const ThingTemplate *tt ) :
   Thing(tt),
 	m_indicatorColor(0),
@@ -372,6 +369,7 @@ Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& 
 	}
 	this->objectInitLockLocal = FALSE;
 	this->objectInitLockLocalTemp = FALSE;
+	this->moneySpentOnMe = 0;
 }
 
 void Object::initHookup()
@@ -972,6 +970,13 @@ Bool Object::isInitLockedHard() {
 	return objectInitLock;
 }
 
+Int Object::getMoneySpentOnMe() {
+	return moneySpentOnMe;
+}
+void Object::setMoneySpentOnMe(Int moneySpentOnMe) {
+	this->moneySpentOnMe = moneySpentOnMe;
+}
+
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 Object::~Object()
@@ -1160,19 +1165,30 @@ void Object::onDestroy()
 	if ( this->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION) && !this->testStatus(OBJECT_STATUS_RECONSTRUCTING) ) {
 		Player *thisPlayer = this->getControllingPlayer();
 		Money *money = thisPlayer->getMoney();
-		UnsignedInt rawAmount = this->getTemplate()->calcCostToBuild( thisPlayer );
-		// Instead of always refunding 100% of the money, use a formula:
-		//   (100 - <construction progress %>) * 0.90 * total cost.
-		// That means you get the best refund (90%) at 0% construction progress, and it decreases up until 100% (nothing).
-		// And, sanity check: require a percent between 0 and 100 (do nothing if it's below 0, how did that happen)
-		Real constructionPercent = this->getConstructionPercent();
-		if (constructionPercent >= 0.0f) {
-			if (constructionPercent > 100.0f) {
-				// clip it (still, how?)
-				constructionPercent = 100.0f;
+
+		// Instead of re-computing the cost to build this, get the 'money-spent-on-me' variable. This is a safety feature.
+		// If the user canceled a construction manually for a 100% refund before this point, this logic would run
+		// and give a refund on top of that, redunding easily more than the player actually spent on the build site in total.
+		// Manually cancelling a build will set the money-spent-on-me var to 0 so that double dipping is avoided.
+		// ---
+		// UnsignedInt rawAmount = this->getTemplate()->calcCostToBuild( thisPlayer );
+		UnsignedInt rawAmount = getMoneySpentOnMe();
+		if (rawAmount != 0) {
+			// Instead of always refunding 100% of the money, use a formula:
+			//   (100 - <construction progress %>) * 0.90 * total cost.
+			// That means you get the best refund (90%) at 0% construction progress, and it decreases up until 100% (nothing).
+			// And, sanity check: require a percent between 0 and 100 (do nothing if it's below 0, how did that happen)
+			Real constructionPercent = this->getConstructionPercent();
+			if (constructionPercent >= 0.0f) {
+				if (constructionPercent > 100.0f) {
+					// clip it (still, how?)
+					constructionPercent = 100.0f;
+				}
+				UnsignedInt amount = (100.0f - constructionPercent) * 0.90f * 0.01f * rawAmount;
+				money->deposit( amount, TRUE, FALSE );
+				// Not that this should be necessary, but may as well.
+				setMoneySpentOnMe(0);
 			}
-			UnsignedInt amount = (100.0f - constructionPercent) * 0.90f * 0.01f * rawAmount;
-			money->deposit( amount, TRUE, FALSE );
 		}
 	}
 	

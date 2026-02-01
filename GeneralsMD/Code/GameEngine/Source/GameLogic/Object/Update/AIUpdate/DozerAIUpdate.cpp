@@ -1705,9 +1705,14 @@ Object *DozerAIUpdate::construct( const ThingTemplate *what,
 	if( isRebuild == FALSE )
 	{
 		Money *money = owningPlayer->getMoney();
+		
+		//MODDD - turned the amount to withdraw (money spent on the construction site) into a temp var.
+		Int cost = what->calcCostToBuild( owningPlayer );
 
-		money->withdraw( what->calcCostToBuild( owningPlayer ) );
+		money->withdraw( cost );
 
+		//MODDD - let the object be aware of how much money was spent on it for easier refund logic.
+		obj->setMoneySpentOnMe(cost);
 	}
 
 	// initialize object

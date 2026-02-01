@@ -1515,8 +1515,24 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			if( !building->testStatus(OBJECT_STATUS_RECONSTRUCTING))
 			{
 				Money *money = thisPlayer->getMoney();
-				UnsignedInt amount = building->getTemplate()->calcCostToBuild( thisPlayer );
+
+				//MODDD - use the stored refund cost instead (unless it's the default 0 for some reason).
+				// ---
+				//UnsignedInt amount = building->getTemplate()->calcCostToBuild( thisPlayer );
+				//money->deposit( amount, TRUE, FALSE );
+				// ---
+				// Replacement:
+				// ---
+				UnsignedInt amount = building->getMoneySpentOnMe();
+				if (amount == 0) {
+					amount = building->getTemplate()->calcCostToBuild( thisPlayer );
+				}
 				money->deposit( amount, TRUE, FALSE );
+				// And, since the money has already been refunded, set its money-spent-on-me to 0 so that the
+				// partial-refund-on-destroyed mechanism doesn't try to double dip & refund again.
+				building->setMoneySpentOnMe(0);
+				// ---
+
 			}
 
 			//

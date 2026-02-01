@@ -186,6 +186,8 @@ public:
 	void initObject();
 	Bool isInitLocked();
 	Bool isInitLockedHard();
+	Int getMoneySpentOnMe();
+	void setMoneySpentOnMe(Int moneySpentOnMe);
 
 	void onDestroy();																							///< run during TheGameLogic::destroyObject
 
@@ -856,9 +858,15 @@ private:
 	Byte													m_numTriggerAreasActive;
 	Bool													m_singleUseCommandUsed;
 	Bool													m_isReceivingDifficultyBonus;
+
 	//MODDD - new
 	Bool objectInitLockLocal;
 	Bool objectInitLockLocalTemp;
+	// How much money has been spent on this unit for easier refund logic.
+	// For now, only used by buildings (things with construction sites) to make refund logic easier.
+	// Not expected for normal units (come from a factory / instantly appear) or buildings after they are constructed.
+	// Selling an already completed structure doesn't use this, though could if you want that to.
+	Int moneySpentOnMe;
 
 };
 
