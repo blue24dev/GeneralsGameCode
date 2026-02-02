@@ -3486,7 +3486,9 @@ void Object::crc( Xfer *xfer )
 #if RETAIL_COMPATIBLE_CRC
 		tmp.format("m_objectUpgradesCompleted: %I64X, ", m_objectUpgradesCompleted);
 #else
-		tmp.format("m_objectUpgradesCompleted: %s, ", m_objectUpgradesCompleted.toHexString().c_str());
+		//MODDD - changed '.c_str()' to '.str()', tiny mistake on thesuperhackers's part?
+		//tmp.format("m_objectUpgradesCompleted: %s, ", m_objectUpgradesCompleted.toHexString().c_str());
+		tmp.format("m_objectUpgradesCompleted: %s, ", m_objectUpgradesCompleted.toHexString().str());
 #endif
 		logString.concat(tmp);
 	}

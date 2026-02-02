@@ -191,6 +191,10 @@
 // difficulty, to be disabled regardless of the setting in the GameData.ini file.
 #define DISABLE_UNIT_HEALTH_WEAPON_DIFFICULTY_BONUSES TRUE
 
+// Changes a few places so that units running over neutral units (civilians, units owned by the neutral/civilian player)
+// is no longer possible. Changes most checks that forbid this from being strictly allies to more broadly being non-enemies.
+#define DONT_RUN_OVER_NEUTRAL_UNITS TRUE
+
 // Setting added in the hopes of preventing a major source of hardware lag: adding to a continually building
 // '<documents>/Command and... Data/Replays/00000000.REP' file for a replay the user may never intend to save/look at anyway.
 // Assuming the issue is what I think it is (hard drive writes becoming obnoxious in long-running games,
@@ -209,9 +213,27 @@
 // even if the player count is 1 or 0(?).
 #define MAP_NAME_PLAYER_COUNT_EXTENSION_ALWAYS TRUE
 
+// Replace logic in MapUtil.cpp's 'MapCache::updateCache' to load maps from the filesystem the first time
+// they are requested and avoid the MapCache.ini files. Similar to 'SHOW_SP_OFFICIAL_MAPS_IN_RELEASE=TRUE'
+// below, but this also fixes a small display bug: map names for maps without a display name (raw file name)
+// in the System tab always being lowercase.
+#define NEW_MAP_LIST_LOAD_LOGIC TRUE
+
 // Show single player official maps even in release builds. These are normally hidden because they include
 // campaign maps and a few debug/test ones.
+// Note that this has no effect if 'NEW_MAP_LIST_LOAD_LOGIC' is on - can imply this setting to be TRUE in that case.
 #define SHOW_SP_OFFICIAL_MAPS_IN_RELEASE TRUE
+
+// Overrides default behavior to block generating the map cache in release mode by default.
+// Otherwise, maps added to your install's 'Maps' folder won't have any effect on the maps shown in map selection.
+// Note that deleting your install folder's 'Maps/MapCache.ini' folder won't be enough to regenerate it -
+// it appears the default one from the '.big' files will be used instead.
+// Although it's intended to use the 'Documents/<game>/Maps maps' folder for adding custom maps, it can be
+// difficult to tell which mod a map is intended for if all maps across several mods are in the same
+// Documents' 'Maps' folder.
+// It's easier to use an install's 'Maps' folder for maps only intended for that mod since running the game
+// from there is the only way to see those maps. Having a separate install folder per mod is a good rule of thumb.
+#define FORCE_UPDATE_MAP_CACHE_IN_RELEASE TRUE
 
 // Is there a confirmation prompt on exiting the entire program (not just a particular 'game')?
 // Retail's way was to depend on the game being windowed or not, this setting applies regardless of that.

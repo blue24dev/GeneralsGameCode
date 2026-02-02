@@ -1601,9 +1601,11 @@ Bool Object::canCrushOrSquish(Object *otherObj, CrushSquishTestType testType ) c
 	UnsignedByte crusherLevel = getCrusherLevel();
 
 	// order matters: we want to know if I consider it to be an ally, not vice versa
-	//MODDD - just don't be enemies instead?  Running over civilians seems like a bad idea don'cha think?
-	//if( getRelationship( otherObj ) == ALLIES )
+#if !DONT_RUN_OVER_NEUTRAL_UNITS
+	if( getRelationship( otherObj ) == ALLIES )
+#else
 	if( getRelationship( otherObj ) != ENEMIES )
+#endif
 	{
 		//Friends don't let friends crush friends.
 		return false;

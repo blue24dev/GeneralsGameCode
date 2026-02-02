@@ -411,17 +411,59 @@ void MapCache::updateCache( void )
 	const AsciiString mapDir = getMapDir();
 	const AsciiString userMapDir = getUserMapDir();
 
+	//MODDD - If the setting is on, replaces all below with a much simpler 'load system/user maps if this is
+	// the first time this run of the game'.
+	// No need for the MapCache.ini files if you're going to load the maps from the file system every time anyway.
+#if NEW_MAP_LIST_LOAD_LOGIC
+	// Using this flag to make sure maps are only loaded once, presumably early on during startup.
+	// Adding/removing maps while the game is running shouldn't really occur anyway.
+	if (m_doCreateStandardMapCacheINI) {
+		// Interestingly enough, loading from the map cache INI isn't needed to see maps in the '.big' file for system maps.
+		// 'loadMapsFromDisk' probably includes checking the '.big' file for any maps intended to be in the install's 'Maps' folder.
+		//loadMapsFromMapCacheINI(mapDir);
+		if (loadMapsFromDisk(mapDir, TRUE, FALSE))
+		{
+			// nothing to do
+		}
+		if (loadMapsFromDisk(userMapDir, FALSE, FALSE))
+		{
+			// nothing to do
+		}
+		m_doCreateStandardMapCacheINI = FALSE;
+	}
+#else
+
 	// Create the standard map cache if required. Is only relevant for Mod developers.
 	// TheSuperHackers @tweak This step is done before loading any other map caches to not poison the cached state.
 	if (m_doCreateStandardMapCacheINI)
 	{
+
+		//MODDD - changing how this works.  The 'doesFileExist(mapDir...)' check should be done regardless since
+		// there isn't much to do if that directory doesn't exist.
+		// Also involving a new preprocessor setting to always build the cache even for release builds
+		// (if you do lots of modding, you may as well have this as a baked-in default)
+		// ---
+		/*
 #if defined(RTS_DEBUG)
 		// only create the map cache file if "Maps" folder exists
 		const Bool buildMapCache = TheLocalFileSystem->doesFileExist(mapDir.str());
 #else
 		const Bool buildMapCache = TheGlobalData->m_buildMapCache;
 #endif
-		if (buildMapCache)
+	  */
+		// ---
+		// Replaced with
+		// ---
+#if defined(RTS_DEBUG) || FORCE_UPDATE_MAP_CACHE_IN_RELEASE
+		const Bool buildMapCache = TRUE;
+#else
+		const Bool buildMapCache = TheGlobalData->m_buildMapCache;
+#endif
+		// ---
+
+		//MODDD - replaced this check
+		//if (buildMapCache)
+		if (buildMapCache && TheLocalFileSystem->doesFileExist(mapDir.str()))
 		{
 			const Bool isOfficial = TRUE;
 			const Bool filterByAllowedMaps = !m_allowedMaps.empty();
@@ -455,6 +497,8 @@ void MapCache::updateCache( void )
 		loadMapsFromMapCacheINI(mapDir);
 		m_doLoadStandardMapCacheINI = FALSE;
 	}
+
+#endif
 }
 
 void MapCache::prepareUnseenMaps( const AsciiString &mapDir )

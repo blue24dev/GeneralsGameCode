@@ -246,10 +246,10 @@ void showSkirmishGameOptionsUnderlyingGUIElements( Bool show )
 //MODDD - simple helpers
 void showSystemMaps() {
 	//MODDD - In debug mode, go ahead and show all maps.
-#if defined(DEBUG) || SHOW_SP_OFFICIAL_MAPS_IN_RELEASE
+#if defined(RTS_DEBUG) || SHOW_SP_OFFICIAL_MAPS_IN_RELEASE
 	populateMapListbox( mapList, TRUE, MAPFILTER_ANY, TheSkirmishGameInfo->getMap() );
 #else
-	populateMapListbox( mapList, TRUE, TRUE, TheSkirmishGameInfo->getMap() );
+	populateMapListbox( mapList, TRUE, MAPFILTER_MULTIPLAYER_ONLY, TheSkirmishGameInfo->getMap() );
 #endif
 }
 

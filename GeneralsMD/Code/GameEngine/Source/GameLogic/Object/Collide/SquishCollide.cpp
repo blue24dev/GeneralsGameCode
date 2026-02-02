@@ -89,7 +89,11 @@ void SquishCollide::onCollide( Object *other, const Coord3D *loc, const Coord3D 
 	}
 
 	// order matters: we want to know if IT considers ME to be an ally (a reversal of the usual situation)
+#if !DONT_RUN_OVER_NEUTRAL_UNITS
 	if( other->getCrusherLevel() > 0 && other->getRelationship(getObject()) != ALLIES)
+#else
+	if( other->getCrusherLevel() > 0 && other->getRelationship(getObject()) == ENEMIES)
+#endif
 	{
 		PhysicsBehavior *otherPhysics = other->getPhysics();
 		if (otherPhysics == nullptr)
