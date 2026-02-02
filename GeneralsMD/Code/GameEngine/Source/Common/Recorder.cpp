@@ -1675,7 +1675,7 @@ AsciiString RecorderClass::getReplayArchiveDir()
 }
 
 /**
- * returns the file extention for the replay files.
+ * returns the file extension for the replay files.
  */
 AsciiString RecorderClass::getReplayExtention() {
 	return AsciiString(replayExtention);

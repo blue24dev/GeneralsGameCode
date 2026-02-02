@@ -1034,7 +1034,7 @@ void GameLogic::startNewGame( Bool saveGame )
 	m_rankLevelLimit = 1000;	// this is reset every game.
 
 	//
-	// only reset the next object ID allocater counter when we're not loading a save game.
+	// only reset the next object ID allocator counter when we're not loading a save game.
 	// for save games, we read this value out of the save game file and it is important
 	// that we preserve it as we load and execute the game
 	//
@@ -1786,7 +1786,8 @@ void GameLogic::startNewGame( Bool saveGame )
 	// update the loadscreen
 	updateLoadProgress(LOAD_PROGRESS_POST_PRELOAD_ASSETS);
 
-	TheTacticalView->setAngleAndPitchToDefault();
+	TheTacticalView->setAngleToDefault();
+	TheTacticalView->setPitchToDefault();
 	TheTacticalView->setZoomToDefault();
 
 	if( TheRecorder )
@@ -1832,7 +1833,8 @@ void GameLogic::startNewGame( Bool saveGame )
 
 	// Set up the camera height based on the map height & globalData.
 	TheTacticalView->initHeightForMap();
-	TheTacticalView->setAngleAndPitchToDefault();
+	TheTacticalView->setAngleToDefault();
+	TheTacticalView->setPitchToDefault();
 	TheTacticalView->setZoomToDefault();
 
 	// update the loadscreen
@@ -3443,7 +3445,7 @@ void GameLogic::destroyObject( Object *obj )
 	if (!obj || obj->isDestroyed())
 		return;
 
-	// run the object onDestroy event if provied
+	// run the object onDestroy event if provided
 	for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
 	{
 		DestroyModuleInterface* destroy = (*m)->getDestroy();
@@ -4261,7 +4263,7 @@ void GameLogic::xfer( Xfer *xfer )
 	// !!!DON'T DO THIS!!! ----> xfer->xferObjectID( &m_nextObjectID ); <---- !!!DON'T DO THIS!!!
 
 	//
-	// xfer a table of contents that contain thing template and indentifier pairs.  this
+	// xfer a table of contents that contain thing template and identifier pairs.  this
 	// table of contents is good for this save file only as unique numbers are only
 	// generated and stored for the actual things that are on this map
 	//

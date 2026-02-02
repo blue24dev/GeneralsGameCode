@@ -1207,7 +1207,7 @@ void Object::onDestroy()
 		(*b)->onDelete();
 	}
 
-	//Have to remove ourself from looking as well.  RebuildHoleWorkers definately hit here.
+	//Have to remove ourself from looking as well.  RebuildHoleWorkers definitely hit here.
 	handlePartitionCellMaintenance();
 }
 
@@ -2708,7 +2708,7 @@ void Object::setDisabledUntil( DisabledType type, UnsignedInt frame )
 	if( m_disabledTillFrame[ type ] != frame )
 	{
 		// an edge-test for disabledness, for type. This INCREMENTS m_pauseCount
-		// srj sez: HELD nevers disables special powers.
+		// srj sez: HELD never disables special powers.
 		if ( type != DISABLED_HELD && !isDisabledByType( type ) )
 			pauseAllSpecialPowers( TRUE );
 
@@ -2880,7 +2880,7 @@ Bool Object::clearDisabled( DisabledType type )
 
 
 	// an edge-test for disabledness, for type. This DECREMENTS m_pauseCount
-	// srj sez: HELD nevers disables special powers.
+	// srj sez: HELD never disables special powers.
 	if ( type != DISABLED_HELD && isDisabledByType( type ) )
 		pauseAllSpecialPowers( FALSE );
 
@@ -4546,7 +4546,7 @@ void Object::onDisabledEdge(Bool becomingDisabled)
 }
 
 //-------------------------------------------------------------------------------------------------
-/** Object CRC implemtation */
+/** Object CRC implementation */
 //-------------------------------------------------------------------------------------------------
 void Object::crc( Xfer *xfer )
 {
@@ -4672,7 +4672,7 @@ void Object::crc( Xfer *xfer )
 }
 
 //-------------------------------------------------------------------------------------------------
-/** Object xfer implemtation
+/** Object xfer implementation
 	* Version Info:
 	* 1: Initial version
 	* 2: Xfers m_singleUseCommandUsed... determines if the single use command button has been used or not.
@@ -5383,7 +5383,7 @@ void Object::onDie( DamageInfo *damageInfo )
 	if( m_radarData )
 		TheRadar->removeObject( this );
 
-	// Just in case I have been sporting one of thise fancy Terrain Decals,
+	// Just in case I have been sporting one of those fancy Terrain Decals,
 	//I naturally lose it now, because I'm dead.
 	Drawable *draw = getDrawable();
 	if (draw) draw->setTerrainDecalFadeTarget(0.0f, -0.03f);//fade...
@@ -5584,7 +5584,7 @@ Bool Object::hasGhostObject() const
 }
 
 //-------------------------------------------------------------------------------------------------
-/// We have moved a 'significant' amount, so do maintenence that can be considered 'cell-based'
+/// We have moved a 'significant' amount, so do maintenance that can be considered 'cell-based'
 void Object::onPartitionCellChange()
 {
 	handlePartitionCellMaintenance();
@@ -7349,7 +7349,7 @@ void Object::defect( Team* newTeam, UnsignedInt detectionTime )
 		ai->aiIdle( CMD_FROM_AI );
 	}
 
-	// Play our sound indicating we've been defected. (weird verbage, but true.)
+	// Play our sound indicating we've been defected. (weird verbiage, but true.)
 	AudioEventRTS voiceDefect = *getTemplate()->getVoiceDefect();
 	voiceDefect.setObjectID(getID());
 	TheAudio->addAudioEvent(&voiceDefect);
@@ -7383,8 +7383,8 @@ void Object::defect( Team* newTeam, UnsignedInt detectionTime )
 	}
 
 	// defect any mines that are owned by this structure, right now.
-	// unfortunately, structures don't keep list of mines they own, so we must do
-	// this the hard way :-( [fortunately, this doens't happen very often, so this
+	// unfortunately, structures don't keep a list of mines they own, so we must do
+	// this the hard way :-( [fortunately, this doesn't happen very often, so this
 	// is probably an acceptable, if icky, solution.] (srj)
 	for (Object* mine = TheGameLogic->getFirstObject(); mine; mine = mine->getNextObject())
 	{
