@@ -347,7 +347,9 @@ Player::Player( Int playerIndex )
 
 	//MODDD - uhh no, PlayerList calls this enough
 	//init( nullptr );
-
+	
+	//MODDD
+	slotIndex = -1;
 }
 
 //=============================================================================
@@ -871,14 +873,14 @@ void Player::initFromDict(const Dict* d)
 
 		Real moneyScalar = 1.0;
 #if NOOB_MODE
-		if(getSide().compare("AmericaAirForceGeneral") == 0) {
+		if (slotIndex == 1) {
 			moneyScalar = 1.4;
 		}
 #endif
 		m_money.deposit( FORCE_HUMAN_PLAYER_START_MONEY * moneyScalar, FALSE );
 	}
 #elif NOOB_MODE
-	if (getPlayerType() == PLAYER_HUMAN && getSide().compare("AmericaAirForceGeneral") == 0) {
+	if (getPlayerType() == PLAYER_HUMAN && slotIndex == 1) {
 		// get the current amount of money, presumably set by skirmish setting. Add it back with the scalar applied.
 		UnsignedInt currentMoney = m_money.countMoney();
 		m_money.withdraw(m_money.countMoney());
@@ -888,8 +890,8 @@ void Player::initFromDict(const Dict* d)
 
 	//MODDD - personal choice. Change the experience rate for air force general
 #if NOOB_MODE
-	if (getPlayerType() == PLAYER_HUMAN && getSide().compare("AmericaAirForceGeneral") == 0) {
-		setSkillPointsModifier(1.25);
+	if (getPlayerType() == PLAYER_HUMAN && slotIndex == 1) {
+		setSkillPointsModifier(1.15);
 	}
 #endif
 
@@ -2960,7 +2962,7 @@ Bool Player::canBuild(const ThingTemplate *tmplate) const
 	// -----------------------------------------------------------------------------
 #if NOOB_MODE
 	/*
-	if (this->getSide().compare("AmericaAirForceGeneral") == 0 && tmplate->getName().startsWithNoCase("boss")) {
+	if (slotIndex == 1 && tmplate->getName().startsWithNoCase("boss")) {
 		// proceed - skip prereqs check
 	} else
 	*/

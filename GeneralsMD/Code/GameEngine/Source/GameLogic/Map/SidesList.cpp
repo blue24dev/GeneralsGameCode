@@ -67,13 +67,17 @@ static const Int K_SIDES_DATA_VERSION_3 = 3;	// includes Team list.
 */
 SidesInfo::SidesInfo(void) :
 	m_pBuildList(nullptr),
-	m_scripts(nullptr)
+	m_scripts(nullptr),
+	//MODDD
+	slotIndex(-1)
 {
 }
 
 SidesInfo::SidesInfo(const SidesInfo& thatref) :
 	m_pBuildList(nullptr),
-	m_scripts(nullptr)
+	m_scripts(nullptr),
+	//MODDD
+	slotIndex(-1)
 {
 	*this = thatref;
 }

@@ -828,4 +828,8 @@ private:
 
 	Bool									m_isPlayerDead;
 	Bool									m_logicalRetaliationModeEnabled;
+
+	//MODDD - convenience feature: index of the slot this player is for.
+	// Can be -1 to mean player side isn't associated with a slot (neutral, civilian, or from a side otherwise baked into the map).
+public: Int slotIndex;
 };

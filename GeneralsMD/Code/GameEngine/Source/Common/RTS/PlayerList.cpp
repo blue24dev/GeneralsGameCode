@@ -143,6 +143,9 @@ void PlayerList::newGame()
 		Player* p = m_players[m_playerCount++];
 		p->initFromDict(d);
 
+		//MODDD - quick hack. Carry the 'slotIndex' from the side over to this player.
+		p->slotIndex = TheSidesList->getSideInfo(i)->slotIndex;
+
 		// Multiplayer override
 		Bool exists;	// throwaway, since we don't care if it exists
 		if (d->getBool(TheKey_multiplayerIsLocal, &exists))

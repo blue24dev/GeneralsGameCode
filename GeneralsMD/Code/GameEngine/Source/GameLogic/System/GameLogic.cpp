@@ -1565,6 +1565,9 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			}
 			TheSidesList->addSide(&d);
 
+			//MODDD - quick hack. Get the most recently added side and let it be aware of what slot number it is for.
+			TheSidesList->getSideInfo(TheSidesList->getNumSides() - 1)->slotIndex = i;
+
 			AsciiString playerTeamName;
 			playerTeamName.set("team");
 			playerTeamName.concat(playerName);

@@ -6702,8 +6702,9 @@ void ScriptActions::doAffectSkillPointsModifier(const AsciiString& playerName, R
 	if (
 		playerDst->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(playerDst->getPlayerNameKey()).getLength() != 0 &&
 		playerDst->getPlayerType() == PLAYER_HUMAN &&
-		playerDst->getSide().compare("AmericaAirForceGeneral") == 0
-		) {
+		playerDst->slotIndex == 1
+	)
+	{
 		Real newModifierMod = newModifier * 1.15;
 		playerDst->setSkillPointsModifier(newModifierMod);
 		return;
