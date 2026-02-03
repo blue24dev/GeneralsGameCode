@@ -96,10 +96,10 @@ protected:
 	Bool						m_effectsInitialized;
 	Bool						m_wasAirborne;
 	Bool						m_isPowersliding;
+
 	/// debris emitters for when tank is moving
-	ParticleSystem* m_dustEffect;
-	ParticleSystem* m_dirtEffect;
-	ParticleSystem* m_powerslideEffect;
+	enum { DustEffect, DirtEffect, PowerslideEffect };
+	ParticleSystemID m_truckEffectIDs[3];
 
 	Real						m_frontWheelRotation;
 	Real						m_rearWheelRotation;
@@ -120,9 +120,9 @@ protected:
 	AudioEventRTS		m_landingSound;
 
 	//Tank Data
-	/// debris emitters for when tank is moving
-	ParticleSystem* m_treadDebrisLeft;
-	ParticleSystem* m_treadDebrisRight;
+
+	/// left and right debris emitters for when tank is moving
+	ParticleSystemID m_treadDebrisIDs[2];
 
 	enum TreadType { TREAD_LEFT, TREAD_RIGHT, TREAD_MIDDLE };	//types of treads for different vehicles
 	enum {MAX_TREADS_PER_TANK=4};
@@ -144,7 +144,6 @@ protected:
 	void enableEmitters( Bool enable );						///< stop creating debris from the tank treads
 	void updateBones( void );
 
-	void startMoveDebris( void );												///< start creating debris from the tank treads
 	void stopMoveDebris( void );												///< stop creating debris from the tank treads
 	void updateTreadObjects(void);												///< update pointers to sub-objects like treads.
 	void updateTreadPositions(Real uvDelta);									///< update uv coordinates on each tread

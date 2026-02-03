@@ -74,9 +74,8 @@ protected:
 
 protected:
 
-	/// debris emitters for when tank is moving
-	ParticleSystem* m_treadDebrisLeft;
-	ParticleSystem* m_treadDebrisRight;
+	/// left and right debris emitters for when tank is moving
+	ParticleSystemID m_treadDebrisIDs[2];
 
 	RenderObjClass *m_prevRenderObj;
 
@@ -97,7 +96,6 @@ protected:
 	void createEmitters( void );					///< Create particle effects.
 	void tossEmitters( void );					///< Create particle effects.
 
-	void startMoveDebris( void );												///< start creating debris from the tank treads
 	void stopMoveDebris( void );												///< stop creating debris from the tank treads
 	void updateTreadObjects(void);												///< update pointers to sub-objects like treads.
 	void updateTreadPositions(Real uvDelta);									///< update uv coordinates on each tread
