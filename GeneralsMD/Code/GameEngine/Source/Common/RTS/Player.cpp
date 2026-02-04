@@ -874,7 +874,7 @@ void Player::initFromDict(const Dict* d)
 		Real moneyScalar = 1.0;
 #if NOOB_MODE
 		if (slotIndex == 1) {
-			moneyScalar = 1.4;
+			moneyScalar = 1.25;
 		}
 #endif
 		m_money.deposit( FORCE_HUMAN_PLAYER_START_MONEY * moneyScalar, FALSE );
@@ -884,11 +884,11 @@ void Player::initFromDict(const Dict* d)
 		// get the current amount of money, presumably set by skirmish setting. Add it back with the scalar applied.
 		UnsignedInt currentMoney = m_money.countMoney();
 		m_money.withdraw(m_money.countMoney());
-		m_money.deposit(currentMoney * 1.4, FALSE);
+		m_money.deposit(currentMoney * 1.25, FALSE);
 	}
 #endif
 
-	//MODDD - personal choice. Change the experience rate for air force general
+	//MODDD - personal choice. Change the experience rate for a particular player.
 #if NOOB_MODE
 	if (getPlayerType() == PLAYER_HUMAN && slotIndex == 1) {
 		setSkillPointsModifier(1.15);

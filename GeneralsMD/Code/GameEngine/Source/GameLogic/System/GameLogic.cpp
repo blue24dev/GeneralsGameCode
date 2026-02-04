@@ -1617,6 +1617,11 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 
 	// update the player list to match the new map.
 	TheTeamFactory->reset();
+
+	//MODDD - NOTE - this step is important! It builds players from the sides list.
+	// As in, doesn't just make 16 or 32 blank player items in an array (already done much earlier), it really
+	// populates each one from a side and increases the 'm_playerCount' in 'ThePlayerList'.
+	// This isn't very clear from a glance and is important to understand how a game is prepared.
 	ThePlayerList->newGame();
 
 	// update the loadscreen

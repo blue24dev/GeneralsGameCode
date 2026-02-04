@@ -141,10 +141,12 @@ void PlayerList::newGame()
 
 		/// @todo The Player class should have a reset() method, instead of directly calling initFromDict() (MSB)
 		Player* p = m_players[m_playerCount++];
-		p->initFromDict(d);
 
 		//MODDD - quick hack. Carry the 'slotIndex' from the side over to this player.
+		// (do this early since some stuff in 'initFromDict' might need to know this in time)
 		p->slotIndex = TheSidesList->getSideInfo(i)->slotIndex;
+
+		p->initFromDict(d);
 
 		// Multiplayer override
 		Bool exists;	// throwaway, since we don't care if it exists
