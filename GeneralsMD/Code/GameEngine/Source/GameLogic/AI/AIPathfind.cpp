@@ -9037,6 +9037,11 @@ Path *Pathfinder::buildActualPath( const Object *obj, LocomotorSurfaceTypeMask a
 	return path;
 }
 
+//MODDD - debugging
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+
 /**
  * Work backwards from goal cell to construct final path.
  */
@@ -9090,14 +9095,27 @@ void Pathfinder::prependCells( Path *path, const Coord3D *fromPos,
 
 	//MODDD - a fix. 'cell' is null at this point very rarely.
 	// Taking inspiration from the 'RETAIL_COMPATIBLE_PATHFINDING' fix below, hopefully this is ok in a pinch?
-	if (!cell) {
+	if (!cell)
+	{
+		SYSTEMTIME lt;
+		std::ofstream outputFile;
+		GetLocalTime(&lt);
+		outputFile.open("test_crash_AIPathfind.txt", std::ios::out | std::ios::app);
+		outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << "." << std::setw(3) << std::setfill('0') << lt.wMilliseconds << " - ";
+		outputFile << "'cell' is unexpectedly 'nullptr' in 'Pathfinder::prependCells'!" << std::endl;
+		
 		// Try 'prevCell'.
 		cell = prevCell;
 
 		// Probably paranoid, but just in case.
 		if (!cell) {
+			outputFile << "* 'cell = prevCell' quickfix did not work - 'cell' is still 'nullptr'! 'prependCells' call terminated." << std::endl;
+			outputFile.close();
 			return;
 		}
+		
+		outputFile << "* 'cell = prevCell' quickfix resulted in a non-null 'cell' - proceeding..." << std::endl;
+		outputFile.close();
 
 		// If the cell from 'cell = prevCell' isn't null, should be fine to proceed.
 		// Whether the method should just return here at this point instead, I have no idea.
