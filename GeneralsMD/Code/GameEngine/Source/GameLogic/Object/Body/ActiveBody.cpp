@@ -183,23 +183,33 @@ ActiveBody::ActiveBody( Thing *thing, const ModuleData* moduleData ) :
 			// nothing for here - superweapons are plenty beefy enough
 		} else if(obj->isKindOf(KINDOF_FS_BASE_DEFENSE)) {
 			// get more health
-			m_currentHealth *= 1.6;
-			m_prevHealth *= 1.6;
-			m_maxHealth *= 1.6;
-			m_initialHealth *= 1.6;
+			m_currentHealth *= 1.5;
+			m_prevHealth *= 1.5;
+			m_maxHealth *= 1.5;
+			m_initialHealth *= 1.5;
 		} else {
 			// buildings otherwise
-			m_currentHealth *= 1.4;
-			m_prevHealth *= 1.4;
-			m_maxHealth *= 1.4;
-			m_initialHealth *= 1.4;
+			m_currentHealth *= 1.75;
+			m_prevHealth *= 1.75;
+			m_maxHealth *= 1.75;
+			m_initialHealth *= 1.75;
 		}
 	} else {
-		// non-structure: have a little more health anyway
-		m_currentHealth *= 1.15;
-		m_prevHealth *= 1.15;
-		m_maxHealth *= 1.15;
-		m_initialHealth *= 1.15;
+			KindOfMaskType tempMask;
+			tempMask.set(KINDOF_INFANTRY);
+			tempMask.set(KINDOF_VEHICLE);
+			tempMask.set(KINDOF_AIRCRAFT);
+			tempMask.set(KINDOF_HUGE_VEHICLE);
+			// don't these should be needed, nor forbidding UNATTACKABLE?
+			//tempMask.set(KINDOF_DOZER);
+			//tempMask.set(KINDOF_HARVESTER);
+			if (obj->isAnyKindOf(tempMask)) {
+				// a non-structure unit (not some weird system/inner-detail thing): have a little more health anyway
+				m_currentHealth *= 1.20;
+				m_prevHealth *= 1.20;
+				m_maxHealth *= 1.20;
+				m_initialHealth *= 1.20;
+			}
 	}
 	*/
 

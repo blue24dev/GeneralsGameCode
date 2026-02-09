@@ -1136,33 +1136,66 @@ void ThingTemplate::validateAudio()
 //-------------------------------------------------------------------------------------------------
 void ThingTemplate::validate()
 {
-	/*
 	//MODDD - for me only
 	// This area is called after ThingFactory::parseObjectDefinition's 'ini->initFromINI( thingTemplate...' call,
 	// so any hackish edits to apply to everything can go here.
+	/*
 	if (this->isKindOf(KINDOF_STRUCTURE)) {
 		if (this->isKindOf(KINDOF_FS_SUPERWEAPON)) {
 			// superweapons cost a bit more but already take a while to build - less factor there
-			this->m_buildCost *= 1.2;
-			this->m_buildTime *= 1.25;
-		} else if(this->isKindOf(KINDOF_FS_BASE_DEFENSE)) {
-			// even better health buff, so they cost more, but the build time isn't affected as much
 			this->m_buildCost *= 1.25;
-			this->m_buildTime *= 1.4;
+			this->m_buildTime *= 1.05;
+		} else if(this->isKindOf(KINDOF_FS_BASE_DEFENSE)) {
+			// to be less spammable since each one's health boost is more noticeable
+			this->m_buildCost *= 1.15;
+			this->m_visionRange *= 1.35;
 		} else {
 			// all other buildings
-			this->m_buildTime *= 1.75;
+			this->m_buildTime *= 1.12;
+			this->m_visionRange *= 1.3;
 		}
 	} else {
 		// non-buildings
-		this->m_buildTime *= 2;
+		this->m_buildTime *= 1.08;
+		this->m_visionRange *= 1.3;
 	}
-	
+	*/
+
+	// Make things that are exclusively dozers cheaper.
+	// This that are dozers and harvesters at the same time (GLA workers) don't need as much of a reduction.
+	/*
+	if (this->isKindOf(KINDOF_DOZER)) {
+		if (this->isKindOf(KINDOF_HARVESTER)) {
+			// Worker
+			// (200 -> 130)
+			this->m_buildCost *= 0.65;
+		} else {
+			// (1000 -> 500)
+			// Normal dozer (vehicle)
+			this->m_buildCost *= 0.50;
+		}
+	} else {
+		// Also, if something isn't a dozer and is a harvester (chinook, supply truck), cut the price by 25%.
+		
+		if (this->isKindOf(KINDOF_HARVESTER) && !(this->isKindOf(KINDOF_CAN_ATTACK)) ) {
+			this->m_buildCost *= 0.75;
+		}
+		// and those
+		else if (this->isKindOf(KINDOF_FS_SUPPLY_CENTER)) {
+			this->m_buildCost *= 0.75;
+		}
+		else if (this->isKindOf(KINDOF_FS_WARFACTORY)) {
+			this->m_buildCost *= 0.75;
+		}
+	}
+	*/
+
 	//MODDD - for me only
 	// Beware of side effects like revealed fog of war that doesn't un-reveal. This is not well understood.
 	// Checking for being above 0 first appears to fix this. Are negative values used in some places?
+	/*
 	if (this->m_shroudClearingRange > 0) {
-		this->m_shroudClearingRange *= 1.6;
+		this->m_shroudClearingRange *= 1.50f;
 	}
 	*/
 
@@ -1593,6 +1626,35 @@ Int ThingTemplate::calcCostToBuild( const Player* player) const
 Int ThingTemplate::calcTimeToBuild( const Player* player) const
 {
 	Int buildTime = getBuildTime() * LOGICFRAMES_PER_SECOND;
+
+	//MODDD - for me only.  AI players can build faster over the course of a long game.
+	/*
+	const UnsignedInt startMin = 16;
+	const UnsignedInt endMin = 60;
+	const float startModifier = 1.00;
+	const float endModifier = 0.75;
+	
+	if(player->getPlayerType() == PLAYER_COMPUTER)
+	{
+		UnsignedInt frame = TheGameLogic->getFrame();
+		if (frame <= (30 * 60) * startMin)
+		{
+			buildTime *= startModifier;
+		}
+		else if(frame <= (30 * 60) * endMin)
+		{
+			float fracto = (float)(frame - ((30 * 60) * startMin)) / (float)((30 * 60) * (endMin - startMin));
+			float fracto_inv = 1.0f - fracto;
+			
+			buildTime *= endModifier + (startModifier - endModifier) * fracto_inv;
+		}
+		else
+		{
+			buildTime *= endModifier;
+		}
+	}
+	*/
+
 	buildTime *= player->getHandicap()->getHandicap(Handicap::BUILDTIME, this);
 
 	Real factionModifier = 1 + player->getProductionTimeChangePercent( getName() );

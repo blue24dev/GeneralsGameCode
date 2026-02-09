@@ -45,12 +45,14 @@
 
 // This is here to easily toggle between the retail compatible with fixed pathfinding fallback and pure fixed pathfinding mode
 #ifndef RETAIL_COMPATIBLE_PATHFINDING
-#define RETAIL_COMPATIBLE_PATHFINDING (1)
+//MODDD - was 1, changed to 0 for more fixes
+#define RETAIL_COMPATIBLE_PATHFINDING (0)
 #endif
 
 // This is here to easily toggle between the retail compatible pathfinding memory allocation and the new static allocated data mode
 #ifndef RETAIL_COMPATIBLE_PATHFINDING_ALLOCATION
-#define RETAIL_COMPATIBLE_PATHFINDING_ALLOCATION (1)
+//MODDD - was 1, changed to 0 for more fixes
+#define RETAIL_COMPATIBLE_PATHFINDING_ALLOCATION (0)
 #endif
 
 // This is essentially synonymous for RETAIL_COMPATIBLE_CRC. There is a lot wrong with AIGroup, such as use-after-free, double-free, leaks,

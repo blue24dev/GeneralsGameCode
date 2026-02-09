@@ -468,6 +468,17 @@ void SpecialPowerModule::startPowerRecharge()
 	{
 		// set the frame we will be 100% available on now
 		m_availableOnFrame = TheGameLogic->getFrame() + getSpecialPowerTemplate()->getReloadTime();
+
+		/*
+		//MODDD - for me only.  Add 4 minutes to non-shared times, ex: super weapons
+		// (first check for not being the dummy 'never ready' value before doing math on top of that)
+		if (m_availableOnFrame != 0xFFFFFFFF){
+			if (getObject()->isKindOf( KINDOF_FS_SUPERWEAPON )) {
+				m_availableOnFrame += 30 * 60 * 4;
+			}
+		}
+		*/
+
 		//MODDD STUPID HACK
 		/*
 		if (strstr(this->getPowerName().str(), "CIA") == nullptr) {

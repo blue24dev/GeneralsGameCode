@@ -1330,6 +1330,10 @@ void GlobalData::parseGameDataDefinition( INI* ini )
 	if (TheWritableGlobalData->m_maxCameraHeight < 900) {
 		TheWritableGlobalData->m_maxCameraHeight = 900;
 	}
+	// Be easier to build in general
+	if (TheWritableGlobalData->m_allowedHeightVariationForBuilding < 14.0) {
+		TheWritableGlobalData->m_allowedHeightVariationForBuilding = 14.0;
+	}
 	*/
 
 	// override INI values with user preferences
