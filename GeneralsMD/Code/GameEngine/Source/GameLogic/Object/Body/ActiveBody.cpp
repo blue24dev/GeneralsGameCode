@@ -175,7 +175,6 @@ ActiveBody::ActiveBody( Thing *thing, const ModuleData* moduleData ) :
 	m_maxHealth = getActiveBodyModuleData()->m_maxHealth;
 	m_initialHealth = getActiveBodyModuleData()->m_initialHealth;
 
-	/*
 	//MODDD - for me only
 	Object* obj = getObject();
 	if (obj->isKindOf(KINDOF_STRUCTURE)) {
@@ -211,7 +210,6 @@ ActiveBody::ActiveBody( Thing *thing, const ModuleData* moduleData ) :
 				m_initialHealth *= 1.20;
 			}
 	}
-	*/
 
 	// force an initially-valid armor setup
 	validateArmorAndDamageFX();

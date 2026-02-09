@@ -1326,7 +1326,6 @@ void GlobalData::parseGameDataDefinition( INI* ini )
 	ini->initFromINI( TheWritableGlobalData, s_GlobalDataFieldParseTable );
 
 	//MODDD - for me only. Always have a greater MaxCameraHeight
-	/*
 	if (TheWritableGlobalData->m_maxCameraHeight < 900) {
 		TheWritableGlobalData->m_maxCameraHeight = 900;
 	}
@@ -1334,7 +1333,6 @@ void GlobalData::parseGameDataDefinition( INI* ini )
 	if (TheWritableGlobalData->m_allowedHeightVariationForBuilding < 14.0) {
 		TheWritableGlobalData->m_allowedHeightVariationForBuilding = 14.0;
 	}
-	*/
 
 	// override INI values with user preferences
 	OptionPreferences optionPref;

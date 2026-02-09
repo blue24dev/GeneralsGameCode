@@ -1139,7 +1139,6 @@ void ThingTemplate::validate()
 	//MODDD - for me only
 	// This area is called after ThingFactory::parseObjectDefinition's 'ini->initFromINI( thingTemplate...' call,
 	// so any hackish edits to apply to everything can go here.
-	/*
 	if (this->isKindOf(KINDOF_STRUCTURE)) {
 		if (this->isKindOf(KINDOF_FS_SUPERWEAPON)) {
 			// superweapons cost a bit more but already take a while to build - less factor there
@@ -1159,11 +1158,9 @@ void ThingTemplate::validate()
 		this->m_buildTime *= 1.08;
 		this->m_visionRange *= 1.3;
 	}
-	*/
 
 	// Make things that are exclusively dozers cheaper.
 	// This that are dozers and harvesters at the same time (GLA workers) don't need as much of a reduction.
-	/*
 	if (this->isKindOf(KINDOF_DOZER)) {
 		if (this->isKindOf(KINDOF_HARVESTER)) {
 			// Worker
@@ -1188,16 +1185,13 @@ void ThingTemplate::validate()
 			this->m_buildCost *= 0.75;
 		}
 	}
-	*/
 
 	//MODDD - for me only
 	// Beware of side effects like revealed fog of war that doesn't un-reveal. This is not well understood.
 	// Checking for being above 0 first appears to fix this. Are negative values used in some places?
-	/*
 	if (this->m_shroudClearingRange > 0) {
 		this->m_shroudClearingRange *= 1.50f;
 	}
-	*/
 
 	if (m_shadowTextureName.isEmpty())
 	{
@@ -1628,11 +1622,10 @@ Int ThingTemplate::calcTimeToBuild( const Player* player) const
 	Int buildTime = getBuildTime() * LOGICFRAMES_PER_SECOND;
 
 	//MODDD - for me only.  AI players can build faster over the course of a long game.
-	/*
 	const UnsignedInt startMin = 16;
-	const UnsignedInt endMin = 60;
+	const UnsignedInt endMin = 90;
 	const float startModifier = 1.00;
-	const float endModifier = 0.75;
+	const float endModifier = 0.85;
 	
 	if(player->getPlayerType() == PLAYER_COMPUTER)
 	{
@@ -1653,7 +1646,6 @@ Int ThingTemplate::calcTimeToBuild( const Player* player) const
 			buildTime *= endModifier;
 		}
 	}
-	*/
 
 	buildTime *= player->getHandicap()->getHandicap(Handicap::BUILDTIME, this);
 
