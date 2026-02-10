@@ -1622,10 +1622,10 @@ Int ThingTemplate::calcTimeToBuild( const Player* player) const
 	Int buildTime = getBuildTime() * LOGICFRAMES_PER_SECOND;
 
 	//MODDD - for me only.  AI players can build faster over the course of a long game.
-	const UnsignedInt startMin = 16;
-	const UnsignedInt endMin = 90;
+	const UnsignedInt startMin = 15;
+	const UnsignedInt endMin = 60;
 	const float startModifier = 1.00;
-	const float endModifier = 0.85;
+	const float endModifier = 0.80;
 	
 	if(player->getPlayerType() == PLAYER_COMPUTER)
 	{
