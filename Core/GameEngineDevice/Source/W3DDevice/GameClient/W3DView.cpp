@@ -193,6 +193,17 @@ void W3DView::setHeight(Int height)
  	m_3DCamera->Get_Viewport(vMin,vMax);
  	vMax.Y=(Real)(m_originY+height)/(Real)TheDisplay->getHeight();
  	m_3DCamera->Set_Viewport(vMin,vMax);
+
+	//MODDD - call for the max scroll bounds to be re-calculated so that the very bottom of the intended bounds
+	// aren't missing until the user does something to re-trigger it (zoom in/out at all or mousewheel click).
+	// Explanation:
+	// It appears the bottom command bar's impact on the logical screen height (shifted by the command bar being
+	// visible or collapsed) is done very late into starting a game. The actual scroll bounds at the time are as
+	// if the command bar were collapsed instead of visible as it immediately is.
+	// Easy fix is to re-run the bounds calc whenever the logical screen height is adjusted.
+	// This also fixes the scroll bounds being a little out-of-sync on toggling the bottom command bar without
+	// doing the aforementioned zoom in/out/mousewheel-click to re-trigger a bounds calc.
+	m_cameraAreaConstraintsValid = false;
 }
 
 //-------------------------------------------------------------------------------------------------
