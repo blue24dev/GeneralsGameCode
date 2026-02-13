@@ -57,9 +57,14 @@ class AsciiString;
 // (release mode unaffected by this entirely)
 #define RELEASE_DEBUG_LOGGING
 
+//MODDD - forcing this off for now.
+#define NO_DEBUG_CRC
+#define DISABLE_ALLOW_DEBUG_UTILS
+
 #ifdef RELEASE_DEBUG_LOGGING  ///< Creates a DebugLogFile.txt (No I or D) with all the debug log goodness.  Good for startup problems.
-	#define ALLOW_DEBUG_UTILS 1
-	#define DEBUG_LOGGING 1
+//MODDD - no to these for now
+//	#define ALLOW_DEBUG_UTILS 1
+//	#define DEBUG_LOGGING 1
 	#define DISABLE_DEBUG_CRASHING 1
 	#define DISABLE_DEBUG_STACKTRACE 1
 	#define DISABLE_DEBUG_PROFILE 1
