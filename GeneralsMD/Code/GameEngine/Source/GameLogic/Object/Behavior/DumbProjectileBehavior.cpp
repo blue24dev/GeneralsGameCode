@@ -445,6 +445,9 @@ Bool DumbProjectileBehavior::calcFlightPath(Bool recalcNumSegments)
 	{
 		Real flightDistance = flightCurve.getApproximateLength();
 		m_flightPathSegments = ceil( flightDistance / m_flightPathSpeed );
+
+		//MODDD - may no longer be needed since TheSuperHackers changes
+#if 0
 		//MODDD - bugfix for a crash on firing to an object that is close enough for the projectile to reach it in
 		// 1 frame (or whatever unit of time 'm_flightPathSpeed' is for).
 		// The BezierSegment class gives up on a path of less than 2 steps, leaving 1 point at the origin (0,0,0).
@@ -481,11 +484,17 @@ Bool DumbProjectileBehavior::calcFlightPath(Bool recalcNumSegments)
 			*/
 			// ---
 		}
+#endif
 	}
+	
 	// MODDD - NOTE - the BezierSegment algorithm doesn't do anything if 'numSegments' (first param) is under 2 -
 	// 'm_flightPath' would be left empty (seg=0) or with 1 point with a lazy default of (0,0,0) (seg=1).
 	// Hence the handling above.
-	flightCurve.getSegmentPoints( m_flightPathSegments, &m_flightPath );
+	// ---UPDATE - made these points before TheSuperHackers changes - trying with the changes seen above reverted
+	// ---
+	// TheSuperHackers @info The way flight paths are used requires at least two curve points.
+	// DumbProjectileBehavior::update has been modified to handle cases where the flight path consists of one or zero curve points.
+	flightCurve.getSegmentPoints(m_flightPathSegments, &m_flightPath);
 	DEBUG_ASSERTCRASH(m_flightPathSegments == m_flightPath.size(), ("m_flightPathSegments mismatch"));
 
 #if defined(RTS_DEBUG)
@@ -623,6 +632,7 @@ UpdateSleepTime DumbProjectileBehavior::update()
 		return UPDATE_SLEEP_NONE;
 	}
 
+	// TheSuperHackers @info This check also covers the case where the flight path consists of zero curve points.
 	if( m_currentFlightPathStep >= m_flightPath.size() )
 	{
 		// No more steps to use. Would go out of bounds on vector, so have to do something.
@@ -687,8 +697,28 @@ UpdateSleepTime DumbProjectileBehavior::update()
       //long, blurry projectile graphics which look badly oriented on step 0 of the flight path
       // so lets orient it the same as if it were on frame 1!
     {
-		  Coord3D prevPos = m_flightPath[0];
-		  Coord3D curPos = m_flightPath[1];
+			// TheSuperHackers @bugfix Caball009 10/01/2026 Check vector size before accessing the second element to prevent out of bounds access.
+			// The non-deterministic behavior for retail clients cannot be fixed, so this will remain a source of potential mismatches in retail compatibility mode.
+			// Use the flight path start and end coordinates if needed, so that the behavior is deterministic for patched clients.
+			Coord3D prevPos;
+			Coord3D curPos;
+
+			if (m_flightPath.size() >= 2)
+			{
+				prevPos = m_flightPath[0];
+				curPos = m_flightPath[1];
+			}
+			else
+			{
+#if RETAIL_COMPATIBLE_CRC
+				DEBUG_CRASH(("A mismatch is likely to happen if this code path is used in a match with unpatched clients."
+					" Vector is expected to contain two or more elements; check the weapon speed value."));
+#endif
+
+				prevPos = m_flightPathStart;
+				curPos = m_flightPathEnd;
+				flightStep = m_flightPathEnd;
+			}
 
 		  Vector3 curDir(curPos.x - prevPos.x, curPos.y - prevPos.y, curPos.z - prevPos.z);
 		  curDir.Normalize();	// buildTransformMatrix wants it this way

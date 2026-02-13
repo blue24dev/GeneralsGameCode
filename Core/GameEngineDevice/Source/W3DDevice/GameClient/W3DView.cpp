@@ -194,16 +194,10 @@ void W3DView::setHeight(Int height)
  	vMax.Y=(Real)(m_originY+height)/(Real)TheDisplay->getHeight();
  	m_3DCamera->Set_Viewport(vMin,vMax);
 
-	//MODDD - call for the max scroll bounds to be re-calculated so that the very bottom of the intended bounds
-	// aren't missing until the user does something to re-trigger it (zoom in/out at all or mousewheel click).
-	// Explanation:
-	// It appears the bottom command bar's impact on the logical screen height (shifted by the command bar being
-	// visible or collapsed) is done very late into starting a game. The actual scroll bounds at the time are as
-	// if the command bar were collapsed instead of visible as it immediately is.
-	// Easy fix is to re-run the bounds calc whenever the logical screen height is adjusted.
-	// This also fixes the scroll bounds being a little out-of-sync on toggling the bottom command bar without
-	// doing the aforementioned zoom in/out/mousewheel-click to re-trigger a bounds calc.
+	// TheSuperHackers @bugfix Now recalculates the camera constraints because
+	// showing or hiding the control bar will change the viewable area.
 	m_cameraAreaConstraintsValid = false;
+	m_recalcCamera = true;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -223,6 +217,9 @@ void W3DView::setWidth(Int width)
 	//we want to maintain the same scale, so we'll need to adjust the fov.
 	//default W3D fov for full-screen is 50 degrees.
 	m_3DCamera->Set_View_Plane((Real)width/(Real)TheDisplay->getWidth()*DEG_TO_RADF(50.0f),-1);
+
+	m_cameraAreaConstraintsValid = false;
+	m_recalcCamera = true;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1816,6 +1813,7 @@ void W3DView::scrollBy( Coord2D *delta )
 //-------------------------------------------------------------------------------------------------
 void W3DView::forceRedraw()
 {
+	m_cameraAreaConstraintsValid = false;
 	m_recalcCamera = true;
 }
 
@@ -1848,6 +1846,9 @@ void W3DView::setPitch( Real radians )
 	m_doingPitchCamera = false;
 	m_doingZoomCamera = false;
 	m_doingScriptedCameraLock = false;
+	// TheSuperHackers @fix Now recalculates the camera constraints because
+	// the camera pitch can change the camera distance towards the map border.
+	m_cameraAreaConstraintsValid = false;
 	m_recalcCamera = true;
 }
 
@@ -1870,6 +1871,9 @@ void W3DView::setPitchToDefault( void )
 
 	m_FXPitch = 1.0f;
 
+	// TheSuperHackers @fix Now recalculates the camera constraints because
+	// the camera pitch can change the camera distance towards the map border.
+	m_cameraAreaConstraintsValid = false;
 	m_recalcCamera = true;
 }
 
@@ -1959,6 +1963,7 @@ void W3DView::setFieldOfView( Real angle )
 #if defined(RTS_DEBUG)
 	// this is only for testing, and recalculating the
 	// camera every frame is wasteful
+	m_cameraAreaConstraintsValid = false;
 	m_recalcCamera = true;
 #endif
 }
