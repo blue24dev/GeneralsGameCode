@@ -1058,6 +1058,11 @@ Bool Radar::getLastEventLoc( Coord3D *eventPos )
 // ------------------------------------------------------------------------------------------------
 void Radar::tryUnderAttackEvent( const Object *obj )
 {
+	//MODDD - bugfix for 'under attack' notifications in the shell map.
+	if (TheGameLogic->getGameMode() == GAME_SHELL)
+	{
+		return;
+	}
 
 	// sanity
 	if( obj == nullptr )
