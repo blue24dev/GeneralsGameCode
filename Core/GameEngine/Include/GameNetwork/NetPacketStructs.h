@@ -35,9 +35,9 @@ typedef UnsignedByte NetPacketFieldType;
 namespace NetPacketFieldTypes {
 	constexpr const NetPacketFieldType CommandType = 'T';
 	constexpr const NetPacketFieldType Relay = 'R';
+	constexpr const NetPacketFieldType Frame = 'F';
 	constexpr const NetPacketFieldType PlayerId = 'P';
 	constexpr const NetPacketFieldType CommandId = 'C';
-	constexpr const NetPacketFieldType Frame = 'F';
 	constexpr const NetPacketFieldType Data = 'D';
 }
 
@@ -46,32 +46,38 @@ namespace NetPacketFieldTypes {
 ////////////////////////////////////////////////////////////////////////////////
 
 struct NetPacketCommandTypeField {
-	char header;
+	NetPacketCommandTypeField() : fieldType(NetPacketFieldTypes::CommandType) {}
+	char fieldType;
 	UnsignedByte commandType;
 };
 
 struct NetPacketRelayField {
-	char header;
+	NetPacketRelayField() : fieldType(NetPacketFieldTypes::Relay) {}
+	char fieldType;
 	UnsignedByte relay;
 };
 
-struct NetPacketPlayerIdField {
-	char header;
-	UnsignedByte playerId;
-};
-
 struct NetPacketFrameField {
-	char header;
+	NetPacketFrameField() : fieldType(NetPacketFieldTypes::Frame) {}
+	char fieldType;
 	UnsignedInt frame;
 };
 
+struct NetPacketPlayerIdField {
+	NetPacketPlayerIdField() : fieldType(NetPacketFieldTypes::PlayerId) {}
+	char fieldType;
+	UnsignedByte playerId;
+};
+
 struct NetPacketCommandIdField {
-	char header;
+	NetPacketCommandIdField() : fieldType(NetPacketFieldTypes::CommandId) {}
+	char fieldType;
 	UnsignedShort commandId;
 };
 
 struct NetPacketDataField {
-	char header;
+	NetPacketDataField() : fieldType(NetPacketFieldTypes::Data) {}
+	char fieldType;
 };
 
 ////////////////////////////////////////////////////////////////////////////////
