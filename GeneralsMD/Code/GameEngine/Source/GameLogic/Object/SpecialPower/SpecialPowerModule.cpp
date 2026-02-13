@@ -378,7 +378,6 @@ Real SpecialPowerModule::getPercentReady() const
 	// ---------
 	UnsignedInt reloadTime = modData->m_specialPowerTemplate->getReloadTime();
 	//MODDD - for me only: extra time for superweapons
-	/*
 	if (!modData->m_specialPowerTemplate->isSharedNSync())
 	{
 		if (getObject()->isKindOf( KINDOF_FS_SUPERWEAPON ))
@@ -386,7 +385,6 @@ Real SpecialPowerModule::getPercentReady() const
 			reloadTime += 30 * 60 * 4;
 		}
 	}
-	*/
 	Real percent = 1.0f - ((readyFrame - TheGameLogic->getFrame()) /
 												 (Real)reloadTime);
 	// ---------
@@ -492,12 +490,10 @@ void SpecialPowerModule::startPowerRecharge()
 		// ---------
 		UnsignedInt reloadTime = modData->m_specialPowerTemplate->getReloadTime();
 		//MODDD - for me only: extra time for superweapons
-		/*
 		if (getObject()->isKindOf( KINDOF_FS_SUPERWEAPON ))
 		{
 			reloadTime += 30 * 60 * 4;
 		}
-		*/
 		m_availableOnFrame = TheGameLogic->getFrame() + reloadTime;
 		// ---------
 	}
