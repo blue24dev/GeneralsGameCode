@@ -369,8 +369,27 @@ Real SpecialPowerModule::getPercentReady() const
 	}
 
 	// calculate the percent
+	//MODDD - replacement for potential edits
+	// ---------
+	/*
 	Real percent = 1.0f - ((readyFrame - TheGameLogic->getFrame()) /
 												 (Real)modData->m_specialPowerTemplate->getReloadTime());
+	*/
+	// ---------
+	UnsignedInt reloadTime = modData->m_specialPowerTemplate->getReloadTime();
+	//MODDD - for me only: extra time for superweapons
+	/*
+	if (!modData->m_specialPowerTemplate->isSharedNSync())
+	{
+		if (getObject()->isKindOf( KINDOF_FS_SUPERWEAPON ))
+		{
+			reloadTime += 30 * 60 * 4;
+		}
+	}
+	*/
+	Real percent = 1.0f - ((readyFrame - TheGameLogic->getFrame()) /
+												 (Real)reloadTime);
+	// ---------
 
 	return percent;
 }
@@ -467,24 +486,20 @@ void SpecialPowerModule::startPowerRecharge()
 	else
 	{
 		// set the frame we will be 100% available on now
-		m_availableOnFrame = TheGameLogic->getFrame() + getSpecialPowerTemplate()->getReloadTime();
-
-		//MODDD - for me only.  Add 4 minutes to non-shared times, ex: super weapons
-		// (first check for not being the dummy 'never ready' value before doing math on top of that)
-		if (m_availableOnFrame != 0xFFFFFFFF){
-			if (getObject()->isKindOf( KINDOF_FS_SUPERWEAPON )) {
-				m_availableOnFrame += 30 * 60 * 4;
-			}
-		}
-
-		//MODDD STUPID HACK
+		//MODDD - replacement for potential edits
+		// ---------
+		//m_availableOnFrame = TheGameLogic->getFrame() + getSpecialPowerTemplate()->getReloadTime();
+		// ---------
+		UnsignedInt reloadTime = modData->m_specialPowerTemplate->getReloadTime();
+		//MODDD - for me only: extra time for superweapons
 		/*
-		if (strstr(this->getPowerName().str(), "CIA") == nullptr) {
-			m_availableOnFrame = TheGameLogic->getFrame() + getSpecialPowerTemplate()->getReloadTime();
-		} else {
-			m_availableOnFrame = TheGameLogic->getFrame() + 0;
+		if (getObject()->isKindOf( KINDOF_FS_SUPERWEAPON ))
+		{
+			reloadTime += 30 * 60 * 4;
 		}
 		*/
+		m_availableOnFrame = TheGameLogic->getFrame() + reloadTime;
+		// ---------
 	}
 }
 
