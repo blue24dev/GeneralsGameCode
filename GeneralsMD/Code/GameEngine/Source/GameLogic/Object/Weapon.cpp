@@ -2007,7 +2007,7 @@ void Weapon::computeBonus(const Object *source, WeaponBonusConditionFlags extraB
 	//MODDD - for me only, boost the range of base defense weapons
 	if (source->isKindOf(KINDOF_FS_BASE_DEFENSE)) {
 		Real current = bonus.getField(WeaponBonus::RANGE);
-		bonus.setField(WeaponBonus::RANGE, current + 0.25f);
+		bonus.setField(WeaponBonus::RANGE, current + 0.17f);
 	}
 }
 
