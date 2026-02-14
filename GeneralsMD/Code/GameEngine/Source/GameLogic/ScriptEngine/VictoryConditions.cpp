@@ -142,7 +142,7 @@ void VictoryConditions::reset( void )
 //-------------------------------------------------------------------------------------------------
 void VictoryConditions::update( void )
 {
-#if GENERALS_CHALLENGE_FORCE
+#if GENERALS_CHALLENGE_FORCE || CAMPAIGN_FORCE
 	//MODDD - CHANGE
 	// Early termination.
 	// Check for default defeat conditions removed.

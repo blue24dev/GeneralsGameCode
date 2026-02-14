@@ -1278,7 +1278,14 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	Campaign* currentCampaign = TheCampaignManager->getCurrentCampaign();
 	Bool isChallengeCampaign = m_gameMode == GAME_SINGLE_PLAYER && currentCampaign && currentCampaign->m_isChallengeCampaign;
 #endif
-  
+
+	//MODDD - TODO - CAMPAIGN_FORCE support
+	// Don't force m_gameMode to 'GAME_SINGLEPLAYER' if the user is playing the map through skirmish mode?
+	// Need that case to not be able to break so it can be a start point for getting co-op campaign to work with
+	// network-mode's 'TheGameInfo' (not a null one that single-player mode uses).
+	// Ex: let other human players use the remaining human-marked sides in a map, don't try to generate players / starting
+	// buildings/units from the skirmish-slots like skirmish/network-mode does in retail.
+
 	// Fill in the game color and Factions before we do the Load Screen
 	TheGameInfo = nullptr;
 	if (TheNetwork)
@@ -1306,9 +1313,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 		}
 		else if(m_gameMode == GAME_SKIRMISH)
 		{
-#if !CAMPAIGN_FORCE
 		  TheGameInfo = TheSkirmishGameInfo;
-#endif
 		}
 		//MODDD - #if wrapper. For GENERALS_CHALLENGE_FORCE, there is no need for this check as the skirmish game
 		// mode should be used instead for non-network games.
