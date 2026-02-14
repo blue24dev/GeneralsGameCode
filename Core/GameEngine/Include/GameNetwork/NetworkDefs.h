@@ -48,6 +48,19 @@ enum ConnectionNumbers CPP_11(: Int)
 	NUM_CONNECTIONS
 };
 
+//MODDD - moved from below, see comment there
+// ---------
+#pragma pack(push, 1)
+struct TransportMessageHeader
+{
+	UnsignedInt crc;											///< packet-level CRC (must be first in packet)
+	UnsignedShort magic;									///< Magic number identifying Generals packets
+//	Int id;
+//	NetMessageFlags flags;
+};
+#pragma pack(pop)
+// ---------
+
 static constexpr const Int MAX_SLOTS = MAX_PLAYER+1;
 
 // TheSuperHackers @info As we are not detecting for network fragmentation and dynamically adjusting payload sizes, we set an 1100 bytes UDP payload as a safe upper limit for various networks
@@ -88,6 +101,8 @@ struct CommandPacket
 
 #define MAX_TRANSPORT_STATISTICS_SECONDS 30
 
+//MODDD - moved above to work with RETAIL_COMPATIBLE_AIGROUP=0
+/*
 #pragma pack(push, 1)
 struct TransportMessageHeader
 {
@@ -97,6 +112,7 @@ struct TransportMessageHeader
 //	NetMessageFlags flags;
 };
 #pragma pack(pop)
+*/
 
 /**
  * Transport message - encapsulating info kept by the transport layer about each
