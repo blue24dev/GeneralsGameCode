@@ -382,7 +382,7 @@ Real SpecialPowerModule::getPercentReady() const
 	{
 		if (getObject()->isKindOf( KINDOF_FS_SUPERWEAPON ))
 		{
-			reloadTime += 30 * 60 * 4;
+			reloadTime += LOGICFRAMES_PER_SECOND * 60 * 4;
 		}
 	}
 	Real percent = 1.0f - ((readyFrame - TheGameLogic->getFrame()) /
@@ -492,7 +492,7 @@ void SpecialPowerModule::startPowerRecharge()
 		//MODDD - for me only: extra time for superweapons
 		if (getObject()->isKindOf( KINDOF_FS_SUPERWEAPON ))
 		{
-			reloadTime += 30 * 60 * 4;
+			reloadTime += LOGICFRAMES_PER_SECOND * 60 * 4;
 		}
 		m_availableOnFrame = TheGameLogic->getFrame() + reloadTime;
 		// ---------
