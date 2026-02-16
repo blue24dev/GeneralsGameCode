@@ -108,6 +108,10 @@ public:
 	void setPosition( const Coord3D *pos );
 	const Coord3D* getPosition( void );
 
+	//MODDD - bugfix for particle cannon sound hit sound effect volume being too low
+	void setPlaySoundFromGround( Bool playSoundFromGround );
+	Bool getPlaySoundFromGround();
+
 	void setObjectID( ObjectID objID );
 	ObjectID getObjectID( void );
 
@@ -175,6 +179,10 @@ protected:
 	TimeOfDay m_timeOfDay;					///< This should be the current Time Of Day.
 
 	Coord3D m_positionOfAudio;			///< Position of the sound if no further positional updates are necessary
+
+	//MODDD - bugfix for particle cannon sound hit sound effect volume being too low
+	Bool m_playSoundFromGround;
+
 	union	// These are now unioned.
 	{
 		ObjectID m_objectID;						///< ObjectID of the object that this sound is tied to. Position can be automatically updated from this.

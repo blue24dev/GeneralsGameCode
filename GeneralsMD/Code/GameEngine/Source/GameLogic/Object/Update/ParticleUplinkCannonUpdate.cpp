@@ -1053,6 +1053,15 @@ void ParticleUplinkCannonUpdate::createOrbitToTargetLaser( UnsignedInt growthFra
 		{
 			m_annihilationSound.setDrawableID( m_orbitToTargetBeamID );
 			//m_annihilationSound.setPosition( &m_initialTargetPosition );
+
+			//MODDD - bugfix for particle cannon sound hit sound effect volume being too low
+			// To play from the bottom of the drawable instead of the top.
+			// It seems updating the sound in real time from here isn't feasible, this sends something off to
+			// the rest of the sound system that won't be affected by position updates from here.
+			// It looks like 'addAudioEvent' adds a copy of the current 'AudioEventRTS' so changes to this
+			// source version won't carry over to that one.    Fun...
+			m_annihilationSound.setPlaySoundFromGround(TRUE);
+
 			m_annihilationSound.setPlayingHandle( TheAudio->addAudioEvent( &m_annihilationSound ) );
 		}
 	}
