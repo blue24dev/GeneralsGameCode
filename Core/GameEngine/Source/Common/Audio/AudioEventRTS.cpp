@@ -81,7 +81,9 @@ AudioEventRTS::AudioEventRTS()
 										m_allCount(0),
 										m_playerIndex(-1),
 										m_delay(0.0f),
-										m_uninterruptible(FALSE)
+										m_uninterruptible(FALSE),
+										//MODDD - bugfix for particle cannon sound hit sound effect volume being too low
+										m_playSoundFromGround(FALSE)
 {
 	m_attackName.clear();
 	m_decayName.clear();
@@ -108,7 +110,9 @@ AudioEventRTS::AudioEventRTS( const AsciiString& eventName )
 										m_allCount(0),
 										m_playerIndex(-1),
 										m_delay(0.0f),
-										m_uninterruptible(FALSE)
+										m_uninterruptible(FALSE),
+										//MODDD - bugfix for particle cannon sound hit sound effect volume being too low
+										m_playSoundFromGround(FALSE)
 {
 	m_attackName.clear();
 	m_decayName.clear();
@@ -136,7 +140,9 @@ AudioEventRTS::AudioEventRTS( const AsciiString& eventName, ObjectID ownerID )
 										m_allCount(0),
 										m_playerIndex(-1),
 										m_delay(0.0f),
-										m_uninterruptible(FALSE)
+										m_uninterruptible(FALSE),
+										//MODDD - bugfix for particle cannon sound hit sound effect volume being too low
+										m_playSoundFromGround(FALSE)
 {
 	m_attackName.clear();
 	m_decayName.clear();
@@ -172,7 +178,9 @@ AudioEventRTS::AudioEventRTS( const AsciiString& eventName, DrawableID drawableI
 										m_allCount(0),
 										m_playerIndex(-1),
 										m_delay(0.0f),
-										m_uninterruptible(FALSE)
+										m_uninterruptible(FALSE),
+										//MODDD - bugfix for particle cannon sound hit sound effect volume being too low
+										m_playSoundFromGround(FALSE)
 {
 	m_attackName.clear();
 	m_decayName.clear();
@@ -207,7 +215,9 @@ AudioEventRTS::AudioEventRTS( const AsciiString& eventName, const Coord3D *posit
 										m_allCount(0),
 										m_playerIndex(-1),
 										m_delay(0.0f),
-										m_uninterruptible(FALSE)
+										m_uninterruptible(FALSE),
+										//MODDD - bugfix for particle cannon sound hit sound effect volume being too low
+										m_playSoundFromGround(FALSE)
 {
 	m_positionOfAudio.set( positionOfAudio );
 	m_attackName.clear();
@@ -253,6 +263,9 @@ AudioEventRTS::AudioEventRTS( const AudioEventRTS& right )
 		m_objectID = right.m_objectID;
 	}
 
+	//MODDD - bugfix for particle cannon sound hit sound effect volume being too low
+	m_playSoundFromGround = right.m_playSoundFromGround;
+
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -293,6 +306,10 @@ AudioEventRTS& AudioEventRTS::operator=( const AudioEventRTS& right )
 	{
 		m_objectID = right.m_objectID;
 	}
+	
+	//MODDD - bugfix for particle cannon sound hit sound effect volume being too low
+	m_playSoundFromGround = right.m_playSoundFromGround;
+
 	return *this;
 
 }
@@ -574,6 +591,16 @@ const Coord3D* AudioEventRTS::getPosition( void )
 	return nullptr;
 }
 
+//MODDD - bugfix for particle cannon sound hit sound effect volume being too low
+void AudioEventRTS::setPlaySoundFromGround( Bool playSoundFromGround )
+{
+	m_playSoundFromGround = playSoundFromGround;
+}
+Bool AudioEventRTS::getPlaySoundFromGround()
+{
+	return m_playSoundFromGround;
+}
+
 //-------------------------------------------------------------------------------------------------
 void AudioEventRTS::setObjectID( ObjectID objID )
 {
@@ -724,6 +751,9 @@ void AudioEventRTS::setVolume( Real vol )
 	m_volume = vol;
 }
 
+//MODDD - bugfix for particle cannon sound hit sound effect volume being too low
+#include "GameLogic/TerrainLogic.h"
+
 //-------------------------------------------------------------------------------------------------
 const Coord3D *AudioEventRTS::getCurrentPosition( void )
 {
@@ -746,7 +776,23 @@ const Coord3D *AudioEventRTS::getCurrentPosition( void )
 	case OT_Drawable:
 		if (Drawable *draw = TheGameClient->findDrawableByID(m_drawableID))
 		{
-			m_positionOfAudio.set( draw->getPosition() );
+			//MODDD - bugfix for particle cannon sound hit sound effect volume being too low
+			// Surrounding the original with a condition
+			// ------
+			if (!m_playSoundFromGround) {
+			// ------ (original)
+				m_positionOfAudio.set( draw->getPosition() );
+			// ------ (/original)
+			} else {
+				// This really should just be able to be given straight to this sound by setting 'm_positionOfAudio' either
+				// separately or in addition to being attched to this drawable from ParticleUplinkCannonUpdate.cpp.
+				// But when I tried to do that, the sound was stuck playing at the initial position (did not move with a
+				// moving particle cannon hit location).
+				// Computing this from the terrain from sound logic instead of it being supplied from elsewhere just feels weird.
+				m_positionOfAudio.set( draw->getPosition() );
+				m_positionOfAudio.z = TheTerrainLogic->getGroundHeight( m_positionOfAudio.x, m_positionOfAudio.y );
+			}
+			// ------
 		}
 		else
 		{
