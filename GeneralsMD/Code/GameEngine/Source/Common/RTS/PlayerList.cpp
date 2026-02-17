@@ -60,6 +60,9 @@
 #include "GameLogic/SidesList.h"
 #include "GameNetwork/NetworkDefs.h"
 
+//MODDD
+#include "GameNetwork/GameInfo.h"
+
 
 //-----------------------------------------------------------------------------
 /*extern*/ PlayerList *ThePlayerList = nullptr;
@@ -171,11 +174,15 @@ void PlayerList::newGame()
 		}
 #else
 		// Do a check for having the 'IsHuman' bool anyway.
+		// UPDATE - no longer a good assumption in case of non-computer-marked players that aren't intended for someone to play as.
+		// See the '#if CAMPAIGN_FORCE' block below after this loop through sides.
+		/*
 		if (d->getBool(TheKey_playerIsHuman))
 		{
 			m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = p;
 			++m_humanPlayerRefsSoftCount;
 		}
+		*/
 #endif
 
 		// Set the build list.
@@ -183,6 +190,60 @@ void PlayerList::newGame()
 		// Build list is attached to player now, so release it from the side info.
 		TheSidesList->getSideInfo(i)->releaseBuildList();
 	}
+
+#if CAMPAIGN_FORCE
+	// After creating the players from the sides above, find the human players for 'm_humanPlayerRefs'.
+	if (TheGameInfo != nullptr)
+	{
+		// Normal case: a skirmish/network-loaded map used in the campaign.
+		// First, assume there is the first player, always named "ThePlayer".
+		AsciiString targetPlayerName;
+		targetPlayerName = "ThePlayer";
+		Player* playerRef;
+		playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+		if (playerRef == nullptr)
+		{
+			// try "player0"?
+			targetPlayerName = "player0";
+			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+		}
+		m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
+		++m_humanPlayerRefsSoftCount;
+
+		// Now for the remaining possible players 1-7 (#2 to #8 from 1-based counting), search for the expected
+		// name: player<1-7>.
+		for (int i = 1; i < 8; i++)
+		{
+			targetPlayerName.format("player%d", i);
+			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+			if (playerRef != nullptr)
+			{
+			  // Add to the list and keep searching
+				m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
+				++m_humanPlayerRefsSoftCount;
+			}
+			else
+			{
+				// Not found? Stop searching
+				break;
+			}
+		}
+	}
+	else
+	{
+		// Shell map: find the first human-marked player, add to the list of player refs
+		for (int i = 0; i < MAX_PLAYER_COUNT; i++)
+		{
+			Player* playerRef = getNthPlayer(i);
+			if (playerRef == nullptr) continue;
+			if (playerRef->getPlayerType() == PLAYER_HUMAN) {
+				m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
+				++m_humanPlayerRefsSoftCount;
+				break;
+			}
+		}
+	}
+#endif
 
 	if (!setLocal)
 	{
