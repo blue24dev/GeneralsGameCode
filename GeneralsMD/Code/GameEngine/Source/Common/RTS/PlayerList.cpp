@@ -60,6 +60,9 @@
 #include "GameLogic/SidesList.h"
 #include "GameNetwork/NetworkDefs.h"
 
+//MODDD
+#include "GameNetwork/GameInfo.h"
+
 
 //-----------------------------------------------------------------------------
 /*extern*/ PlayerList *ThePlayerList = nullptr;
@@ -189,27 +192,43 @@ void PlayerList::newGame()
 
 //MODDD - Correct way!
 #if CAMPAIGN_FORCE
-	// First, assume there is the first player, always named "ThePlayer"
-	AsciiString targetPlayerName;
-	targetPlayerName = "ThePlayer";
-	Player* playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
-	m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
-	++m_humanPlayerRefsSoftCount;
-
-	// Now for the remaining possible players 1-7 (#2 to #8 from 1-based counting), search for the expected name
-	for (int i = 1; i < 8; i++) {
-		targetPlayerName.format("player%d", i);
-		playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
-		if (playerRef != nullptr)
-		{
-		  // Add to the list and keep searching
-			m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
-			++m_humanPlayerRefsSoftCount;
+	if (TheGameInfo == nullptr)
+	{
+		for (int i = 0; i < MAX_PLAYER_COUNT; i++) {
+			Player* playerRef = getNthPlayer(i);
+			if (!playerRef) continue;
+			if (playerRef->getPlayerType() == PLAYER_HUMAN) {
+				// okay - only human player we care about for this (shell map)
+				m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
+				++m_humanPlayerRefsSoftCount;
+				break;
+			}
 		}
-		else
-		{
-			// Not found? Stop searching
-			break;
+	}
+	else
+	{
+		// First, assume there is the first player, always named "ThePlayer"
+		AsciiString targetPlayerName;
+		targetPlayerName = "ThePlayer";
+		Player* playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+		m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
+		++m_humanPlayerRefsSoftCount;
+
+		// Now for the remaining possible players 1-7 (#2 to #8 from 1-based counting), search for the expected name
+		for (int i = 1; i < 8; i++) {
+			targetPlayerName.format("player%d", i);
+			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+			if (playerRef != nullptr)
+			{
+			  // Add to the list and keep searching
+				m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
+				++m_humanPlayerRefsSoftCount;
+			}
+			else
+			{
+				// Not found? Stop searching
+				break;
+			}
 		}
 	}
 #endif

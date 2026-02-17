@@ -1621,6 +1621,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	*/
 	
 	if (TheGameInfo == nullptr) {
+		// for just the shell map really - used the first human-marked side
 		UnsignedInt targetHumanSideToEncounter;
 		targetHumanSideToEncounter = 0;
 		UnsignedInt humanSidesEncountered = 0;
@@ -1647,13 +1648,6 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			targetPlayerName.format("player%d", localSlotNum);
 		}
 
-		/*
-		for (int i = 0; i < TheSidesList->getNumSides(); ++i)
-		{
-			SidesInfo* sideInfo = TheSidesList->getSideInfo(i);
-			Dict* sideDict = sideInfo->getDict();
-		}
-		*/
 		SidesInfo* sideInfo = TheSidesList->findSideInfo(targetPlayerName);
 		Dict* sideDict = sideInfo->getDict();
 		sideDict->setBool(TheKey_multiplayerIsLocal, TRUE);
