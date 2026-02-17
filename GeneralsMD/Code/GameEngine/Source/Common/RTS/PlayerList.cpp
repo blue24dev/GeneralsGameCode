@@ -174,7 +174,8 @@ void PlayerList::newGame()
 		}
 #else
 		// Do a check for having the 'IsHuman' bool anyway.
-		// NOPE not a good assumption for the point of this
+		// UPDATE - no longer a good assumption in case of non-computer-marked players that aren't intended for someone to play as.
+		// See the '#if CAMPAIGN_FORCE' block below after this loop through sides.
 		/*
 		if (d->getBool(TheKey_playerIsHuman))
 		{
@@ -190,32 +191,29 @@ void PlayerList::newGame()
 		TheSidesList->getSideInfo(i)->releaseBuildList();
 	}
 
-//MODDD - Correct way!
 #if CAMPAIGN_FORCE
-	if (TheGameInfo == nullptr)
+	// After creating the players from the sides above, find the human players for 'm_humanPlayerRefs'.
+	if (TheGameInfo != nullptr)
 	{
-		for (int i = 0; i < MAX_PLAYER_COUNT; i++) {
-			Player* playerRef = getNthPlayer(i);
-			if (!playerRef) continue;
-			if (playerRef->getPlayerType() == PLAYER_HUMAN) {
-				// okay - only human player we care about for this (shell map)
-				m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
-				++m_humanPlayerRefsSoftCount;
-				break;
-			}
-		}
-	}
-	else
-	{
-		// First, assume there is the first player, always named "ThePlayer"
+		// Normal case: a skirmish/network-loaded map used in the campaign.
+		// First, assume there is the first player, always named "ThePlayer".
 		AsciiString targetPlayerName;
 		targetPlayerName = "ThePlayer";
-		Player* playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+		Player* playerRef;
+		playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+		if (playerRef == nullptr)
+		{
+			// try "player0"?
+			targetPlayerName = "player0";
+			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+		}
 		m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
 		++m_humanPlayerRefsSoftCount;
 
-		// Now for the remaining possible players 1-7 (#2 to #8 from 1-based counting), search for the expected name
-		for (int i = 1; i < 8; i++) {
+		// Now for the remaining possible players 1-7 (#2 to #8 from 1-based counting), search for the expected
+		// name: player<1-7>.
+		for (int i = 1; i < 8; i++)
+		{
 			targetPlayerName.format("player%d", i);
 			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
 			if (playerRef != nullptr)
@@ -227,6 +225,20 @@ void PlayerList::newGame()
 			else
 			{
 				// Not found? Stop searching
+				break;
+			}
+		}
+	}
+	else
+	{
+		// Shell map: find the first human-marked player, add to the list of player refs
+		for (int i = 0; i < MAX_PLAYER_COUNT; i++)
+		{
+			Player* playerRef = getNthPlayer(i);
+			if (playerRef == nullptr) continue;
+			if (playerRef->getPlayerType() == PLAYER_HUMAN) {
+				m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
+				++m_humanPlayerRefsSoftCount;
 				break;
 			}
 		}

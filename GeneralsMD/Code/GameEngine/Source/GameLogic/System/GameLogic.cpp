@@ -1590,18 +1590,27 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	}
 
 #if CAMPAIGN_FORCE
+	// Figure out which side baked into the map represents "me", the one creating the game or joining someone
+	// else's in a network game.
+	// One side should have its dict receive a true value at 'TheKey_multiplayerIsLocal' - this will be the side
+	// the currrent machine(user) will play as in-game.
+	// ---
+	// Old way: find the 'i-th' human-marked side throughout the sides in start->end order (not alphabetical).
+	// Example: whoever created the game gets the 1st human-marked side. Whoever joined (player 2) gets the 2nd
+	// human marked side, etc.
 	/*
 	UnsignedInt targetHumanSideToEncounter;
-	if (TheGameInfo)
+	if (TheGameInfo != nullptr)
 	{
 		// The current skirmish/network game knows who 'I' am.
 		targetHumanSideToEncounter = TheGameInfo->getLocalSlotNum();
 	}
 	else
 	{
+		// Shell map.
 		// Since the 'd->getBool(TheKey_playerIsHuman)' way of determining the local player is disabled in
-		// PlayerList this time (handles it for the shell map), handling that case here too.
-		// It's just finding the first human-marked side to be the local player.
+		// PlayerList this time (handles it for non-network-game cases like the shell map normally), handling that case here.
+		// Use the first human-marked side as before would have.
 		targetHumanSideToEncounter = 0;
 	}
 
@@ -1619,38 +1628,62 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 		}
 	}
 	*/
-	
-	if (TheGameInfo == nullptr) {
-		// for just the shell map really - used the first human-marked side
-		UnsignedInt targetHumanSideToEncounter;
-		targetHumanSideToEncounter = 0;
-		UnsignedInt humanSidesEncountered = 0;
+
+	// New way. Old way had an issue for maps that had multiple non-computer marked players (not necessarily left for a human player).
+	// So, going back to picking players by having specific names, so maps need to adhere to this standard to work right (hopefully
+	// they all do / most do & the few that don't can have some names shifted).
+	// 1st player is expected to be called "ThePlayer" or "player0" (do not use both, "ThePlayer" will get precedence).
+	if (TheGameInfo != nullptr)
+	{
+		UnsignedInt localSlotNum = TheGameInfo->getLocalSlotNum();
+		AsciiString targetPlayerName;
+		SidesInfo* sideInfo;
+		if (localSlotNum == 0)
+		{
+			targetPlayerName = "ThePlayer";
+			sideInfo = TheSidesList->findSideInfo(targetPlayerName);
+			if (sideInfo == nullptr)
+			{
+				// try "player0"
+				targetPlayerName = "player0";
+				sideInfo = TheSidesList->findSideInfo("player0");
+			}
+			if (sideInfo == nullptr)
+			{
+				AsciiString errorText;
+				errorText.format("fatal error! CAMPAIGN_FORCE is on and this map lacks a side/player for this user to play as.\nA side/player of \"ThePlayer\" or \"player0\" was expected but not found.");
+				RELEASE_CRASH(errorText.str());
+				return;
+			}
+		}
+		else
+		{
+			targetPlayerName.format("player%d", localSlotNum);
+			sideInfo = TheSidesList->findSideInfo(targetPlayerName);
+			if (sideInfo == nullptr)
+			{
+				AsciiString errorText;
+				errorText.format("fatal error! CAMPAIGN_FORCE is on and this map lacks a side/player for this user to play as.\nA side/player of \"player%d\" was expected but not found.", localSlotNum);
+				RELEASE_CRASH(errorText.str());
+				return;
+			}
+		}
+
+		Dict* sideDict = sideInfo->getDict();
+		sideDict->setBool(TheKey_multiplayerIsLocal, TRUE);
+	}
+	else
+	{
+		// Shell map: use the first human-marked side as before
 		for (int i = 0; i < TheSidesList->getNumSides(); ++i)
 		{
 			SidesInfo* sideInfo = TheSidesList->getSideInfo(i);
 			Dict* sideDict = sideInfo->getDict();
 			if (sideDict->getBool(TheKey_playerIsHuman)) {
-				if (targetHumanSideToEncounter == humanSidesEncountered) {
-					sideDict->setBool(TheKey_multiplayerIsLocal, TRUE);
-					break;
-				}
-				++humanSidesEncountered;
+				sideDict->setBool(TheKey_multiplayerIsLocal, TRUE);
+				break;
 			}
 		}
-	}
-	else
-	{
-		UnsignedInt localSlotNum = TheGameInfo->getLocalSlotNum();
-		AsciiString targetPlayerName;
-		if (localSlotNum == 0) {
-			targetPlayerName = "ThePlayer";
-		} else {
-			targetPlayerName.format("player%d", localSlotNum);
-		}
-
-		SidesInfo* sideInfo = TheSidesList->findSideInfo(targetPlayerName);
-		Dict* sideDict = sideInfo->getDict();
-		sideDict->setBool(TheKey_multiplayerIsLocal, TRUE);
 	}
 #endif
 
