@@ -67,7 +67,9 @@
 //-----------------------------------------------------------------------------
 PlayerList::PlayerList() :
 	m_local(nullptr),
-	m_playerCount(0)
+	m_playerCount(0),
+	//MODDD
+	m_humanPlayerRefsSoftCount(0)
 {
 	// we only allocate a few of these, so don't bother pooling 'em
 	for (Int i = 0; i < MAX_PLAYER_COUNT; i++)
@@ -156,12 +158,25 @@ void PlayerList::newGame()
 			setLocalPlayer(p);
 			setLocal = true;
 		}
-
+		
+		//MODDD - NOTE - this block should never be needed to tell who the local player is for 'CAMPAIGN_FORCE'.
+		// This is determined by setting 'TheKey_multiplayerIsLocal' (block above) for single-player (skirmish) and
+		// network mode. You could argue that the skirmish game mode should also handle this in advance for consistency
+		// regardless of 'CAMPAIGN_FORCE' here.
+#if !CAMPAIGN_FORCE
 		if (!setLocal && !TheNetwork && d->getBool(TheKey_playerIsHuman))
 		{
 			setLocalPlayer(p);
 			setLocal = true;
 		}
+#else
+		// Do a check for having the 'IsHuman' bool anyway.
+		if (d->getBool(TheKey_playerIsHuman))
+		{
+			m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = p;
+			++m_humanPlayerRefsSoftCount;
+		}
+#endif
 
 		// Set the build list.
 		p->setBuildList(TheSidesList->getSideInfo(i)->getBuildList());
@@ -172,6 +187,8 @@ void PlayerList::newGame()
 	if (!setLocal)
 	{
 		DEBUG_ASSERTCRASH(TheNetwork, ("*** Map has no human player... picking first nonneutral player for control"));
+		//MODDD - NOTE - this for-loop is going through 'getNumSides()' yet getting the 'i-th' player with 'i' instead of
+		// the 'i-th' side. Is that intentional? Then again, this fallback shouldn't be needed in a well-formed map.
 		for( i = 0; i < TheSidesList->getNumSides(); i++)
 		{
 			Player* p = getNthPlayer(i);
@@ -237,6 +254,10 @@ void PlayerList::newGame()
 void PlayerList::init()
 {
 	m_playerCount = 1;
+
+	//MODDD
+	m_humanPlayerRefsSoftCount = 0;
+
 	m_players[0]->init(nullptr);
 
 	for (int i = 1; i < MAX_PLAYER_COUNT; i++)

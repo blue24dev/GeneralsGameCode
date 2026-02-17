@@ -163,6 +163,15 @@ private:
 	Int						m_playerCount;
 	Player				*m_players[MAX_PLAYER_COUNT];
 
+#if CAMPAIGN_FORCE
+//MODDD - add a list of references to human players since they won't be generated (names "player<0-7") as
+// expected by network mode. It should use this list instead (public for now for laziness)
+public:
+	Int						m_humanPlayerRefsSoftCount;
+	// capacity comes from MAX_SLOTS
+	Player				*m_humanPlayerRefs[8];
+#endif
+
 };
 
 

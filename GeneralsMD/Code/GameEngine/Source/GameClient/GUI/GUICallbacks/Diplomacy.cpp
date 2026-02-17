@@ -475,9 +475,15 @@ void PopulateInGameDiplomacyPopup( void )
 			}
 			if (slot->isAI())
 				isInGame = true;
+
+#if !CAMPAIGN_FORCE
 			AsciiString playerName;
 			playerName.format("player%d", slotNum);
 			Player *player = ThePlayerList->findPlayerWithNameKey(NAMEKEY(playerName));
+#else
+			Player* player = ThePlayerList->m_humanPlayerRefs[slotNum];
+#endif
+			
 			Bool isAlive = !TheVictoryConditions->hasSinglePlayerBeenDefeated(player);
 			Bool isObserver = player->isPlayerObserver();
 

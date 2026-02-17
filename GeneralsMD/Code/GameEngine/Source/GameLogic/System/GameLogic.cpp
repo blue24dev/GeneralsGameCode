@@ -1273,18 +1273,11 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	TheWritableGlobalData->m_loadScreenRender = TRUE;	///< mark it so only a few select things are rendered during load
 	TheWritableGlobalData->m_TiVOFastMode = FALSE;	//always disable the TIVO fast-forward mode at the start of a new game.
 
-#if !GENERALS_CHALLENGE_FORCE
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 	// thanks, visual, studio...
 	Campaign* currentCampaign = TheCampaignManager->getCurrentCampaign();
 	Bool isChallengeCampaign = m_gameMode == GAME_SINGLE_PLAYER && currentCampaign && currentCampaign->m_isChallengeCampaign;
 #endif
-
-	//MODDD - TODO - CAMPAIGN_FORCE support
-	// Don't force m_gameMode to 'GAME_SINGLEPLAYER' if the user is playing the map through skirmish mode?
-	// Need that case to not be able to break so it can be a start point for getting co-op campaign to work with
-	// network-mode's 'TheGameInfo' (not a null one that single-player mode uses).
-	// Ex: let other human players use the remaining human-marked sides in a map, don't try to generate players / starting
-	// buildings/units from the skirmish-slots like skirmish/network-mode does in retail.
 
 	// Fill in the game color and Factions before we do the Load Screen
 	TheGameInfo = nullptr;
@@ -1320,8 +1313,9 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 		// For GENERALS_CHALLENGE_FORCE, it may be possible to generate a 'TheChallengeGameInfo' like the generals
 		// challenge menu normally does & populate it with anything from 'TheSkirmishGameInfo' in place of what
 		// the normal GC menu does, but this doesn't seem worth it considering how 'TheGameInfo' for network games
-		// would also need to be considered. Replacing a MP gamemode with a SP one might not turn out so good.
-#if !GENERALS_CHALLENGE_FORCE
+		// would also need to be considered. Replacing a MP gamemode with a SP one might have issues without some
+		// attention to whatever the MP needs to do that's special (I assume something?) but feel free to test that out.
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 		else if(isChallengeCampaign)
 		{
 			TheGameInfo = TheChallengeGameInfo;
@@ -1427,10 +1421,17 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 
 	Int localSlot = 0;
 	Int progressCount = LOAD_PROGRESS_SIDE_POPULATION;
+
+	//MODDD - actually don't do anything here at all for 'CAMPAIGN_FORCE'.
+	// 'GENERALS_CHALLENGE_FORCE' is still expected to use the game info, however.
+#if !CAMPAIGN_FORCE
 	if (TheGameInfo)
+#else
+	if (FALSE)
+#endif
 	{
 
-		//MODDD - disabled
+		//MODDD
 #if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 		if (TheGameEngine->isMultiplayerSession() || isSkirmishOrSkirmishReplay)
 #else
@@ -1587,6 +1588,37 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			updateLoadProgress(progressCount + i);
 		}
 	}
+
+#if CAMPAIGN_FORCE
+	UnsignedInt targetHumanSideToEncounter;
+	if (TheGameInfo)
+	{
+		// The current skirmish/network game knows who 'I' am.
+		targetHumanSideToEncounter = TheGameInfo->getLocalSlotNum();
+	}
+	else
+	{
+		// Since the 'd->getBool(TheKey_playerIsHuman)' way of determining the local player is disabled in
+		// PlayerList this time (handles it for the shell map), handling that case here too.
+		// It's just finding the first human-marked side to be the local player.
+		targetHumanSideToEncounter = 0;
+	}
+
+	UnsignedInt humanSidesEncountered = 0;
+	for (int i = 0; i < TheSidesList->getNumSides(); ++i)
+	{
+		SidesInfo* sideInfo = TheSidesList->getSideInfo(i);
+		Dict* sideDict = sideInfo->getDict();
+		if (sideDict->getBool(TheKey_playerIsHuman)) {
+			if (targetHumanSideToEncounter == humanSidesEncountered) {
+				sideDict->setBool(TheKey_multiplayerIsLocal, TRUE);
+				break;
+			}
+			++humanSidesEncountered;
+		}
+	}
+#endif
+
 	//if(m_gameMode != GAME_REPLAY)
 	//{
 
@@ -1638,9 +1670,6 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	// update the loadscreen
 	updateLoadProgress(LOAD_PROGRESS_POST_SCRIPT_ENGINE_NEW_MAP);
 
-
-
-	//MODDD - disabled
 #if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 	if (TheGameEngine->isMultiplayerSession() || isSkirmishOrSkirmishReplay)
 #else
@@ -1881,7 +1910,11 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	ThePartitionManager->revealMapForPlayerPermanently( observerPlayer->getPlayerIndex() );
 	DEBUG_LOG(("Reveal shroud for %ls whose index is %d", observerPlayer->getPlayerDisplayName().str(), observerPlayer->getPlayerIndex()));
 
+#if !CAMPAIGN_FORCE
 	if (TheGameInfo)
+#else
+	if (FALSE)
+#endif
 	{
 		for (int i=0; i<MAX_SLOTS; ++i)
 		{
@@ -2109,7 +2142,11 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	#endif
 
 	// place initial network buildings/units
+#if !CAMPAIGN_FORCE
 	if (TheGameInfo && !loadingSaveGame)
+#else
+	if (FALSE)
+#endif
 	{
 		Int progressCount = LOAD_PROGRESS_LOOP_INITIAL_NETWORK_BUILDINGS;
 		for (int i=0; i<MAX_SLOTS; ++i)
@@ -2224,7 +2261,11 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	// Note - We construct the multiplayer start spot name manually here, so change this if you
 	//        change TheKey_Player_1_Start etc.  mdc
 	AsciiString startingCamName = TheNameKeyGenerator->keyToName(TheKey_InitialCameraPosition);
+#if !CAMPAIGN_FORCE
 	if (TheGameInfo)
+#else
+	if (FALSE)
+#endif
 	{
 		GameSlot *slot = TheGameInfo->getSlot(localSlot);
 		DEBUG_ASSERTCRASH(slot, ("Starting a LAN game without ourselves!"));
@@ -2282,13 +2323,17 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	if( loadingSaveGame == FALSE )
 		ThePlayerList->newMap();
 
-	//MODDD - replaced. This is on if you're trying to play a GC map in skirmish.
-	// Need to run the automatic relationship changes regardless of 'isChallengeCampaign' for things to run smoothly.
-#if !GENERALS_CHALLENGE_FORCE
-	if ( isChallengeCampaign )
-#else
-	// Const is on: If there is a 'game' alone, proceed
+#if GENERALS_CHALLENGE_FORCE
+	// If there is a 'game' alone, proceed.
+	// Need to run the automatic relationship changes regardless of 'isChallengeCampaign'.
 	if (TheGameInfo)
+#elif CAMPAIGN_FORCE
+	// No automatic relationships here.
+	// The map should set this up properly since human-intended players are baked in & configurable there anyway.
+	if (FALSE)
+#else
+	// retail
+	if ( isChallengeCampaign )
 #endif
 	{
 		// Establish local player relationships with other teams as

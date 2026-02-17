@@ -309,6 +309,7 @@
 // counts as 'night' so that lights aren't only on immediately after midnight and on until the start of morning.
 // They're tweaked to be more of an average case, but a one-size-fits-all is difficult, especially considering that most maps probably
 // never gave much thought to times of day other than the one they're saved with - keep that in mind of shadows look wonky on some maps/TOD's.
+// NOTE - beware of bugs observed while this is on, though they don't usually make the game unplayable - see the readme.
 #define REAL_TIME_TOD_CHANGE FALSE
 
 // TODO - edit the save/load feature to include the time-of-day at the time the game is saved?

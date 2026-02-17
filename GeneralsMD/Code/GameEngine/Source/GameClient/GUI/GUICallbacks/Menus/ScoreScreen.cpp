@@ -2141,6 +2141,30 @@ void grabMultiPlayerInfo( void )
 		populatePlayerInfo(player, count);
 		count ++;
 	}
+
+#elif CAMPAIGN_FORCE
+  // And for using 'CAMPAIGN_FORCE' instead. A copy of above that doesn't exclude human players since campaign maps don't
+	// provide nor generate "player<0-7>", so just include all players without special checks.
+	// To be more accurate to the original single-player behavior, could look at 'grabSinglePlayerInfo' to see how it
+	// groups computer players together to copy that much over, but would prefer to keep human players separate to
+	// see individual score info there (people like to see their own stats).
+	// Grouping only computer players together as rows like "GLA Enemies", keeping human players separate should suffice.
+	// ---
+	// (copy of above for now with some removals - see comments in the original block further above)
+	Player* civilianPlayer = ThePlayerList->findPlayerWithNameKey(NAMEKEY("PlyrCivilian"));
+	for (int i = 0; i < ThePlayerList->getPlayerCount(); i++) {
+		Player* player = ThePlayerList->getNthPlayer(i);
+		if (player->isPlayerObserver()) {
+			continue;
+		}
+		if (player == ThePlayerList->getNeutralPlayer() || player == civilianPlayer) {
+			// no, neutral/civilian stats aren't very interesting.
+			continue;
+		}
+		// All passed - include in addition to the slot players already listed
+		populatePlayerInfo(player, count);
+		count ++;
+	}
 #endif
 }
 

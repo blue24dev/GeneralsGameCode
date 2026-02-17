@@ -2078,10 +2078,10 @@ void Player::killPlayer(void)
 	}
 
 //MODDD
-#if !GENERALS_CHALLENGE_FORCE
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 	if (TheGameLogic->isInSinglePlayerGame()) {
 #else
-  // Treat this as a single player game like the original GC mission would
+  // Treat this as a single player game like the original GC or campaign mission would
 	if (TRUE) {
 #endif
 		if (getPlayerType()==PLAYER_COMPUTER) {
