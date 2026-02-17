@@ -171,11 +171,14 @@ void PlayerList::newGame()
 		}
 #else
 		// Do a check for having the 'IsHuman' bool anyway.
+		// NOPE not a good assumption for the point of this
+		/*
 		if (d->getBool(TheKey_playerIsHuman))
 		{
 			m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = p;
 			++m_humanPlayerRefsSoftCount;
 		}
+		*/
 #endif
 
 		// Set the build list.
@@ -183,6 +186,33 @@ void PlayerList::newGame()
 		// Build list is attached to player now, so release it from the side info.
 		TheSidesList->getSideInfo(i)->releaseBuildList();
 	}
+
+//MODDD - Correct way!
+#if CAMPAIGN_FORCE
+	// First, assume there is the first player, always named "ThePlayer"
+	AsciiString targetPlayerName;
+	targetPlayerName = "ThePlayer";
+	Player* playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+	m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
+	++m_humanPlayerRefsSoftCount;
+
+	// Now for the remaining possible players 1-7 (#2 to #8 from 1-based counting), search for the expected name
+	for (int i = 1; i < 8; i++) {
+		targetPlayerName.format("player%d", i);
+		playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+		if (playerRef != nullptr)
+		{
+		  // Add to the list and keep searching
+			m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
+			++m_humanPlayerRefsSoftCount;
+		}
+		else
+		{
+			// Not found? Stop searching
+			break;
+		}
+	}
+#endif
 
 	if (!setLocal)
 	{
