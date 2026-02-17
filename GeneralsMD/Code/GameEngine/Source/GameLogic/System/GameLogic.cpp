@@ -1590,6 +1590,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	}
 
 #if CAMPAIGN_FORCE
+	/*
 	UnsignedInt targetHumanSideToEncounter;
 	if (TheGameInfo)
 	{
@@ -1616,6 +1617,46 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			}
 			++humanSidesEncountered;
 		}
+	}
+	*/
+	
+	if (TheGameInfo == nullptr) {
+		UnsignedInt targetHumanSideToEncounter;
+		targetHumanSideToEncounter = 0;
+		UnsignedInt humanSidesEncountered = 0;
+		for (int i = 0; i < TheSidesList->getNumSides(); ++i)
+		{
+			SidesInfo* sideInfo = TheSidesList->getSideInfo(i);
+			Dict* sideDict = sideInfo->getDict();
+			if (sideDict->getBool(TheKey_playerIsHuman)) {
+				if (targetHumanSideToEncounter == humanSidesEncountered) {
+					sideDict->setBool(TheKey_multiplayerIsLocal, TRUE);
+					break;
+				}
+				++humanSidesEncountered;
+			}
+		}
+	}
+	else
+	{
+		UnsignedInt localSlotNum = TheGameInfo->getLocalSlotNum();
+		AsciiString targetPlayerName;
+		if (localSlotNum == 0) {
+			targetPlayerName = "ThePlayer";
+		} else {
+			targetPlayerName.format("player%d", localSlotNum);
+		}
+
+		/*
+		for (int i = 0; i < TheSidesList->getNumSides(); ++i)
+		{
+			SidesInfo* sideInfo = TheSidesList->getSideInfo(i);
+			Dict* sideDict = sideInfo->getDict();
+		}
+		*/
+		SidesInfo* sideInfo = TheSidesList->findSideInfo(targetPlayerName);
+		Dict* sideDict = sideInfo->getDict();
+		sideDict->setBool(TheKey_multiplayerIsLocal, TRUE);
 	}
 #endif
 
