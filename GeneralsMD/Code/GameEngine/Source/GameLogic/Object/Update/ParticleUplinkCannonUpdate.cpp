@@ -1059,7 +1059,7 @@ void ParticleUplinkCannonUpdate::createOrbitToTargetLaser( UnsignedInt growthFra
 			// It seems updating the sound in real time from here isn't feasible, this sends something off to
 			// the rest of the sound system that won't be affected by position updates from here.
 			// It looks like 'addAudioEvent' adds a copy of the current 'AudioEventRTS' so changes to this
-			// source version won't carry over to that one.    Fun...
+			// source instance won't carry over to that one.    Fun...
 			m_annihilationSound.setPlaySoundFromGround(TRUE);
 
 			m_annihilationSound.setPlayingHandle( TheAudio->addAudioEvent( &m_annihilationSound ) );

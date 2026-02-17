@@ -167,9 +167,14 @@ GameMessage *NetGameCommandMsg::constructGameMessage() const
 {
 	GameMessage *retval = newInstance(GameMessage)(m_type);
 
+#if !CAMPAIGN_FORCE
 	AsciiString name;
 	name.format("player%d", getPlayerID());
 	retval->friend_setPlayerIndex( ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(name))->getPlayerIndex());
+#else
+	Player* p = ThePlayerList->m_humanPlayerRefs[getPlayerID()];
+	retval->friend_setPlayerIndex(p->getPlayerIndex());
+#endif
 
 	GameMessageArgument *arg = m_argList;
 	while (arg != nullptr) {

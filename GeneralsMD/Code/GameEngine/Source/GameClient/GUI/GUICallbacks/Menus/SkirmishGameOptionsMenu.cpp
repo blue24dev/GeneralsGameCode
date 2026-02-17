@@ -454,7 +454,9 @@ void reallyDoStart( void )
 #if !CAMPAIGN_FORCE
 		isSkirmish = TRUE;
 #else
-		isSkirmish = FALSE;
+		// TEST - force the skirmish mode here too for now
+		//isSkirmish = FALSE;
+		isSkirmish = TRUE;
 #endif
 	}
 

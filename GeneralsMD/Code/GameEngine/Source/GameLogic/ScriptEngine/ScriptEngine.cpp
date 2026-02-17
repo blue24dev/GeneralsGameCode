@@ -143,8 +143,10 @@ ScriptEngine *TheScriptEngine = nullptr;
 static const Int ATTACK_PRIORITY_DEFAULT = 1;
 
 //MODDD - NEW
+#if GENERALS_CHALLENGE_FORCE 
 //#include "GameNetwork/GameInfo.h"
-Player* getRandomSlotPlayer() {
+Player* getRandomSlotPlayer()
+{
 	Player* availablePlayerList[MAX_SLOTS];
 	int availablePlayerListSoftCount = 0;
 
@@ -180,6 +182,55 @@ Player* getRandomSlotPlayer() {
 	int randomVal = GameLogicRandomValue(0, availablePlayerListSoftCount - 1);
 	return availablePlayerList[randomVal];
 }
+#elif CAMPAIGN_FORCE
+Player* getRandomSlotPlayer()
+{
+	// For the campaign, get a random human player instead since the slots system isn't used to generate "player<0-7>".
+	// A size of 'MAX_SLOTS' for this is still ok because there can be at most 8 players anyway.
+	Player* availablePlayerList[MAX_SLOTS];
+	int availablePlayerListSoftCount = 0;
+
+	for (int i=0; i<MAX_PLAYER_COUNT; ++i)
+	{
+		Player* player = ThePlayerList->getNthPlayer(i);
+
+		if (player && player->getPlayerType() == PLAYER_HUMAN) {
+			// Add the valid slot-player to the list of players to choose from
+			availablePlayerList[availablePlayerListSoftCount] = player;
+			availablePlayerListSoftCount++;
+		}
+
+		// Safety
+		if (availablePlayerListSoftCount >= MAX_SLOTS) {
+			break;
+		}
+	}
+
+	if (availablePlayerListSoftCount <= 0) {
+		// Nothing available?
+		return nullptr;
+	}
+
+	// Randomly pick a player from the list
+	int randomVal = GameLogicRandomValue(0, availablePlayerListSoftCount - 1);
+	return availablePlayerList[randomVal];
+}
+
+// Also, a method to get the first human player since 'getLocalPlayer' would return different results in multiplayer (mismatch candy).
+Player* getFirstHumanPlayer()
+{
+	for (int i=0; i<MAX_PLAYER_COUNT; ++i)
+	{
+		Player* player = ThePlayerList->getNthPlayer(i);
+
+		if (player && player->getPlayerType() == PLAYER_HUMAN) {
+			return player;
+		}
+	}
+	// ???
+	return nullptr;
+}
+#endif
 
 //-------------------------------------------------------------------------------------------------
 /** Ctor */
@@ -5850,7 +5901,7 @@ void ScriptEngine::clearTeamFlags(void)
 Player *ScriptEngine::getSkirmishEnemyPlayer(void)
 {
 	//MODDD - #if wrapper
-#if !GENERALS_CHALLENGE_FORCE
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 	Bool is_GeneralsChallengeContext = TheCampaignManager->getCurrentCampaign() && TheCampaignManager->getCurrentCampaign()->m_isChallengeCampaign;
 #endif
 
@@ -5858,7 +5909,7 @@ Player *ScriptEngine::getSkirmishEnemyPlayer(void)
 		Player *enemy = m_currentPlayer->getCurrentEnemy();
 		if (enemy==nullptr) {
 			//MODDD - replacing to get a random slot player, includes the human requirement
-#if !GENERALS_CHALLENGE_FORCE
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 			// get the human player.
 			Int i;
 			for (i=0; i<ThePlayerList->getPlayerCount(); i++) {
@@ -5888,21 +5939,26 @@ Player *ScriptEngine::getSkirmishEnemyPlayer(void)
 Player *ScriptEngine::getPlayerFromAsciiString(const AsciiString& playerString)
 {
 	//MODDD - #if wrapper + alt
-#if !GENERALS_CHALLENGE_FORCE
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 	Bool is_GeneralsChallengeContext = TheCampaignManager->getCurrentCampaign() && TheCampaignManager->getCurrentCampaign()->m_isChallengeCampaign;
-#else
-	Bool is_GeneralsChallengeContext = TRUE;
 #endif
 
+#if GENERALS_CHALLENGE_FORCE
+	if (playerString == LOCAL_PLAYER || (playerString == THE_PLAYER && TRUE))
+		// get player #0 instead
+		return ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey("player0"));
+#elif CAMPAIGN_FORCE
+	if (playerString == LOCAL_PLAYER)
+		// get the first human player instead
+		return getFirstHumanPlayer();
+#else
+	// retail
 	if (playerString == LOCAL_PLAYER || (playerString == THE_PLAYER && is_GeneralsChallengeContext))
 		// Designers have built their Generals' Challenge maps, referencing "ThePlayer" meaning the local player.
 		// However, they've also built many of their single player maps with this string, where "ThePlayer" is not intended as an alias.
-		//MODDD - get player #0 instead
-#if !GENERALS_CHALLENGE_FORCE
 		return ThePlayerList->getLocalPlayer();
-#else
-		return ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey("player0"));
 #endif
+
 	if (playerString == THIS_PLAYER)
 		return getCurrentPlayer();
 	else if (playerString == THIS_PLAYER_ENEMY)	{
@@ -6024,21 +6080,23 @@ PolygonTrigger *ScriptEngine::getQualifiedTriggerAreaByName( AsciiString name )
 Team * ScriptEngine::getTeamNamed(const AsciiString& teamName)
 {
 	//MODDD - #if wrapper + alt
-#if !GENERALS_CHALLENGE_FORCE
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 	Bool is_GeneralsChallengeContext = TheCampaignManager->getCurrentCampaign() && TheCampaignManager->getCurrentCampaign()->m_isChallengeCampaign;
-#else
-	Bool is_GeneralsChallengeContext = TRUE;
 #endif
 
+#if GENERALS_CHALLENGE_FORCE
+	if (teamName == TEAM_THE_PLAYER && TRUE)
+		return ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey("player0"))->getDefaultTeam();
+#elif CAMPAIGN_FORCE
+	// no hardcoded string checks possible since the only one requires this to be generals-challenge (not the case here).
+#else
+	// retail
 	if (teamName == TEAM_THE_PLAYER && is_GeneralsChallengeContext)
 		// Designers have built their Generals' Challenge maps, referencing "teamThePlayer" meaning the local player's default (parent) team.
 		// However, they've also built many of their single player maps with this string, where "teamThePlayer" is not intended as an alias.
-		//MODDD - you know the drill
-#if !GENERALS_CHALLENGE_FORCE
 		return ThePlayerList->getLocalPlayer()->getDefaultTeam();
-#else
-		return ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey("player0"))->getDefaultTeam();
 #endif
+
 	if (teamName == THIS_TEAM) {
 		if (m_callingTeam)
 			return m_callingTeam;
@@ -6299,7 +6357,7 @@ void ScriptEngine::doNamedMapReveal(const AsciiString& revealName)
 	pos = *way->getLocation();
 
 	//MODDD - force for all players if this const is on
-#if !GENERALS_CHALLENGE_FORCE
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 	ThePartitionManager->doShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, player->getPlayerMask());
 #else
 	ThePartitionManager->doShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, getHumanPlayerMask());
@@ -6337,7 +6395,7 @@ void ScriptEngine::undoNamedMapReveal(const AsciiString& revealName)
 	pos = *way->getLocation();
 
 	//MODDD - force for all players if this const is on
-#if !GENERALS_CHALLENGE_FORCE
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 	ThePartitionManager->undoShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, player->getPlayerMask());
 #else
 	ThePartitionManager->undoShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, getHumanPlayerMask());

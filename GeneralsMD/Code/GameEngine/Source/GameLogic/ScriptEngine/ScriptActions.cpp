@@ -3099,13 +3099,13 @@ void ScriptActions::doRevealMapAtWaypoint(const AsciiString& waypointName, Real 
 	}
 
 	// thanks for making me need to do this visual studio.......
-#if !GENERALS_CHALLENGE_FORCE
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
 #endif
 	PlayerMaskType playerMask;
 
 	//MODDD - if this constant is on, always apply to all human players instead
-#if !GENERALS_CHALLENGE_FORCE
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 	if (player && playerName.isNotEmpty())
 		playerMask = player->getPlayerMask();
 	else
@@ -3151,13 +3151,13 @@ void ScriptActions::doShroudMapAtWaypoint(const AsciiString& waypointName, Real 
 	}
 
 	// thanks for making me need to do this visual studio.......
-#if !GENERALS_CHALLENGE_FORCE
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
 #endif
 	PlayerMaskType playerMask;
 
 	//MODDD - if this constant is on, always apply to all human players instead
-#if !GENERALS_CHALLENGE_FORCE
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 	if (player && playerName.isNotEmpty())
 		playerMask = player->getPlayerMask();
 	else
@@ -3208,6 +3208,19 @@ void ScriptActions::doRevealMapEntire(const AsciiString& playerName)
 				{
 					ThePartitionManager->revealMapForPlayer( i );
 				}
+			}
+		}
+		return;
+	}
+#elif CAMPAIGN_FORCE
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		// Just do it for all human players.
+		for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
+		{
+			Player *player = ThePlayerList->getNthPlayer(i);
+			if (player->getPlayerType() == PLAYER_HUMAN)
+			{
+				ThePartitionManager->revealMapForPlayer( i );
 			}
 		}
 		return;
@@ -3264,6 +3277,21 @@ void ScriptActions::doRevealMapEntirePermanently( Bool reveal, const AsciiString
 		}
 		return;
 	}
+#elif CAMPAIGN_FORCE
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
+		{
+			Player *player = ThePlayerList->getNthPlayer(i);
+			if (player->getPlayerType() == PLAYER_HUMAN)
+			{
+				if( reveal )
+					ThePartitionManager->revealMapForPlayerPermanently( i );
+				else
+					ThePartitionManager->undoRevealMapForPlayerPermanently( i );
+			}
+		}
+		return;
+	}
 #endif
 
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
@@ -3315,6 +3343,18 @@ void ScriptActions::doShroudMapEntire(const AsciiString& playerName)
 				{
 					ThePartitionManager->shroudMapForPlayer( i );
 				}
+			}
+		}
+		return;
+	}
+#elif CAMPAIGN_FORCE
+	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+		for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
+		{
+			Player *player = ThePlayerList->getNthPlayer(i);
+			if (player->getPlayerType() == PLAYER_HUMAN)
+			{
+				ThePartitionManager->shroudMapForPlayer( i );
 			}
 		}
 		return;
