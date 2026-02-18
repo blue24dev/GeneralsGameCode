@@ -6831,6 +6831,8 @@ void Object::doCommandButtonAtPosition( const CommandButton *commandButton, cons
 			{
 				if( commandButton->getSpecialPowerTemplate() )
 				{
+					//MODDD - point of crash?  check this->m_behaviors ?
+					// doSpecialPowerAtLocation->getSpecialPowerModule, 'this->m_behaviors' can be bad memory somewhere as it's iterated through?
 					CommandOption commandOptions = (CommandOption)(commandButton->getOptions() | COMMAND_FIRED_BY_SCRIPT);
 					doSpecialPowerAtLocation( commandButton->getSpecialPowerTemplate(), pos, INVALID_ANGLE, commandOptions, cmdSource == CMD_FROM_SCRIPT );
 					return;

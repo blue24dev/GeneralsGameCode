@@ -3501,6 +3501,17 @@ void AIMoveAndEvacuateState::onExit( StateExitType status )
 {
 	getMachine()->unlock();
 	getMachine()->setGoalPosition(&m_origin); // In case we follow with a AIMoveAndDeleteState.
+
+	//MODDD - added
+	// ---------
+	// If I don't plan on leaving the map, may as well let the player order me around
+	Object* obj = getMachineOwner();
+	if( this->getID() != AI_MOVE_AND_EVACUATE_AND_EXIT && !obj->isSelectable() )
+	{
+		obj->setSelectable(TRUE);
+	}
+	// ---------
+
 	AIInternalMoveToState::onExit( status );
 }
 

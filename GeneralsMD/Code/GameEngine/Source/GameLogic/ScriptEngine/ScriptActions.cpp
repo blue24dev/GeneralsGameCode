@@ -749,6 +749,17 @@ void ScriptActions::doCreateReinforcements(const AsciiString& team, const AsciiS
 					{
 						if( ai )
 						{
+							//MODDD - shouldn't an object whose only purpose is to drop something off & leave not be selectable?
+							obj->setSelectable(FALSE);
+							// No, requires changing some access modifiers and means a rare case of an object meant to forbid player commands per the INI files
+							// (i.e. always) could be reverted later back to a 'FALSE' that it never was in the first place. Having to keep track of that would
+							// defeat the purpose of this being a convenient hack.
+							// Either add something similar to be set per-object that's checked in addition to 'forbidsPlayerCommands' or trust that
+							// 'setSelectable(FALSE)' above is enough and call it a day.
+							//ai->getAIUpdateModuleData()->m_forbidPlayerCommands = TRUE;
+							// There is also locking states in 'onEnter' per the base reinforcement 'enter-evacuate-exit' states that seems to have the
+							// same intended effect (chinook's version of that lacks that as-is).
+
 							ai->chooseLocomotorSet( LOCOMOTORSET_NORMAL );
 							ai->aiMoveToAndEvacuateAndExit(&destination, CMD_FROM_SCRIPT);
 						}
@@ -757,6 +768,9 @@ void ScriptActions::doCreateReinforcements(const AsciiString& team, const AsciiS
 					{
 						if( ai )
 						{
+							//MODDD - same as above, but eventually this will be reverted before the object leaves the map.
+							obj->setSelectable(FALSE);
+
 							ai->chooseLocomotorSet( LOCOMOTORSET_NORMAL );
 							ai->aiMoveToAndEvacuate( &destination, CMD_FROM_SCRIPT );
 						}
