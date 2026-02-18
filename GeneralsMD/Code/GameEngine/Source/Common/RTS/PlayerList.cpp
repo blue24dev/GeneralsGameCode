@@ -70,9 +70,7 @@
 //-----------------------------------------------------------------------------
 PlayerList::PlayerList() :
 	m_local(nullptr),
-	m_playerCount(0),
-	//MODDD
-	m_humanPlayerRefsSoftCount(0)
+	m_playerCount(0)
 {
 	// we only allocate a few of these, so don't bother pooling 'em
 	for (Int i = 0; i < MAX_PLAYER_COUNT; i++)
@@ -315,9 +313,10 @@ void PlayerList::newGame()
 void PlayerList::init()
 {
 	m_playerCount = 1;
-
-	//MODDD
+	
+#if CAMPAIGN_FORCE
 	m_humanPlayerRefsSoftCount = 0;
+#endif
 
 	m_players[0]->init(nullptr);
 
