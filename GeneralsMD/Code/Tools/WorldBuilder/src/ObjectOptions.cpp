@@ -402,12 +402,11 @@ HTREEITEM ObjectOptions::_FindOrDont(const char* pLabel, HTREEITEM startPoint)
 	std::list<HTREEITEM> itemsToEx;
 	itemsToEx.push_back(startPoint);
 
-	//MODDD - checking for the list's size being 0 instead is proper according to an exception on high sensitivity
-	//while (itemsToEx.front()) {
-	while (itemsToEx.size() > 0) {
+	while (!itemsToEx.empty()) {
 		char buffer[_MAX_PATH];
 		HTREEITEM hItem = itemsToEx.front();
 		itemsToEx.pop_front();
+		DEBUG_ASSERTCRASH(hItem != nullptr, ("Unexpected tree item pointer in ObjectOptions::_FindOrDont"));
 
 		if (!m_objectTreeView.ItemHasChildren(hItem)) {
 			TVITEM item;

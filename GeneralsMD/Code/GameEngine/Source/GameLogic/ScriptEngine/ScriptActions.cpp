@@ -768,7 +768,8 @@ void ScriptActions::doCreateReinforcements(const AsciiString& team, const AsciiS
 					{
 						if( ai )
 						{
-							//MODDD - same as above, but eventually this will be reverted before the object leaves the map.
+							//MODDD - same as above, but this will be reverted when the transport's units are evacuated since the
+							// transport won't leave the map (handled by the state handling evacuation's 'onExit').
 							obj->setSelectable(FALSE);
 
 							ai->chooseLocomotorSet( LOCOMOTORSET_NORMAL );
