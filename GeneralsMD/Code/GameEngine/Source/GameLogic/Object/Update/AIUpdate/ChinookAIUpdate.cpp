@@ -131,6 +131,17 @@ public:
 		return STATE_SUCCESS;
 	}
 
+	//MODDD - added
+	void onExit( StateExitType status )
+	{
+		// If I don't plan on leaving the map, may as well let the player order me around
+		Object* obj = getMachineOwner();
+		if( this->getID() != EVAC_AND_EXIT && !obj->isSelectable() )
+		{
+			obj->setSelectable(TRUE);
+		}
+	}
+
 	virtual StateReturnType update()
 	{
 		return STATE_SUCCESS;
@@ -167,9 +178,26 @@ public:
 	{
 		Object *owner = getMachineOwner();
 
+		//MODDD - why? just check for having reached the destination to move to, assuming that was out of view well enough
+		// (borrowed from 'AIInternalMoveToState::update()')
+		// ---
+		/*
 		Region3D mapRegion;
 		TheTerrainLogic->getExtentIncludingBorder( &mapRegion );
 		if( !mapRegion.isInRegionNoZ( owner->getPosition() ) )
+		*/
+		// ---
+		// Actually, nevermind this replacement too. A temporary state is used instead while the chinook moves to the destination,
+		// presumably off the map. Just by that finishing to reach here, go ahead and imply it's fine to despawn.
+		// There might be a smarter way to handle this like using this as the state to check for being at the target instead
+		// of the temporary state (don't use a temporary one at all to do that), but I don't feel like staring at this anymore.
+		/*
+		AIUpdateInterface *ai = owner->getAI();
+		Real onPathDistToGoal = ai->getLocomotorDistanceToGoal();
+		//DEBUG_LOG(("onPathDistToGoal = %f %s",onPathDistToGoal, obj->getTemplate()->getName().str()));
+		if (ai->getCurLocomotor() && (onPathDistToGoal < ai->getCurLocomotor()->getCloseEnoughDist()))
+		*/
+		// ---
 		{
 			TheGameLogic->destroyObject(owner);
 			return STATE_SUCCESS;
@@ -178,7 +206,8 @@ public:
 		return STATE_CONTINUE;
 	}
 
-	void onExit()
+	//MODDD - missing param to be an overload?
+	void onExit( StateExitType status )
 	{
 		Object *owner = getMachineOwner();
 		owner->clearStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_RIDER8 ) );
@@ -1317,17 +1346,23 @@ void ChinookAIUpdate::aiDoCommand(const AICommandParms* parms)
 			const Real THRESH = 3.0f;
 			const Real THRESH_SQR = THRESH*THRESH;
 
-			// MONKEY PATCH FIX FOR NOW
-			const bool allowExit = true;
-			/*
 #if RETAIL_COMPATIBLE_CRC || PRESERVE_RETAIL_BEHAVIOR
 			const bool allowExit = true;
 #else
 			// TheSuperHackers @bugfix Stubbjax 04/11/2025 Passengers are no longer all dumped in a single frame.
 			const ContainModuleInterface* contain = getObject()->getContain();
-			const bool allowExit = contain && contain->hasObjectsWantingToEnterOrExit();
+
+			//MODDD - bugfix for chinooks spawned to deliver reinforcements forgetting to actually evacuate their reinforcements.
+			// They will spawn, move to where they're supposed to, and proceed to leave the map.
+			// Caused by 'contain->hasObjectsWantingToEnterOrExit()' being FALSE, most likely because objects inside
+			// technically don't have an obligation to leave (spawned inside the transport, no chance for user input).
+			// Falling through reaches base AI's generic version of state machines that doesn't work as well for the chinook, clearly.
+			// Allowing 'parms->m_cmdSource == CMD_FROM_SCRIPT' to pass as well should work.
+			// ---
+			//const bool allowExit = contain && contain->hasObjectsWantingToEnterOrExit();
+			// ---
+			const bool allowExit = contain && (contain->hasObjectsWantingToEnterOrExit() || parms->m_cmdSource == CMD_FROM_SCRIPT);
 #endif
-			*/
 
 			if (calcDistSqr(*getObject()->getPosition(), parms->m_pos) > THRESH_SQR &&
 					m_flightStatus == CHINOOK_LANDED)

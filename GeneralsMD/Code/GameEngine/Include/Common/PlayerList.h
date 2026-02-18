@@ -84,6 +84,12 @@ public:
 	virtual void reset( void );
 	virtual void update( void );
 
+	//MODDD
+#if CAMPAIGN_FORCE
+	Player* findFirstHumanPlayer( void );
+	void populateHumanPlayerRefs( void );
+#endif
+
 	virtual void newGame( void ); // called during GameLogic::startNewGame()
 	virtual void newMap( void );	 // Called after a new map is loaded.
 

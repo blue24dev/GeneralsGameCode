@@ -124,6 +124,102 @@ void PlayerList::reset()
 	init();
 }
 
+//MODDD
+#if CAMPAIGN_FORCE
+// Helper to find the first human-intended player, since it could come from an expected name or have to come
+// from the first non-computer-marked player.
+Player* PlayerList::findFirstHumanPlayer()
+{
+	AsciiString targetPlayerName;
+	Player* playerRef;
+	// The name of the intended side/player to play as in the campaign was inconsistent but was usually one of these.
+	const char* commonPlayerNames[] = {
+		"ThePlayer",
+		"Player",
+		"PlyrPLAYER",
+		"player0"
+	};
+
+	for (int i = 0; i < std::size(commonPlayerNames); ++i) {
+		targetPlayerName.set(commonPlayerNames[i]);
+		playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+		if (playerRef != nullptr)
+		{
+			// done searching
+			return playerRef;
+		}
+	}
+
+	// Fallback: find the first non-computer-marked side.
+	for (int i = 0; i < MAX_PLAYER_COUNT; i++)
+	{
+		playerRef = getNthPlayer(i);
+		if (playerRef != nullptr && playerRef->getPlayerType() == PLAYER_HUMAN)
+		{
+			return playerRef;
+		}
+	}
+
+	// ???
+	return nullptr;
+}
+
+// After creating the players from the sides in 'PlayerList::newGame()', find the human players for 'm_humanPlayerRefs'.
+// This is less error prone than assuming any non-computer-marked player is meant to be played as, because several maps
+// had multiple non-computer-marked players, and most were clearly not intended to be played as.
+// Only the player usually played as per single player logic (by an expected name, or the first non-computer-marked player),
+// and subsequent ones by a "player1", "player2", etc. naming scheme, should be in 'm_humanPlayerRefs'.
+// This will allow it to mirror the choices of players selected per machine in GameLogic.cpp: getMultiplayerLocalSide.
+// This lets any one machine be aware of who the other human players are.
+void PlayerList::populateHumanPlayerRefs()
+{
+	if (TheGameInfo != nullptr)
+	{
+		// Normal case: a skirmish/network-loaded map used in the campaign.
+		AsciiString targetPlayerName;
+		Player* playerRef;
+
+		// This can't possibly be null or else a similar earlier check (GameLogic.cpp: getMultiplayerLocalSide)
+		// would have already crashed.
+		playerRef = findFirstHumanPlayer();
+		m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
+		++m_humanPlayerRefsSoftCount;
+		
+		// For the remaining possible users (#2 to #8 from 1-based counting), search for the expected name: "player<1-7>".
+		for (int i = 1; i < 8; i++)
+		{
+			targetPlayerName.format("player%d", i);
+			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+			if (playerRef != nullptr)
+			{
+			  // Add to the list and keep searching
+				m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
+				++m_humanPlayerRefsSoftCount;
+			}
+			else
+			{
+				// Not found? Stop searching
+				break;
+			}
+		}
+	}
+	else
+	{
+		// Shell map: find the first human-marked player, add to the list of player refs
+		for (int i = 0; i < MAX_PLAYER_COUNT; i++)
+		{
+			Player* playerRef = getNthPlayer(i);
+			if (playerRef != nullptr && playerRef->getPlayerType() == PLAYER_HUMAN)
+			{
+				m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
+				++m_humanPlayerRefsSoftCount;
+				break;
+			}
+		}
+	}
+}
+#endif
+
 //-----------------------------------------------------------------------------
 void PlayerList::newGame()
 {
@@ -190,80 +286,7 @@ void PlayerList::newGame()
 	}
 
 #if CAMPAIGN_FORCE
-	// After creating the players from the sides above, find the human players for 'm_humanPlayerRefs'.
-	if (TheGameInfo != nullptr)
-	{
-		// Normal case: a skirmish/network-loaded map used in the campaign.
-		// First, assume there is the first player, always named "ThePlayer".
-		AsciiString targetPlayerName;
-		targetPlayerName = "ThePlayer";
-		Player* playerRef;
-		playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
-		// Some other attempts
-		if (playerRef == nullptr)
-		{
-			targetPlayerName = "Player";
-			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
-		}
-		if (playerRef == nullptr)
-		{
-			targetPlayerName = "PlyrPLAYER";
-			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
-		}
-		if (playerRef == nullptr)
-		{
-			targetPlayerName = "player0";
-			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
-		}
-		if (playerRef == nullptr)
-		{
-			// Find the first human-marked side than, dangit.
-			for (int i = 0; i < MAX_PLAYER_COUNT; i++)
-			{
-				Player* _playerRef = getNthPlayer(i);
-				if (_playerRef == nullptr) continue;
-				if (_playerRef->getPlayerType() == PLAYER_HUMAN) {
-					playerRef = _playerRef;
-					break;
-				}
-			}
-		}
-		m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
-		++m_humanPlayerRefsSoftCount;
-
-		// Now for the remaining possible players 1-7 (#2 to #8 from 1-based counting), search for the expected
-		// name: player<1-7>.
-		for (int i = 1; i < 8; i++)
-		{
-			targetPlayerName.format("player%d", i);
-			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
-			if (playerRef != nullptr)
-			{
-			  // Add to the list and keep searching
-				m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
-				++m_humanPlayerRefsSoftCount;
-			}
-			else
-			{
-				// Not found? Stop searching
-				break;
-			}
-		}
-	}
-	else
-	{
-		// Shell map: find the first human-marked player, add to the list of player refs
-		for (int i = 0; i < MAX_PLAYER_COUNT; i++)
-		{
-			Player* playerRef = getNthPlayer(i);
-			if (playerRef == nullptr) continue;
-			if (playerRef->getPlayerType() == PLAYER_HUMAN) {
-				m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
-				++m_humanPlayerRefsSoftCount;
-				break;
-			}
-		}
-	}
+	populateHumanPlayerRefs();
 #endif
 
 	if (!setLocal)
