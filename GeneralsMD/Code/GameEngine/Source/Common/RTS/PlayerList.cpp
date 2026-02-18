@@ -207,8 +207,26 @@ void PlayerList::newGame()
 		}
 		if (playerRef == nullptr)
 		{
+			targetPlayerName = "PlyrPLAYER";
+			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+		}
+		if (playerRef == nullptr)
+		{
 			targetPlayerName = "player0";
 			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+		}
+		if (playerRef == nullptr)
+		{
+			// Find the first human-marked side than, dangit.
+			for (int i = 0; i < MAX_PLAYER_COUNT; i++)
+			{
+				Player* _playerRef = getNthPlayer(i);
+				if (_playerRef == nullptr) continue;
+				if (_playerRef->getPlayerType() == PLAYER_HUMAN) {
+					playerRef = _playerRef;
+					break;
+				}
+			}
 		}
 		m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
 		++m_humanPlayerRefsSoftCount;

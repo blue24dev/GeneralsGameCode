@@ -1650,13 +1650,31 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			}
 			if (sideInfo == nullptr)
 			{
+				targetPlayerName = "PlyrPLAYER";
+				sideInfo = TheSidesList->findSideInfo(targetPlayerName);
+			}
+			if (sideInfo == nullptr)
+			{
 				targetPlayerName = "player0";
 				sideInfo = TheSidesList->findSideInfo(targetPlayerName);
 			}
 			if (sideInfo == nullptr)
 			{
+				// Find the first human-marked side than, dangit.
+				for (int i = 0; i < TheSidesList->getNumSides(); ++i)
+				{
+					SidesInfo* _sideInfo = TheSidesList->getSideInfo(i);
+					Dict* sideDict = _sideInfo->getDict();
+					if (sideDict->getBool(TheKey_playerIsHuman)) {
+						sideInfo = _sideInfo;
+						break;
+					}
+				}
+			}
+			if (sideInfo == nullptr)
+			{
 				AsciiString errorText;
-				errorText.format("fatal error! CAMPAIGN_FORCE is on and this map lacks a side/player for this user to play as.\nA side/player of \"ThePlayer\", \"Player\", or \"player0\" was expected but not found.");
+				errorText.format("fatal error! CAMPAIGN_FORCE is on and this map lacks a side/player for this user to play as.\nThere must be at least one human-marked side/player, though some expected choices such as \"ThePlayer\", \"Player\", or \"player0\" will receive precedence.");
 				RELEASE_CRASH(errorText.str());
 				return;
 			}
