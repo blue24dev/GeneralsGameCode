@@ -199,9 +199,14 @@ void PlayerList::newGame()
 		targetPlayerName = "ThePlayer";
 		Player* playerRef;
 		playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+		// Some other attempts
 		if (playerRef == nullptr)
 		{
-			// try "player0"?
+			targetPlayerName = "Player";
+			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+		}
+		if (playerRef == nullptr)
+		{
 			targetPlayerName = "player0";
 			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
 		}
