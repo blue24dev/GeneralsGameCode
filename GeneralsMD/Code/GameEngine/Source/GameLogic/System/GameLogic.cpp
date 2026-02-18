@@ -1642,16 +1642,21 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 		{
 			targetPlayerName = "ThePlayer";
 			sideInfo = TheSidesList->findSideInfo(targetPlayerName);
+			// Some other attempts
 			if (sideInfo == nullptr)
 			{
-				// try "player0"
+				targetPlayerName = "Player";
+				sideInfo = TheSidesList->findSideInfo(targetPlayerName);
+			}
+			if (sideInfo == nullptr)
+			{
 				targetPlayerName = "player0";
-				sideInfo = TheSidesList->findSideInfo("player0");
+				sideInfo = TheSidesList->findSideInfo(targetPlayerName);
 			}
 			if (sideInfo == nullptr)
 			{
 				AsciiString errorText;
-				errorText.format("fatal error! CAMPAIGN_FORCE is on and this map lacks a side/player for this user to play as.\nA side/player of \"ThePlayer\" or \"player0\" was expected but not found.");
+				errorText.format("fatal error! CAMPAIGN_FORCE is on and this map lacks a side/player for this user to play as.\nA side/player of \"ThePlayer\", \"Player\", or \"player0\" was expected but not found.");
 				RELEASE_CRASH(errorText.str());
 				return;
 			}
