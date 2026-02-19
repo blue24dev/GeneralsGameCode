@@ -481,7 +481,7 @@ void PopulateInGameDiplomacyPopup( void )
 			playerName.format("player%d", slotNum);
 			Player *player = ThePlayerList->findPlayerWithNameKey(NAMEKEY(playerName));
 #else
-			Player* player = ThePlayerList->m_humanPlayerRefs[slotNum];
+			Player* player = ThePlayerList->m_slotPlayerRefs[slotNum];
 #endif
 			
 			Bool isAlive = !TheVictoryConditions->hasSinglePlayerBeenDefeated(player);

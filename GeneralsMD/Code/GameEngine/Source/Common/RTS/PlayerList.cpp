@@ -62,6 +62,7 @@
 
 //MODDD
 #include "GameNetwork/GameInfo.h"
+#include "GameLogic/GameLogic.h"
 
 
 //-----------------------------------------------------------------------------
@@ -124,11 +125,10 @@ void PlayerList::reset()
 	init();
 }
 
-//MODDD
-#if CAMPAIGN_FORCE
+//MODDD - new
 // Helper to find the first human-intended player, since it could come from an expected name or have to come
 // from the first non-computer-marked player.
-Player* PlayerList::findFirstHumanPlayer()
+Player* PlayerList::findFirstSlotPlayer()
 {
 	AsciiString targetPlayerName;
 	Player* playerRef;
@@ -164,37 +164,85 @@ Player* PlayerList::findFirstHumanPlayer()
 	return nullptr;
 }
 
-// After creating the players from the sides in 'PlayerList::newGame()', find the human players for 'm_humanPlayerRefs'.
+//MODDD - new
+// After creating the players from the sides in 'PlayerList::newGame()', find the human players for 'm_slotPlayerRefs'.
 // This is less error prone than assuming any non-computer-marked player is meant to be played as, because several maps
 // had multiple non-computer-marked players, and most were clearly not intended to be played as.
 // Only the player usually played as per single player logic (by an expected name, or the first non-computer-marked player),
-// and subsequent ones by a "player1", "player2", etc. naming scheme, should be in 'm_humanPlayerRefs'.
+// and subsequent ones by a "player1", "player2", etc. naming scheme, should be in 'm_slotPlayerRefs'.
 // This will allow it to mirror the choices of players selected per machine in GameLogic.cpp: getMultiplayerLocalSide.
-// This lets any one machine be aware of who the other human players are.
-void PlayerList::populateHumanPlayerRefs()
+// This lets any one machine be aware of who the other slot players are.
+void PlayerList::populateSlotPlayerRefs()
 {
-	if (TheGameInfo != nullptr)
+	if (TheGameLogic->getGameMode() == GAME_SHELL)
 	{
-		// Normal case: a skirmish/network-loaded map used in the campaign.
+		// Shell map: find the first human-marked player, add to the list of slot player refs. That's it.
+		for (int i = 0; i < MAX_PLAYER_COUNT; i++)
+		{
+			Player* playerRef = getNthPlayer(i);
+			if (playerRef != nullptr && playerRef->getPlayerType() == PLAYER_HUMAN)
+			{
+				m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
+				++m_slotPlayerRefsSoftCount;
+				break;
+			}
+		}
+		return;
+	}
+	
+	// For anything else, decide if this is a campaign map, a generals challenge (GC) map, or a skirmish map (basically 'other').
+	// Note that both GC and skirmish maps use the skirmish system to populate players "player<0-7>" (done by the time this method
+	// is reached), so string-lookups for those will work in either case.
+	// GC maps are supposed to have a dummy "ThePlayer" played that isn't actually meant to be played as. So ignoring it works out
+	// here (other players shouldn't be able to treat it as a slot player, i.e. something to target with support powers).
+	// However, campaign maps are trickier - standard is to use the first non-computer-marked player to be played as.
+	// For co-op support, all I can figure is to name players in a standard way (ex: "player<1-7>" like skirmish generation would),
+	// because a map may have multiple non-computer-marked players as-is (can't determine which is meant to be played as by other
+	// connected users in a network game).
+	Bool isCampaignMap;
+
+	// Check the '_FORCE' constants for an easy assumption
+#if GENERALS_CHALLENGE_FORCE
+	isCampaignMap = FALSE;
+#elif CAMPAIGN_FORCE
+	isCampaignMap = TRUE;
+#else
+	// No constant to tell us. Check the game mode and the usual generals challenge check.
+	// (remember that playing a campaign or GC map in the skirmish/network from the menus isn't possible here)
+	// Actually just checking for 'TheGameInfo' being null or not (assume single player & not generals challenge) will work out.
+	if (TheGameInfo == nullptr)
+	{
+		isCampaignMap = TRUE;
+	}
+	else
+	{
+		isCampaignMap = FALSE;
+	}
+#endif
+
+	if (isCampaignMap)
+	{
+		// Campaign map - special handling to find the first player, the rest are expected to be named "player#" if
+		// provided by the map (named that way) for co-op support
 		AsciiString targetPlayerName;
 		Player* playerRef;
 
 		// This can't possibly be null or else a similar earlier check (GameLogic.cpp: getMultiplayerLocalSide)
 		// would have already crashed.
-		playerRef = findFirstHumanPlayer();
-		m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
-		++m_humanPlayerRefsSoftCount;
+		playerRef = findFirstSlotPlayer();
+		m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
+		++m_slotPlayerRefsSoftCount;
 		
-		// For the remaining possible users (#2 to #8 from 1-based counting), search for the expected name: "player<1-7>".
+		// For the remaining possible users, search for the expected name: "player<1-7>".
 		for (int i = 1; i < 8; i++)
 		{
 			targetPlayerName.format("player%d", i);
 			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
 			if (playerRef != nullptr)
 			{
-			  // Add to the list and keep searching
-				m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
-				++m_humanPlayerRefsSoftCount;
+				// Add to the list and keep searching
+				m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
+				++m_slotPlayerRefsSoftCount;
 			}
 			else
 			{
@@ -205,20 +253,27 @@ void PlayerList::populateHumanPlayerRefs()
 	}
 	else
 	{
-		// Shell map: find the first human-marked player, add to the list of player refs
-		for (int i = 0; i < MAX_PLAYER_COUNT; i++)
+		// GC or Skirmish map - simple: "player#" for all players.
+		AsciiString targetPlayerName;
+		Player* playerRef;
+		for (int i = 0; i < 8; i++)
 		{
-			Player* playerRef = getNthPlayer(i);
-			if (playerRef != nullptr && playerRef->getPlayerType() == PLAYER_HUMAN)
+			targetPlayerName.format("player%d", i);
+			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+			if (playerRef != nullptr)
 			{
-				m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = playerRef;
-				++m_humanPlayerRefsSoftCount;
+				// Add to the list and keep searching
+				m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
+				++m_slotPlayerRefsSoftCount;
+			}
+			else
+			{
+				// Not found? Stop searching
 				break;
 			}
 		}
 	}
 }
-#endif
 
 //-----------------------------------------------------------------------------
 void PlayerList::newGame()
@@ -273,8 +328,8 @@ void PlayerList::newGame()
 		/*
 		if (d->getBool(TheKey_playerIsHuman))
 		{
-			m_humanPlayerRefs[m_humanPlayerRefsSoftCount] = p;
-			++m_humanPlayerRefsSoftCount;
+			m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = p;
+			++m_slotPlayerRefsSoftCount;
 		}
 		*/
 #endif
@@ -285,9 +340,7 @@ void PlayerList::newGame()
 		TheSidesList->getSideInfo(i)->releaseBuildList();
 	}
 
-#if CAMPAIGN_FORCE
-	populateHumanPlayerRefs();
-#endif
+	populateSlotPlayerRefs();
 
 	if (!setLocal)
 	{
@@ -361,7 +414,7 @@ void PlayerList::init()
 	m_playerCount = 1;
 	
 #if CAMPAIGN_FORCE
-	m_humanPlayerRefsSoftCount = 0;
+	m_slotPlayerRefsSoftCount = 0;
 #endif
 
 	m_players[0]->init(nullptr);
@@ -430,6 +483,12 @@ Team *PlayerList::validateTeam( AsciiString owner )
 		t = getNeutralPlayer()->getDefaultTeam();
 	}
 	return t;
+}
+
+//MODDD - tell if the local player has been set to a non-default choice (anything other than the neutral player).
+Bool PlayerList::isLocalPlayerSet()
+{
+	return m_local != getNeutralPlayer();
 }
 
 //-----------------------------------------------------------------------------

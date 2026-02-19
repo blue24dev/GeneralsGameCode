@@ -143,67 +143,45 @@ ScriptEngine *TheScriptEngine = nullptr;
 static const Int ATTACK_PRIORITY_DEFAULT = 1;
 
 //MODDD - NEW
-#if GENERALS_CHALLENGE_FORCE 
-//#include "GameNetwork/GameInfo.h"
-Player* getRandomSlotPlayer()
+#if GENERALS_CHALLENGE_FORCE || CAMPAIGN_FORCE
+#include "GameNetwork/GameInfo.h"
+Player* getRandomEnemySlotPlayer(Player* currentPlayer)
 {
+	// For Generals Challenge and Campaign maps alike, assuming a slot player is an enemy works
 	Player* availablePlayerList[MAX_SLOTS];
 	int availablePlayerListSoftCount = 0;
 
-	for (int i=0; i<MAX_SLOTS; ++i)
+	for (int i=0; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 	{
-		// Not going to rely on 'TheGameInfo' in case it ever gets deleted after the game starts.
-		// The final players populated by startup (player0, ...) has enough info anyway.
-		/*
-		GameSlot *slot = TheGameInfo->getSlot(i);
-
-		// Excluding AI slots because their AI must be dead - why waste special powers / attention on them?
-		if (!slot || !slot->isOccupied() || !slot->isHuman())
+		Player* player = ThePlayerList->m_slotPlayerRefs[i];
+		if (!player->isPlayerActive())
+		{
+			// Don't attack/target defeated players
 			continue;
-		*/
-
-		AsciiString playerName;
-		playerName.format("player%d", i);
-		Player *player = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(playerName));
-
-		if (player && player->getPlayerType() == PLAYER_HUMAN) {
-			// Add the valid slot-player to the list of players to choose from
-			availablePlayerList[availablePlayerListSoftCount] = player;
-			availablePlayerListSoftCount++;
-		}
-	}
-
-	if (availablePlayerListSoftCount <= 0) {
-		// Nothing available?
-		return nullptr;
-	}
-
-	// Randomly pick a player from the list
-	int randomVal = GameLogicRandomValue(0, availablePlayerListSoftCount - 1);
-	return availablePlayerList[randomVal];
-}
-#elif CAMPAIGN_FORCE
-Player* getRandomSlotPlayer()
-{
-	// For the campaign, get a random human player instead since the slots system isn't used to generate "player<0-7>".
-	// A size of 'MAX_SLOTS' for this is still ok because there can be at most 8 players anyway.
-	Player* availablePlayerList[MAX_SLOTS];
-	int availablePlayerListSoftCount = 0;
-
-	for (int i=0; i<MAX_PLAYER_COUNT; ++i)
-	{
-		Player* player = ThePlayerList->getNthPlayer(i);
-
-		if (player && player->getPlayerType() == PLAYER_HUMAN) {
-			// Add the valid slot-player to the list of players to choose from
-			availablePlayerList[availablePlayerListSoftCount] = player;
-			availablePlayerListSoftCount++;
 		}
 
-		// Safety
-		if (availablePlayerListSoftCount >= MAX_SLOTS) {
-			break;
+		// Check to see if slots are available (map started from the skirmish/network menus).
+		// Can decide if a slot player's corresponding slot was actually occupied (given a connected player).
+		// Basically, don't attack/target a slot that's using a dummy computer player (not participating anyway).
+		// Note that 'TheGameInfo' is NULL for playing the campaign the normally intended way without 'CAMPAIGN_FORCE'.
+		// No slot info means 'single-player' only (of course you're here...) so this check wouldn't have a purpose anyway.
+		if (TheGameInfo)
+		{
+			GameSlot *slot = TheGameInfo->getSlot(i);
+			if (!slot->isOccupied())
+			{
+				continue;
+			}
 		}
+
+		if (currentPlayer->getRelationship( player->getDefaultTeam() ) != ENEMIES)
+		{
+			// Not even enemies at all
+			continue;
+		}
+
+		availablePlayerList[availablePlayerListSoftCount] = player;
+		availablePlayerListSoftCount++;
 	}
 
 	if (availablePlayerListSoftCount <= 0) {
@@ -216,17 +194,31 @@ Player* getRandomSlotPlayer()
 	return availablePlayerList[randomVal];
 }
 
-// Also, a method to get the first human player since 'getLocalPlayer' would return different results in multiplayer (mismatch candy).
-Player* getFirstHumanPlayer()
+// Also, a method to get the first slot player since 'getLocalPlayer' would return different a result in
+// multiplayer per machine  (mismatch candy).
+Player* getFirstSlotPlayer()
 {
-	for (int i=0; i<MAX_PLAYER_COUNT; ++i)
+	for (int i=0; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 	{
-		Player* player = ThePlayerList->getNthPlayer(i);
-
-		if (player && player->getPlayerType() == PLAYER_HUMAN) {
-			return player;
+		Player* player = ThePlayerList->m_slotPlayerRefs[i];
+		if (!player->isPlayerActive())
+		{
+			continue;
 		}
+
+		if (TheGameInfo)
+		{
+			GameSlot *slot = TheGameInfo->getSlot(i);
+			if (!slot->isOccupied())
+			{
+				continue;
+			}
+		}
+
+		return player;
 	}
+
+
 	// ???
 	return nullptr;
 }
@@ -5908,7 +5900,24 @@ Player *ScriptEngine::getSkirmishEnemyPlayer(void)
 	if (m_currentPlayer) {
 		Player *enemy = m_currentPlayer->getCurrentEnemy();
 		if (enemy==nullptr) {
-			//MODDD - replacing to get a random slot player, includes the human requirement
+			//MODDD - TODO.
+			// This is making a broad assumption that any non-computer-marked player (same as PLAYER_HUMAN) makes sense
+			// to be an enemy of this computer player. However, what about the rare case a computer player is allied
+			// with the local player (single-player) or the slot players (co-op)?
+			// And in a real skirmish/network game (not '_FORCE' constants being used to play an abnormal map), couldn't this
+			// computer player happen to be allies or enemies with any slot player, human or not?
+			// Three cases.
+			// Campaign map: trickiest because plenty of computer-marked & non-computer-marked players aren't substantial, like
+			// just for some technical detail or to hold a few units - doesn't make sense to uniquely target with superweapons or
+			// support powers for instance. But some players could be substantial without being associated with a slot.
+			// How do you decide a non-slot player is substantial?
+			//   computer-marked players: See if it's using AI / being played by one at all or just a dummy (not able to make its units do anything / produce anything).
+			//   non-computer-marked players: if it's not a slot player, ignore it. Clearly a dummy player so not interesting.
+			//   (as usual, ignore slot players corresponding to an unoccupied slot)
+			// GC map: assumption that slot players are always enemies is actually OK here.
+			// Skirmish: go through the slot players and pick one to be the enemy like 'getRandomEnemySlotPlayer' already does.
+			// However, require the relationship between 'me' and 'them' to be 'ENEMIES' in order to be part of the random list at the end.
+			// TEST - do a breakpoint here for non-'_FORCE' skirmish. Is this point even reached in that case?
 #if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 			// get the human player.
 			Int i;
@@ -5924,7 +5933,7 @@ Player *ScriptEngine::getSkirmishEnemyPlayer(void)
 				enemy = nullptr;
 			}
 #else
-			return getRandomSlotPlayer();
+			return getRandomEnemySlotPlayer(m_currentPlayer);
 #endif
 		}
 		return enemy;
@@ -5950,7 +5959,7 @@ Player *ScriptEngine::getPlayerFromAsciiString(const AsciiString& playerString)
 #elif CAMPAIGN_FORCE
 	if (playerString == LOCAL_PLAYER)
 		// get the first human player instead
-		return getFirstHumanPlayer();
+		return getFirstSlotPlayer();
 #else
 	// retail
 	if (playerString == LOCAL_PLAYER || (playerString == THE_PLAYER && is_GeneralsChallengeContext))

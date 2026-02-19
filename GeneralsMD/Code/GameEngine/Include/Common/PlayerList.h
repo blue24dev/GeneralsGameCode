@@ -86,8 +86,8 @@ public:
 
 	//MODDD
 #if CAMPAIGN_FORCE
-	Player* findFirstHumanPlayer( void );
-	void populateHumanPlayerRefs( void );
+	Player* findFirstSlotPlayer( void );
+	void populateSlotPlayerRefs( void );
 #endif
 
 	virtual void newGame( void ); // called during GameLogic::startNewGame()
@@ -124,6 +124,9 @@ public:
 		This will never return null.
 	*/
 	inline Player *getLocalPlayer() { DEBUG_ASSERTCRASH(m_local != nullptr, ("null m_local")); return m_local; }
+
+	//MODDD
+	Bool isLocalPlayerSet();
 
 	/**
 		Set the local player. You cannot set it to null; if you pass null, you'll
@@ -169,14 +172,16 @@ private:
 	Int						m_playerCount;
 	Player				*m_players[MAX_PLAYER_COUNT];
 
-#if CAMPAIGN_FORCE
-//MODDD - add a list of references to human players since they won't be generated (names "player<0-7") as
-// expected by network mode. It should use this list instead (public for now for laziness)
+//MODDD - add a list of references to players meant to be playable by someone connected to the game since
+// they aren't generated (names "player<0-7") as expected by network mode in CAMPAIGN_FORCE.
+// Update - going to allow this for any choice of '_FORCE' including none at all.
+// May as well have hard links to any players in case these have special signifiance elsewhere than having
+// to do "player#" string lookups so often (not purposefully replacing all of them for now, though).
+// (public for now for laziness)
 public:
-	Int						m_humanPlayerRefsSoftCount;
+	Int						m_slotPlayerRefsSoftCount;
 	// capacity comes from MAX_SLOTS
-	Player				*m_humanPlayerRefs[8];
-#endif
+	Player				*m_slotPlayerRefs[8];
 
 };
 

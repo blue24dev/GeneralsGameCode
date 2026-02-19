@@ -3750,7 +3750,30 @@ void WeaponBonusSet::parseWeaponBonusSet(INI* ini)
 {
 	WeaponBonusConditionType wb = (WeaponBonusConditionType)INI::scanIndexList(ini->getNextToken(), TheWeaponBonusNames);
 	WeaponBonus::Field wf = (WeaponBonus::Field)INI::scanIndexList(ini->getNextToken(), TheWeaponBonusFieldNames);
-	m_bonus[wb].setField(wf, INI::scanPercentToReal(ini->getNextToken()));
+
+	//MODDD - moved the param out of 'setField' below in case of my own intervention
+	Real v = INI::scanPercentToReal(ini->getNextToken());
+
+	//MODDD - for me only. I prefer some changes to the garrisoned bonuses, they seem a bit excessive to me
+	/*
+	if (wb == WEAPONBONUSCONDITION_GARRISONED)
+	{
+		if (wf == WeaponBonus::DAMAGE)
+		{
+			// as of retail, 125%
+			// (rockets & anti-infantry with a range bonus are obnoxious enough behind concrete to begin with, why bonus damage to begin with???)
+			v = 1.00f;
+		}
+		else if (wf == WeaponBonus::RANGE)
+		{
+			// as of retail, 133%
+			// (I don't think the bonus I gave to base defenses through the bonus system applies at the same time as this)
+			v = 1.28f;
+		}
+	}
+	*/
+
+	m_bonus[wb].setField(wf, v);
 }
 
 //-------------------------------------------------------------------------------------------------
