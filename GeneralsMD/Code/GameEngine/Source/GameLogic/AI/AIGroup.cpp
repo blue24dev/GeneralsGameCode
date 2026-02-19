@@ -2682,11 +2682,15 @@ void AIGroup::groupDoSpecialPower( UnsignedInt specialPowerID, UnsignedInt comma
 {
 	//This is the no target, no position version.
 	std::list<Object *>::iterator i;
-	for( i = m_memberList.begin(); i != m_memberList.end(); ++i )
+	
+	//MODDD - handle iteration early on
+	for( i = m_memberList.begin(); i != m_memberList.end(); /*empty*/ )
 	{
 		//Special powers do a lot of different things, but the top level stuff doesn't use
 		//ai interface code. It finds the special power module and calls it directly for each object.
 		Object *object = (*i);
+		++i;
+
 		const SpecialPowerTemplate *spTemplate = TheSpecialPowerStore->findSpecialPowerTemplateByID( specialPowerID );
 		if( spTemplate )
 		{
@@ -2769,12 +2773,16 @@ void AIGroup::groupDoSpecialPowerAtObject( UnsignedInt specialPowerID, Object *t
 {
 	//This one requires a target
 	std::list<Object *>::iterator i;
-	for( i = m_memberList.begin(); i != m_memberList.end(); ++i )
+	
+	//MODDD - handle iteration early on
+	for( i = m_memberList.begin(); i != m_memberList.end(); /*empty*/ )
 	{
 		//Special powers do a lot of different things, but the top level stuff doesn't use
 		//ai interface code. It finds the special power module and calls it directly for each object.
 
 		Object *object = (*i);
+		++i;
+
 		const SpecialPowerTemplate *spTemplate = TheSpecialPowerStore->findSpecialPowerTemplateByID( specialPowerID );
 		if( spTemplate )
 		{
@@ -2962,12 +2970,14 @@ void AIGroup::groupDoCommandButton( const CommandButton *commandButton, CommandS
 {
 	std::list<Object *>::iterator i;
 	Object *source;
-
-	for( i = m_memberList.begin(); i != m_memberList.end(); ++i )
+	
+	//MODDD - handle iteration early on
+	for( i = m_memberList.begin(); i != m_memberList.end(); /*empty*/ )
 	{
 
 		// get object
 		source = *i;
+		++i;
 
 		source->doCommandButton( commandButton, cmdSource );
 	}
@@ -2983,11 +2993,18 @@ void AIGroup::groupDoCommandButtonAtPosition( const CommandButton *commandButton
 	std::list<Object *>::iterator i;
 	Object *source;
 
-	for( i = m_memberList.begin(); i != m_memberList.end(); ++i )
+	//MODDD - handle iteration early on in the loop body instead of in the loop header (3rd part) so that newly
+	// spawned objects being killed in the same frame (ex: rebel ambush on impassable terrain) doesn't cause
+	// some garbage memory issues with the iterator, presumably after 'source->doCommandButtonAtPosition'.
+	// Sometimes '++i' causes a crash in debugging mode or with memory-0'ing on deletion, i.e. '0xdeadbeef' fills.
+	// ...and of course TheSuperHackers have already run into this issue elsewhere (see 'groupDoSpecialPowerAtLocation').
+	// ...wait, no, that was Westwood??? WTF why was that fix not applied everywhere the issue could possibly happen at the time then!
+	for( i = m_memberList.begin(); i != m_memberList.end(); /*empty*/ )
 	{
 
 		// get object
 		source = *i;
+		++i;
 
 		source->doCommandButtonAtPosition( commandButton, pos, cmdSource );
 	}
@@ -3002,11 +3019,13 @@ void AIGroup::groupDoCommandButtonUsingWaypoints( const CommandButton *commandBu
 	std::list<Object *>::iterator i;
 	Object *source;
 
-	for( i = m_memberList.begin(); i != m_memberList.end(); ++i )
+	//MODDD - handle iteration early on
+	for( i = m_memberList.begin(); i != m_memberList.end(); /*empty*/ )
 	{
 
 		// get object
 		source = *i;
+		++i;
 
 		source->doCommandButtonUsingWaypoints( commandButton, way, cmdSource );
 	}
@@ -3020,12 +3039,14 @@ void AIGroup::groupDoCommandButtonAtObject( const CommandButton *commandButton, 
 {
 	std::list<Object *>::iterator i;
 	Object *source;
-
-	for( i = m_memberList.begin(); i != m_memberList.end(); ++i )
+	
+	//MODDD - handle iteration early on
+	for( i = m_memberList.begin(); i != m_memberList.end(); /*empty*/ )
 	{
 
 		// get object
 		source = *i;
+		++i;
 
 		source->doCommandButtonAtObject( commandButton, obj, cmdSource );
 	}
