@@ -1260,6 +1260,9 @@ Bool AIPlayer::computeSuperweaponTarget(const SpecialPowerTemplate *power, Coord
 	cash = -1;
 	Int count = 0;
 
+	//MODDD - start with 'veryBestPos' zero'd since they may be added to without any existing position yet
+	veryBestPos.zero();
+
 	for( x = 0; x < xCount; x++ )
 	{
 		for( y = 0; y < yCount; y++ )
@@ -1276,17 +1279,8 @@ Bool AIPlayer::computeSuperweaponTarget(const SpecialPowerTemplate *power, Coord
 			}
 			else if (curCash==cash)
 			{
-				//MODDD - add a check for count being set to 1 yet.
-				// If not, 'veryBestPos' is garbage memory and can't be added to - set to pos like above in that case.
-				if (count >= 1) {
-					// ---
-					veryBestPos.x += pos.x;
-					veryBestPos.y += pos.y;
-					// ---
-				} else {
-					// in case the starting 'current-best-cash-value' is reached in the first run-through?
-					veryBestPos = pos;
-				}
+				veryBestPos.x += pos.x;
+				veryBestPos.y += pos.y;
 				count++;
 			}
 		}

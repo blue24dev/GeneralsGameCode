@@ -172,7 +172,7 @@ GameMessage *NetGameCommandMsg::constructGameMessage() const
 	name.format("player%d", getPlayerID());
 	retval->friend_setPlayerIndex( ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(name))->getPlayerIndex());
 #else
-	Player* p = ThePlayerList->m_humanPlayerRefs[getPlayerID()];
+	Player* p = ThePlayerList->m_slotPlayerRefs[getPlayerID()];
 	retval->friend_setPlayerIndex(p->getPlayerIndex());
 #endif
 
