@@ -3753,7 +3753,6 @@ void WeaponBonusSet::parseWeaponBonusSet(INI* ini)
 	Real v = INI::scanPercentToReal(ini->getNextToken());
 
 	//MODDD - for me only. I prefer some changes to the garrisoned bonuses, they seem a bit excessive to me
-	/*
 	if (wb == WEAPONBONUSCONDITION_GARRISONED)
 	{
 		if (wf == WeaponBonus::DAMAGE)
@@ -3769,7 +3768,6 @@ void WeaponBonusSet::parseWeaponBonusSet(INI* ini)
 			v = 1.28f;
 		}
 	}
-	*/
 
 	m_bonus[wb].setField(wf, v);
 }
