@@ -478,6 +478,8 @@ set(GAMEENGINE_SRC
     Include/GameLogic/ObjectScriptStatusBits.h
     Include/GameLogic/ObjectTypes.h
     Include/GameLogic/PartitionManager.h
+    # MODDD - new
+    Include/GameLogic/PeekSideNames.h
     Include/GameLogic/PolygonTrigger.h
     Include/GameLogic/Powers.h
     Include/GameLogic/RankInfo.h
@@ -835,6 +837,8 @@ set(GAMEENGINE_SRC
     Source/GameLogic/AI/AITNGuard.cpp
     Source/GameLogic/AI/Squad.cpp
     Source/GameLogic/AI/TurretAI.cpp
+    # MODDD - new
+    Source/GameLogic/Map/PeekSideNames.cpp
     Source/GameLogic/Map/PolygonTrigger.cpp
     Source/GameLogic/Map/SidesList.cpp
     Source/GameLogic/Map/TerrainLogic.cpp

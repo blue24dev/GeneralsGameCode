@@ -61,6 +61,8 @@
 #include "GameNetwork/GameInfo.h"
 #include "GameNetwork/NetworkDefs.h"
 
+//MODDD
+#include "GameLogic/PeekSideNames.h"
 
 //-------------------------------------------------------------------------------
 // PRIVATE DATA ///////////////////////////////////////////////////////////////////////////////////
@@ -233,6 +235,23 @@ static Bool loadMap( AsciiString filename )
 	file.registerParser( "HeightMapData", AsciiString::TheEmptyString, ParseSizeOnlyInChunk );
 	file.registerParser( "WorldInfo", AsciiString::TheEmptyString, ParseWorldDictDataChunk );
 	file.registerParser( "ObjectsList", AsciiString::TheEmptyString, ParseObjectsDataChunk );
+
+	//MODDD - if 'CAMPAIGN_FORCE' is on, the user needs to be able to see how many slot players a campaign map
+	// expects to support (available positions to fill for co-op, likely the whole point of this).
+	// The normal way the game decides on max players is how many "Player_#_Start" waypoints there are.
+	// That won't work for campaign maps because they don't necessarily have these waypoints (if they do, likely only
+	// one for the first player and it's probably a mistake since it isn't meaningful in this case).
+	// Idea: check to see if there is a "player1" side in the map's sides list (baked-in player data). If so,
+	// start with a player count of 2 (first player name isn't standardized, though it isn't important to prove
+	// that the first player exists at this point), and count upwards "player#" to find the number of slot players
+	// the map supports (probably just 2 at "player1" though).
+	// If there isn't a "player1' side, the retail default of "Player_#_Start" waypoint checks still works. A map
+	// without even the "Player_1_Start" waypoint still has a reported minimum of 1 player - that suffices.
+#if CAMPAIGN_FORCE
+		PeekSideNames::peekedSideNamesSoftCount = 0;
+		file.registerParser( "SidesList", AsciiString::TheEmptyString,	PeekSideNames::ParseSidesDataChunk );
+#endif
+
 	if (!file.parse(nullptr)) {
 		throw(ERROR_CORRUPT_FILE_FORMAT);
 	}
@@ -688,7 +707,24 @@ Bool MapCache::addMap(
 	md.m_isOfficial = isOfficial;
 	md.m_doesExist = TRUE;
 	md.m_waypoints.update();
+
+#if !CAMPAIGN_FORCE
+	// retail
 	md.m_numPlayers = md.m_waypoints.m_numStartSpots;
+#else
+	Int slotPlayerCountTest = PeekSideNames::getSlotPlayerCountSuggestedByPeekedSideNames();
+	if( slotPlayerCountTest != 0 )
+	{
+		md.m_numPlayers = slotPlayerCountTest;
+	}
+	else
+	{
+		// Being 0 means there weren't any side/player names to assume how many slot players are intended.
+		// Just use the retail way (named waypoint count).
+		md.m_numPlayers = md.m_waypoints.m_numStartSpots;
+	}
+#endif
+
 	md.m_isMultiplayer = (md.m_numPlayers >= 2);
 	md.m_timestamp.m_highTimeStamp = fileInfo.timestampHigh;
 	md.m_timestamp.m_lowTimeStamp = fileInfo.timestampLow;

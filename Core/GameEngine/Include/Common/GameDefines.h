@@ -247,6 +247,15 @@
 // Retail's way was to depend on the game being windowed or not, this setting applies regardless of that.
 #define CONFIRMATION_PROMPT_TO_EXIT_PROGRAM FALSE
 
+// Value to force 'MaxCameraHeight' in GameData.ini to during cinematic cutscenes, often in campaign maps.
+// They were made with a specific max camera height in mind, and changing it can affect what's shown significantly.
+// This is the number to change the setting to, not a bool.
+// A value of 0 will mean this feature is unused.
+// For mods, see the value in their GameData.ini in case a different choice is used from retail and use the
+// default seen there for this setting before making your own changes.
+// (retail choice is 310)
+#define FORCE_CINEMATIC_MAX_CAMERA_HEIGHT 0
+
 // Whether the 'AudioFootprintInBytes' setting from AudioSettings.ini is forced to a higher value if it's using
 // below a certain value (128 Megabytes) - applies to retail's 5 MB. Setting to 'FALSE' just uses what's in the
 // file like retail.

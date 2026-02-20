@@ -97,6 +97,11 @@ void View::init( void )
 
 	m_zoom = 1.0f;
 	m_maxHeightAboveGround = TheGlobalData->m_maxCameraHeight;
+	//MODDD
+#if defined(FORCE_CINEMATIC_MAX_CAMERA_HEIGHT) && FORCE_CINEMATIC_MAX_CAMERA_HEIGHT != 0
+	m_maxHeightAboveGroundCinematic = FORCE_CINEMATIC_MAX_CAMERA_HEIGHT;
+#endif
+
 	m_minHeightAboveGround = TheGlobalData->m_minCameraHeight;
 	m_okToAdjustHeight = FALSE;
 
@@ -192,12 +197,32 @@ void View::setHeightAboveGround(Real z)
 	// if our zoom is limited, we will stay within a predefined distance from the terrain
 	if( m_zoomLimited )
 	{
-		m_heightAboveGround = clamp(m_minHeightAboveGround, z, m_maxHeightAboveGround);
+		m_heightAboveGround = clamp(m_minHeightAboveGround, z, getMaxHeightAboveGround());
 	}
 	else
 	{
 		m_heightAboveGround = z;
 	}
+}
+
+//MODDD - getter in place of references to 'm_maxHeightAboveGround' to use a different value during cinematic mode.
+// Changing the game's camera value past the default can have adverse effects on the on-rails portions of the campaign.
+#include "GameClient/InGameUI.h"
+Real View::getMaxHeightAboveGround() const
+{
+#if defined(FORCE_CINEMATIC_MAX_CAMERA_HEIGHT) && FORCE_CINEMATIC_MAX_CAMERA_HEIGHT != 0
+	if (TheInGameUI->getInputEnabled()) {
+		return m_maxHeightAboveGround;
+	}
+	else
+	{
+		// cinematic mode, presumably.
+		return m_maxHeightAboveGroundCinematic;
+	}
+#else
+	// setting unused - always use this then
+	return m_maxHeightAboveGround;
+#endif
 }
 
 /**
