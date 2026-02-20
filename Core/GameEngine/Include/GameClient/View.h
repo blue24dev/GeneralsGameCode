@@ -186,6 +186,10 @@ public:
 	virtual void setZoom(Real z) { m_zoom = z; }
 	virtual Real getHeightAboveGround() { return m_heightAboveGround; }
 	virtual void setHeightAboveGround(Real z);
+	
+	//MODDD
+	virtual Real getMaxHeightAboveGround() const;
+
 	virtual void zoom( Real height ); ///< Zoom in/out, closer to the ground, limit to min, or farther away from the ground, limit to max
 	virtual void setZoomToDefault( void ) { m_zoom  = 1.0f; } ///< Set zoom to default value
 	virtual void setOkToAdjustHeight( Bool val ) { m_okToAdjustHeight = val; }	///< Set this to adjust camera height
@@ -265,6 +269,12 @@ protected:
 	Real m_pitch;																								///< Rotation of view direction around horizontal (X) axis. Expected normalized
 
 	Real m_maxHeightAboveGround;																///< Highest camera above ground value
+
+	//MODDD
+#if defined(FORCE_CINEMATIC_MAX_CAMERA_HEIGHT) && FORCE_CINEMATIC_MAX_CAMERA_HEIGHT != 0
+	Real m_maxHeightAboveGroundCinematic;
+#endif
+
 	Real m_minHeightAboveGround;																///< Lowest camera above ground value
 	Real m_zoom;																								///< Current zoom value
 	Real m_heightAboveGround;																		///< User's desired camera height above ground

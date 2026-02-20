@@ -121,6 +121,8 @@ set(WORLDBUILDER_SRC
     "include/EditGroup.h"
     "include/EditObjectParameter.h"
     "include/EditParameter.h"
+    #MODDD - new
+    "include/Enum.h"
     "include/ExportScriptsOptions.h"
     "include/EyedropperTool.h"
     "include/FeatherOptions.h"

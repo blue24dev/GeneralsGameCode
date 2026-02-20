@@ -491,7 +491,7 @@ void W3DView::calcCameraAreaConstraints()
 Bool W3DView::isWithinCameraHeightConstraints() const
 {
 	const Bool isAboveMinHeight = m_currentHeightAboveGround >= m_minHeightAboveGround;
-	const Bool isBelowMaxHeight = m_currentHeightAboveGround <= m_maxHeightAboveGround;
+	const Bool isBelowMaxHeight = m_currentHeightAboveGround <= getMaxHeightAboveGround();
 	return isAboveMinHeight && (isBelowMaxHeight || !TheGlobalData->m_enforceMaxCameraHeight);
 }
 
@@ -1884,9 +1884,17 @@ void W3DView::setDefaultView(Real pitch, Real angle, Real maxHeight)
 	// MDC - we no longer want to rotate maps (design made all of them right to begin with)
 	//	m_defaultAngle = angle * M_PI/180.0f;
 	m_defaultPitch = pitch;
+
 	m_maxHeightAboveGround = TheGlobalData->m_maxCameraHeight*maxHeight;
 	if (m_minHeightAboveGround > m_maxHeightAboveGround)
 		m_maxHeightAboveGround = m_minHeightAboveGround;
+
+	//MODDD - this too
+#if defined(FORCE_CINEMATIC_MAX_CAMERA_HEIGHT) && FORCE_CINEMATIC_MAX_CAMERA_HEIGHT != 0
+	m_maxHeightAboveGroundCinematic = FORCE_CINEMATIC_MAX_CAMERA_HEIGHT*maxHeight;
+	if (m_minHeightAboveGround > m_maxHeightAboveGroundCinematic)
+		m_maxHeightAboveGroundCinematic = m_minHeightAboveGround;
+#endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1935,13 +1943,13 @@ void W3DView::setZoomToDefault( void )
 	// find best approximation of max terrain height we can see
 	Real terrainHeightMax = getHeightAroundPos(m_pos.x, m_pos.y);
 
-	Real desiredHeight = (terrainHeightMax + m_maxHeightAboveGround);
+	Real desiredHeight = (terrainHeightMax + getMaxHeightAboveGround());
 	Real desiredZoom = desiredHeight / m_cameraOffset.z;
 
 	//DEBUG_LOG(("W3DView::setZoomToDefault() Current zoom: %g  Desired zoom: %g", m_zoom, desiredZoom));
 
 	m_zoom = desiredZoom;
-	m_heightAboveGround = m_maxHeightAboveGround;
+	m_heightAboveGround = getMaxHeightAboveGround();
 
 	m_doingMoveCameraOnWaypointPath = false;
 	m_CameraArrivedAtWaypointOnPathFlag = false;
@@ -2506,7 +2514,7 @@ void W3DView::cameraModFinalZoom( Real finalZoom, Real easeIn, Real easeOut )
 	if (m_doingRotateCamera)
 	{
 		Real terrainHeightMax = getHeightAroundPos(m_pos.x, m_pos.y);
-		Real maxHeight = (terrainHeightMax + m_maxHeightAboveGround);
+		Real maxHeight = (terrainHeightMax + getMaxHeightAboveGround());
 		Real maxZoom = maxHeight / m_cameraOffset.z;
 
 		Real time = (m_rcInfo.numFrames + m_rcInfo.numHoldFrames - m_rcInfo.curFrame)*TheW3DFrameLengthInMsec;
@@ -2516,7 +2524,7 @@ void W3DView::cameraModFinalZoom( Real finalZoom, Real easeIn, Real easeOut )
 	{
 		Coord3D pos = m_mcwpInfo.waypoints[m_mcwpInfo.numWaypoints];
 		Real terrainHeightMax = getHeightAroundPos(pos.x, pos.y);
-		Real maxHeight = (terrainHeightMax + m_maxHeightAboveGround);
+		Real maxHeight = (terrainHeightMax + getMaxHeightAboveGround());
 		Real maxZoom = maxHeight / m_cameraOffset.z;
 
 		Real time = m_mcwpInfo.totalTimeMilliseconds - m_mcwpInfo.elapsedTimeMilliseconds;
@@ -2738,7 +2746,7 @@ void W3DView::resetCamera(const Coord3D *location, Int milliseconds, Real easeIn
 	// terrain height + desired height offset == cameraOffset * actual zoom
 	// find best approximation of max terrain height we can see
 	Real terrainHeightMax = getHeightAroundPos(location->x, location->y);
-	Real desiredHeight = (terrainHeightMax + m_maxHeightAboveGround);
+	Real desiredHeight = (terrainHeightMax + getMaxHeightAboveGround());
 	Real desiredZoom = desiredHeight / m_cameraOffset.z;
 
 	zoomCamera( desiredZoom, milliseconds, easeIn, easeOut );	// this isn't right... or is it?
