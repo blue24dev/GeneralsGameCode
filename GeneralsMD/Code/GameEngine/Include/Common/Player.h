@@ -258,6 +258,9 @@ public:
 	/// return a bitmask that is unique to this player.
 	PlayerMaskType getPlayerMask() const { return 1 << m_playerIndex; }
 
+	//MODDD - why was this missing?
+	AIPlayer* getAIPlayerData() const;
+
 	/// a convenience function to test the ThingTemplate against the players canBuild flags
 	/// called by canBuild
 	Bool allowedToBuild(const ThingTemplate *tmplate) const;

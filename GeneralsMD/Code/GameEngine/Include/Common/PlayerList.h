@@ -85,10 +85,8 @@ public:
 	virtual void update( void );
 
 	//MODDD
-#if CAMPAIGN_FORCE
 	Player* findFirstSlotPlayer( void );
 	void populateSlotPlayerRefs( void );
-#endif
 
 	virtual void newGame( void ); // called during GameLogic::startNewGame()
 	virtual void newMap( void );	 // Called after a new map is loaded.

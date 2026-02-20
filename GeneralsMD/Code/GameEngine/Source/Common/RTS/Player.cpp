@@ -2352,6 +2352,11 @@ void Player::sellEverythingUnderTheSun()
   iterateObjects( sellBuildings, nullptr );
 }
 
+//MODDD - New
+AIPlayer* Player::getAIPlayerData() const
+{
+	return m_ai;
+}
 
 //=============================================================================
 Bool Player::allowedToBuild(const ThingTemplate *tmplate) const
