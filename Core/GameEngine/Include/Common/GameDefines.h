@@ -254,7 +254,7 @@
 // For mods, see the value in their GameData.ini in case a different choice is used from retail and use the
 // default seen there for this setting before making your own changes.
 // (retail choice is 310)
-#define FORCE_CINEMATIC_MAX_CAMERA_HEIGHT 0
+#define FORCE_CINEMATIC_MAX_CAMERA_HEIGHT 310
 
 // Whether the 'AudioFootprintInBytes' setting from AudioSettings.ini is forced to a higher value if it's using
 // below a certain value (128 Megabytes) - applies to retail's 5 MB. Setting to 'FALSE' just uses what's in the
