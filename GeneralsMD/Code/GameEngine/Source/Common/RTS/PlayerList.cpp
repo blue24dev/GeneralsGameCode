@@ -412,10 +412,7 @@ void PlayerList::newGame()
 void PlayerList::init()
 {
 	m_playerCount = 1;
-	
-#if CAMPAIGN_FORCE
 	m_slotPlayerRefsSoftCount = 0;
-#endif
 
 	m_players[0]->init(nullptr);
 
