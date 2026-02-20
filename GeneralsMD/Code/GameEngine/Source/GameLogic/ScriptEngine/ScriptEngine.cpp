@@ -142,18 +142,33 @@ ScriptEngine *TheScriptEngine = nullptr;
 
 static const Int ATTACK_PRIORITY_DEFAULT = 1;
 
-//MODDD - NEW
-#if GENERALS_CHALLENGE_FORCE || CAMPAIGN_FORCE
+//MODDD - NEW, for checking 'TheGameInfo'
 #include "GameNetwork/GameInfo.h"
-Player* getRandomEnemySlotPlayer(Player* currentPlayer)
+#include "GameLogic/AIPlayer.h"
+
+//MODDD - NEW. Logic to randomly select a player to be the 'enemy', likely for some map script such as who to use a support power / superweapon
+// on when the current player doesn't have a contextual enemy at the time (assuming I understand how that works).
+// This replaces the retail way of finding an enemy if the current player lacks one to use already.
+Player* getRandomEnemyPlayer(Player* currentPlayer)
 {
-	// For Generals Challenge and Campaign maps alike, assuming a slot player is an enemy works
-	Player* availablePlayerList[MAX_SLOTS];
+	// List of players to choose from to be my enemy. Potentially every single player minus 1 can be an enemy,
+	// though that's very unlikely (even having the maximum number of players is unlikely to begin with).
+	Player* availablePlayerList[MAX_PLAYER_COUNT];
 	int availablePlayerListSoftCount = 0;
 
+	// Go through every slot player to see which ones I am 'enemies' with by relationship, and which one are valid
+	// choices (not defeated, not associated with a slot that was never used by a connected player -> brain-dead AI default).
+	// Note that checking for the dummy "ThePlayer" in Generals Challenge maps isn't needed here - that's never a slot player
+	// so it's gracefully left out of this run-through.
 	for (int i=0; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 	{
 		Player* player = ThePlayerList->m_slotPlayerRefs[i];
+
+		if (player == currentPlayer) {
+			// Don't pick yourself to be the enemy
+			continue;
+		}
+
 		if (!player->isPlayerActive())
 		{
 			// Don't attack/target defeated players
@@ -164,7 +179,7 @@ Player* getRandomEnemySlotPlayer(Player* currentPlayer)
 		// Can decide if a slot player's corresponding slot was actually occupied (given a connected player).
 		// Basically, don't attack/target a slot that's using a dummy computer player (not participating anyway).
 		// Note that 'TheGameInfo' is NULL for playing the campaign the normally intended way without 'CAMPAIGN_FORCE'.
-		// No slot info means 'single-player' only (of course you're here...) so this check wouldn't have a purpose anyway.
+		// No slot info means the game is 'single-player' (of course you're here) so this check wouldn't have a purpose anyway.
 		if (TheGameInfo)
 		{
 			GameSlot *slot = TheGameInfo->getSlot(i);
@@ -182,6 +197,60 @@ Player* getRandomEnemySlotPlayer(Player* currentPlayer)
 
 		availablePlayerList[availablePlayerListSoftCount] = player;
 		availablePlayerListSoftCount++;
+	}
+
+	// MODDD - if this is a campaign map, allow selecting baked-in map players that 'currentPlayer' is enemies with as well,
+	// so long as they aren't already linked to a slot player (checked above already - don't double dip) and are actually
+	// a reasonable target (not some non-human player that can't actually do anything with units because it has no AI).
+	// This is a clear addition to the base game where choosing computer-marked players as enemies, at least in
+	// 'getSkirmishEnemyPlayer' relying on here, wasn't possible.
+	// This is basically an extra run-through for non-slot-players to be enemies.
+	// This isn't needed for GC (only reasonable players are slot players, "ThePlayer" dummy being left out is a good thing).
+	// And this isn't needed for skirmish (same logic as above, there should be no other valid choices anyway).
+	Bool isCampaignMap;
+
+	// Check the '_FORCE' constants for an easy assumption
+#if GENERALS_CHALLENGE_FORCE
+	isCampaignMap = FALSE;
+#elif CAMPAIGN_FORCE
+	isCampaignMap = TRUE;
+#else
+	// No constant to tell us. Check the game mode and the usual generals challenge check.
+	// (remember that playing a campaign or GC map in the skirmish/network from the menus isn't possible here)
+	// Actually just checking for 'TheGameInfo' being null or not (assume single player & not generals challenge) will work out.
+	if (TheGameInfo == nullptr)
+	{
+		isCampaignMap = TRUE;
+	}
+	else
+	{
+		isCampaignMap = FALSE;
+	}
+#endif
+
+	if (isCampaignMap)
+	{
+		for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
+		{
+			Player* player = ThePlayerList->getNthPlayer(i);
+			if (player == nullptr) continue;
+			if (player == currentPlayer) continue; // again, not enemies with 'me' ('currentPlayer' may not be a slot player themselves)
+			if (player->slotIndex != -1) continue; // if this player is already associated with a slot, already handled above - don't do it again
+			if (!player->isPlayerActive()) continue;
+			if (currentPlayer->getRelationship( player->getDefaultTeam() ) != ENEMIES) continue;
+			if (player->getPlayerType() != PLAYER_COMPUTER) continue; // must be a computer player (extra human-marked players are mistakes or meant to be AI-dead I guess?)
+
+			// Finally, check to see if this player has an AI to actually play them.
+			//MODDD - TODO - any specifics to tell if this AI player can actually *play the game*, and isn't just a bunch of sitting units waiting for a map trigger?
+			// i.e. something a human player would typically thing to attack as a living target?
+			AIPlayer* aiPlayerRef = player->getAIPlayerData();
+			if (aiPlayerRef == nullptr) continue;
+			// (actually, this bit doesn't require the AI player data - whoops)
+			if (!player->getCanBuildUnits() && !player->getCanBuildBase()) continue; // if the player can't do either of these, assume they're not worth being my enemy
+
+			availablePlayerList[availablePlayerListSoftCount] = player;
+			availablePlayerListSoftCount++;
+		}
 	}
 
 	if (availablePlayerListSoftCount <= 0) {
@@ -218,11 +287,9 @@ Player* getFirstSlotPlayer()
 		return player;
 	}
 
-
 	// ???
 	return nullptr;
 }
-#endif
 
 //-------------------------------------------------------------------------------------------------
 /** Ctor */
@@ -5893,7 +5960,8 @@ void ScriptEngine::clearTeamFlags(void)
 Player *ScriptEngine::getSkirmishEnemyPlayer(void)
 {
 	//MODDD - #if wrapper
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+	// UPDATE - not here anymore
+#if 0
 	Bool is_GeneralsChallengeContext = TheCampaignManager->getCurrentCampaign() && TheCampaignManager->getCurrentCampaign()->m_isChallengeCampaign;
 #endif
 
@@ -5906,19 +5974,20 @@ Player *ScriptEngine::getSkirmishEnemyPlayer(void)
 			// with the local player (single-player) or the slot players (co-op)?
 			// And in a real skirmish/network game (not '_FORCE' constants being used to play an abnormal map), couldn't this
 			// computer player happen to be allies or enemies with any slot player, human or not?
-			// Three cases.
-			// Campaign map: trickiest because plenty of computer-marked & non-computer-marked players aren't substantial, like
-			// just for some technical detail or to hold a few units - doesn't make sense to uniquely target with superweapons or
-			// support powers for instance. But some players could be substantial without being associated with a slot.
-			// How do you decide a non-slot player is substantial?
-			//   computer-marked players: See if it's using AI / being played by one at all or just a dummy (not able to make its units do anything / produce anything).
-			//   non-computer-marked players: if it's not a slot player, ignore it. Clearly a dummy player so not interesting.
-			//   (as usual, ignore slot players corresponding to an unoccupied slot)
-			// GC map: assumption that slot players are always enemies is actually OK here.
-			// Skirmish: go through the slot players and pick one to be the enemy like 'getRandomEnemySlotPlayer' already does.
-			// However, require the relationship between 'me' and 'them' to be 'ENEMIES' in order to be part of the random list at the end.
-			// TEST - do a breakpoint here for non-'_FORCE' skirmish. Is this point even reached in that case?
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+			// UPDATE - always use my redirect and choose what to do there instead.
+			// ---
+			// Longer explanation:
+			// In the original game, this just stops at the first computer-marked (presumably human) player. This often
+			// works for the campaign, and always for Generals Challenge maps where a computer player's enemy is always *the* human/local user playing the game.
+			// However, now that the campaign & generals challenge can be played in network mode / co-op ('_FORCE' constants), choosing randomly
+			// between any possible opponents instead of always choosing the first human player makes more sense.
+			// I don't understand how the retail logic would be OK for skmirish. Couldn't a computer player happen to be allies with the earliest human player,
+			// or even if they are enemies, have other enemy computer players that should be picked some of the time instead?
+			// You could argue that even campaign mode should allow choosing enemy computer players (based off sides baked into the map) to this player, such as
+			// allies to the local user (single player) or slot players (the host & connected players in co-op).
+			// Quite the case study!
+			// ---
+#if 0
 			// get the human player.
 			Int i;
 			for (i=0; i<ThePlayerList->getPlayerCount(); i++) {
@@ -5932,9 +6001,8 @@ Player *ScriptEngine::getSkirmishEnemyPlayer(void)
 				}
 				enemy = nullptr;
 			}
-#else
-			return getRandomEnemySlotPlayer(m_currentPlayer);
 #endif
+			return getRandomEnemyPlayer(m_currentPlayer);
 		}
 		return enemy;
 	}
@@ -5947,26 +6015,28 @@ Player *ScriptEngine::getSkirmishEnemyPlayer(void)
 //-------------------------------------------------------------------------------------------------
 Player *ScriptEngine::getPlayerFromAsciiString(const AsciiString& playerString)
 {
-	//MODDD - #if wrapper + alt
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+#if GENERALS_CHALLENGE_FORCE
+	Bool is_GeneralsChallengeContext = TRUE;
+#elif CAMPAIGN_FORCE
+	Bool is_GeneralsChallengeContext = FALSE;
+#else
+	// retail - decide if it's the case per context as usual
 	Bool is_GeneralsChallengeContext = TheCampaignManager->getCurrentCampaign() && TheCampaignManager->getCurrentCampaign()->m_isChallengeCampaign;
 #endif
-
-#if GENERALS_CHALLENGE_FORCE
-	if (playerString == LOCAL_PLAYER || (playerString == THE_PLAYER && TRUE))
-		// get player #0 instead
-		return ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey("player0"));
-#elif CAMPAIGN_FORCE
-	if (playerString == LOCAL_PLAYER)
-		// get the first human player instead
-		return getFirstSlotPlayer();
-#else
-	// retail
+	
 	if (playerString == LOCAL_PLAYER || (playerString == THE_PLAYER && is_GeneralsChallengeContext))
 		// Designers have built their Generals' Challenge maps, referencing "ThePlayer" meaning the local player.
 		// However, they've also built many of their single player maps with this string, where "ThePlayer" is not intended as an alias.
-		return ThePlayerList->getLocalPlayer();
-#endif
+		// ---
+		//MODDD - replacing this. 'getLocalPlayer' will return a different choice per machine in network games (ex: whether you're "player0" or "player1"
+		// in GC maps played in the new co-op mode with GENERALS_CHALLENGE_FORCE).
+		// The new 'getFirstSlotPlayer' will get the first slot-based player on all machines, or the only player in single-player (cover all use cases).
+		// ---
+		//return ThePlayerList->getLocalPlayer();
+		// ---
+		return getFirstSlotPlayer();
+		// Old way (bad assumption for campaign maps: player name isn't standardized)
+		// return ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey("player0"));
 
 	if (playerString == THIS_PLAYER)
 		return getCurrentPlayer();
@@ -6088,23 +6158,24 @@ PolygonTrigger *ScriptEngine::getQualifiedTriggerAreaByName( AsciiString name )
 //-------------------------------------------------------------------------------------------------
 Team * ScriptEngine::getTeamNamed(const AsciiString& teamName)
 {
-	//MODDD - #if wrapper + alt
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+#if GENERALS_CHALLENGE_FORCE
+	Bool is_GeneralsChallengeContext = TRUE;
+#elif CAMPAIGN_FORCE
+	Bool is_GeneralsChallengeContext = FALSE;
+#else
+	// retail - decide if it's the case per context as usual
 	Bool is_GeneralsChallengeContext = TheCampaignManager->getCurrentCampaign() && TheCampaignManager->getCurrentCampaign()->m_isChallengeCampaign;
 #endif
 
-#if GENERALS_CHALLENGE_FORCE
-	if (teamName == TEAM_THE_PLAYER && TRUE)
-		return ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey("player0"))->getDefaultTeam();
-#elif CAMPAIGN_FORCE
-	// no hardcoded string checks possible since the only one requires this to be generals-challenge (not the case here).
-#else
-	// retail
 	if (teamName == TEAM_THE_PLAYER && is_GeneralsChallengeContext)
 		// Designers have built their Generals' Challenge maps, referencing "teamThePlayer" meaning the local player's default (parent) team.
 		// However, they've also built many of their single player maps with this string, where "teamThePlayer" is not intended as an alias.
-		return ThePlayerList->getLocalPlayer()->getDefaultTeam();
-#endif
+		// ---
+		//MODDD - replacing this. Same kind of replacement as 'getPlayerFromAsciiString', see notes there
+		// ---
+		//return ThePlayerList->getLocalPlayer()->getDefaultTeam();
+		// ---
+		return getFirstSlotPlayer()->getDefaultTeam();
 
 	if (teamName == THIS_TEAM) {
 		if (m_callingTeam)
