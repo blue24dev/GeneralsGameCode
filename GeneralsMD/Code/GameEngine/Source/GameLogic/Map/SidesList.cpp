@@ -525,7 +525,6 @@ void SidesList::prepareForMP_or_Skirmish(void)
 		// However, for generals challenge maps loaded as skirmish, this isn't good.
 		// Going to skip a call to this method entirely (prepareForMP_or_Skirmish) instead of just dummying
 		// out the 'removeSide' call here.
-		// See an edit in GameLogic.cpp for the call-to-here commented out.
 		if (m_numSides == 1) break;	// can't remove the last side.
 		removeSide(i);
 		i--;

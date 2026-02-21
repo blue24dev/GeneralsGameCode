@@ -311,12 +311,17 @@ void StartPressed(void)
 		return;
 	}
 
+	//MODDD - don't show the sandbox mode message for either '_FORCE' constant.
+	// Skirmish/network-menu assigned settings aren't as relevant to the game in these cases.
+	// There are still enemies in the map even if all slot players are on the same team.
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 	if (numRandom + teams.size() < 2)
 	{
 		UnicodeString text;
 		text.format(TheGameText->fetch("GUI:SandboxMode"));
 			TheLAN->OnChat(L"SYSTEM", TheLAN->GetLocalIP(), text, LANAPI::LANCHAT_SYSTEM);
 	}
+#endif
 
 	// see if everyone's accepted and count the number of players in the game
 	UnicodeString mapDisplayName;

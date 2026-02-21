@@ -1804,7 +1804,22 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			}
 		}
 
+		//MODDD - don't apply the victory/defeat-checking script conditions
+		// Actually this block won't run anyway ('numTeams'-counting block above is never run in this case). Oh well.
+		// For info, this script is what regularly calls for checks to 'VictoryConditions.cpp' that decide in ending
+		// the game in victory/defeat. Beats me why that wouldn't just be hardcoded per game mode if 99.9% of the logic
+		// is behind such a basic "tell the game engine to do what it's supposted to do" layer.
+		// ...and this block, to load that script, is basically decided per game mode ("if (TheGameInfo)" is effectively a
+		// single-player-campaign check).
+		// I feel it would've made more sense to make what to do specifically for victory/defeat like UI graphics or music
+		// up to player template info (if it isn't already). Do victory/defeat checks every frame without needing the
+		// multiplayer scripts file to say that (safe to delete that then), if the current game is skirmish/network
+		// and not sandbox mode (point of the 'numTeams' check above).
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 		if (numTeams > 1)
+#else
+		if (FALSE)
+#endif
 		{
 			// add in the multiplayer victory/defeat scripts
 			AsciiString path = "Data\\Scripts\\MultiplayerScripts.scb";

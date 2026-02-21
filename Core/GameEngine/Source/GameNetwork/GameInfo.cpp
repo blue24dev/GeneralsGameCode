@@ -869,6 +869,12 @@ Bool GameInfo::isMultiPlayer(void)
 
 Bool GameInfo::isSandbox(void)
 {
+	//MODDD - if either '_FORCE' constant is on, never say this is 'sandbox' mode.
+	// Slot players may be on the same team, but there are likely still enemies to these players on the map.
+#if GENERALS_CHALLENGE_FORCE || CAMPAIGN_FORCE
+	return FALSE;
+#endif
+
 	Int localSlotNum = getLocalSlotNum();
 	Int localTeam = getConstSlot(localSlotNum)->getTeamNumber();
 	for (Int i=0; i<MAX_SLOTS; ++i)
