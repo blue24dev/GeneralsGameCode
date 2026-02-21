@@ -1,8 +1,8 @@
 //MODDD - new file
 
+#if CAMPAIGN_FORCE
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
 
-#if CAMPAIGN_FORCE
 #include "Common/DataChunk.h"
 #include "Common/WellKnownKeys.h"
 #include "GameLogic/PeekSideNames.h"
@@ -36,19 +36,58 @@ namespace PeekSideNames
 	Int peekedSideNamesSoftCount;
 
 
-	Int indexOfNameInPeekedSideNames(const AsciiString& targetName)
+	Bool ParseSidesDataChunk(DataChunkInput &file, DataChunkInfo *info, void *userData)
 	{
-		for (Int i_peekedSideName = 0; i_peekedSideName < peekedSideNamesSoftCount; i_peekedSideName++)
+		Int count = file.readInt();
+		peekedSideNamesSoftCount = count;
+
+		Int i, j;
+		for (i=0; i<count; i++)
 		{
-			const AsciiString& peekedSideName = peekedSideNames[i_peekedSideName];
-			if (peekedSideName == targetName)
+			if (i >= MAX_PLAYER_COUNT) break;
+			Dict d =  file.readDict();
+
+			peekedSideNames[i] = d.getAsciiString(TheKey_playerName);
+
+			// read through the rest anyway to progress to the next side
+			// (HOLY-)
+			Int count = file.readInt();
+			for (j=0; j<count; j++)
 			{
-				// Found it
-				return i_peekedSideName;
+				file.readAsciiString();
+				file.readAsciiString();
+				file.readReal();
+				file.readReal();
+				file.readReal();
+				file.readReal();
+				file.readByte();
+				file.readInt();
+				if (info->version >= K_SIDES_DATA_VERSION_3)
+				{
+					file.readAsciiString();
+					file.readInt();
+					file.readByte();
+					file.readByte();
+					file.readByte();
+				}
 			}
 		}
-		// not found
-		return -1;
+		if (info->version >= K_SIDES_DATA_VERSION_2)
+		{
+			count = file.readInt();
+			for (i=0; i<count; i++)
+			{
+				file.readDict();
+			}
+		}
+
+		file.registerParser( "PlayerScriptsList", info->label, ParseScriptsDataChunk );
+		if (!file.parse(nullptr)) {
+			throw(ERROR_CORRUPT_FILE_FORMAT);
+		}
+
+		DEBUG_ASSERTCRASH(file.atEndOfChunk(), ("Incorrect data file length."));
+		return true;
 	}
 
 	Int getSlotPlayerCountSuggestedByPeekedSideNames()
@@ -85,7 +124,21 @@ namespace PeekSideNames
 		return slotPlayerCount;
 	}
 
-
+	Int indexOfNameInPeekedSideNames(const AsciiString& targetName)
+	{
+		for (Int i_peekedSideName = 0; i_peekedSideName < peekedSideNamesSoftCount; i_peekedSideName++)
+		{
+			const AsciiString& peekedSideName = peekedSideNames[i_peekedSideName];
+			if (peekedSideName == targetName)
+			{
+				// Found it
+				return i_peekedSideName;
+			}
+		}
+		// not found
+		return -1;
+	}
+	
 	Bool ParseScriptsDataChunk(DataChunkInput &file, DataChunkInfo *info, void *userData)
 	{
 		file.registerParser( "ScriptList", info->label, ParseScriptListDataChunk );
@@ -230,58 +283,5 @@ namespace PeekSideNames
 		return true;
 	}
 
-	Bool ParseSidesDataChunk(DataChunkInput &file, DataChunkInfo *info, void *userData)
-	{
-		Int count = file.readInt();
-		peekedSideNamesSoftCount = count;
-
-		Int i, j;
-		for (i=0; i<count; i++)
-		{
-			if (i >= MAX_PLAYER_COUNT) break;
-			Dict d =  file.readDict();
-
-			peekedSideNames[i] = d.getAsciiString(TheKey_playerName);
-
-			// read through the rest anyway to progress to the next side
-			// (HOLY-)
-			Int count = file.readInt();
-			for (j=0; j<count; j++)
-			{
-				file.readAsciiString();
-				file.readAsciiString();
-				file.readReal();
-				file.readReal();
-				file.readReal();
-				file.readReal();
-				file.readByte();
-				file.readInt();
-				if (info->version >= K_SIDES_DATA_VERSION_3)
-				{
-					file.readAsciiString();
-					file.readInt();
-					file.readByte();
-					file.readByte();
-					file.readByte();
-				}
-			}
-		}
-		if (info->version >= K_SIDES_DATA_VERSION_2)
-		{
-			count = file.readInt();
-			for (i=0; i<count; i++)
-			{
-				file.readDict();
-			}
-		}
-
-		file.registerParser( "PlayerScriptsList", info->label, ParseScriptsDataChunk );
-		if (!file.parse(nullptr)) {
-			throw(ERROR_CORRUPT_FILE_FORMAT);
-		}
-
-		DEBUG_ASSERTCRASH(file.atEndOfChunk(), ("Incorrect data file length."));
-		return true;
-	}
 }
 #endif

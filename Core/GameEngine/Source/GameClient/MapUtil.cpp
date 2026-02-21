@@ -62,7 +62,9 @@
 #include "GameNetwork/NetworkDefs.h"
 
 //MODDD
+#if CAMPAIGN_FORCE
 #include "GameLogic/PeekSideNames.h"
+#endif
 
 //-------------------------------------------------------------------------------
 // PRIVATE DATA ///////////////////////////////////////////////////////////////////////////////////

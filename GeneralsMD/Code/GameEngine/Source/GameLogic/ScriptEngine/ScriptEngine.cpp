@@ -6032,9 +6032,17 @@ Player *ScriptEngine::getPlayerFromAsciiString(const AsciiString& playerString)
 		// in GC maps played in the new co-op mode with GENERALS_CHALLENGE_FORCE).
 		// The new 'getFirstSlotPlayer' will get the first slot-based player on all machines, or the only player in single-player (cover all use cases).
 		// ---
-		//return ThePlayerList->getLocalPlayer();
-		// ---
+		// LAST UPDATE - turns out the original is still best for retail (neither '_FORCE' constant), oddly enough.
+		// This won't have issues used in GC/campaign played normally (always single player), and in skirmish/network games,
+		// the scripts happen to only use the local player for what music to play (not a sync issue).
+		// Forcing the 1st player to be used unconditionally means everyone gets that player's music instead of their own.
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+		return ThePlayerList->getLocalPlayer();
+#else
+		// Still makes sense if either constant is on in case of GC/campaign being played in co-op mode.
+		// Eliminates sync risks. Just make the map scripts smarter per map to fine tune stuff per player if you really want to.
 		return getFirstSlotPlayer();
+#endif
 		// Old way (bad assumption for campaign maps: player name isn't standardized)
 		// return ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey("player0"));
 

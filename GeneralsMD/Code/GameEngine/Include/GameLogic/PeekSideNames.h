@@ -1,4 +1,9 @@
 //MODDD - new file
+// Only relevant if the 'CAMPAIGN_FORCE' constant is on.
+// Offers custom 'SidesDataChunk' & needed parsers to find the names of all sides (players to generate on
+// running a game) within a map's file data.
+// Has a few utility methods and exposed result variables near the beginning.
+// Setting 'peekedSideNamesSoftCount' back to 0 before expected parsing is run is recommended.
 
 #pragma once
 
@@ -8,13 +13,17 @@
 #include "Common/STLTypedefs.h"
 
 namespace PeekSideNames
-{	
+{
+	// refer to result variables as needed, mainly after parsing is run
 	extern AsciiString peekedSideNames[MAX_PLAYER_COUNT];
 	extern Int peekedSideNamesSoftCount;
 
-	Int indexOfNameInPeekedSideNames(const AsciiString& targetName);
+	// external interface
+	Bool ParseSidesDataChunk(DataChunkInput &file, DataChunkInfo *info, void *userData);
 	Int getSlotPlayerCountSuggestedByPeekedSideNames();
 
+	// internals (likely not useful to call from other places - think of as private)
+	Int indexOfNameInPeekedSideNames(const AsciiString& targetName);
 	Bool ParseScriptsDataChunk(DataChunkInput &file, DataChunkInfo *info, void *userData);
 	Bool ParseScriptListDataChunk(DataChunkInput &file, DataChunkInfo *info, void *userData);
 	Bool ParseGroupDataChunk(DataChunkInput &file, DataChunkInfo *info, void *userData);
@@ -28,6 +37,5 @@ namespace PeekSideNames
 	Bool ParseActionDataChunk(DataChunkInput &file, DataChunkInfo *info, void *userData);
 	Bool ParseActionFalseDataChunk(DataChunkInput &file, DataChunkInfo *info, void *userData);
 
-	Bool ParseSidesDataChunk(DataChunkInput &file, DataChunkInfo *info, void *userData);
 }
 #endif
