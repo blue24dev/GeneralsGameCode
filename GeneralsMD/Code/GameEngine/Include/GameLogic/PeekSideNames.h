@@ -12,6 +12,10 @@
 #include "Common/UnicodeString.h"
 #include "Common/STLTypedefs.h"
 
+class AsciiString;
+class DataChunkInput;
+struct DataChunkInfo;
+
 namespace PeekSideNames
 {
 	// refer to result variables as needed, mainly after parsing is run
