@@ -57,10 +57,6 @@ protected:
 	Dict						m_dict;					///< general player dict.
 	ScriptList			*m_scripts;			///< linked list.
 
-	//MODDD - convenience feature: index of the slot this side is for, mostly just to carry along to the player that's produced.
-	// Can be '-1' to mean this side isn't associated with a slot (neutral, civilian, or a side otherwise baked into the map).
-public: Int slotIndex;
-
 public:
 	SidesInfo(void);
 	SidesInfo(const SidesInfo& thatref);

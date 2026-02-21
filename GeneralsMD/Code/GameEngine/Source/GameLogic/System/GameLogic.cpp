@@ -1252,7 +1252,17 @@ SidesInfo* getMultiplayerLocalSide()
 		return nullptr;
 	}
 
-	UnsignedInt localSlotNum = TheGameInfo->getLocalSlotNum();
+	UnsignedInt localSlotNum;
+	if (TheGameInfo != nullptr)
+	{
+		localSlotNum = TheGameInfo->getLocalSlotNum();
+	}
+	else
+	{
+		// single player in retail - first & only player
+		localSlotNum = 0;
+	}
+
 	AsciiString targetPlayerName;
 	SidesInfo* sideInfo;
 	if (localSlotNum == 0)
@@ -1702,7 +1712,8 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			TheSidesList->addSide(&d);
 
 			//MODDD - quick hack. Get the most recently added side and let it be aware of what slot number it is for.
-			TheSidesList->getSideInfo(TheSidesList->getNumSides() - 1)->slotIndex = i;
+			// UPDATE - handled elsewhere now
+			//TheSidesList->getSideInfo(TheSidesList->getNumSides() - 1)->slotIndex = i;
 
 			AsciiString playerTeamName;
 			playerTeamName.set("team");
@@ -2066,11 +2077,11 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 
 #if REMOVE_FOG_OF_WAR
 		//MODDD - new loop, for all players, slot-or-not (though slot-only should suffice too?)
-		for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
+		for (int i = 0; i < ThePlayerList->getPlayerCount(); ++i) {
 			Player* player = ThePlayerList->getNthPlayer(i);
 			//MODDD - CHANGE. Reveal the map for all players for now
 			//if (player && player->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(player->getPlayerNameKey()).getLength() != 0) {
-			if (player && player->getPlayerType() == PLAYER_HUMAN) {
+			if (player->getPlayerType() == PLAYER_HUMAN) {
 				ThePartitionManager->revealMapForPlayerPermanently( player->getPlayerIndex() );
 			}
 		}

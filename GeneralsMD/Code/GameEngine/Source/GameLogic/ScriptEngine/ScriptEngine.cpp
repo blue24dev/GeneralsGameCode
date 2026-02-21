@@ -230,10 +230,9 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 
 	if (isCampaignMap)
 	{
-		for (int i = 0; i < MAX_PLAYER_COUNT; ++i)
+		for (int i = 0; i < ThePlayerList->getPlayerCount(); ++i)
 		{
 			Player* player = ThePlayerList->getNthPlayer(i);
-			if (player == nullptr) continue;
 			if (player == currentPlayer) continue; // again, not enemies with 'me' ('currentPlayer' may not be a slot player themselves)
 			if (player->slotIndex != -1) continue; // if this player is already associated with a slot, already handled above - don't do it again
 			if (!player->isPlayerActive()) continue;
@@ -5989,8 +5988,7 @@ Player *ScriptEngine::getSkirmishEnemyPlayer(void)
 			// ---
 #if 0
 			// get the human player.
-			Int i;
-			for (i=0; i<ThePlayerList->getPlayerCount(); i++) {
+			for (Int i=0; i<ThePlayerList->getPlayerCount(); i++) {
 				enemy = ThePlayerList->getNthPlayer(i);
 				if (/*enemy->isLocalPlayer() &&*/ enemy->getPlayerType()==PLAYER_HUMAN) {
 					if (is_GeneralsChallengeContext && enemy->getPlayerNameKey() == NAMEKEY(THE_PLAYER)) {
