@@ -2613,7 +2613,7 @@ void TerrainLogic::setActiveBoundary(Int newActiveBoundary)
 		Int minBoundaryCellCountX = min(curBoundaryCellCountX, newBoundaryCellCountX);
 		Int minBoundaryCellCountY = min(curBoundaryCellCountY, newBoundaryCellCountY);
 
-		for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
+		for (int i = 0; i < ThePlayerList->getPlayerCount(); ++i) {
 			Player* player = ThePlayerList->getNthPlayer(i);
 			if (player && player->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(player->getPlayerNameKey()).getLength() != 0) {
 				if (m_boundaries[newActiveBoundary].x < m_boundaries[m_activeBoundary].x) {

@@ -5247,7 +5247,7 @@ void ScriptActions::doBorderSwitch(Int borderToUse)
 	}
 #else
 	//MODDD - added portion to undo the reveal for all players
-	for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
+	for (int i = 0; i < ThePlayerList->getPlayerCount(); ++i) {
 		Player* player = ThePlayerList->getNthPlayer(i);
 		if (player && player->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(player->getPlayerNameKey()).getLength() != 0) {
 			ThePartitionManager->undoRevealMapForPlayerPermanently( player->getPlayerIndex() );
@@ -5264,7 +5264,7 @@ void ScriptActions::doBorderSwitch(Int borderToUse)
 	}
 #else
 	//MODDD - added portion to re-apply the reveal for all players
-	for (int i = 0; i < MAX_PLAYER_COUNT; ++i) {
+	for (int i = 0; i < ThePlayerList->getPlayerCount(); ++i) {
 		Player* player = ThePlayerList->getNthPlayer(i);
 		if (player && player->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(player->getPlayerNameKey()).getLength() != 0) {
 			ThePartitionManager->revealMapForPlayerPermanently( player->getPlayerIndex() );

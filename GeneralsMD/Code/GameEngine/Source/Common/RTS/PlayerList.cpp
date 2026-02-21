@@ -142,7 +142,7 @@ Player* PlayerList::findFirstSlotPlayer()
 
 	for (int i = 0; i < std::size(commonPlayerNames); ++i) {
 		targetPlayerName.set(commonPlayerNames[i]);
-		playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+		playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
 		if (playerRef != nullptr)
 		{
 			// done searching
@@ -154,7 +154,7 @@ Player* PlayerList::findFirstSlotPlayer()
 	for (int i = 0; i < MAX_PLAYER_COUNT; i++)
 	{
 		playerRef = getNthPlayer(i);
-		if (playerRef != nullptr && playerRef->getPlayerType() == PLAYER_HUMAN)
+		if (playerRef->getPlayerType() == PLAYER_HUMAN)
 		{
 			return playerRef;
 		}
@@ -177,11 +177,12 @@ void PlayerList::populateSlotPlayerRefs()
 	if (TheGameLogic->getGameMode() == GAME_SHELL)
 	{
 		// Shell map: find the first human-marked player, add to the list of slot player refs. That's it.
-		for (int i = 0; i < MAX_PLAYER_COUNT; i++)
+		for (int i = 0; i < this->getPlayerCount(); i++)
 		{
 			Player* playerRef = getNthPlayer(i);
-			if (playerRef != nullptr && playerRef->getPlayerType() == PLAYER_HUMAN)
+			if (playerRef->getPlayerType() == PLAYER_HUMAN)
 			{
+				playerRef->slotIndex = 0;
 				m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
 				++m_slotPlayerRefsSoftCount;
 				break;
@@ -230,6 +231,7 @@ void PlayerList::populateSlotPlayerRefs()
 		// This can't possibly be null or else a similar earlier check (GameLogic.cpp: getMultiplayerLocalSide)
 		// would have already crashed.
 		playerRef = findFirstSlotPlayer();
+		playerRef->slotIndex = 0;
 		m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
 		++m_slotPlayerRefsSoftCount;
 		
@@ -237,9 +239,10 @@ void PlayerList::populateSlotPlayerRefs()
 		for (int i = 1; i < 8; i++)
 		{
 			targetPlayerName.format("player%d", i);
-			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+			playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
 			if (playerRef != nullptr)
 			{
+				playerRef->slotIndex = i;
 				// Add to the list and keep searching
 				m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
 				++m_slotPlayerRefsSoftCount;
@@ -259,9 +262,10 @@ void PlayerList::populateSlotPlayerRefs()
 		for (int i = 0; i < 8; i++)
 		{
 			targetPlayerName.format("player%d", i);
-			playerRef = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+			playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
 			if (playerRef != nullptr)
 			{
+				playerRef->slotIndex = i;
 				// Add to the list and keep searching
 				m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
 				++m_slotPlayerRefsSoftCount;
@@ -298,7 +302,8 @@ void PlayerList::newGame()
 
 		//MODDD - quick hack. Carry the 'slotIndex' from the side over to this player.
 		// (do this early since some stuff in 'initFromDict' might need to know this in time)
-		p->slotIndex = TheSidesList->getSideInfo(i)->slotIndex;
+		// UPDATE - handled elsewhere now
+		//p->slotIndex = TheSidesList->getSideInfo(i)->slotIndex;
 
 		p->initFromDict(d);
 
