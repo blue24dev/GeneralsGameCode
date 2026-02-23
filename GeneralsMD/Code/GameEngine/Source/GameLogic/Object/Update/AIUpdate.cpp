@@ -4941,12 +4941,12 @@ void AIUpdateInterface::privateCommandButton( const CommandButton *commandButton
 							default:
 								if( owner->getName().isNotEmpty() )
 								{
-									DEBUG_ASSERTCRASH( 0, ("AIUpdate::privateCommandButton() -- unit %s ('%s'), command %s not implemented.",
+									DEBUG_CRASH( ("AIUpdate::privateCommandButton() -- unit %s ('%s'), command %s not implemented.",
 										owner->getTemplate()->getName().str(), owner->getName().str(), commandButton->getTextLabel().str() ) );
 								}
 								else
 								{
-									DEBUG_ASSERTCRASH( 0, ("AIUpdate::privateCommandButton() -- unit %s, command %s not implemented.",
+									DEBUG_CRASH( ("AIUpdate::privateCommandButton() -- unit %s, command %s not implemented.",
 										owner->getTemplate()->getName().str(), commandButton->getTextLabel().str() ) );
 								}
 						}
@@ -4994,12 +4994,12 @@ void AIUpdateInterface::privateCommandButtonPosition( const CommandButton *comma
 							default:
 								if( owner->getName().isNotEmpty() )
 								{
-									DEBUG_ASSERTCRASH( 0, ("AIUpdate::privateCommandButtonPosition() -- unit %s ('%s'), command %s not implemented.",
+									DEBUG_CRASH( ("AIUpdate::privateCommandButtonPosition() -- unit %s ('%s'), command %s not implemented.",
 										owner->getTemplate()->getName().str(), owner->getName().str(), commandButton->getTextLabel().str() ) );
 								}
 								else
 								{
-									DEBUG_ASSERTCRASH( 0, ("AIUpdate::privateCommandButtonPosition() -- unit %s, command %s not implemented.",
+									DEBUG_CRASH( ("AIUpdate::privateCommandButtonPosition() -- unit %s, command %s not implemented.",
 										owner->getTemplate()->getName().str(), commandButton->getTextLabel().str() ) );
 								}
 								break;
@@ -5061,7 +5061,7 @@ void AIUpdateInterface::privateCommandButtonObject( const CommandButton *command
 								targetNickname.format( "('%s')", obj->getName().str() );
 							}
 
-							DEBUG_ASSERTCRASH( 0, ("AIUpdate::privateCommandButtonPosition() -- unit %s %s, command %s at unit %s %s not implemented.",
+							DEBUG_CRASH( ("AIUpdate::privateCommandButtonPosition() -- unit %s %s, command %s at unit %s %s not implemented.",
 								myName.str(), myNickname.str(), commandButton->getTextLabel().str(), targetName.str(), targetNickname.str() ) );
 						}
 					}
