@@ -984,7 +984,7 @@ AsciiString GameInfoToAsciiString( const GameInfo *game )
 		}
 		else
 		{
-			DEBUG_ASSERTCRASH(false, ("Bad slot type"));
+			DEBUG_CRASH(("Bad slot type"));
 			str = "X:";
 		}
 		optionsString.concat(str);
