@@ -870,28 +870,7 @@ void Player::initFromDict(const Dict* d)
 #if defined(FORCE_HUMAN_PLAYER_START_MONEY) && FORCE_HUMAN_PLAYER_START_MONEY != 0:
 	if (getPlayerType() == PLAYER_HUMAN) {
 		m_money.withdraw(m_money.countMoney());
-
-		Real moneyScalar = 1.0;
-#if NOOB_MODE
-		if (slotIndex == 1) {
-			moneyScalar = 1.25;
-		}
-#endif
-		m_money.deposit( FORCE_HUMAN_PLAYER_START_MONEY * moneyScalar, FALSE );
-	}
-#elif NOOB_MODE
-	if (getPlayerType() == PLAYER_HUMAN && slotIndex == 1) {
-		// get the current amount of money, presumably set by skirmish setting. Add it back with the scalar applied.
-		UnsignedInt currentMoney = m_money.countMoney();
-		m_money.withdraw(m_money.countMoney());
-		m_money.deposit(currentMoney * 1.25, FALSE);
-	}
-#endif
-
-	//MODDD - personal choice. Change the experience rate for a particular player.
-#if NOOB_MODE
-	if (getPlayerType() == PLAYER_HUMAN && slotIndex == 1) {
-		setSkillPointsModifier(1.15);
+		m_money.deposit( FORCE_HUMAN_PLAYER_START_MONEY, FALSE );
 	}
 #endif
 
