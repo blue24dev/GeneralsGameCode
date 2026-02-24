@@ -347,6 +347,32 @@ void PlayerList::newGame()
 
 	populateSlotPlayerRefs();
 
+	//MODDD - this used to be handled in Player.cpp: initFromDict, but the 'slotIndex' wasn't seen since this
+	// is assigned in 'populateSlotPlayerRefs' instead of earlier in SidesInfo (this has the benefit of being
+	// re-determined on loading a saved game).
+	// Could do something like assign 'slotIndex' before 'initFromDict' so the old way works but doesn't seem
+	// worth it to decide what-player-belongs-to-what-slot so far in advance for only this cheap hack.
+	// So, decide who gets the n00b bonus here instead.
+	
+#if NOOB_MODE
+	if (m_slotPlayerRefsSoftCount >= 2)
+	{
+		// hardcoded - get the 2nd slot player
+		Player* playerRef = m_slotPlayerRefs[1];
+		// player-type should be 'HUMAN', and the slot should be actually used (non-applicable in single-player, not that you should've gotten this far in that case)
+		if (playerRef->getPlayerType() == PLAYER_HUMAN && (TheGameInfo==nullptr || TheGameInfo->getSlot(1)->isOccupied()))
+		{
+		// get the current amount of money, remove it from the player, add it back with a scalar applied
+			Money* moneyRef = playerRef->getMoney();
+			UnsignedInt currentMoney = moneyRef->countMoney();
+			moneyRef->withdraw(currentMoney);
+			moneyRef->deposit((UnsignedInt)((float)currentMoney * 1.25f), FALSE);
+
+			playerRef->setSkillPointsModifier(1.15f);
+		}
+	}
+#endif
+
 	if (!setLocal)
 	{
 		DEBUG_ASSERTCRASH(TheNetwork, ("*** Map has no human player... picking first nonneutral player for control"));
