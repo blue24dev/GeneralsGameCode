@@ -51,7 +51,7 @@ SquishCollide::SquishCollide( Thing *thing, const ModuleData* moduleData ) : Col
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
-SquishCollide::~SquishCollide( void )
+SquishCollide::~SquishCollide()
 {
 
 }
@@ -165,7 +165,7 @@ void SquishCollide::xfer( Xfer *xfer )
 // ------------------------------------------------------------------------------------------------
 /** Load post process */
 // ------------------------------------------------------------------------------------------------
-void SquishCollide::loadPostProcess( void )
+void SquishCollide::loadPostProcess()
 {
 
 	// extend base class

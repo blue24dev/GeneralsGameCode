@@ -121,7 +121,7 @@ void TransportContainModuleData::buildFieldParse(MultiIniFieldParse& p)
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
-Int TransportContain::getContainMax( void ) const
+Int TransportContain::getContainMax() const
 {
 	if (getTransportContainModuleData())
 		return getTransportContainModuleData()->m_slotCapacity;
@@ -148,7 +148,7 @@ void TransportContain::onObjectCreated() {
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
-TransportContain::~TransportContain( void )
+TransportContain::~TransportContain()
 {
 
 }
@@ -222,7 +222,7 @@ Bool TransportContain::isValidContainerFor(const Object* rider, Bool checkCapaci
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
-void TransportContain::letRidersUpgradeWeaponSet( void )
+void TransportContain::letRidersUpgradeWeaponSet()
 {
 
   const TransportContainModuleData * d = getTransportContainModuleData();
@@ -697,7 +697,7 @@ void TransportContain::xfer( Xfer *xfer )
 // ------------------------------------------------------------------------------------------------
 /** Load post process */
 // ------------------------------------------------------------------------------------------------
-void TransportContain::loadPostProcess( void )
+void TransportContain::loadPostProcess()
 {
 
 	// extend base class

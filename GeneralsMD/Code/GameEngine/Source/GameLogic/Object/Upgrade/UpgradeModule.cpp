@@ -69,7 +69,7 @@ void UpgradeModule::xfer( Xfer *xfer )
 // ------------------------------------------------------------------------------------------------
 /** Load post process */
 // ------------------------------------------------------------------------------------------------
-void UpgradeModule::loadPostProcess( void )
+void UpgradeModule::loadPostProcess()
 {
 
 	// call base class
@@ -297,7 +297,7 @@ void UpgradeMux::upgradeMuxXfer( Xfer *xfer )
 
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
-void UpgradeMux::upgradeMuxLoadPostProcess( void )
+void UpgradeMux::upgradeMuxLoadPostProcess()
 {
 
 }

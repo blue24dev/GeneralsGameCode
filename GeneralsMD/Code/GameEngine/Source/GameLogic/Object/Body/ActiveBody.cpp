@@ -86,7 +86,7 @@ public:
 
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
-BodyParticleSystem::~BodyParticleSystem( void )
+BodyParticleSystem::~BodyParticleSystem()
 {
 
 }
@@ -222,13 +222,13 @@ ActiveBody::ActiveBody( Thing *thing, const ModuleData* moduleData ) :
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
-ActiveBody::~ActiveBody( void )
+ActiveBody::~ActiveBody()
 {
 }
 
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
-void ActiveBody::onDelete( void )
+void ActiveBody::onDelete()
 {
 
 	// delete all particle systems
@@ -1122,7 +1122,7 @@ void ActiveBody::createParticleSystems( const AsciiString &boneBaseName,
 // ------------------------------------------------------------------------------------------------
 /** Delete all the body particle systems */
 // ------------------------------------------------------------------------------------------------
-void ActiveBody::deleteAllParticleSystems( void )
+void ActiveBody::deleteAllParticleSystems()
 {
 	BodyParticleSystem *nextBodySystem;
 	ParticleSystem *particleSystem;
@@ -1151,7 +1151,7 @@ void ActiveBody::deleteAllParticleSystems( void )
 // ------------------------------------------------------------------------------------------------
 /* 	This function is called on state changes only.  Body Type or Aflameness. */
 // ------------------------------------------------------------------------------------------------
-void ActiveBody::updateBodyParticleSystems( void )
+void ActiveBody::updateBodyParticleSystems()
 {
 	static const ParticleSystemTemplate *fireSmallTemplate   = TheParticleSystemManager->findTemplate( TheGlobalData->m_autoFireParticleSmallSystem );
 	static const ParticleSystemTemplate *fireMediumTemplate  = TheParticleSystemManager->findTemplate( TheGlobalData->m_autoFireParticleMediumSystem );
@@ -1703,7 +1703,7 @@ void ActiveBody::xfer( Xfer *xfer )
 // ------------------------------------------------------------------------------------------------
 /** Load post process */
 // ------------------------------------------------------------------------------------------------
-void ActiveBody::loadPostProcess( void )
+void ActiveBody::loadPostProcess()
 {
 
 	// extend base class

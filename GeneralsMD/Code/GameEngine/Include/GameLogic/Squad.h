@@ -66,7 +66,7 @@ protected:
 	// snapshot methods
 	virtual void crc( Xfer *xfer );
 	virtual void xfer( Xfer *xfer );
-	virtual void loadPostProcess( void );
+	virtual void loadPostProcess();
 
 	VecObjectID m_objectIDs;
 
@@ -86,7 +86,7 @@ public:
 	const VecObjectPtr& getLiveObjects(Player *player = nullptr);					// get all objects that pass "isEffectivelyDead" test
 	// ---
 
-	Int getSizeOfGroup(void) const;										// get the current number of objects, including dead objects
+	Int getSizeOfGroup() const;										// get the current number of objects, including dead objects
 	Bool isOnSquad(const Object *objToTest) const;		// returns true if the object is on this squad, otherwise false
 
 	// convenience function to fill this squad with members of a team

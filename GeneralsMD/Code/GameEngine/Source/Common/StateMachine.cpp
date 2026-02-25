@@ -93,7 +93,7 @@ public:
 };
 #ifdef STATE_MACHINE_DEBUG
 //-----------------------------------------------------------------------------
-std::vector<StateID> * State::getTransitions( void )
+std::vector<StateID> * State::getTransitions()
 {
 	std::vector<StateID> *ids = new std::vector<StateID>;
 	ids->push_back(m_successStateID);
@@ -922,7 +922,7 @@ void StateMachine::xfer( Xfer *xfer )
 // ------------------------------------------------------------------------------------------------
 /** Load post process */
 // ------------------------------------------------------------------------------------------------
-void StateMachine::loadPostProcess( void )
+void StateMachine::loadPostProcess()
 {
 
 }
