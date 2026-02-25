@@ -25,6 +25,8 @@
 
 //MODDD
 #include "Common/AudioEventInfo.h"
+//MODDD - no mutex? how could you
+#include "mutex.h"
 
 #include "mss/mss.h"
 
@@ -112,6 +114,12 @@ struct OpenAudioFile
 
 typedef std::hash_map< AsciiString, OpenAudioFile, rts::hash<AsciiString>, rts::equal_to<AsciiString> > OpenFilesHash;
 typedef OpenFilesHash::iterator OpenFilesHashIt;
+
+//MODDD
+struct AILCallbackCall {
+	UnsignedInt audioCompleted;
+	UnsignedInt flags;
+};
 
 class AudioFileCache
 {
@@ -224,6 +232,9 @@ class MilesAudioManager : public AudioManager
 		virtual void processFadingList();
 		virtual void processStoppedList();
 
+		//MODDD
+		void processAILCallbackList();
+
 		Bool shouldProcessRequestThisFrame( AudioRequest *req ) const;
 		void adjustRequest( AudioRequest *req );
 		Bool checkForSample( AudioRequest *req );
@@ -334,6 +345,11 @@ class MilesAudioManager : public AudioManager
 		UnsignedInt m_num2DSamples;
 		UnsignedInt m_num3DSamples;
 		UnsignedInt m_numStreams;
+
+		//MODDD
+		public: std::list<AILCallbackCall> AILCallbackList;
+		public: MutexClass AILCallbackListMutex;
+	protected:
 
 #if defined(RTS_DEBUG)
 		typedef std::set<AsciiString> SetAsciiString;
