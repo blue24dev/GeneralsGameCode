@@ -92,7 +92,7 @@ Real Energy::getEnergySupplyRatio() const
 }
 
 //-------------------------------------------------------------------------------------------------
-Bool Energy::hasSufficientPower(void) const
+Bool Energy::hasSufficientPower() const
 {
 	if( TheGameLogic->getFrame() < m_powerSabotagedTillFrame )
 	{
@@ -307,7 +307,7 @@ void Energy::xfer( Xfer *xfer )
 // ------------------------------------------------------------------------------------------------
 /** Load post process */
 // ------------------------------------------------------------------------------------------------
-void Energy::loadPostProcess( void )
+void Energy::loadPostProcess()
 {
 	//MODDD - oh look, a use for this method
 	// After a series of units producing/consuming power has finished being added at fresh map start or game

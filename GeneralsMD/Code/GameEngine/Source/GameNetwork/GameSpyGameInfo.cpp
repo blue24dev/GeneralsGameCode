@@ -455,7 +455,7 @@ GameSpyGameInfo::GameSpyGameInfo()
 
 // Misc game-related functionality --------------------
 
-void GameSpyStartGame( void )
+void GameSpyStartGame()
 {
 	if (TheGameSpyGame)
 	{
@@ -484,7 +484,7 @@ void GameSpyStartGame( void )
 	}
 }
 
-void GameSpyLaunchGame( void )
+void GameSpyLaunchGame()
 {
 	if (TheGameSpyGame)
 	{
@@ -584,14 +584,14 @@ void GameSpyLaunchGame( void )
 	}
 }
 
-void GameSpyGameInfo::init( void )
+void GameSpyGameInfo::init()
 {
 	GameInfo::init();
 
 	m_hasBeenQueried = false;
 }
 
-void GameSpyGameInfo::resetAccepted( void )
+void GameSpyGameInfo::resetAccepted()
 {
 	GameInfo::resetAccepted();
 
@@ -603,7 +603,7 @@ void GameSpyGameInfo::resetAccepted( void )
 	}
 }
 
-Int GameSpyGameInfo::getLocalSlotNum( void ) const
+Int GameSpyGameInfo::getLocalSlotNum() const
 {
 	DEBUG_ASSERTCRASH(m_inGame, ("Looking for local game slot while not in game"));
 	if (!m_inGame)
@@ -623,7 +623,7 @@ Int GameSpyGameInfo::getLocalSlotNum( void ) const
 	return -1;
 }
 
-void GameSpyGameInfo::gotGOACall( void )
+void GameSpyGameInfo::gotGOACall()
 {
 	DEBUG_LOG(("gotGOACall()"));
 	m_hasBeenQueried = true;
@@ -667,7 +667,7 @@ void GameSpyGameInfo::startGame(Int gameID)
 	TheNAT->establishConnectionPaths();
 }
 
-AsciiString GameSpyGameInfo::generateGameResultsPacket( void )
+AsciiString GameSpyGameInfo::generateGameResultsPacket()
 {
 	Int i;
 	Int endFrame = TheVictoryConditions->getEndFrame();

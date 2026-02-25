@@ -143,7 +143,7 @@ ScriptActions::~ScriptActions()
 //-------------------------------------------------------------------------------------------------
 /** Init */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::init( void )
+void ScriptActions::init()
 {
 
 	reset();
@@ -153,7 +153,7 @@ void ScriptActions::init( void )
 //-------------------------------------------------------------------------------------------------
 /** Reset */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::reset( void )
+void ScriptActions::reset()
 {
 	m_suppressNewWindows = FALSE;
 	closeWindows(FALSE); // Close victory or defeat windows.
@@ -163,7 +163,7 @@ void ScriptActions::reset( void )
 //-------------------------------------------------------------------------------------------------
 /** Update */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::update( void )
+void ScriptActions::update()
 {
 	// Empty for now.  jba.
 }
@@ -185,7 +185,7 @@ void ScriptActions::closeWindows( Bool suppressNewWindows )
 //-------------------------------------------------------------------------------------------------
 /** doQuickVictory */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doQuickVictory( void )
+void ScriptActions::doQuickVictory()
 {
 	closeWindows(FALSE);
 	TheGameLogic->closeWindows();
@@ -207,7 +207,7 @@ void ScriptActions::doSetInfantryLightingOverride(Real setting)
 //-------------------------------------------------------------------------------------------------
 /** doVictory */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doVictory( void )
+void ScriptActions::doVictory()
 {
 	closeWindows(FALSE);
 	TheGameLogic->closeWindows();
@@ -231,7 +231,7 @@ void ScriptActions::doVictory( void )
 //-------------------------------------------------------------------------------------------------
 /** doDefeat */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doDefeat( void )
+void ScriptActions::doDefeat()
 {
 	closeWindows(FALSE);
 	TheGameLogic->closeWindows();
@@ -255,7 +255,7 @@ void ScriptActions::doDefeat( void )
 //-------------------------------------------------------------------------------------------------
 /** doLocalDefeat */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doLocalDefeat( void )
+void ScriptActions::doLocalDefeat()
 {
 	TheScriptEngine->markMPLocalDefeatWindowShown();
 	closeWindows(FALSE);
@@ -479,7 +479,7 @@ void ScriptActions::doCameraFollowNamed(const AsciiString& unit, Bool snapToUnit
 //-------------------------------------------------------------------------------------------------
 /** doStopCameraFollowUnit */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doStopCameraFollowUnit(void)
+void ScriptActions::doStopCameraFollowUnit()
 {
 	TheTacticalView->setCameraLock(INVALID_ID);
 }
@@ -905,7 +905,7 @@ void ScriptActions::doModCameraFinalLookToward(const AsciiString& waypoint)
 //-------------------------------------------------------------------------------------------------
 /** doModCameraMoveToSelection */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doModCameraMoveToSelection(void)
+void ScriptActions::doModCameraMoveToSelection()
 {
 	Int count=0;
 	Coord3D destination;
@@ -2184,7 +2184,7 @@ void ScriptActions::doTeamHuntWithCommandButton(const AsciiString& teamName, con
 			continue;
 		}
 		Bool foundCommand = false;
-		const CommandSet *commandSet = TheControlBar->findCommandSet( obj->getCommandSetString( ) );
+		const CommandSet *commandSet = TheControlBar->findCommandSet( obj->getCommandSetString() );
 		if( commandSet )
 		{
 			for( int i = 0; i < MAX_COMMANDS_PER_SET; i++ )
@@ -2367,7 +2367,7 @@ void ScriptActions::doPlayerEnableUnitConstruction(const AsciiString& playerName
 //-------------------------------------------------------------------------------------------------
 /** doCameraMoveHome */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doCameraMoveHome(void)
+void ScriptActions::doCameraMoveHome()
 {
 
 }
@@ -2982,7 +2982,7 @@ void ScriptActions::doTeamRadarCreateEvent(const AsciiString& teamName, Int even
 //-------------------------------------------------------------------------------------------------
 /** doRadarDisable */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doRadarDisable(void)
+void ScriptActions::doRadarDisable()
 {
 	TheRadar->hide(ThePlayerList->getLocalPlayer()->getPlayerIndex(), true);
 }
@@ -2990,7 +2990,7 @@ void ScriptActions::doRadarDisable(void)
 //-------------------------------------------------------------------------------------------------
 /** doRadarEnable */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doRadarEnable(void)
+void ScriptActions::doRadarEnable()
 {
 	TheRadar->hide(ThePlayerList->getLocalPlayer()->getPlayerIndex(), false);
 }
@@ -3063,7 +3063,7 @@ void ScriptActions::doCameraMotionBlur(Bool zoomIn, Bool saturate)
 
 //MODDD - removed 'static' modifier, can be externed from other places
 //static PlayerMaskType getHumanPlayerMask( void )
-PlayerMaskType getHumanPlayerMask( void )
+PlayerMaskType getHumanPlayerMask()
 {
 #if RETAIL_COMPATIBLE_CRC
 	PlayerMaskType mask;
@@ -4099,7 +4099,7 @@ void ScriptActions::doWeather(Bool showWeather)
 //-------------------------------------------------------------------------------------------------
 /** Freeze time */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doFreezeTime(void)
+void ScriptActions::doFreezeTime()
 {
 	TheScriptEngine->doFreezeTime();
 }
@@ -4107,7 +4107,7 @@ void ScriptActions::doFreezeTime(void)
 //-------------------------------------------------------------------------------------------------
 /** Unfreeze time */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doUnfreezeTime(void)
+void ScriptActions::doUnfreezeTime()
 {
 	TheScriptEngine->doUnfreezeTime();
 }
@@ -4194,7 +4194,7 @@ void ScriptActions::doNamedSetStoppingDistance(const AsciiString& unit, Real sto
 //-------------------------------------------------------------------------------------------------
 /** doDisableSpecialPowerDisplay */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doDisableSpecialPowerDisplay(void)
+void ScriptActions::doDisableSpecialPowerDisplay()
 {
 	TheInGameUI->setSuperweaponDisplayEnabledByScript(false);
 }
@@ -4202,7 +4202,7 @@ void ScriptActions::doDisableSpecialPowerDisplay(void)
 //-------------------------------------------------------------------------------------------------
 /** doEnableSpecialPowerDisplay */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doEnableSpecialPowerDisplay(void)
+void ScriptActions::doEnableSpecialPowerDisplay()
 {
 	TheInGameUI->setSuperweaponDisplayEnabledByScript(true);
 }
@@ -4347,7 +4347,7 @@ void ScriptActions::doHideCountdownTimer(const AsciiString& timerName)
 //-------------------------------------------------------------------------------------------------
 /** doDisableCountdownTimerDisplay */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doDisableCountdownTimerDisplay(void)
+void ScriptActions::doDisableCountdownTimerDisplay()
 {
 	TheInGameUI->showNamedTimerDisplay(FALSE);
 }
@@ -4355,7 +4355,7 @@ void ScriptActions::doDisableCountdownTimerDisplay(void)
 //-------------------------------------------------------------------------------------------------
 /** doEnableCountdownTimerDisplay */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doEnableCountdownTimerDisplay(void)
+void ScriptActions::doEnableCountdownTimerDisplay()
 {
 	TheInGameUI->showNamedTimerDisplay(TRUE);
 }
@@ -4785,7 +4785,7 @@ void ScriptActions::doTeamUseCommandButtonAbilityAtWaypoint( const AsciiString& 
 //-------------------------------------------------------------------------------------------------
 /** doRadarRefresh */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doRadarRefresh( void )
+void ScriptActions::doRadarRefresh()
 {
 	TheRadar->refreshTerrain( TheTerrainLogic );
 }
@@ -4810,7 +4810,7 @@ void ScriptActions::doCameraTetherNamed(const AsciiString& unit, Bool snapToUnit
 //-------------------------------------------------------------------------------------------------
 /** doCameraStopTetherNamed */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doCameraStopTetherNamed(void)
+void ScriptActions::doCameraStopTetherNamed()
 {
 	TheTacticalView->setCameraLock(INVALID_ID);
 }
@@ -5348,7 +5348,7 @@ void ScriptActions::doDestroyAllContained(const AsciiString& unitName, Int damag
 //-------------------------------------------------------------------------------------------------
 /** doRadarForceEnable */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doRadarForceEnable(void)
+void ScriptActions::doRadarForceEnable()
 {
 	TheRadar->forceOn(ThePlayerList->getLocalPlayer()->getPlayerIndex(), true);
 }
@@ -5356,7 +5356,7 @@ void ScriptActions::doRadarForceEnable(void)
 //-------------------------------------------------------------------------------------------------
 /** doRadarRevertNormal */
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doRadarRevertNormal(void)
+void ScriptActions::doRadarRevertNormal()
 {
 	TheRadar->forceOn(ThePlayerList->getLocalPlayer()->getPlayerIndex(), false);
 }
@@ -6496,7 +6496,7 @@ void ScriptActions::doC3CameraEnableSlaveMode
 }
 
 //-------------------------------------------------------------------------------------------------
-void ScriptActions::doC3CameraDisableSlaveMode( void )
+void ScriptActions::doC3CameraDisableSlaveMode()
 {
 	TheTacticalView->cameraDisableSlaveMode();
 }

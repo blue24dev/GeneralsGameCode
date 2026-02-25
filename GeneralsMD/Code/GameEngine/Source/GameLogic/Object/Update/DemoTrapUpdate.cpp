@@ -91,7 +91,7 @@ DemoTrapUpdate::DemoTrapUpdate( Thing *thing, const ModuleData* moduleData ) : U
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
-DemoTrapUpdate::~DemoTrapUpdate( void )
+DemoTrapUpdate::~DemoTrapUpdate()
 {
 
 }
@@ -318,7 +318,7 @@ void DemoTrapUpdate::xfer( Xfer *xfer )
 // ------------------------------------------------------------------------------------------------
 /** Load post process */
 // ------------------------------------------------------------------------------------------------
-void DemoTrapUpdate::loadPostProcess( void )
+void DemoTrapUpdate::loadPostProcess()
 {
 
 	// extend base class

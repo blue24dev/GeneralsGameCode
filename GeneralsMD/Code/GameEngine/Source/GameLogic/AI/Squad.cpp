@@ -81,6 +81,7 @@ void Squad::clearSquad() {
 	m_objectsCached.clear();
 }
 
+//MODDD - added a 'player' param
 //MODDD - TODO - consider replacing 'getLiveObjects' with this completely, and leave out 'getAllObjects'?
 // There isn't a case that only calling one or the other makes sense externally, nor internally.
 // Always need to see what game objects are no longer available, as well as just not currently selectable.
@@ -149,6 +150,7 @@ const VecObjectPtr& Squad::getAllObjects(Player *player) // Not a const function
 	return m_objectsCached;
 }
 
+//MODDD - added a 'player' param
 //MODDD - TODO - rename to 'getObjects'?  Since it's the only public method, and there's ever a use case for
 // getting non-selectable objects externally, it makes sense for this to have a generic name.
 // ---
@@ -176,7 +178,7 @@ const VecObjectPtr& Squad::getLiveObjects(Player *player)
 }
 
 // getSizeOfGroup /////////////////////////////////////////////////////////////////////////////////
-Int Squad::getSizeOfGroup(void) const
+Int Squad::getSizeOfGroup() const
 {
 	return m_objectIDs.size();
 }
@@ -319,7 +321,7 @@ void Squad::xfer( Xfer *xfer )
 // ------------------------------------------------------------------------------------------------
 /** Load post process */
 // ------------------------------------------------------------------------------------------------
-void Squad::loadPostProcess( void )
+void Squad::loadPostProcess()
 {
 
 }
