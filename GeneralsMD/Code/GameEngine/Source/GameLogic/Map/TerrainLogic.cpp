@@ -2682,12 +2682,12 @@ void TerrainLogic::setActiveBoundary(Int newActiveBoundary)
 
 //MODDD
 // Note that you might want to check that 'getBoundaryCount()' is above 0 first
-const ICoord2D& TerrainLogic::getActiveBoundaryInfo(void)
+const ICoord2D& TerrainLogic::getActiveBoundaryInfo()
 {
 	return m_boundaries[m_activeBoundary];
 }
 //MODDD
-Int TerrainLogic::getBoundaryCount(void)
+Int TerrainLogic::getBoundaryCount()
 {
 	return m_boundaries.size();
 }

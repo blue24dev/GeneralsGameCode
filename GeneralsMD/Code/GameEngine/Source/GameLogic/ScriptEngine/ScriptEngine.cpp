@@ -6410,7 +6410,7 @@ void ScriptEngine::createNamedMapReveal(const AsciiString& revealName, const Asc
 }
 
 //MODDD
-extern PlayerMaskType getHumanPlayerMask(void);
+extern PlayerMaskType getHumanPlayerMask();
 
 //-------------------------------------------------------------------------------------------------
 void ScriptEngine::doNamedMapReveal(const AsciiString& revealName)
