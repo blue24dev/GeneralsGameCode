@@ -130,8 +130,7 @@ DECLARE_PERF_TIMER(MemoryPoolInitFilling)
 		}
 	#endif
 
-//MODDD
-#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL_ONLY)
+#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL)
 
 const Int GARBAGE_FILL_VALUE												= 0xdeadbeef;
 
@@ -273,8 +272,7 @@ static void sysFree(void* p)
 			::memset32(p, GARBAGE_FILL_VALUE, ::GlobalSize(p));
 			theTotalSystemAllocationInBytes -= ::GlobalSize(p);
 		}
-//MODDD
-#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL_ONLY)
+#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL)
 		::memset32(p, GARBAGE_FILL_VALUE, ::GlobalSize(p));
 #endif
 		::GlobalFree(p);
@@ -426,8 +424,7 @@ private:
 	void*									m_stacktrace[MEMORYPOOL_STACKTRACE_SIZE];		///< stacktrace of when block was allocated (if not checkpointing)
 	#endif
 
-//MODDD
-#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL_ONLY)
+#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL)
 	Int										m_logicalSize;
 #endif
 
@@ -466,8 +463,7 @@ public:
 	Bool debugCheckOverrun();
 	Int debugSingleBlockReportLeak(const char* owner);
 
-//MODDD
-#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL_ONLY)
+#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL)
 	void debugMarkBlockAsFree();
 
 #endif	// MEMORYPOOL_DEBUG
@@ -894,8 +890,7 @@ void MemoryPoolSingleBlock::initBlock(Int logicalSize, MemoryPoolBlob *owningBlo
 	}
 #endif
 }
-//MODDD
-#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL_ONLY)
+#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL)
 	m_logicalSize = logicalSize;
 #endif // MEMORYPOOL_DEBUG
 
@@ -1088,8 +1083,7 @@ void MemoryPoolSingleBlock::debugMarkBlockAsFree()
 	debugVerifyBlock();
 	#endif
 }
-//MODDD
-#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL_ONLY)
+#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL)
 void MemoryPoolSingleBlock::debugMarkBlockAsFree()
 {
 	::memset32(getUserDataNoDbg(), GARBAGE_FILL_VALUE, m_logicalSize);
@@ -1229,8 +1223,7 @@ void MemoryPoolBlob::initBlob(MemoryPool *owningPool, Int allocationCount)
 		block->setNextFreeBlock((i > 0) ? next : nullptr);
 #ifdef MEMORYPOOL_DEBUG
 		block->debugMarkBlockAsFree();
-//MODDD
-#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL_ONLY)
+#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL)
 		block->debugMarkBlockAsFree();
 #endif
 		block = next;
@@ -1325,8 +1318,7 @@ void MemoryPoolBlob::freeSingleBlock(MemoryPoolSingleBlock *block)
 #endif
 #ifdef MEMORYPOOL_DEBUG
 	block->debugMarkBlockAsFree();
-//MODDD
-#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL_ONLY)
+#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL)
 	block->debugMarkBlockAsFree();
 #endif
 #ifdef MEMORYPOOL_INTENSE_VERIFY
@@ -2371,8 +2363,7 @@ void DynamicMemoryAllocator::freeBytes(void* pBlockPtr)
 		if (thePeakLargeBlocks < theTotalLargeBlocks)
 			thePeakLargeBlocks = theTotalLargeBlocks;
 		block->debugMarkBlockAsFree();
-//MODDD
-#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL_ONLY)
+#elif defined(MEMORYPOOL_DEBUG_GARBAGE_FILL)
 		block->debugMarkBlockAsFree();
 #endif
 

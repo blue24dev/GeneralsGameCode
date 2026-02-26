@@ -943,7 +943,7 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			break;
 		}
 
-#if defined(RTS_DEBUG) || defined (_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#if _BASE_DEBUG_FEATURES_ALLOWED || defined (_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 		//---------------------------------------------------------------------------------------------
 		case GameMessage::MSG_DEBUG_KILL_SELECTION:
 		{

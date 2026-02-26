@@ -52,10 +52,6 @@
 
 //MODDD - NOTE - As-is, this block enables memory debug if the current build is for debug.
 // Comment out this block to force memory debug to be disabled for closer-to-normal performance games in debug mode.
-// Also - going to allow a custom flag: 'MEMORYPOOL_DEBUG_GARBAGE_FILL_ONLY', mutually exclusive of 'MEMORYPOOL_DEBUG'.
-// If 'MEMORYPOOL_DEBUG_GARBAGE_FILL_ONLY' is on, only the '0xdeadbeef'-writes to give memory an obvious
-// default will take effect.
-// This should be a good compromise between performance and memory not being a complete mess in case of an exception.
 /*
 // ------------
 #if defined(RTS_DEBUG) && !defined(MEMORYPOOL_DEBUG_CUSTOM_NEW) && !defined(DISABLE_MEMORYPOOL_DEBUG_CUSTOM_NEW)
@@ -69,11 +65,21 @@
 // ------------
 */
 
-//MODDD - the new flag, see above - again, mutually exclusive of MEMORYPOOL_DEBUG.
+// MODDD - added a new macro setting: 'MEMORYPOOL_DEBUG_GARBAGE_FILL'.
+// If 'MEMORYPOOL_DEBUG_GARBAGE_FILL' is on, the '0xdeadbeef'-writes to give memory an obvious default will still take effect.
+// It is implied 'TRUE' if 'MEMORYPOOL_DEBUG' is 'TRUE' (the new setting being 'FALSE' in this case is not meaningful).
+// This way, places throughout the codebase can simply check 'MEMORYPOOL_DEBUG_GARBAGE_FILL' to tell if memory should be garbage-filled
+// in specific places instead of needing a more complex condition.
+// However, it can be either on/off if 'MEMORYPOOL_DEBUG' is 'FALSE' to either be used anyway or not.
+// This setting being on should be a good compromise between performance and memory not being a complete mess in case of an exception.
+// And for reference, 'MEMORYPOOL_DEBUG_CUSTOM_NEW' isn't be necessary for this setting.
 // ---
-#if defined(RTS_DEBUG) && !defined(MEMORYPOOL_DEBUG) && !defined(DISABLE_MEMORYPOOL_DEBUG)
-  // ('MEMORYPOOL_DEBUG_CUSTOM_NEW' shouldn't be necessary for this)
-	#define MEMORYPOOL_DEBUG_GARBAGE_FILL_ONLY
+#if defined(MEMORYPOOL_DEBUG)
+	// Always imply this setting when the full 'MEMORYPOOL_DEBUG' is on.
+	#define MEMORYPOOL_DEBUG_GARBAGE_FILL
+#else
+	// Choose: do the garbage-fill anyway?
+	#define MEMORYPOOL_DEBUG_GARBAGE_FILL
 #endif
 // ---
 

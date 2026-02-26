@@ -55,11 +55,15 @@
 #include "Common/GameDefines.h"
 
 // ----------------------------------------------------------------------------------------------
+//MODDD - nah
+/*
 #if defined(RTS_DEBUG)
 	#define DUMP_PERF_STATS
 #else
 	#define NO_DUMP_PERF_STATS
 #endif
+*/
+#define NO_DUMP_PERF_STATS
 
 // ----------------------------------------------------------------------------------------------
 enum

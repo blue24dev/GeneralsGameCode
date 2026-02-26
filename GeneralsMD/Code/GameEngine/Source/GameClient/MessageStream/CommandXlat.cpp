@@ -95,7 +95,7 @@
 #define dont_ALLOW_ALT_F4
 
 
-#if defined(RTS_DEBUG)
+#if _BASE_DEBUG_FEATURES_ALLOWED
 /*non-static*/ Real TheSkateDistOverride = 0.0f;
 
 void countObjects(Object *obj, void *userData)
@@ -130,10 +130,10 @@ void printObjects(Object *obj, void *userData)
 	TheScriptEngine->AppendDebugMessage(line, FALSE);
 }
 
-#endif // defined(RTS_DEBUG)
+#endif // _BASE_DEBUG_FEATURES_ALLOWED
 
 
-#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#if _BASE_DEBUG_FEATURES_ALLOWED || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 
 void giveAllSciences(Player* player)
 {
@@ -186,7 +186,7 @@ Bool hasThingsInProduction(PlayerType playerType)
 	return false;
 }
 
-#endif // defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#endif // _BASE_DEBUG_FEATURES_ALLOWED || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 
 
 bool changeMaxRenderFps(FpsValueChange change)
@@ -2496,7 +2496,7 @@ GameMessageDisposition CommandTranslator::translateGameMessage(const GameMessage
 		return DESTROY_MESSAGE;
 	}
 
-#if defined(RTS_DEBUG)
+#if _BASE_DEBUG_FEATURES_ALLOWED
 	ExtentModType extentModType = EXTENTMOD_INVALID;
 	Real extentModAmount = 0.0f;
 #endif
@@ -3162,7 +3162,7 @@ GameMessageDisposition CommandTranslator::translateGameMessage(const GameMessage
 
 		//-----------------------------------------------------------------------------------------
 		case GameMessage::MSG_META_DEPLOY:
-			#ifdef RTS_DEBUG
+			#if _BASE_DEBUG_FEATURES_ALLOWED
 			DEBUG_CRASH(("unimplemented meta command MSG_META_DEPLOY !"));
 			#endif
 			/// @todo srj implement me
@@ -3171,7 +3171,7 @@ GameMessageDisposition CommandTranslator::translateGameMessage(const GameMessage
 
 		//-----------------------------------------------------------------------------------------
 		case GameMessage::MSG_META_FOLLOW:
-			#ifdef RTS_DEBUG
+			#if _BASE_DEBUG_FEATURES_ALLOWED
 			DEBUG_CRASH(("unimplemented meta command MSG_META_FOLLOW !"));
 			#endif
 			/// @todo srj implement me
@@ -4099,7 +4099,7 @@ GameMessageDisposition CommandTranslator::translateGameMessage(const GameMessage
 
 		//------------------------------------------------------------------------------- DEMO MESSAGES
 
-#if defined(RTS_DEBUG)
+#if _BASE_DEBUG_FEATURES_ALLOWED
 		//------------------------------------------------------------------------- BEGIN DEMO MESSAGES
 		//------------------------------------------------------------------------- BEGIN DEMO MESSAGES
 		//------------------------------------------------------------------------- BEGIN DEMO MESSAGES
@@ -5536,11 +5536,11 @@ GameMessageDisposition CommandTranslator::translateGameMessage(const GameMessage
 		//--------------------------------------------------------------------------- END DEMO MESSAGES
 		//--------------------------------------------------------------------------- END DEMO MESSAGES
 		//--------------------------------------------------------------------------- END DEMO MESSAGES
-#endif // #if defined(RTS_DEBUG)
+#endif // _BASE_DEBUG_FEATURES_ALLOWED
 
 		//------------------------------------------------------------------------DEMO MESSAGES
 		//-----------------------------------------------------------------------------------------
-#if defined(RTS_DEBUG)
+#if _BASE_DEBUG_FEATURES_ALLOWED
 		case GameMessage::MSG_META_DEMO_TOGGLE_AUDIODEBUG:
 		{
 			if (TheDisplay->getDebugDisplayCallback() == AudioDebugDisplay)
@@ -5551,7 +5551,7 @@ GameMessageDisposition CommandTranslator::translateGameMessage(const GameMessage
 			break;
 		}
 
-#endif//defined(RTS_DEBUG)
+#endif// _BASE_DEBUG_FEATURES_ALLOWED
 
 #ifdef DUMP_PERF_STATS
 		//------------------------------------------------------------------------DEMO MESSAGES
