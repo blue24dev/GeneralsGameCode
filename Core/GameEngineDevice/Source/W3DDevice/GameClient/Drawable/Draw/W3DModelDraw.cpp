@@ -197,7 +197,7 @@ LogClass BonePosLog("bonePositions.txt");
 extern AsciiString TheThingTemplateBeingParsedName;
 #endif
 
-#if defined(RTS_DEBUG)
+#if _BASE_DEBUG_FEATURES_ALLOWED
 extern Real TheSkateDistOverride;
 #endif
 
@@ -2261,7 +2261,7 @@ Real W3DModelDraw::getCurAnimDistanceCovered() const
 	if (m_curState != nullptr && m_whichAnimInCurState >= 0)
 	{
 		const W3DAnimationInfo& animInfo = m_curState->m_animations[m_whichAnimInCurState];
-	#if defined(RTS_DEBUG)
+	#if _BASE_DEBUG_FEATURES_ALLOWED
 		if (TheSkateDistOverride != 0.0f)
 			return TheSkateDistOverride;
 	#endif

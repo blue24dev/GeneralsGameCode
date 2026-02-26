@@ -458,7 +458,7 @@ void GameEngine::init()
 
 
 
-	#if defined(RTS_DEBUG)
+	#if _BASE_DEBUG_FEATURES_ALLOWED
 		// If we're in Debug, load the Debug settings as well.
 		ini.loadFileDirectory( "Data\\INI\\GameDataDebug", INI_LOAD_OVERWRITE, nullptr );
 	#endif
@@ -615,7 +615,7 @@ void GameEngine::init()
 
 		TheMetaMap->generateMetaMap();
 
-#if defined(RTS_DEBUG)
+#if _BASE_DEBUG_FEATURES_ALLOWED
 		ini.loadFileDirectory("Data\\INI\\CommandMapDebug", INI_LOAD_MULTIFILE, nullptr);
 #endif
 
