@@ -347,9 +347,6 @@ Player::Player( Int playerIndex )
 
 	//MODDD - uhh no, PlayerList calls this enough
 	//init( nullptr );
-	
-	//MODDD
-	slotIndex = -1;
 }
 
 //=============================================================================
@@ -408,6 +405,9 @@ void Player::init(const PlayerTemplate* pt)
 	m_listInScoreScreen = TRUE;
 
 	m_unitsShouldHunt = FALSE;
+	
+	//MODDD
+	slotIndex = -1;
 
 #if defined(RTS_DEBUG)
 	m_DEMO_ignorePrereqs = FALSE;

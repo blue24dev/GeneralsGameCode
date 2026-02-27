@@ -206,7 +206,28 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 	// 'getSkirmishEnemyPlayer' relying on here, wasn't possible.
 	// This is basically an extra run-through for non-slot-players to be enemies.
 	// This isn't needed for GC (only reasonable players are slot players, "ThePlayer" dummy being left out is a good thing).
-	// And this isn't needed for skirmish (same logic as above, there should be no other valid choices anyway).
+	// And this isn't needed for skirmish (same logic as above, there should be no other valid choices anyway, or
+	// the in-context 'current enemy' feature - 'm_currentPlayer->getCurrentEnemy()' - should be good enough there).
+	//MODDD - UPDATE - disabling this for now.
+	// In testing (ex: Zero Hour, GLA Campaign mission 5), the AI often includes players with 0 units like the
+	// initial China 1 (all stuff transferred to the player after the intro) and the TUNNEL_NETWORK one (similar
+	// case later in the game). If the AI picks one of these players to use a special power on, they often target
+	// one of the corners of the map.
+	// In short, retail campaign missions are spotty on declaring players defeated when they have nothing, or
+	// at least turning the 'can-build units/buildings' settings off for players that are not meant to actively
+	// participate / actively be targeted. Also note that being able to build may be temporarily turned off
+	// to artificially slow down a player, so an immediate 'can-I-build-now' check may not be the best.
+	// Possible alternatives:
+	// 1. Add a feature to the world builder to declare which players a particular player may target with special
+	// powers. Then you have a definite list & the map-maker should know to mark players defeated when they have nothing.
+	// 2. A new world builder action: 'target any enemy objects with special power'. Insead of doing a highest-value
+	// check against a particular player, do it for any units belonging to any players the current is enemies with.
+	// That would remove the seemingly bias toward attacking players with barely anything on the map compared to others just because
+	// a random-selection said to target them equally often.
+	// Extra: have a better fail-safe for failing to find anything to target with a special power than hitting a corner
+	// of the map? Seems like a weird thing to happen. Perhaps let the caller pick a different player to try instead,
+	// or do a preliminary check for having any damage-able / above-0-value targets.
+	/*
 	Bool isCampaignMap;
 
 	// Check the '_FORCE' constants for an easy assumption
@@ -251,6 +272,7 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 			availablePlayerListSoftCount++;
 		}
 	}
+	*/
 
 	if (availablePlayerListSoftCount <= 0) {
 		// Nothing available?
