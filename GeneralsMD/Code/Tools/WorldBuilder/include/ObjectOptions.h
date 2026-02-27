@@ -36,7 +36,11 @@ public:
 	ObjectOptions(CWnd* pParent = nullptr);   ///< standard constructor
 
 	~ObjectOptions(void);   ///< standard destructor
-	enum { NAME_MAX_LEN = 64 };
+
+	//MODDD - safety, increasing this
+	//enum { NAME_MAX_LEN = 64 };
+	enum { NAME_MAX_LEN = 128 };
+
 // Dialog Data
 	//{{AFX_DATA(ObjectOptions)
 	enum { IDD = IDD_OBJECT_OPTIONS };
@@ -77,6 +81,8 @@ protected:
 	CTreeCtrl					m_objectTreeView;
 	MapObject					*m_objectsList;
 	ObjectPreview			m_objectPreview;
+	//MODDD - new
+	HTREEITEM m_prevObjectTreeViewSelectedRootItem;
 
 protected:
 	void addObject( MapObject *mapObject, const char *pPath,
@@ -86,6 +92,8 @@ protected:
 	HTREEITEM _FindOrDont(const char* pLabel, HTREEITEM startPoint);
 	Bool setObjectTreeViewSelection(HTREEITEM parent, Int selection);
 	void updateLabel();
+	//MODDD
+	HTREEITEM getSelectedRootItemFromObjectTreeView();
 	static MapObject *getCurMapObject(void);
 
 public:
