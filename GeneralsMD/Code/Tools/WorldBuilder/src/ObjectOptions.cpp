@@ -56,6 +56,9 @@ ObjectOptions::ObjectOptions(CWnd* pParent /*=nullptr*/)
 	m_objectsList = nullptr;
 	strcpy(m_currentObjectName, "No Selection");
 	m_curOwnerName.clear();
+	//MODDD
+	m_prevObjectTreeViewSelectedRootItem = nullptr;
+
 	//{{AFX_DATA_INIT(ObjectOptions)
 		// NOTE: the ClassWizard will add member initialization here
 	//}}AFX_DATA_INIT
@@ -121,16 +124,44 @@ void ObjectOptions::updateLabel()
 	}
 
 	CComboBox *list = (CComboBox*)GetDlgItem(IDC_OWNINGTEAM);
+
+	//MODDD - before resetting the 'Default Owner' combo box, see if the existing team selection should be
+	// preserved through re-populating the list instead (appear unchanged).
+	// Basically, selecting objects within the same side/faction folder doesn't reset the owner dropdown.
+	// ---
+	Bool selectDefaultTeamForObjSide = true;
+	AsciiString defTeamName;
+	HTREEITEM hCurrentSelectedRootItem = getSelectedRootItemFromObjectTreeView();
+	if (hCurrentSelectedRootItem != nullptr)
+	{
+		if (hCurrentSelectedRootItem == m_prevObjectTreeViewSelectedRootItem)
+		{
+			selectDefaultTeamForObjSide = false;
+			char buffer[NAME_MAX_LEN];
+			int index = list->GetCurSel();
+			list->GetLBText(index, buffer);
+			// This is the option the combobox will show selected after being re-populated, drawn from what was
+			// selected at the time in this case (will be found & selected again to look no different).
+			defTeamName.set(buffer);
+		}
+		m_prevObjectTreeViewSelectedRootItem = hCurrentSelectedRootItem;
+	}
+	// ---
+
 	list->ResetContent();
 
 	Bool found = false;
-	AsciiString defTeamName;
+	//MODDD - moved to above
+	//AsciiString defTeamName;
 	MapObject *pCur = getCurMapObject();
 	if (!pCur) {
 		// No valid selection. Just return.
 		return;
 	}
-	if (pCur)
+
+	//MODDD - added to condition
+	//if (pCur)
+	if (pCur && selectDefaultTeamForObjSide)
 	{
 		const ThingTemplate* tt = pCur->getThingTemplate();
 		if (tt)
@@ -220,6 +251,29 @@ static const PlayerTemplate* findFirstPlayerTemplateOnSide(AsciiString side)
 	return nullptr;
 }
 #endif
+
+//MODDD - get the highest (earliest-depth) node in 'm_objectTreeView' by traversing the currently selected
+// node's parents.
+HTREEITEM ObjectOptions::getSelectedRootItemFromObjectTreeView()
+{
+	HTREEITEM hItem = m_objectTreeView.GetSelectedItem();
+	if (hItem == nullptr)
+	{
+		return nullptr;
+	}
+
+	while (true)
+	{
+		// If this node's parent is null, this is a root node
+		HTREEITEM hParentTestItem = m_objectTreeView.GetParentItem(hItem);
+		if (hParentTestItem == nullptr)
+		{
+			return hItem;
+		}
+		// Try again with the current parent node
+		hItem = hParentTestItem;
+	}
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // ObjectOptions message handlers
