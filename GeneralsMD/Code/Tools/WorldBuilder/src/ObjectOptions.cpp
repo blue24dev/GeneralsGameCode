@@ -125,39 +125,54 @@ void ObjectOptions::updateLabel()
 
 	CComboBox *list = (CComboBox*)GetDlgItem(IDC_OWNINGTEAM);
 
+	//MODDD - don't do this yet
+	//list->ResetContent();
+
+	Bool found = false;
+	AsciiString defTeamName;
+	MapObject *pCur = getCurMapObject();
+	if (!pCur) {
+		// No valid selection. Just return.
+		//MODDD - NOTE - most likely, the user selected a non-leaf node, like 'STRUCTURE', or collapsed the parent
+		// of the selected node (selecion moved to the collapsed parent).
+		// Going to assume leaving the list as it is in this case is fine.
+		return;
+	}
+
 	//MODDD - before resetting the 'Default Owner' combo box, see if the existing team selection should be
 	// preserved through re-populating the list instead (appear unchanged).
 	// Basically, selecting objects within the same side/faction folder doesn't reset the owner dropdown.
 	// ---
 	Bool selectDefaultTeamForObjSide = true;
-	AsciiString defTeamName;
 	HTREEITEM hCurrentSelectedRootItem = getSelectedRootItemFromObjectTreeView();
 	if (hCurrentSelectedRootItem != nullptr)
 	{
 		if (hCurrentSelectedRootItem == m_prevObjectTreeViewSelectedRootItem)
 		{
-			selectDefaultTeamForObjSide = false;
-			char buffer[NAME_MAX_LEN];
 			int index = list->GetCurSel();
-			list->GetLBText(index, buffer);
-			// This is the option the combobox will show selected after being re-populated, drawn from what was
-			// selected at the time in this case (will be found & selected again to look no different).
-			defTeamName.set(buffer);
+			if (index != -1)
+			{
+				char buffer[NAME_MAX_LEN];
+				list->GetLBText(index, buffer);
+				// This is the option the combobox will show selected after being re-populated, drawn from what was
+				// selected at the time in this case (will be found & selected again to look no different).
+				defTeamName.set(buffer);
+				selectDefaultTeamForObjSide = false;
+			}
+			// No item selected in the combobox? See if 'm_curOwnerName' is available
+			else if (m_curOwnerName.isNotEmpty())
+			{
+				defTeamName.set(m_curOwnerName);
+				selectDefaultTeamForObjSide = false;
+			}
+			// Otherwise, 'selectDefaultTeamForObjSide' will remain 'true' to re-determine the team to use as usual
 		}
 		m_prevObjectTreeViewSelectedRootItem = hCurrentSelectedRootItem;
 	}
 	// ---
-
+	
+	//MODDD - since the original location was disabled, adding it here
 	list->ResetContent();
-
-	Bool found = false;
-	//MODDD - moved to above
-	//AsciiString defTeamName;
-	MapObject *pCur = getCurMapObject();
-	if (!pCur) {
-		// No valid selection. Just return.
-		return;
-	}
 
 	//MODDD - added to condition
 	//if (pCur)
@@ -834,6 +849,11 @@ Int ObjectOptions::getObjectNamedIndex(const AsciiString& name)
 	return(0);
 }
 
+//MODDD
+void ObjectOptions::onRequestForNewSideSuccess()
+{
+	m_prevObjectTreeViewSelectedRootItem = nullptr;
+}
 
 void ObjectOptions::OnEditchangeOwningteam()
 {

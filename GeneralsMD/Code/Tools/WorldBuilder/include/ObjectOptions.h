@@ -92,8 +92,10 @@ protected:
 	HTREEITEM _FindOrDont(const char* pLabel, HTREEITEM startPoint);
 	Bool setObjectTreeViewSelection(HTREEITEM parent, Int selection);
 	void updateLabel();
+
 	//MODDD
 	HTREEITEM getSelectedRootItemFromObjectTreeView();
+
 	static MapObject *getCurMapObject(void);
 
 public:
@@ -105,6 +107,10 @@ public:
 	static Real getCurObjectHeight(void);
 	static void update();
 	static AsciiString getCurGdfName(void);
+
+	//MODDD
+	void onRequestForNewSideSuccess();
+
 };
 
 //{{AFX_INSERT_LOCATION}}

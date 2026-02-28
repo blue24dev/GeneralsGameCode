@@ -90,6 +90,9 @@ public:
 	void handleCameraChange(void);
 	void onEditScripts();
 
+	//MODDD - getter
+	ObjectOptions* getObjectOptionsPanel() { return &m_objectOptions; };
+
 protected:  // control bar embedded members
 	CStatusBar					m_wndStatusBar;
 	CToolBar						m_wndToolBar;

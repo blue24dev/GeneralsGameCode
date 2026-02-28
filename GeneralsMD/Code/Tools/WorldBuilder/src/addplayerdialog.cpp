@@ -28,6 +28,9 @@
 #include "WorldBuilderDoc.h"
 #include "CUndoable.h"
 
+//MODDD
+#include "MainFrm.h"
+
 /////////////////////////////////////////////////////////////////////////////
 // AddPlayerDialog dialog
 
@@ -80,6 +83,11 @@ void AddPlayerDialog::OnOK()
 		const PlayerTemplate* pt = ThePlayerTemplateStore->findPlayerTemplate(NAMEKEY((LPCTSTR)theText));
 		if (pt)
 		{
+			//MODDD - if this dialog originated from ObjectOptions ('m_side' isn't empty), let the ObjectOptions's
+			// panel know about this success.
+			// This is now needed since the panel would try to retain the existing 'neutral' owner otherwise.
+			CMainFrame::GetMainFrame()->getObjectOptionsPanel()->onRequestForNewSideSuccess();
+
 			m_addedSide = pt ? pt->getName() : AsciiString::TheEmptyString;
 			SidesList newSides = *TheSidesList;
 			newSides.addPlayerByTemplate(m_addedSide);
