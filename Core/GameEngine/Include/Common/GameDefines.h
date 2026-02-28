@@ -57,6 +57,10 @@
 #define RETAIL_COMPATIBLE_PATHFINDING_ALLOCATION (0)
 #endif
 
+#ifndef RETAIL_COMPATIBLE_CIRCLE_FILL_ALGORITHM
+#define RETAIL_COMPATIBLE_CIRCLE_FILL_ALGORITHM (1) // Use the original circle fill algorithm, which is more efficient but less accurate
+#endif
+
 // Disable non retail fixes in the networking, such as putting more data per UDP packet
 #ifndef RETAIL_COMPATIBLE_NETWORKING
 //MODDD - was 1, changed to 0 for more fixes
