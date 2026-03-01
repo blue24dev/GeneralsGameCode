@@ -508,6 +508,9 @@ Int GameSpyStagingRoom::getLocalSlotNum() const
 	DEBUG_ASSERTCRASH(m_inGame, ("Looking for local game slot while not in game"));
 	if (!m_inGame)
 		return -1;
+	
+	//MODDD!!!
+	return 0;
 
 	AsciiString localName = TheGameSpyInfo->getLocalName();
 

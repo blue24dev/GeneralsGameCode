@@ -517,7 +517,7 @@ void NAT::establishConnectionPaths() {
 					while ((m_connectionPairs[m_connectionPairIndex][0][nodeindex] == -1) || (m_connectionNodes[nodeindex].m_slotIndex != -1)) {
 						++nodeindex;
 					}
-					m_connectionNodes[nodeindex].m_slotIndex = i;
+					m_connectionNodes[nodeindex].m_slotIndex = 0;//i;
 					m_connectionNodes[nodeindex].m_behavior = m_slotList[i]->getNATBehavior();
 					connectionAssigned[i] = TRUE;
 					otherNetgearNum = nodeindex;
@@ -529,7 +529,7 @@ void NAT::establishConnectionPaths() {
 					while (m_connectionPairs[m_connectionPairIndex][0][nodeindex] != otherNetgearNum) {
 						++nodeindex;
 					}
-					m_connectionNodes[nodeindex].m_slotIndex = i;
+					m_connectionNodes[nodeindex].m_slotIndex = 0;//i;
 					m_connectionNodes[nodeindex].m_behavior = m_slotList[i]->getNATBehavior();
 					connectionAssigned[i] = TRUE;
 					otherNetgearNum = -1;
@@ -557,7 +557,7 @@ void NAT::establishConnectionPaths() {
 			++nodeindex;
 		}
 		DEBUG_LOG(("NAT::establishConnectionPaths - assigning node %d to slot %d (%ls)", nodeindex, i, m_slotList[i]->getName().str()));
-		m_connectionNodes[nodeindex].m_slotIndex = i;
+		m_connectionNodes[nodeindex].m_slotIndex = 0;//i;
 		m_connectionNodes[nodeindex].m_behavior = m_slotList[i]->getNATBehavior();
 		connectionAssigned[i] = TRUE;
 	}

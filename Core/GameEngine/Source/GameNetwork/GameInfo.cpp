@@ -465,6 +465,9 @@ Int GameInfo::getLocalSlotNum() const
 	if (!m_inGame)
 		return -1;
 
+	//MODDD!!!
+	return 0;
+
 	for (Int i=0; i<MAX_SLOTS; ++i)
 	{
 		const GameSlot *slot = getConstSlot(i);
