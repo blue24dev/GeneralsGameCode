@@ -1274,6 +1274,8 @@ void updateSkirmishGameOptions()
 	}
 
   GadgetCheckBoxSetChecked( checkBoxLimitSuperweapons, TheSkirmishGameInfo->getSuperweaponRestriction() != 0 );
+  //MODDD - condensed
+  /*
   Int itemCount = GadgetComboBoxGetLength(comboBoxStartingCash);
   Int index = 0;
   for ( ; index < itemCount; index++ )
@@ -1285,6 +1287,8 @@ void updateSkirmishGameOptions()
       break;
     }
   }
+  */
+  DecideStartingCashComboBoxSelectedPos(comboBoxStartingCash, TheSkirmishGameInfo);
 
   DEBUG_ASSERTCRASH( index < itemCount, ("Could not find new starting cash amount %d in list", TheSkirmishGameInfo->getStartingCash().countMoney() ) );
 }

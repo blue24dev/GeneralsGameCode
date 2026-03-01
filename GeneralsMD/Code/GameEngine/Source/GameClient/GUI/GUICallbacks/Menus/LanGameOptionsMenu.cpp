@@ -968,6 +968,9 @@ void updateGameOptions()
 		GadgetStaticTextSetText(textEntryMapDisplay, mapDisplayName);
 
     GadgetCheckBoxSetChecked( checkboxLimitSuperweapons, theGame->getSuperweaponRestriction() != 0 );
+
+		//MODDD - condensed
+		/*
 		Int itemCount = GadgetComboBoxGetLength(comboBoxStartingCash);
     Int index = 0;
     for ( ; index < itemCount; index++ )
@@ -979,6 +982,8 @@ void updateGameOptions()
         break;
       }
     }
+		*/
+		DecideStartingCashComboBoxSelectedPos(comboBoxStartingCash, theGame);
 
     DEBUG_ASSERTCRASH( index < itemCount, ("Could not find new starting cash amount %d in list", theGame->getStartingCash().countMoney() ) );
 	}

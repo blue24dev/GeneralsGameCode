@@ -987,6 +987,9 @@ static Bool addMapToMapListbox(
 		index = GadgetListBoxAddEntryText( lbData.listbox, mapDisplayName, lbData.color, index, lbData.numColumns-1 );
 		DEBUG_ASSERTCRASH(index >= 0, ("Expects valid index"));
 
+		//MODDD - early termination check for invalid add
+		if(index == -1)return false;
+
 		if (mapName == lbData.mapToSelect)
 		{
 			lbData.selectionIndex = index;
@@ -1002,10 +1005,14 @@ static Bool addMapToMapListbox(
 		}
 
 		// TheSuperHackers @performance Now stops processing when the list is full.
+		//MODDD - I gave list boxes the ability to resize if they need to, to get past some weird
+		// limitations as of retail like cutting off maps after a certain amount in map choosers.
+		/*
 		if (index == lbData.numLength - 1)
 		{
 			return false;
 		}
+		*/
 	}
 
 	return true;

@@ -332,7 +332,12 @@ void PopulateStartingCashComboBox(GameWindow *comboBox, GameInfo *myGame)
   GadgetComboBoxReset(comboBox);
 
   const MultiplayerStartingMoneyList & startingCashMap = TheMultiplayerSettings->getStartingMoneyList();
-  Int currentSelectionIndex = -1;
+
+	//MODDD - don't decide which item should be selected yet.
+	// In several cases, the provided 'myGame' isn't given the proper 'starting cash' value yet.
+	// On creating a skirmish or network game (tested in LAN), startingCash is the leftover default value
+	// (often 10000) because it hasn't come from history from Skirmish/Network.ini yet.
+  //Int currentSelectionIndex = -1;
 
   MultiplayerStartingMoneyList::const_iterator it = startingCashMap.begin();
   for ( ; it != startingCashMap.end(); it++ )
@@ -341,18 +346,82 @@ void PopulateStartingCashComboBox(GameWindow *comboBox, GameInfo *myGame)
                                           comboBox->winGetEnabled() ? comboBox->winGetEnabledTextColor() : comboBox->winGetDisabledTextColor());
     GadgetComboBoxSetItemData(comboBox, newIndex, (void *)it->countMoney());
 
+		//MODDD - see above
+		/*
     if ( myGame->getStartingCash().amountEqual( *it ) )
     {
       currentSelectionIndex = newIndex;
     }
+		*/
   }
-
+	
+	//MODDD - see above
+	// Also, if you restore this, pay attention to 'it->countMoney()'.
+	// This caused crashes whenever this point was reached (ex: joinging a multiplayer game where the host has
+	// a starting value that doesn't match any dropdown choices).
+	// Using 'myGame->getStartingCash()' was probably the intent, but, again, this may not be accurate yet per
+	// the notes further above.
+	/*
   if ( currentSelectionIndex == -1 )
   {
     DEBUG_CRASH( ("Current selection for starting cash not found in list") );
     currentSelectionIndex = GadgetComboBoxAddEntry(comboBox, formatMoneyForStartingCashComboBox( myGame->getStartingCash() ),
                                           comboBox->winGetEnabled() ? comboBox->winGetEnabledTextColor() : comboBox->winGetDisabledTextColor());
     GadgetComboBoxSetItemData(comboBox, currentSelectionIndex, (void *)it->countMoney() );
+  }
+
+  GadgetComboBoxSetSelectedPos(comboBox, currentSelectionIndex);
+	*/
+}
+
+//MODDD - new method to decide which item in the 'starting cash' dropdown should be selected to represent the
+// current game's starting cash.
+// Added to separate out the part of 'PopulateStartingCashComboBox' that decided this.
+// As-is logic was already doing this in most places after the starting cash was properly applied, so this
+// is more-or-less condensing some commonly repeated code.
+void DecideStartingCashComboBoxSelectedPos(GameWindow *comboBox, GameInfo *myGame)
+{
+	Int itemCount = GadgetComboBoxGetLength(comboBox);
+
+	//MODDD
+	Int currentSelectionIndex = -1;
+
+	//MODDD - not sure if this precaution is still needed.
+	// ---
+	// Note: must check if combobox is already correct to avoid infinite recursion
+  Int existingSelectedIndex;
+  GadgetComboBoxGetSelectedPos( comboBox, &existingSelectedIndex );
+	// ---
+
+	Int index = 0;
+	for ( ; index < itemCount; index++ )
+	{
+		Int value  = (Int)GadgetComboBoxGetItemData(comboBox, index);
+		if ( value == myGame->getStartingCash().countMoney() )
+		{
+			//MODDD - replaced, do this call later
+			//GadgetComboBoxSetSelectedPos(comboBox, index, TRUE);
+			currentSelectionIndex = index;
+			break;
+		}
+	}
+
+	//MODDD - again, not sure if this is still needed. Blocks re-selecting the same item (goal == already-selected).
+  if ( existingSelectedIndex != -1 && currentSelectionIndex == existingSelectedIndex ) return;
+
+	//MODDD - doing this here, moved/modified from PopulateStartingCashComboBox
+	// (adds a new item to represent the starting cash if an existing dropdown item isnt available to)
+	if ( currentSelectionIndex == -1 )
+  {
+    DEBUG_CRASH( ("Current selection for starting cash not found in list") );
+    currentSelectionIndex = GadgetComboBoxAddEntry(comboBox, formatMoneyForStartingCashComboBox( myGame->getStartingCash() ),
+			//MODDD - also, always using the enabled-text-color here. As of retail, the disabled text color is a dark red
+			// that seems to look like an error or disallowed value though that isn't the intent.
+			// This can be observed on joining an existing network game (combobox is disabled by the time this method is reached).
+                                          comboBox->winGetEnabledTextColor());
+		//MODDD - replaced
+    //GadgetComboBoxSetItemData(comboBox, currentSelectionIndex, (void *)it->countMoney() );
+		GadgetComboBoxSetItemData(comboBox, currentSelectionIndex, (void *)myGame->getStartingCash().countMoney() );
   }
 
   GadgetComboBoxSetSelectedPos(comboBox, currentSelectionIndex);
