@@ -1089,6 +1089,11 @@ Int populateMapListboxNoReset( GameWindow *listbox, Bool useSystemMaps, MapFilte
 	if (!listbox)
 		return -1;
 
+	//MODDD
+#if BYPASS_MAP_FILTER
+	mapFilterMode = MAPFILTER_ANY;
+#endif
+
 	MapListBoxData lbData;
 	lbData.listbox = listbox;
 	lbData.numLength = GadgetListBoxGetListLength( listbox );
