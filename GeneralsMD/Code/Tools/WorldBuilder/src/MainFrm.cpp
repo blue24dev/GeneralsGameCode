@@ -438,6 +438,35 @@ void CMainFrame::onEditScripts()
 	m_scriptDialog->ShowWindow(SW_SHOWNA);
 }
 
+//MODDD - new event
+// Called at the start of creating a new map (File -> New, clicking 'OK' in that prompt).
+void CMainFrame::onNewMapStart()
+{
+	onMapChange();
+	// Also, may as well reset these so the existing map's settings don't persist.
+	// Doing raw assignment instead of setters to avoid extra logic that doesn't need to run, and probably
+	// depends on the existing map being unloaded/replaced anyway.
+	TheWritableGlobalData->m_timeOfDay = TIME_OF_DAY_AFTERNOON;
+	TheWritableGlobalData->m_weather = WEATHER_NORMAL;
+}
+
+//MODDD - new event
+// Called at the start of opening an existing map, after going through any possible prompts and actually finding something to load from a path.
+// Note that it's still possible for a failure to revert to the existing map, though I don't know how much it's worth
+// thinking about that case. May want to do some UI resets before attempting to load a map regardless.
+// Also consider an event 'onLoadMapSuccess' for the very end (at 'REF_PTR_RELEASE(pOldHeightMap);') since
+// the newly loaded map is done being loaded / set-up and can't possibly be reverted at that point.
+void CMainFrame::onLoadMapStart()
+{
+	onMapChange();
+}
+
+//MODDD - new event (on new-map or load-map start)
+void CMainFrame::onMapChange()
+{
+	getObjectOptionsPanel()->onMapChange();
+}
+
 /////////////////////////////////////////////////////////////////////////////
 // CMainFrame diagnostics
 

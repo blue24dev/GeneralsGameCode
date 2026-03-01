@@ -109,6 +109,7 @@ public:
 	static AsciiString getCurGdfName(void);
 
 	//MODDD
+	void onMapChange();
 	void onRequestForNewSideSuccess();
 
 };

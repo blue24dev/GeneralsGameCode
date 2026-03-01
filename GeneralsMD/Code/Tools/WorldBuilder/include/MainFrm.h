@@ -93,6 +93,11 @@ public:
 	//MODDD - getter
 	ObjectOptions* getObjectOptionsPanel() { return &m_objectOptions; };
 
+	//MODDD - new events
+	void onNewMapStart();
+	void onLoadMapStart();
+	void onMapChange();
+
 protected:  // control bar embedded members
 	CStatusBar					m_wndStatusBar;
 	CToolBar						m_wndToolBar;
