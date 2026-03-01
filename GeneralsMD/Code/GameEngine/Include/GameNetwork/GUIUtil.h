@@ -38,6 +38,9 @@ void PopulatePlayerTemplateComboBox(Int comboBox, GameWindow *comboArray[], Game
 void PopulateTeamComboBox(Int comboBox, GameWindow *comboArray[], GameInfo *myGame, Bool isObserver = FALSE);
 void PopulateStartingCashComboBox(GameWindow *comboBox, GameInfo *myGame);
 
+//MODDD
+void DecideStartingCashComboBoxSelectedPos(GameWindow *comboBox, GameInfo *myGame);
+
 void EnableSlotListUpdates( Bool val );
 Bool AreSlotListUpdatesEnabled();
 

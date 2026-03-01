@@ -1009,6 +1009,8 @@ void WOLDisplayGameOptions()
   if ( limitSuperweapons != GadgetCheckBoxIsChecked(checkBoxLimitSuperweapons))
     GadgetCheckBoxSetChecked( checkBoxLimitSuperweapons, limitSuperweapons );
 
+	//MODDD - condensed
+	/*
   Int itemCount = GadgetComboBoxGetLength(comboBoxStartingCash);
   Int index = 0;
   for ( ; index < itemCount; index++ )
@@ -1025,6 +1027,8 @@ void WOLDisplayGameOptions()
       break;
     }
   }
+	*/
+  DecideStartingCashComboBoxSelectedPos(comboBoxStartingCash, theGame);
 
   DEBUG_ASSERTCRASH( index < itemCount, ("Could not find new starting cash amount %d in list", theGame->getStartingCash().countMoney() ) );
 }
@@ -1465,6 +1469,14 @@ void WOLGameSetupMenuInit( WindowLayout *layout, void *userData )
     checkBoxLimitSuperweapons->winEnable( FALSE ); // Can look but only host can touch
     comboBoxStartingCash->winEnable( FALSE );      // Ditto
 		initialAcceptEnable = FALSE;
+
+		//MODDD - NOTE. Why isn't something like 'WOLDisplaySlotList()' or 'WOLDisplayGameOptions()' called here?
+		// 'LanGameOptionsMenu.cpp' calls 'updateGameOptions()' at the end of both routes for its 'amIHost()' check
+		// during UI setup.
+		//MODDD - Adding this for safety, but feel free to prove if this isn't needed
+		// (that's the case if the starting cash dropdown choice is selected without this).
+		GameSpyStagingRoom *theGame = TheGameSpyInfo->getCurrentStagingRoom();
+		DecideStartingCashComboBoxSelectedPos(comboBoxStartingCash, theGame);
 	}
 
 	// Show the Menu
