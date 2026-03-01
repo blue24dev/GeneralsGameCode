@@ -243,11 +243,6 @@
 // in the System tab always being lowercase.
 #define NEW_MAP_LIST_LOAD_LOGIC TRUE
 
-// Show single player official maps even in release builds. These are normally hidden because they include
-// campaign maps and a few debug/test ones.
-// Note that this has no effect if 'NEW_MAP_LIST_LOAD_LOGIC' is on - can imply this setting to be TRUE in that case.
-#define SHOW_SP_OFFICIAL_MAPS_IN_RELEASE TRUE
-
 // Overrides default behavior to block generating the map cache in release mode by default.
 // Otherwise, maps added to your install's 'Maps' folder won't have any effect on the maps shown in map selection.
 // Note that deleting your install folder's 'Maps/MapCache.ini' folder won't be enough to regenerate it -
@@ -257,7 +252,17 @@
 // Documents' 'Maps' folder.
 // It's easier to use an install's 'Maps' folder for maps only intended for that mod since running the game
 // from there is the only way to see those maps. Having a separate install folder per mod is a good rule of thumb.
+// Note that this has no effect if 'NEW_MAP_LIST_LOAD_LOGIC' is on - can imply this setting to be TRUE in that case.
 #define FORCE_UPDATE_MAP_CACHE_IN_RELEASE TRUE
+
+// Show single player official maps even in release builds. These are normally hidden because they include
+// campaign maps and a few debug/test ones.
+// Note that this has no effect if 'BYPASS_MAP_FILTER' is on - all maps would be shown unconditionally & this setting would be ignored.
+#define SHOW_SP_OFFICIAL_MAPS_IN_RELEASE TRUE
+
+// If on, no single/multi-player filtering is done in any map chooser, ideally to see single player maps for
+// a network game. Surely you have your reasons.
+#define BYPASS_MAP_FILTER TRUE
 
 // Is there a confirmation prompt on exiting the entire program (not just a particular 'game')?
 // Retail's way was to depend on the game being windowed or not, this setting applies regardless of that.
