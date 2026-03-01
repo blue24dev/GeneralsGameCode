@@ -149,6 +149,9 @@ void ObjectOptions::updateLabel()
 	{
 		if (hCurrentSelectedRootItem == m_prevObjectTreeViewSelectedRootItem)
 		{
+			// The selected item in the object tree is under the same root node as the previously selected one.
+			// Get the currently selected item's name for 'defTeamNameTemp'.
+			AsciiString defTeamNameTemp;
 			int index = list->GetCurSel();
 			if (index != -1)
 			{
@@ -156,16 +159,37 @@ void ObjectOptions::updateLabel()
 				list->GetLBText(index, buffer);
 				// This is the option the combobox will show selected after being re-populated, drawn from what was
 				// selected at the time in this case (will be found & selected again to look no different).
-				defTeamName.set(buffer);
-				selectDefaultTeamForObjSide = false;
+				defTeamNameTemp.set(buffer);
 			}
 			// No item selected in the combobox? See if 'm_curOwnerName' is available
 			else if (m_curOwnerName.isNotEmpty())
 			{
-				defTeamName.set(m_curOwnerName);
-				selectDefaultTeamForObjSide = false;
+				defTeamNameTemp.set(m_curOwnerName);
 			}
-			// Otherwise, 'selectDefaultTeamForObjSide' will remain 'true' to re-determine the team to use as usual
+
+			// One more sanity check: does the team we're going to select actually exist in the teams dropdown?
+			// This is in case the team was renamed/removed in some other view, so the original
+			// pick-the-first-player-of-side's team logic runs instead if needed.
+			if (defTeamNameTemp.isNotEmpty())
+			{
+				Bool matchFound = false;
+				for (int i = 0; i < TheSidesList->getNumTeams(); i++)
+				{
+					Dict *d = TheSidesList->getTeamInfo(i)->getDict();
+					AsciiString name = d->getAsciiString(TheKey_teamName);
+					if (defTeamNameTemp == name) {
+						matchFound = true;
+						break;
+					}
+				}
+
+				if (matchFound)
+				{
+					// This is still a valid team - apply 'defTeamNameTemp'
+					defTeamName = defTeamNameTemp;
+					selectDefaultTeamForObjSide = false;
+				}
+			}
 		}
 		m_prevObjectTreeViewSelectedRootItem = hCurrentSelectedRootItem;
 	}
@@ -847,6 +871,12 @@ Int ObjectOptions::getObjectNamedIndex(const AsciiString& name)
 		}
 	}
 	return(0);
+}
+
+//MODDD
+void ObjectOptions::onMapChange()
+{
+	m_prevObjectTreeViewSelectedRootItem = nullptr;
 }
 
 //MODDD

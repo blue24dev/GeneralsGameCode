@@ -318,6 +318,8 @@ void CWorldBuilderDoc::Serialize(CArchive& ar)
 		CachedFileInputStream theInputStream;
 		if (theInputStream.open(AsciiString((const char *)pth)))
 		try {
+			//MODDD
+			CMainFrame::GetMainFrame()->onLoadMapStart();
 
 			WbApp()->selectPointerTool();
 			PolygonTrigger::deleteTriggers();
@@ -1270,6 +1272,10 @@ BOOL CWorldBuilderDoc::OnNewDocument()
 			return(false);
 		}
 	}
+
+	//MODDD
+	CMainFrame::GetMainFrame()->onNewMapStart();
+
 	REF_PTR_RELEASE(m_heightMap);
 	REF_PTR_RELEASE(m_undoList);
 	m_curRedo = 0;
