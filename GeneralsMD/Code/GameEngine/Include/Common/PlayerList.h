@@ -87,6 +87,7 @@ public:
 	//MODDD
 	Player* findFirstSlotPlayer();
 	void populateSlotPlayerRefs();
+	void postPlayersInit();
 
 	virtual void newGame(); // called during GameLogic::startNewGame()
 	virtual void newMap();	 // Called after a new map is loaded.
