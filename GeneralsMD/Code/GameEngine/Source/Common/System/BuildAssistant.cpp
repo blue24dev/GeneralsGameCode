@@ -391,6 +391,15 @@ Object *BuildAssistant::buildObjectNow( Object *constructorObject, const ThingTe
 
 		TheAI->pathfinder()->addObjectToPathfindMap( obj );
 
+		//MODDD - this route is taken when the build list system decides to instantly create a structure (build
+		// list hologram in the editor had 'm_isInitiallyBuilt' turned on).
+		// Since structures are made with the 'UNDER_CONSTRUCTION' status above, they may skip needed initialization in some
+		// places, namely SpecialPowerModule (ex: strategy center for unit-specific abilities: battlep plans & CIA intelligence).
+		// The structure is skipped to 100% construction completion without the dozer AI that normally calls
+		// 'call_objectOnBuildComplete'. To include the needed the checks, the 'call_objectOnBuildComplete' call done
+		// further down just needs 'checkForSpecialPowerModuleCreateCalls = true'.
+		Bool checkForSpecialPowerModuleCreateCalls = (obj->isKindOf( KINDOF_STRUCTURE ));
+
 		// notify the player that this thing has come into existence
 		if( obj->isKindOf( KINDOF_STRUCTURE ) )
 		{
@@ -426,7 +435,7 @@ Object *BuildAssistant::buildObjectNow( Object *constructorObject, const ThingTe
 			create->onBuildComplete();
 		}
 		*/
-		call_objectOnBuildComplete(obj);
+		call_objectOnBuildComplete(obj, checkForSpecialPowerModuleCreateCalls);
 
 		// Creation is another valid and essential time to call this. This building now Looks.
 		obj->handlePartitionCellMaintenance();
@@ -707,6 +716,14 @@ LegalBuildCode BuildAssistant::isLocationClearOfObjects( const Coord3D *worldPos
 		// same story for inert things: ie, radiation fields, pings, and projectile streams (!)...
 		if (them->isKindOf(KINDOF_INERT))
 			continue;
+
+		//MODDD - going to assume if this is a turret attached to a mobile unit (ex: avenger turret - yes, encountered here
+		// as a separate game object), it shouldn't count for an obstruction (the check on the avenger itself done
+		// at some point in this loop should be fine).
+		// ---
+		if (them->isDisabledByHeldFlag())
+			continue;
+		// ---
 
 		if (them->isKindOf(KINDOF_IMMOBILE))
 		{

@@ -2830,6 +2830,22 @@ UnsignedInt Object::getDisabledUntil( DisabledType type ) const
 	return 0;
 }
 
+//MODDD - similar to 'isDisabled' but only check for the 'DISABLED_HELD' type.
+// Could also do a 'isDisabled_mobilityOnly' to be just like 'isDisabled' but exclude 'DISABLED_HELD', but
+// I think it's best to let the caller specially handle this case.
+// Ex: a newly made build site should ignore a turret attached to a mobile unit like an avenger, not tell it
+// to move out of the way. (I didn't have to do anything special for that case, but, just an example to think about).
+//MODDD - TODO - are there any other cases of logic that should be adjusted for running into turrets as separate game
+// objects on player-interactive objects, like units acquiring the avenger turret as an enemy separately from the
+// avenger? 
+// Also, I'd argue the 'HELD' disable-type to signify belonging to something like this should be independent of
+// the disabled types, like some 'isEmbeddedTurret' or 'isEmbeddedAddOn' to easily skip things that shouldn't be
+// handled in iteration expected to only cover whole player-interactive objects.
+Bool Object::isDisabledByHeldFlag() const
+{
+	return m_disabledMask.test(DISABLED_HELD);
+}
+
 //MODDD - TODO. why does this have a 'Bool' return type? Does anything refer to the return from this?
 //-------------------------------------------------------------------------------------------------
 Bool Object::clearDisabled( DisabledType type )
