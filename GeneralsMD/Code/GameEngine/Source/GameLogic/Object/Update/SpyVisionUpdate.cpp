@@ -56,6 +56,31 @@ SpyVisionUpdate::~SpyVisionUpdate()
 {
 }
 
+//MODDD - new, to decide what to do if self-powered and running for the first time
+void SpyVisionUpdate::selfPoweredInit()
+{
+	const SpyVisionUpdateModuleData *data = getSpyVisionUpdateModuleData();
+	UnsignedInt now = TheGameLogic->getFrame();
+
+	//MODDD - for non-zero durations, start inactive instead.
+	// This means the initial cooldown must pass before the ability has an effect, similar to other non-shared
+	// special powers like CIA Intelligence.
+	// This prevents the player from being able to cheese faster spy-on-all restarts by selling & rebuilding the
+	// internet center.
+	// Although selfPoweredDuration & Interal should either both be 0 or both be non-0, if either is 0, just leave it
+	// up to retail logic. Better than starting off & sleeping forever (never turns on), unless that would happen anyway.
+	if (data->m_selfPoweredDuration != 0 && data->m_selfPoweredInterval != 0)
+	{
+		m_currentlyActive = FALSE;
+		m_deactivateFrame = now + data->m_selfPoweredInterval;
+		setWakeFrame( getObject(), UPDATE_SLEEP(data->m_selfPoweredInterval) );
+		return;
+	}
+
+	// Retail logic (start with the spy vision active)
+	activateSpyVision(data->m_selfPoweredDuration);
+}
+
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 void SpyVisionUpdate::activateSpyVision( UnsignedInt duration )
@@ -218,9 +243,28 @@ void SpyVisionUpdate::onDelete()
 void SpyVisionUpdate::upgradeImplementation()
 {
 	const SpyVisionUpdateModuleData *data = getSpyVisionUpdateModuleData();
-	if( data->m_needsUpgrade && !isAlreadyUpgraded() )
+	//MODDD - added 'data->m_selfPowered &&' to the start of the conditions. Seems like a good idea?
+	if( data->m_selfPowered && data->m_needsUpgrade && !isAlreadyUpgraded() )
 	{
-		activateSpyVision(data->m_selfPoweredDuration);// If zero, will turn on permanently.  And it does the wake up setting
+		//MODDD - replacing this call
+		//activateSpyVision(data->m_selfPoweredDuration);// If zero, will turn on permanently.  And it does the wake up setting
+		selfPoweredInit();
+	}
+}
+
+//MODDD
+void SpyVisionUpdate::onCreate()
+{
+	// nothing - need to be finished being built
+}
+
+//MODDD - needed to work when 'data->m_needsUpgrade' isn't the case yet this module is still self-powered
+void SpyVisionUpdate::onBuildComplete()
+{
+	const SpyVisionUpdateModuleData *data = getSpyVisionUpdateModuleData();
+	if (data->m_selfPowered && !data->m_needsUpgrade)
+	{
+		selfPoweredInit();
 	}
 }
 
