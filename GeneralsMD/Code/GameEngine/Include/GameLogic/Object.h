@@ -609,6 +609,10 @@ public:
 
 	DisabledMaskType getDisabledFlags() const { return m_disabledMask; }
 	Bool isDisabled() const { return m_disabledMask.any(); }
+
+	//MODDD - new
+	Bool isDisabledByHeldFlag() const;
+
 	Bool clearDisabled( DisabledType type );
 
 	void setDisabled( DisabledType type );
