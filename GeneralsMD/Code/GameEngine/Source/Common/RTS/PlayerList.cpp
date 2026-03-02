@@ -279,6 +279,58 @@ void PlayerList::populateSlotPlayerRefs()
 	}
 }
 
+//MODDD - new event for handling some cheat/extra-difficulty-related settings to apply to players.
+void PlayerList::postPlayersInit()
+{
+	// One run-through for slot players
+	for (int i=0; i < m_slotPlayerRefsSoftCount; ++i)
+	{
+		Player* player = m_slotPlayerRefs[i];
+
+		if (TheGameInfo)
+		{
+			GameSlot *slot = TheGameInfo->getSlot(i);
+			if (!slot->isOccupied())
+			{
+				continue;
+			}
+		}
+		
+		//MODDD - this used to be handled in Player.cpp: initFromDict, but the 'slotIndex' wasn't seen since this
+		// is assigned in 'populateSlotPlayerRefs' instead of earlier in SidesInfo (this has the benefit of being
+		// re-determined on loading a saved game).
+		// Could do something like assign 'slotIndex' before 'initFromDict' so the old way works but doesn't seem
+		// worth it to decide what-player-belongs-to-what-slot so far in advance for only this cheap hack.
+		// So, decide who gets the n00b bonus here instead.
+#if NOOB_MODE
+		if (player->getPlayerType() == PLAYER_HUMAN && player->slotIndex == 1)
+		{
+			// get the current amount of money, remove it from the player, add it back with a scalar applied
+			Money* moneyRef = playerRef->getMoney();
+			UnsignedInt currentMoney = moneyRef->countMoney();
+			moneyRef->withdraw(currentMoney);
+			moneyRef->deposit((UnsignedInt)((float)currentMoney * 1.25f), FALSE);
+
+			playerRef->setSkillPointsModifier(1.15f);
+		}
+#endif
+	}
+
+	// And a run-through for all players (excluding slot players)
+	for (int i=0; i < getPlayerCount(); ++i)
+	{
+		Player* player = ThePlayerList->getNthPlayer(i);
+		if (player->slotIndex != -1) continue;
+
+#if defined(COMPUTER_PLAYER_EXPERIENCE_SCALAR)
+		if (player->getPlayerType() == PLAYER_COMPUTER)
+		{
+			player->setSkillPointsModifier(COMPUTER_PLAYER_EXPERIENCE_SCALAR);
+		}
+#endif
+	}
+}
+
 //-----------------------------------------------------------------------------
 void PlayerList::newGame()
 {
@@ -347,31 +399,8 @@ void PlayerList::newGame()
 
 	populateSlotPlayerRefs();
 
-	//MODDD - this used to be handled in Player.cpp: initFromDict, but the 'slotIndex' wasn't seen since this
-	// is assigned in 'populateSlotPlayerRefs' instead of earlier in SidesInfo (this has the benefit of being
-	// re-determined on loading a saved game).
-	// Could do something like assign 'slotIndex' before 'initFromDict' so the old way works but doesn't seem
-	// worth it to decide what-player-belongs-to-what-slot so far in advance for only this cheap hack.
-	// So, decide who gets the n00b bonus here instead.
-	
-#if NOOB_MODE
-	if (m_slotPlayerRefsSoftCount >= 2)
-	{
-		// hardcoded - get the 2nd slot player
-		Player* playerRef = m_slotPlayerRefs[1];
-		// player-type should be 'HUMAN', and the slot should be actually used (non-applicable in single-player, not that you should've gotten this far in that case)
-		if (playerRef->getPlayerType() == PLAYER_HUMAN && (TheGameInfo==nullptr || TheGameInfo->getSlot(1)->isOccupied()))
-		{
-		// get the current amount of money, remove it from the player, add it back with a scalar applied
-			Money* moneyRef = playerRef->getMoney();
-			UnsignedInt currentMoney = moneyRef->countMoney();
-			moneyRef->withdraw(currentMoney);
-			moneyRef->deposit((UnsignedInt)((float)currentMoney * 1.25f), FALSE);
-
-			playerRef->setSkillPointsModifier(1.15f);
-		}
-	}
-#endif
+	//MODDD
+	postPlayersInit();
 
 	if (!setLocal)
 	{

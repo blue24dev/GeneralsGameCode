@@ -181,7 +181,6 @@
 // This doesn't affect start moeny set by the skirmish menu.
 //#define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS TRUE
 
-// Also applies regardless of GENERALS_CHALLENGE_FORCE.
 // Multiple of all income for computer players to compensate for the AI's lack of ambition for renewable economic structures
 // when supply docks/piles run out late in the game. Pretty crude check: assumes any money change below X is from most
 // normal in-game means (supply truck, oil derrick, etc.) and not start money or a map script doing it.
@@ -385,6 +384,7 @@
 #define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS TRUE
 
 #define COMPUTER_PLAYER_MONEY_SCALAR 4.5
+#define COMPUTER_PLAYER_EXPERIENCE_SCALAR 1.5
 #define REMOVE_FOG_OF_WAR FALSE
 #define REMOVE_FOG_OF_WAR_ALT FALSE
 #define NOOB_MODE TRUE
