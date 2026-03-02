@@ -1417,8 +1417,14 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	TheWritableGlobalData->m_loadScreenRender = TRUE;	///< mark it so only a few select things are rendered during load
 	TheWritableGlobalData->m_TiVOFastMode = FALSE;	//always disable the TIVO fast-forward mode at the start of a new game.
 
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
-	// thanks, visual, studio...
+	//MODDD - involve macro settings for how this is decided
+	Bool isChallengeCampaign;
+#if GENERALS_CHALLENGE_FORCE
+	isChallengeCampaign = TRUE;
+#elif CAMPAIGN_FORCE
+	isChallengeCampaign = FALSE;
+#else
+	// retail
 	Campaign* currentCampaign = TheCampaignManager->getCurrentCampaign();
 	Bool isChallengeCampaign = m_gameMode == GAME_SINGLE_PLAYER && currentCampaign && currentCampaign->m_isChallengeCampaign;
 #endif
@@ -1481,7 +1487,14 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 
 	checkForDuplicateColors( TheGameInfo );
 
-	Bool isSkirmishOrSkirmishReplay = FALSE;
+	Bool isSkirmishOrSkirmishReplay;
+	//MODDD - new. Variable added in place of 'isMultiplayerSession && isSkirmishOrSkirmishReplay' checks
+	// to easily be decided by macro setting.
+	Bool isStandardSlotGameOrReplay;
+
+#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+	// retail
+	isSkirmishOrSkirmishReplay = FALSE;
 	if (TheGameInfo)
 	{
 		for (Int i=0; i<MAX_SLOTS; ++i)
@@ -1495,7 +1508,25 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 				isSkirmishOrSkirmishReplay = TRUE;
 			}
 		}
-	} else {
+	}
+	isStandardSlotGameOrReplay = (TheGameEngine->isMultiplayerSession() || isSkirmishOrSkirmishReplay);
+#else
+	isSkirmishOrSkirmishReplay = FALSE;
+	isStandardSlotGameOrReplay = FALSE;
+#endif
+
+	//MODDD - several places should be skipped for 'CAMPAIGN_FORCE' even if the game isn't null.
+	// Ex: co-op (network) games have a non-null game info but should still avoid some automatic behavior.
+	Bool doAutomaticPostGamePlayerSetup;
+#if CAMPAIGN_FORCE
+	doAutomaticPostGamePlayerSetup = FALSE;
+#else
+	doAutomaticPostGamePlayerSetup = (TheGameInfo != nullptr);
+#endif
+
+	//MODDD - split from above as an 'else' for more control over above
+	if (TheGameInfo == nullptr)
+	{
 		if (m_gameMode == GAME_SINGLE_PLAYER)	{
 			delete TheSkirmishGameInfo;
 			TheSkirmishGameInfo = nullptr;
@@ -1561,22 +1592,12 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 
 	Int localSlot = 0;
 	Int progressCount = LOAD_PROGRESS_SIDE_POPULATION;
-
-	//MODDD - actually don't do anything here at all for 'CAMPAIGN_FORCE'.
-	// 'GENERALS_CHALLENGE_FORCE' is still expected to use the game info, however.
-#if !CAMPAIGN_FORCE
-	if (TheGameInfo)
-#else
-	if (FALSE)
-#endif
+	//MODDD - replaced 'TheGame' condition with this
+	if (doAutomaticPostGamePlayerSetup)
 	{
 
-		//MODDD
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
-		if (TheGameEngine->isMultiplayerSession() || isSkirmishOrSkirmishReplay)
-#else
-		if (FALSE)
-#endif
+		//MODDD - condition condensed
+		if (isStandardSlotGameOrReplay)
 		{
 			// Saves off any player, and resets the sides to 0 players so we can add the skirmish players.
 			TheSidesList->prepareForMP_or_Skirmish();
@@ -1688,12 +1709,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			}
 */
 
-//MODDD - disabled
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 			if (isSkirmishOrSkirmishReplay)
-#else
-			if (FALSE)
-#endif
 			{
 				d.setBool(TheKey_playerIsSkirmish, true);
 				switch (slot->getState()) {
@@ -1790,11 +1806,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	// update the loadscreen
 	updateLoadProgress(LOAD_PROGRESS_POST_SCRIPT_ENGINE_NEW_MAP);
 
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
-	if (TheGameEngine->isMultiplayerSession() || isSkirmishOrSkirmishReplay)
-#else
-	if (FALSE)
-#endif
+	if (isStandardSlotGameOrReplay)
 	{
 		// if there are no other teams (happens for debugging) don't end the game immediately
 		Int numTeams = 0; // this can be higher than expected, but is accurate for determining 0, 1, 2+
@@ -1815,10 +1827,9 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			}
 		}
 
-		//MODDD - don't apply the victory/defeat-checking script conditions
-		// Actually this block won't run anyway ('numTeams'-counting block above is never run in this case). Oh well.
-		// For info, this script is what regularly calls for checks to 'VictoryConditions.cpp' that decide in ending
-		// the game in victory/defeat. Beats me why that wouldn't just be hardcoded per game mode if 99.9% of the logic
+		//MODDD - NOTE.
+		// This script is what regularly calls for checks to 'VictoryConditions.cpp' that decide in ending the
+		// game in victory/defeat. Beats me why that wouldn't just be hardcoded per game mode if 99.9% of the logic
 		// is behind such a basic "tell the game engine to do what it's supposted to do" layer.
 		// ...and this block, to load that script, is basically decided per game mode ("if (TheGameInfo)" is effectively a
 		// single-player-campaign check).
@@ -1826,11 +1837,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 		// up to player template info (if it isn't already). Do victory/defeat checks every frame without needing the
 		// multiplayer scripts file to say that (safe to delete that then), if the current game is skirmish/network
 		// and not sandbox mode (point of the 'numTeams' check above).
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
 		if (numTeams > 1)
-#else
-		if (FALSE)
-#endif
 		{
 			// add in the multiplayer victory/defeat scripts
 			AsciiString path = "Data\\Scripts\\MultiplayerScripts.scb";
@@ -2044,12 +2051,9 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	Player *observerPlayer = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey("ReplayObserver"));
 	ThePartitionManager->revealMapForPlayerPermanently( observerPlayer->getPlayerIndex() );
 	DEBUG_LOG(("Reveal shroud for %ls whose index is %d", observerPlayer->getPlayerDisplayName().str(), observerPlayer->getPlayerIndex()));
-
-#if !CAMPAIGN_FORCE
-	if (TheGameInfo)
-#else
-	if (FALSE)
-#endif
+	
+	//MODDD - replaced 'TheGame' condition with this
+	if (doAutomaticPostGamePlayerSetup)
 	{
 		for (int i=0; i<MAX_SLOTS; ++i)
 		{
@@ -2277,11 +2281,8 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	#endif
 
 	// place initial network buildings/units
-#if !CAMPAIGN_FORCE
-	if (TheGameInfo && !loadingSaveGame)
-#else
-	if (FALSE)
-#endif
+	// MODDD - replaced 'TheGame' part of condition (1st term)
+	if (doAutomaticPostGamePlayerSetup && !loadingSaveGame)
 	{
 		Int progressCount = LOAD_PROGRESS_LOOP_INITIAL_NETWORK_BUILDINGS;
 		for (int i=0; i<MAX_SLOTS; ++i)
@@ -2396,11 +2397,8 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	// Note - We construct the multiplayer start spot name manually here, so change this if you
 	//        change TheKey_Player_1_Start etc.  mdc
 	AsciiString startingCamName = TheNameKeyGenerator->keyToName(TheKey_InitialCameraPosition);
-#if !CAMPAIGN_FORCE
-	if (TheGameInfo)
-#else
-	if (FALSE)
-#endif
+	//MODDD - replaced 'TheGame' condition with this
+	if (doAutomaticPostGamePlayerSetup)
 	{
 		GameSlot *slot = TheGameInfo->getSlot(localSlot);
 		DEBUG_ASSERTCRASH(slot, ("Starting a LAN game without ourselves!"));
@@ -2458,18 +2456,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	if( loadingSaveGame == FALSE )
 		ThePlayerList->newMap();
 
-#if GENERALS_CHALLENGE_FORCE
-	// If there is a 'game' alone, proceed.
-	// Need to run the automatic relationship changes regardless of 'isChallengeCampaign'.
-	if (TheGameInfo)
-#elif CAMPAIGN_FORCE
-	// No automatic relationships here.
-	// The map should set this up properly since human-intended players are baked in & configurable there anyway.
-	if (FALSE)
-#else
-	// retail
 	if ( isChallengeCampaign )
-#endif
 	{
 		// Establish local player relationships with other teams as
 		// they're set up for "ThePlayer" in challenge mode map.

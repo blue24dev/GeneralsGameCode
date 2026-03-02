@@ -35,6 +35,9 @@
 #include "GameLogic/Module/UpdateModule.h"
 #include "GameLogic/Module/UpgradeModule.h"
 
+//MODDD
+#include "GameLogic/Module/CreateModule.h"
+
 class Player;
 
 //-------------------------------------------------------------------------------------------------
@@ -79,7 +82,8 @@ public:
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
-class SpyVisionUpdate : public UpdateModule, public UpgradeMux
+//MODDD - added 'public CreateModuleInterface' to the inheritance list
+class SpyVisionUpdate : public UpdateModule, public UpgradeMux, public CreateModuleInterface
 {
 
 	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE( SpyVisionUpdate, "SpyVisionUpdate" )
@@ -91,6 +95,9 @@ public:
 	// virtual destructor prototype provided by memory pool declaration
 
 	virtual SpyVisionUpdate* getSpyVision() { return this; }
+	
+	//MODDD - to let other places know that this supports 'CreateModuleInterface'
+	virtual CreateModuleInterface* getCreate() { return this; }
 
 	// module methods
 	static Int getInterfaceMask() { return UpdateModule::getInterfaceMask() | MODULEINTERFACE_UPGRADE; }
@@ -103,6 +110,14 @@ public:
 
 	//Update module
 	virtual UpdateSleepTime update();
+	
+	//MODDD - for 'CreateModuleInterface'
+	virtual void onCreate();
+	virtual void onBuildComplete();	///< This is called when you are a finished game object
+	virtual Bool shouldDoOnBuildComplete() const { return TRUE; }
+
+	//MODDD - new
+	void selfPoweredInit();
 
 	void activateSpyVision( UnsignedInt duration );
 

@@ -282,14 +282,14 @@ void PlayerList::populateSlotPlayerRefs()
 //MODDD - new event for handling some cheat/extra-difficulty-related settings to apply to players.
 void PlayerList::postPlayersInit()
 {
-	// One run-through for slot players
-	for (int i=0; i < m_slotPlayerRefsSoftCount; ++i)
+	for (int i=0; i < getPlayerCount(); ++i)
 	{
-		Player* player = m_slotPlayerRefs[i];
+		Player* player = ThePlayerList->getNthPlayer(i);
 
-		if (TheGameInfo)
+		// If this is a slot player and there is game info to check, see if this slot is unoccupied (skip if so)
+		if (player->slotIndex != -1 && TheGameInfo)
 		{
-			GameSlot *slot = TheGameInfo->getSlot(i);
+			GameSlot *slot = TheGameInfo->getSlot(player->slotIndex);
 			if (!slot->isOccupied())
 			{
 				continue;
@@ -312,20 +312,15 @@ void PlayerList::postPlayersInit()
 			moneyRef->deposit((UnsignedInt)((float)currentMoney * 1.25f), FALSE);
 
 			player->setSkillPointsModifier(1.20f);
+			continue;
 		}
 #endif
-	}
-
-	// And a run-through for all players (excluding slot players)
-	for (int i=0; i < getPlayerCount(); ++i)
-	{
-		Player* player = ThePlayerList->getNthPlayer(i);
-		if (player->slotIndex != -1) continue;
 
 #if defined(COMPUTER_PLAYER_EXPERIENCE_SCALAR)
 		if (player->getPlayerType() == PLAYER_COMPUTER)
 		{
 			player->setSkillPointsModifier(COMPUTER_PLAYER_EXPERIENCE_SCALAR);
+			continue;
 		}
 #endif
 	}

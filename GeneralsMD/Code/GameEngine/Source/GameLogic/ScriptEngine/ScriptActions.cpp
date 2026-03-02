@@ -6746,16 +6746,23 @@ void ScriptActions::doAffectSkillPointsModifier(const AsciiString& playerName, R
 		return;
 	}
 
-	//MODDD - personal choice.
 #if NOOB_MODE
 	if (
-		playerDst->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(playerDst->getPlayerNameKey()).getLength() != 0 &&
 		playerDst->getPlayerType() == PLAYER_HUMAN &&
 		playerDst->slotIndex == 1
 	)
 	{
-		Real newModifierMod = newModifier * 1.15;
-		playerDst->setSkillPointsModifier(newModifierMod);
+		Real finalMod = newModifier * 1.20;
+		playerDst->setSkillPointsModifier(finalMod);
+		return;
+	}
+#endif
+	
+#if defined(COMPUTER_PLAYER_EXPERIENCE_SCALAR)
+	if (playerDst->getPlayerType() == PLAYER_COMPUTER)
+	{
+		Real finalMod = newModifier * COMPUTER_PLAYER_EXPERIENCE_SCALAR;
+		playerDst->setSkillPointsModifier(finalMod);
 		return;
 	}
 #endif
