@@ -378,10 +378,10 @@
 // ----------------------------------------------------------------------------------------------------------
 // Bundles of settings here for convenient access
 #define GENERALS_CHALLENGE_FORCE FALSE
-#define CAMPAIGN_FORCE TRUE
+#define CAMPAIGN_FORCE FALSE
 #define DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY DIFFICULTY_HARD
 #define FORCE_HUMAN_PLAYER_START_MONEY 0
-#define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS TRUE
+#define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS FALSE
 
 #define COMPUTER_PLAYER_MONEY_SCALAR 4.5
 #define COMPUTER_PLAYER_EXPERIENCE_SCALAR 1.5

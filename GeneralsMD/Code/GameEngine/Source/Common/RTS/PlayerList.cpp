@@ -306,12 +306,12 @@ void PlayerList::postPlayersInit()
 		if (player->getPlayerType() == PLAYER_HUMAN && player->slotIndex == 1)
 		{
 			// get the current amount of money, remove it from the player, add it back with a scalar applied
-			Money* moneyRef = playerRef->getMoney();
+			Money* moneyRef = player->getMoney();
 			UnsignedInt currentMoney = moneyRef->countMoney();
 			moneyRef->withdraw(currentMoney);
 			moneyRef->deposit((UnsignedInt)((float)currentMoney * 1.25f), FALSE);
 
-			playerRef->setSkillPointsModifier(1.15f);
+			player->setSkillPointsModifier(1.20f);
 		}
 #endif
 	}
