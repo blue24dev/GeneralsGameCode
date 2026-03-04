@@ -76,6 +76,20 @@
 //-------------------------------------------------------------------------------------------------
 
 
+static inline Bool IS_IMPASSABLE(PathfindCell::CellType type) {
+	// Return true if cell is impassable to ground units. jba. [8/18/2003]
+	if (type==PathfindCell::CELL_IMPASSABLE) {
+		return true;
+	}
+	if (type==PathfindCell::CELL_OBSTACLE) {
+		return true;
+	}
+	if (type==PathfindCell::CELL_BRIDGE_IMPASSABLE) {
+		return true;
+	}
+	return false;
+}
+
 
 struct TCheckMovementInfo
 {
@@ -1545,11 +1559,12 @@ inline ObjectID PathfindCell::getObstacleID() const
 
 /**
  * Flag this cell as an obstacle, from the given one.
+ * Return true if cell was flagged.
  */
-void PathfindCell::setTypeAsObstacle( Object *obstacle, Bool isFence, const ICoord2D &pos )
+Bool PathfindCell::setTypeAsObstacle( Object *obstacle, Bool isFence, const ICoord2D &pos )
 {
 	if (m_type!=PathfindCell::CELL_CLEAR && m_type != PathfindCell::CELL_IMPASSABLE) {
-		return;
+		return false;
 	}
 
 	Bool isRubble = false;
@@ -1565,7 +1580,7 @@ void PathfindCell::setTypeAsObstacle( Object *obstacle, Bool isFence, const ICoo
 		m_obstacleIsTransparent = false;
 #if RETAIL_COMPATIBLE_PATHFINDING_ALLOCATION
 		if (s_useFixedPathfinding) {
-			return;
+			return true;
 		}
 
 		if (m_info) {
@@ -1573,7 +1588,7 @@ void PathfindCell::setTypeAsObstacle( Object *obstacle, Bool isFence, const ICoo
 			releaseInfo();
 		}
 #endif
-		return;
+		return true;
 	}
 
 	m_type = PathfindCell::CELL_OBSTACLE;
@@ -1584,21 +1599,21 @@ void PathfindCell::setTypeAsObstacle( Object *obstacle, Bool isFence, const ICoo
 	// TheSuperHackers @info In retail mode we need to track orphaned cells set as obstacles so we can cleanup and failover properly
 	// So we always make sure to set and clear the local obstacle data on the PathfindCell regardless of retail compat or not
 	if (s_useFixedPathfinding) {
-		return;
+		return true;
 	}
 
 	if (!m_info) {
 		m_info = PathfindCellInfo::getACellInfo(this, pos);
 		if (!m_info) {
 			DEBUG_CRASH(("Not enough PathFindCellInfos in pool."));
-			return;
+			return false;
 		}
 	}
 	m_info->m_obstacleID = obstacle->getID();
 	m_info->m_obstacleIsFence = isFence;
 	m_info->m_obstacleIsTransparent = obstacle->isKindOf(KINDOF_CAN_SEE_THROUGH_STRUCTURE);
 #endif
-	return;
+	return true;
 }
 
 /**
@@ -1632,36 +1647,37 @@ void PathfindCell::setType( CellType type )
 
 /**
  * Unflag this cell as an obstacle, from the given one.
+ * Return true if this cell was previously flagged as an obstacle by this object.
  */
-void PathfindCell::removeObstacle( Object *obstacle )
+Bool PathfindCell::removeObstacle( Object *obstacle )
 {
 	if (m_type == PathfindCell::CELL_RUBBLE) {
 		m_type = PathfindCell::CELL_CLEAR;
 	}
 #if RETAIL_COMPATIBLE_PATHFINDING_ALLOCATION
 	if (s_useFixedPathfinding) {
-		if (m_obstacleID != obstacle->getID()) return;
+		if (m_obstacleID != obstacle->getID()) return false;
 		m_type = PathfindCell::CELL_CLEAR;
 		m_obstacleID = INVALID_ID;
 		m_obstacleIsFence = false;
 		m_obstacleIsTransparent = false;
-		return;
+		return true;
 	}
 
-	if (!m_info) return;
-	if (m_info->m_obstacleID != obstacle->getID()) return;
+	if (!m_info) return false;
+	if (m_info->m_obstacleID != obstacle->getID()) return false;
 	m_type = PathfindCell::CELL_CLEAR;
 	m_info->m_obstacleID = INVALID_ID;
 	releaseInfo();
 
 #else
-	if (m_obstacleID != obstacle->getID()) return;
+	if (m_obstacleID != obstacle->getID()) return false;
 	m_type = PathfindCell::CELL_CLEAR;
 #endif
 	m_obstacleID = INVALID_ID;
 	m_obstacleIsFence = false;
 	m_obstacleIsTransparent = false;
-	return;
+	return true;
 }
 
 /// put self on "open" list in ascending cost order, return new list
@@ -1941,7 +1957,11 @@ UnsignedInt PathfindCell::costToGoal( PathfindCell *goal )
 
 UnsignedInt PathfindCell::costToHierGoal( PathfindCell *goal )
 {
-	DEBUG_ASSERTCRASH(m_info, ("Has to have info."));
+	if( !m_info )
+	{
+		DEBUG_CRASH( ("Has to have info.") );
+		return 100000; //...patch hack 1.01
+	}
 	Int dx = m_info->m_pos.x - goal->getXIndex();
 	Int dy = m_info->m_pos.y - goal->getYIndex();
 	Int cost = REAL_TO_INT_FLOOR(COST_ORTHOGONAL*sqrt(dx*dx + dy*dy) + 0.5f);
@@ -2303,7 +2323,7 @@ void ZoneBlock::blockCalculateZones(PathfindCell **map, PathfindLayer layers[], 
 zoneStorageType ZoneBlock::getEffectiveZone( LocomotorSurfaceTypeMask acceptableSurfaces,
 																					 Bool crusher, zoneStorageType zone) const
 {
-	DEBUG_ASSERTCRASH(zone, ("Zone not set"));
+
 	if (acceptableSurfaces&LOCOMOTORSURFACE_AIR) return 1; // air is all zone 1.
 
 	if ( (acceptableSurfaces&LOCOMOTORSURFACE_GROUND) &&
@@ -2581,9 +2601,6 @@ void PathfindZoneManager::calculateZones( PathfindCell **map, PathfindLayer laye
 	}
 
 	Int totalZones = m_maxZone;
-	if (totalZones>maxZones/2) {
-		DEBUG_LOG(("Max zones %d", m_maxZone));
-	}
 
 	// Collapse the zones into a 1,2,3... sequence, removing collapsed zones.
 	m_maxZone = 1;
@@ -2598,21 +2615,12 @@ void PathfindZoneManager::calculateZones( PathfindCell **map, PathfindLayer laye
 			collapsedZones[i] = collapsedZones[zone];
 		}
 	}
-#ifdef DEBUG_QPF
-#if defined(DEBUG_LOGGING)
-	QueryPerformanceCounter((LARGE_INTEGER *)&endTime64);
-	timeToUpdate = ((double)(endTime64-startTime64) / (double)(freq64));
-	DEBUG_LOG(("Time to calculate first %f", timeToUpdate));
-#endif
-#endif
+
 	// Now map the zones in the map back into the collapsed zones.
 	for( j=globalBounds.lo.y; j<=globalBounds.hi.y; j++ ) {
 		for( i=globalBounds.lo.x; i<=globalBounds.hi.x; i++ ) {
 			PathfindCell &cell = map[i][j];
 			cell.setZone(collapsedZones[cell.getZone()]);
-			if (map[i][j].getZone()==0) {
-				DEBUG_CRASH(("Zone not set cell %d, %d", i, j));
-			}
 		}
 	}
 	for (i=0; i<=LAYER_LAST; i++) {
@@ -2625,9 +2633,6 @@ void PathfindZoneManager::calculateZones( PathfindCell **map, PathfindLayer laye
 		}
 
 		r_thisLayer.setZone( zone );
-		if (!layers[i].isUnused() && !layers[i].isDestroyed() && layers[i].getZone()==0) {
-			DEBUG_CRASH(("Zone not set Layer %d", i));
-		}
 		r_thisLayer.applyZone();
 
 		if (!r_thisLayer.isUnused() && !r_thisLayer.isDestroyed()) {
@@ -2640,7 +2645,7 @@ void PathfindZoneManager::calculateZones( PathfindCell **map, PathfindLayer laye
 	}
 
 	allocateZones();
-	DEBUG_ASSERTCRASH(xBlock==m_zoneBlockExtent.x && yBlock==m_zoneBlockExtent.y, ("Inconsistent allocation - SERIOUS ERROR. jba"));
+
 	for (xBlock=0; xBlock<xCount; xBlock++) {
 		for (yBlock=0; yBlock<yCount; yBlock++) {
 			IRegion2D bounds;
@@ -2661,14 +2666,6 @@ void PathfindZoneManager::calculateZones( PathfindCell **map, PathfindLayer laye
 			m_zoneBlocks[xBlock][yBlock].blockCalculateZones(map, layers, bounds);
 		}
 	}
-
-#ifdef DEBUG_QPF
-#if defined(DEBUG_LOGGING)
-	QueryPerformanceCounter((LARGE_INTEGER *)&endTime64);
-	timeToUpdate = ((double)(endTime64-startTime64) / (double)(freq64));
-	DEBUG_LOG(("Time to calculate second %f", timeToUpdate));
-#endif
-#endif
 
 	// Determine water/ground equivalent zones, and ground/cliff equivalent zones.
 	for (i=0; i<m_zonesAllocated; i++) {
@@ -2700,11 +2697,6 @@ void PathfindZoneManager::calculateZones( PathfindCell **map, PathfindLayer laye
 					applyZone(r_thisCell, r_leftCell, m_groundWaterZones, m_maxZone);
 				}
 				if (groundRubble(r_thisCell, r_leftCell)) {
-					Int zone1 = r_thisCell.getZone();
-					Int zone2 = r_leftCell.getZone();
-					if (m_terrainZones[zone1] != m_terrainZones[zone2]) {
-						//DEBUG_LOG(("Matching terrain zone %d to %d.", zone1, zone2));
-					}
 					applyZone(r_thisCell, r_leftCell, m_groundRubbleZones, m_maxZone);
 				}
 				if (groundCliff(r_thisCell, r_leftCell)) {
@@ -2728,11 +2720,6 @@ void PathfindZoneManager::calculateZones( PathfindCell **map, PathfindLayer laye
 					applyZone(r_thisCell, r_topCell, m_groundWaterZones, m_maxZone);
 				}
 				if (groundRubble(r_thisCell, r_topCell)) {
-					Int zone1 = r_thisCell.getZone();
-					Int zone2 = r_topCell.getZone();
-					if (m_terrainZones[zone1] != m_terrainZones[zone2]) {
-						//DEBUG_LOG(("Matching terrain zone %d to %d.", zone1, zone2));
-					}
 					applyZone(r_thisCell, r_topCell, m_groundRubbleZones, m_maxZone);
 				}
 				if (groundCliff(r_thisCell, r_topCell)) {
@@ -2749,9 +2736,6 @@ void PathfindZoneManager::calculateZones( PathfindCell **map, PathfindLayer laye
 		}
 	}
 
-	if (m_maxZone >= m_zonesAllocated) {
-		RELEASE_CRASH("Pathfind allocation error - fatal. see jba.");
-	}
 	for (i=1; i<m_maxZone; i++) {
 		// Flatten hierarchical zones.
 		Int zone = m_hierarchicalZones[i];
@@ -3121,6 +3105,9 @@ void PathfindLayer::doDebugIcons() {
 							empty = false;
 					}	else if (cell->getType() == PathfindCell::CELL_IMPASSABLE) {
 							color.red = color.green = color.blue = 1;
+							empty = false;
+					}	else if (cell->getType() == PathfindCell::CELL_BRIDGE_IMPASSABLE) {
+							color.blue = color.red = 1;
 							empty = false;
 					}	else if (cell->getType() == PathfindCell::CELL_CLIFF) {
 							color.red = 1;
@@ -4422,6 +4409,7 @@ Locomotor* Pathfinder::chooseBestLocomotorForPosition(PathfindLayerEnum layer, L
 			return LOCOMOTORSURFACE_RUBBLE | LOCOMOTORSURFACE_AIR;
 
 		case PathfindCell::CELL_OBSTACLE:
+		case PathfindCell::CELL_BRIDGE_IMPASSABLE:
 		case PathfindCell::CELL_IMPASSABLE:
 			return LOCOMOTORSURFACE_AIR;
 
@@ -5343,6 +5331,10 @@ void Pathfinder::doDebugIcons() {
 					{
 						case PathfindCell::CELL_CLIFF:
 							color.red = 1;
+							empty = false;
+							break;
+						case PathfindCell::CELL_BRIDGE_IMPASSABLE:
+							color.blue = color.red = 1;
 							empty = false;
 							break;
 						case PathfindCell::CELL_IMPASSABLE:
@@ -7740,27 +7732,37 @@ struct TightenPathStruct
 	PathfindLayerEnum layer;
 	Int		radius;
 	Bool	center;
-	Bool	foundDest;
-	Coord3D destPos;
+	Bool	foundNewDest;
+	Coord3D orgDestPos;
+	Coord3D newDestPos;
 };
 
 
 /*static*/ Int Pathfinder::tightenPathCallback(Pathfinder* pathfinder, PathfindCell* from, PathfindCell* to, Int to_x, Int to_y, void* userData)
 {
 	TightenPathStruct* d = (TightenPathStruct*)userData;
-	if (from == nullptr || to==nullptr) return 0;
+	if (from == nullptr || to==nullptr) return 0; // failure
 	if (d->layer != to->getLayer()) {
-		return 0; // abort.
+		return 0; // failure
 	}
-	Coord3D pos;
+
+#if RETAIL_COMPATIBLE_CRC
+	// TheSuperHackers @bugfix Caball009 27/02/2026 This was originally uninitialized.
+	// The uninitialized values that retail uses here are usually close to zero as long as foundNewDest == false, otherwise it uses the new values of newDestPos.
+	// newDestPos is zero initialized by the caller, so there is no need to check foundNewDest here.
+	Coord3D pos = d->newDestPos;
+#else
+	Coord3D pos = d->orgDestPos;
+#endif
+
 	if (!TheAI->pathfinder()->checkForAdjust(d->obj, *d->locomotorSet, true, to_x, to_y, to->getLayer(), d->radius, d->center, &pos, nullptr))
 	{
-		return 0;	// bail early
+		return 0; // failure
 	}
-	d->foundDest = true;
-	d->destPos = pos;
+	d->foundNewDest = true;
+	d->newDestPos = pos;
 
-	return 0;	// keep going
+	return 0; // success but continue
 }
 
 /* Returns the cost, which is in the same units as coord3d distance. */
@@ -7773,10 +7775,14 @@ void Pathfinder::tightenPath(Object *obj, const LocomotorSet& locomotorSet, Coor
 	info.layer = TheTerrainLogic->getLayerForDestination(from);
 	info.obj = obj;
 	info.locomotorSet = &locomotorSet;
-	info.foundDest = false;
+	info.foundNewDest = false;
+	info.orgDestPos = *to;
+#if RETAIL_COMPATIBLE_CRC
+	info.newDestPos.zero();
+#endif
 	iterateCellsAlongLine(*from, *to, info.layer, tightenPathCallback, &info);
-	if (info.foundDest) {
-		*from = info.destPos;
+	if (info.foundNewDest) {
+		*from = info.newDestPos;
 	}
 }
 
@@ -9182,7 +9188,6 @@ void Pathfinder::updateGoal( Object *obj, const Coord3D *newGoalPos, PathfindLay
 
 	PathfindLayerEnum originalLayer = obj->getDestinationLayer();
 
-	//DEBUG_LOG(("Object Goal layer is %d", layer));
 	Bool layerChanged = originalLayer != layer;
 
 	Bool doGround=false;
@@ -10257,9 +10262,7 @@ Path *Pathfinder::findAttackPath( const Object *obj, const LocomotorSet& locomot
 	#endif
 				if (show)
 					debugShowSearch(true);
-	#if defined(RTS_DEBUG)
-				//DEBUG_LOG(("Attack path took %d cells, %f sec", cellCount, (::GetTickCount()-startTimeMS)/1000.0f));
-	#endif
+
 				// construct and return path
 				Path *path = buildActualPath( obj, locomotorSet.getValidSurfaces(), obj->getPosition(), parentCell, centerInCell, false);
 #if RETAIL_COMPATIBLE_PATHFINDING

@@ -36,9 +36,9 @@
 
 class Bridge;
 class Object;
-class PathfindCell;
-class PathfindZoneManager;
 class Weapon;
+class PathfindZoneManager;
+class PathfindCell;
 
 // How close is close enough when moving.
 
@@ -281,9 +281,9 @@ public:
 		CELL_WATER		= 0x01,									///< water area
 		CELL_CLIFF		= 0x02,									///< steep altitude change
 		CELL_RUBBLE		= 0x03,									///< Cell is occupied by rubble.
-		CELL_OBSTACLE	= 0x04,									///< impassable area
-		CELL_unused		= 0x08,									///< Unused.
-		CELL_IMPASSABLE = 0x0B								///< Just plain impassable except for aircraft.
+		CELL_OBSTACLE	= 0x04,									///< Occupied by a structure
+		CELL_BRIDGE_IMPASSABLE = 0x05,				///< Piece of a bridge that is impassable.
+		CELL_IMPASSABLE = 0x06								///< Just plain impassable except for aircraft.
 	};
 
 	enum CellFlags
@@ -301,8 +301,8 @@ public:
 	PathfindCell();
 	~PathfindCell();
 
-	void setTypeAsObstacle( Object *obstacle, Bool isFence, const ICoord2D &pos );				///< flag this cell as an obstacle, from the given one
-	void removeObstacle( Object *obstacle );				///< flag this cell as an obstacle, from the given one
+	Bool setTypeAsObstacle( Object *obstacle, Bool isFence, const ICoord2D &pos );				///< flag this cell as an obstacle, from the given one
+	Bool removeObstacle( Object *obstacle );				///< unflag this cell as an obstacle, from the given one
 	void setType( CellType type );	///< set the cell type
 	CellType getType() const { return (CellType)m_type; }				///< get the cell type
 	CellFlags getFlags() const { return (CellFlags)m_flags; }				///< get the cell type
@@ -356,13 +356,13 @@ public:
 	inline UnsignedInt getCostSoFar() const {return m_info->m_costSoFar;}
 	inline UnsignedInt getTotalCost() const {return m_info->m_totalCost;}
 
-	inline void setCostSoFar(UnsignedInt cost) {m_info->m_costSoFar = cost;}
-	inline void setTotalCost(UnsignedInt cost) {m_info->m_totalCost = cost;}
+	inline void setCostSoFar(UnsignedInt cost) { if( m_info ) m_info->m_costSoFar = cost;}
+	inline void setTotalCost(UnsignedInt cost) { if( m_info ) m_info->m_totalCost = cost;}
 
 	void setParentCell(PathfindCell* parent);
 	void clearParentCell();
 	void setParentCellHierarchical(PathfindCell* parent);
-	inline PathfindCell* getParentCell() const {return m_info->m_pathParent?m_info->m_pathParent->m_cell: nullptr;}
+	inline PathfindCell* getParentCell() const {return m_info ? m_info->m_pathParent ? m_info->m_pathParent->m_cell : nullptr : nullptr;}
 
 	Bool startPathfind( PathfindCell *goalCell );
 	Bool getPinched() const {return m_pinched;}
@@ -590,7 +590,7 @@ public:
 	virtual Path *findPath( Object *obj, const LocomotorSet& locomotorSet, const Coord3D *from,
 		const Coord3D *to )=0;	///< Find a short, valid path between given locations
 	/** Find a short, valid path to a location NEAR the to location.
-		This succeds when the destination is unreachable (like inside a building).
+		This succeeds when the destination is unreachable (like inside a building).
 		If the destination is unreachable, it will adjust the to point.  */
 	virtual Path *findClosestPath( Object *obj, const LocomotorSet& locomotorSet, const Coord3D *from,
 		Coord3D *to, Bool blocked, Real pathCostMultiplier, Bool moveAllies )=0;
@@ -619,7 +619,7 @@ class Pathfinder : PathfindServicesInterface, public Snapshot
 private:
 	virtual Path *findPath( Object *obj, const LocomotorSet& locomotorSet, const Coord3D *from, const Coord3D *to);	///< Find a short, valid path between given locations
 	/** Find a short, valid path to a location NEAR the to location.
-		This succeds when the destination is unreachable (like inside a building).
+		This succeeds when the destination is unreachable (like inside a building).
 		If the destination is unreachable, it will adjust the to point.  */
 	virtual Path *findClosestPath( Object *obj, const LocomotorSet& locomotorSet, const Coord3D *from,
 		Coord3D *to, Bool blocked, Real pathCostMultiplier, Bool moveAllies );
