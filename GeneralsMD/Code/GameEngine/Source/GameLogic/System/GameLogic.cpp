@@ -1426,7 +1426,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 #else
 	// retail
 	Campaign* currentCampaign = TheCampaignManager->getCurrentCampaign();
-	Bool isChallengeCampaign = m_gameMode == GAME_SINGLE_PLAYER && currentCampaign && currentCampaign->m_isChallengeCampaign;
+	isChallengeCampaign = m_gameMode == GAME_SINGLE_PLAYER && currentCampaign && currentCampaign->m_isChallengeCampaign;
 #endif
 
 	// Fill in the game color and Factions before we do the Load Screen
