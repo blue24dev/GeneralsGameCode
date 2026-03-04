@@ -440,23 +440,24 @@ void reallyDoStart()
 	const MapMetaData *md = TheMapCache->findMap(TheSkirmishGameInfo->getMap());
 	if (md)
 	{
-		//MODDD - I am going to change this to set 'isSkirmish' to TRUE unconditionally.
-		// I think the suggestion from the original comment here is from some earlier point of development
-		// before playing maps in single player through the skirmish menu must have been broken.
-		// True single player (campaign, original generals challenge with some exceptions) works with 'TheGameInfo' being null.
-		// For a 1-player skirmish map where you are meant to impact the starting player with your in-menu choice, this means
-		// that game info configured in the skirmish menu can't be used.
-		// Plus, look at saving a game: if the game mode at the time isn't SKIRMISH, it deletes the skirmish game info, which
-		// can cause issues if the game ever expects to look up info by player slot.
-		// Easiest solution is to force 'isSkirmish' to TRUE here so even a 1-player skirmish map works like it should.
-		// ---
-		//isSkirmish = md->m_isMultiplayer; // we can now select solo campaign maps in Skirmish.
-#if !CAMPAIGN_FORCE
+
+#if GENERALS_CHALLENGE_FORCE
+		// Some things during setup for a generals challenge map (GameLogic.cpp) still expect there to be a non-null
+		// game info ('isSkirmish' being FALSE would imply GAME_SINGLE_PLAYER -> null game info - game info is
+		// needed to carry in-menu choices AKA slot info).
+		// The generals-challenge-specific game mode won't be used for this macro setting so may as well rely on the
+		// skirmish game mode for any number of players.
+		isSkirmish = TRUE;
+#elif CAMPAIGN_FORCE
+		// Although 'isSkirmish = FALSE' would imply GAME_SINGLE_PLAYER, may as well always be a skirmish game mode here.
+		// Co-op mode (playing originally intended single-player maps as multiplayer) requires a network game mode
+		// unconditionally, so always requiring a variable-player-game mode for starting a game through the
+		// skirmish menu is consistent. And '_FORCE' macro settings turn off unwanted meddling implied from being a
+		// skirmish/network game mode so things work as expected.
 		isSkirmish = TRUE;
 #else
-		// TEST - force the skirmish mode here too for now
-		//isSkirmish = FALSE;
-		isSkirmish = TRUE;
+		// retail
+		isSkirmish = md->m_isMultiplayer; // we can now select solo campaign maps in Skirmish.
 #endif
 	}
 

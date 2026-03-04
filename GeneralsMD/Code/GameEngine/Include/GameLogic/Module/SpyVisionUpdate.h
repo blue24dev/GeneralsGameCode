@@ -102,6 +102,8 @@ public:
 	// module methods
 	static Int getInterfaceMask() { return UpdateModule::getInterfaceMask() | MODULEINTERFACE_UPGRADE; }
 	virtual void onDelete();
+	//MODDD - new event
+	//virtual void onGamePostLoad();
 	virtual void onCapture( Player *oldOwner, Player *newOwner );
 	virtual void onDisabledEdge( Bool nowDisabled );
 

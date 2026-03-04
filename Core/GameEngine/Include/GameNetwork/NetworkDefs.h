@@ -47,18 +47,15 @@ enum ConnectionNumbers CPP_11(: Int)
 	MAX_PLAYER = 7,			// The index of the highest possible player number.  This is 0 based, so the most players allowed in a game is MAX_PLAYER+1.
 };
 
-//MODDD - moved from below, see comment there
-// ---------
 #pragma pack(push, 1)
 struct TransportMessageHeader
 {
 	UnsignedInt crc;											///< packet-level CRC (must be first in packet)
 	UnsignedShort magic;									///< Magic number identifying Generals packets
-//	Int id;
-//	NetMessageFlags flags;
+	//	Int id;
+	//	NetMessageFlags flags;
 };
 #pragma pack(pop)
-// ---------
 
 static constexpr const Int MAX_SLOTS = MAX_PLAYER+1;
 
@@ -99,19 +96,6 @@ struct CommandPacket
 #pragma pack(pop)
 
 #define MAX_TRANSPORT_STATISTICS_SECONDS 30
-
-//MODDD - moved above to work with RETAIL_COMPATIBLE_AIGROUP=0
-/*
-#pragma pack(push, 1)
-struct TransportMessageHeader
-{
-	UnsignedInt crc;											///< packet-level CRC (must be first in packet)
-	UnsignedShort magic;									///< Magic number identifying Generals packets
-//	Int id;
-//	NetMessageFlags flags;
-};
-#pragma pack(pop)
-*/
 
 /**
  * Transport message - encapsulating info kept by the transport layer about each

@@ -2516,7 +2516,7 @@ void PathfindZoneManager::reset()  ///< Called when the map is reset.
 }
 
 
-void PathfindZoneManager::markZonesDirty( Bool insert )  ///< Called when the zones need to be recalculated.
+void PathfindZoneManager::markZonesDirty()  ///< Called when the zones need to be recalculated.
 {
 
 	if (TheGameLogic->getFrame()<2) {
@@ -4059,7 +4059,7 @@ void Pathfinder::classifyFence( Object *obj, Bool insert )
  		}
  	}
 	if (didAnything) {
-		m_zoneManager.markZonesDirty( insert );
+		m_zoneManager.markZonesDirty();
 		m_zoneManager.updateZonesForModify(m_map, m_layers, cellBounds, m_extent);
 	}
 }
@@ -4163,7 +4163,7 @@ void Pathfinder::internal_classifyObjectFootprint( Object *obj, Bool insert )
 	{
 		case GEOMETRY_BOX:
 		{
-			m_zoneManager.markZonesDirty( insert );
+			m_zoneManager.markZonesDirty();
 
 			Real angle = obj->getOrientation();
 
@@ -4222,7 +4222,7 @@ void Pathfinder::internal_classifyObjectFootprint( Object *obj, Bool insert )
 		case GEOMETRY_SPHERE:	// not quite right, but close enough
 		case GEOMETRY_CYLINDER:
 		{
-			m_zoneManager.markZonesDirty( insert );
+			m_zoneManager.markZonesDirty();
 			// fill in all cells that overlap as obstacle cells
 			/// @todo This is a very inefficient circle-rasterizer
 			ICoord2D topLeft, bottomRight;
@@ -8091,27 +8091,37 @@ struct TightenPathStruct
 	PathfindLayerEnum layer;
 	Int		radius;
 	Bool	center;
-	Bool	foundDest;
-	Coord3D destPos;
+	Bool	foundNewDest;
+	Coord3D orgDestPos;
+	Coord3D newDestPos;
 };
 
 
 /*static*/ Int Pathfinder::tightenPathCallback(Pathfinder* pathfinder, PathfindCell* from, PathfindCell* to, Int to_x, Int to_y, void* userData)
 {
 	TightenPathStruct* d = (TightenPathStruct*)userData;
-	if (from == nullptr || to==nullptr) return 0;
+	if (from == nullptr || to==nullptr) return 0; // failure
 	if (d->layer != to->getLayer()) {
-		return 0; // abort.
+		return 0; // failure
 	}
-	Coord3D pos;
+
+#if RETAIL_COMPATIBLE_CRC
+	// TheSuperHackers @bugfix Caball009 27/02/2026 This was originally uninitialized.
+	// The uninitialized values that retail uses here are usually close to zero as long as foundNewDest == false, otherwise it uses the new values of newDestPos.
+	// newDestPos is zero initialized by the caller, so there is no need to check foundNewDest here.
+	Coord3D pos = d->newDestPos;
+#else
+	Coord3D pos = d->orgDestPos;
+#endif
+
 	if (!TheAI->pathfinder()->checkForAdjust(d->obj, *d->locomotorSet, true, to_x, to_y, to->getLayer(), d->radius, d->center, &pos, nullptr))
 	{
-		return 0;	// bail early
+		return 0; // failure
 	}
-	d->foundDest = true;
-	d->destPos = pos;
+	d->foundNewDest = true;
+	d->newDestPos = pos;
 
-	return 0;	// keep going
+	return 0; // success but continue
 }
 
 /* Returns the cost, which is in the same units as coord3d distance. */
@@ -8124,10 +8134,14 @@ void Pathfinder::tightenPath(Object *obj, const LocomotorSet& locomotorSet, Coor
 	info.layer = TheTerrainLogic->getLayerForDestination(from);
 	info.obj = obj;
 	info.locomotorSet = &locomotorSet;
-	info.foundDest = false;
+	info.foundNewDest = false;
+	info.orgDestPos = *to;
+#if RETAIL_COMPATIBLE_CRC
+	info.newDestPos.zero();
+#endif
 	iterateCellsAlongLine(*from, *to, info.layer, tightenPathCallback, &info);
-	if (info.foundDest) {
-		*from = info.destPos;
+	if (info.foundNewDest) {
+		*from = info.newDestPos;
 	}
 }
 
@@ -9522,7 +9536,7 @@ void Pathfinder::changeBridgeState( PathfindLayerEnum layer, Bool repaired)
 {
 	if (m_layers[layer].isUnused()) return;
 	if (m_layers[layer].setDestroyed(!repaired)) {
-		m_zoneManager.markZonesDirty( repaired );
+		m_zoneManager.markZonesDirty();
 	}
 }
 

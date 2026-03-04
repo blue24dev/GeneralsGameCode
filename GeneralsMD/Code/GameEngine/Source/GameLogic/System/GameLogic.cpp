@@ -2132,7 +2132,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			if( thingTemplate->isKindOf( KINDOF_SHRUBBERY ) && !useTrees )
 				continue;
 
-			//MODDD - changed this condition to include some lines above, before this was noly for 'createOptimizedTree'.
+			//MODDD - changed this condition to include some lines above, before this was only for 'createOptimizedTree'.
 			// Why bother making 'pos' and 'angle' if you're not going to do anything with it?
 			if (thingTemplate->isKindOf(KINDOF_OPTIMIZED_TREE)) {
 				Coord3D pos = *pMapObj->getLocation();
@@ -5776,10 +5776,11 @@ void GameLogic::loadPostProcess()
 	// m_nextObjID from getting un-necessarily high we will set it to the next available
 	// id from the objects that are now in the world and actually in use
 	//
-	//MODDD - even since a fix for the above situation (IDs are set per save data sooner instead of allocated
-	// & then overwriten), still need to know what the 'next ID available' is, since uh, '1' probably isn't
-	// accurate. Still need '<greatest ID ever allocated> + 1' for this just like it was at the time of save.
-	// ...come to think of it, 'm_nextObjID' could be included in the save to this block isn't needed. *shrug*.
+	//MODDD - NOTE - even since a fix for the above situation (IDs are set per save data sooner instead of
+	// allocated with bogus vals & then overwriten), still need to know what the 'next ID available' is, since
+	// uh, '1' probably isn't accurate.
+	// Still need '<greatest ID ever allocated> + 1' for this just like it was at the time of save.
+	// ...come to think of it, 'm_nextObjID' could be included in the save so this block isn't needed.
 	m_nextObjID = INVALID_ID;
 	Object *obj;
 	for( obj = getFirstObject(); obj; obj = obj->getNextObject() )
