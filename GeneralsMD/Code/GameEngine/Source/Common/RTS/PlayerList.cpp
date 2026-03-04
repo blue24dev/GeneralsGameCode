@@ -364,9 +364,13 @@ void PlayerList::newGame()
 		}
 		
 		//MODDD - NOTE - this block should never be needed to tell who the local player is for 'CAMPAIGN_FORCE'.
-		// This is determined by setting 'TheKey_multiplayerIsLocal' (block above) for single-player (skirmish) and
-		// network mode. You could argue that the skirmish game mode should also handle this in advance for consistency
-		// regardless of 'CAMPAIGN_FORCE' here.
+		// Who the local player is, is determined by setting 'TheKey_multiplayerIsLocal' for a side & it's reached
+		// parsing that side's dict here (see above).
+		// This works in case a player other than the first human player is the local player for this machine
+		// (co-op mode under 'CAMPAIGN_FORCE').
+		// You could argue that all non-network game modes should also use the 'TheKey_multiplayerIsLocal' way for
+		// consistency and remove this block entirely (probably only campaign & shell game modes, even generals challenge
+		// is just a reskin of skirmish).
 #if !CAMPAIGN_FORCE
 		if (!setLocal && !TheNetwork && d->getBool(TheKey_playerIsHuman))
 		{
@@ -376,7 +380,7 @@ void PlayerList::newGame()
 #else
 		// Do a check for having the 'IsHuman' bool anyway.
 		// UPDATE - no longer a good assumption in case of non-computer-marked players that aren't intended for someone to play as.
-		// See the '#if CAMPAIGN_FORCE' block below after this loop through sides.
+		// See the 'populateSlotPlayerRefs' after this loop through all sides.
 		/*
 		if (d->getBool(TheKey_playerIsHuman))
 		{

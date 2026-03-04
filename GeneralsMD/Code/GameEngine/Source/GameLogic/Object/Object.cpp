@@ -492,9 +492,16 @@ void Object::runCreateModules()
 // object init unless this is in-game.
 void Object::gamePostLoad()
 {
-
-	updateUpgradeModules();
+	//MODDD - new event: 'onGamePostLoad', for things that prefer all units be available
+	/*
+	for (BehaviorModule** b = m_behaviors; *b; ++b)
+	{
+		(*b)->onGamePostLoad();
+	}
+	*/
 	
+	updateUpgradeModules();
+
 	//MODDD - NOTE - this would probably be fine in 'constructorEnd' but just being safe for now
 	// (nahh)
 	/*

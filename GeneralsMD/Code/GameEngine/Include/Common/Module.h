@@ -215,6 +215,11 @@ public:
 	the actual deletion of each of those modules happens */
 	virtual void onDelete() { }
 
+	//MODDD - new event, called in an object's 'gamePostLoad' after it's known all other objects are available.
+	// UPDATE - I have since decided against this. I made a document going into more detail on this.
+	// Feel free to re-enable this & the calls into it in object.cpp if you want to try it out / see a need anyway. 
+	//virtual void onGamePostLoad() { }
+
 protected:
 
 	const ModuleData* getModuleData() const { return m_moduleData; }

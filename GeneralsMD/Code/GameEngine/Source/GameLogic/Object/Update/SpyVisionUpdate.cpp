@@ -239,6 +239,21 @@ void SpyVisionUpdate::onDelete()
 	}
 }
 
+/*
+//MODDD - new event
+void SpyVisionUpdate::onGamePostLoad()
+{
+	if( !getObject()->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ) )
+	{
+		const SpyVisionUpdateModuleData *data = getSpyVisionUpdateModuleData();
+		if (data->m_selfPowered && !data->m_needsUpgrade)
+		{
+			selfPoweredInit();
+		}
+	}
+}
+*/
+
 // ------------------------------------------------------------------------------------------------
 void SpyVisionUpdate::upgradeImplementation()
 {
