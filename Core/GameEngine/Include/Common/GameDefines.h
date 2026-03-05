@@ -367,12 +367,12 @@
 	#define TIME_OF_DAY_SOURCE tod_model
 #endif
 
-// '_BASE_DEBUG_FEATURES_ALLOWED' is used elsewhere.
-// This means only checks on '_BASE_DEBUG_FEATURES_ALLOWED' needed without having to check 'RTS_DEBUG' everytime.
+// '_BLOCK_DEBUG_DEMO_MESSAGE_INPUTS' is used elsewhere.
+// This means only checks on '_BLOCK_DEBUG_DEMO_MESSAGE_INPUTS' needed without having to check 'RTS_DEBUG' everytime.
 #if defined(RTS_DEBUG)
-#define _BASE_DEBUG_FEATURES_ALLOWED !BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#define _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS !BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
 #else
-#define _BASE_DEBUG_FEATURES_ALLOWED FALSE
+#define _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS FALSE
 #endif
 
 // ----------------------------------------------------------------------------------------------------------

@@ -33,3 +33,10 @@
 #include "Common/SpecialPowerType.h"
 
 typedef BitFlags<SPECIALPOWER_COUNT>	SpecialPowerMaskType;
+
+//MODDD
+//---
+#define SPECIALPOWER_MAX_COUNT 512
+
+typedef BitFlags<SPECIALPOWER_MAX_COUNT>	SpecialPowerMaskUniqueType;
+// ---

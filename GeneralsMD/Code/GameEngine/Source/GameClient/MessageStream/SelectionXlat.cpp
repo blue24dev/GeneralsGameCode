@@ -62,11 +62,11 @@
 //-----------------------------------------------------------------------------
 // Lorenzen changed this to a member of SelectionTranslator, providing external access
 // name ly in rebuildholeexposedie, where we decide whether to create GLA Holes when hand-of-Godding
-//#if _BASE_DEBUG_FEATURES_ALLOWED || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+//#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 //static Bool TheHandOfGodSelectionMode = false;
 //#endif
 
-#if _BASE_DEBUG_FEATURES_ALLOWED
+#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
 static Bool TheHurtSelectionMode = false;
 static Bool TheDebugSelectionMode = false;
 #endif
@@ -276,7 +276,7 @@ SelectionTranslator::SelectionTranslator()
 
 	TheSelectionTranslator = this;
 
-#if _BASE_DEBUG_FEATURES_ALLOWED || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
   m_HandOfGodSelectionMode = FALSE;
 #endif
 }
@@ -828,7 +828,7 @@ GameMessageDisposition SelectionTranslator::translateGameMessage(const GameMessa
 				{
 
 
-#if _BASE_DEBUG_FEATURES_ALLOWED
+#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
 
 
           if (m_HandOfGodSelectionMode && draw)
@@ -1276,7 +1276,7 @@ GameMessageDisposition SelectionTranslator::translateGameMessage(const GameMessa
 		}
 
 
-#if _BASE_DEBUG_FEATURES_ALLOWED
+#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
 		//-----------------------------------------------------------------------------------------
 		case GameMessage::MSG_META_DEMO_TOGGLE_HAND_OF_GOD_MODE:
 		{
@@ -1304,7 +1304,7 @@ GameMessageDisposition SelectionTranslator::translateGameMessage(const GameMessa
 		}
 #endif
 
-#if _BASE_DEBUG_FEATURES_ALLOWED
+#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
 		//-----------------------------------------------------------------------------------------
 		case GameMessage::MSG_META_DEMO_TOGGLE_HURT_ME_MODE:
 		{
@@ -1318,7 +1318,7 @@ GameMessageDisposition SelectionTranslator::translateGameMessage(const GameMessa
 		}
 #endif
 
-#if _BASE_DEBUG_FEATURES_ALLOWED
+#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
 		//-----------------------------------------------------------------------------------------
 		case GameMessage::MSG_META_DEMO_DEBUG_SELECTION:
 		{

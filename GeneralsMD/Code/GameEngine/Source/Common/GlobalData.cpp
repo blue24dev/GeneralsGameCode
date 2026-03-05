@@ -557,7 +557,7 @@ GlobalData::GlobalData()
 		m_theOriginal = this;
 	m_next = nullptr;
 
-#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 	m_specialPowerUsesDelay = TRUE;
 #endif
   m_TiVOFastMode = FALSE;
@@ -1236,23 +1236,23 @@ Bool GlobalData::setTimeOfDay( TimeOfDay tod )
 GlobalData *GlobalData::newOverride()
 {
 	// TheSuperHackers @info This copy is not implemented in VS6 builds
-	GlobalData *override = NEW GlobalData;
+	GlobalData *overrideData = NEW GlobalData;
 
 	// copy the data from the latest override (TheWritableGlobalData) to the newly created instance
 	DEBUG_ASSERTCRASH( TheWritableGlobalData, ("GlobalData::newOverride() - no existing data") );
-	*override = *TheWritableGlobalData;
+	*overrideData = *TheWritableGlobalData;
 
 	//
 	// link the override to the previously created one, the link order is important here
 	// for the reset function, if you change the way things are linked
 	// for overrides make sure you update the reset function
 	//
-	override->m_next = TheWritableGlobalData;
+	overrideData->m_next = TheWritableGlobalData;
 
 	// set this new instance as the 'most current override' where we will access all data from
-	TheWritableGlobalData = override;
+	TheWritableGlobalData = overrideData;
 
-	return override;
+	return overrideData;
 
 }
 

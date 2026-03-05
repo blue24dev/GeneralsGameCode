@@ -102,11 +102,8 @@ public:
 
 	static const FieldParse* getFieldParse() { return m_specialPowerFieldParse; }
 
-	void friend_setNameAndID(const AsciiString& name, UnsignedInt id)
-	{
-		m_name = name;
-		m_id = id;
-	}
+	//MODDD - implementation moved to .cpp
+	void friend_setNameAndID(const AsciiString& name, UnsignedInt id);
 
 	AsciiString getName() const { return getFO()->m_name; }
 	UnsignedInt getID() const { return getFO()->m_id; }
