@@ -286,7 +286,7 @@ Bool SpecialPowerModule::isModuleForPower( const SpecialPowerTemplate *specialPo
 //-------------------------------------------------------------------------------------------------
 Bool SpecialPowerModule::isReady() const
 {
-#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 	// this is a cheat ... remove this for release!
 	if( TheGlobalData->m_specialPowerUsesDelay == FALSE )
 		return TRUE;
@@ -331,7 +331,7 @@ Real SpecialPowerModule::getPercentReady() const
 		return 0.99999f;
 	}
 
-#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 	if( TheGlobalData->m_specialPowerUsesDelay == FALSE )
 		return 1.0f;
 #endif
@@ -453,7 +453,7 @@ void SpecialPowerModule::startPowerRechargeInit(Bool fromOnSpecialPowerCreation)
 //-------------------------------------------------------------------------------------------------
 void SpecialPowerModule::startPowerRecharge()
 {
-#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 	// this is a cheat ... remove this for release!
 	if( TheGlobalData->m_specialPowerUsesDelay == FALSE )
 		return;

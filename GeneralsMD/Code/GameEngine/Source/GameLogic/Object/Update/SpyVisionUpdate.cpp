@@ -39,6 +39,14 @@
 #include "GameLogic/Module/SpyVisionUpdate.h"
 
 
+//MODDD - TODO
+// There is a bug observed in the retail game:
+// Objects created after spy vision is activated will not be affected. This is easily demo'd by building an
+// internet center (with SH1), and an enemy building a command center afterwards: it won't be revealed unlike existing ones.
+// Selling/destroying & rebuilding your internet center doesn't show the command center either.
+// I have a more thorough explanation and proposed fixes in a document.
+
+
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 SpyVisionUpdate::SpyVisionUpdate( Thing *thing, const ModuleData* moduleData ) : UpdateModule( thing, moduleData )

@@ -133,6 +133,16 @@ const char* const SpecialPowerMaskType::s_bitNameList[] =
 };
 static_assert(ARRAY_SIZE(SpecialPowerMaskType::s_bitNameList) == SpecialPowerMaskType::NumBits + 1, "Incorrect array size");
 
+//MODDD - dummy bit name list because this will never be used by parsing.
+//MODDD - TODO
+// This should probably use a clone of the 'BitFlags' class that doesn't have the name list.
+// Or, move the name list & related methods to a new subclass of 'BitFlags' instead, if that's feasible.
+template<>
+const char* const SpecialPowerMaskUniqueType::s_bitNameList[] =
+{
+	nullptr
+};
+
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 void SpecialPowerStore::parseSpecialPowerDefinition( INI *ini )
@@ -231,6 +241,13 @@ SpecialPowerTemplate::SpecialPowerTemplate()
 SpecialPowerTemplate::~SpecialPowerTemplate()
 {
 
+}
+
+//MODDD - implementation moved to here
+void SpecialPowerTemplate::friend_setNameAndID(const AsciiString& name, UnsignedInt id)
+{
+	m_name = name;
+	m_id = id;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

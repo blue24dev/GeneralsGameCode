@@ -1039,7 +1039,11 @@ void ScriptActions::doCreateObject(const AsciiString& objectName, const AsciiStr
         TheTerrainLogic->createCraterInTerrain( obj );
         TheAI->pathfinder()->addObjectToPathfindMap( obj );
       }
-
+			//MODDD - and do this if a structure is spawned?
+			else if ( obj->isKindOf( KINDOF_STRUCTURE ) )
+			{
+				TheAI->pathfinder()->addObjectToPathfindMap(obj);
+			}
 
 		}
 	} else {
@@ -1228,6 +1232,16 @@ void ScriptActions::createUnitOnTeamAt(const AsciiString& unitName, const AsciiS
 				Coord3D destination = *way->getLocation();
 				obj->setPosition(&destination);
 			}
+			
+			//MODDD - needed so spawning a building still lets units move around it.
+			// If this causes side effects in spawning units (typical usage of this feature), maybe checking the template
+			// 'KINDOF' for being a structure first is best, though plenty of things call 'addObjectToPathfindMap' on
+			// newly created units.
+			// I'll just start with that actually.
+      if ( obj->isKindOf( KINDOF_STRUCTURE ) )
+			{
+				TheAI->pathfinder()->addObjectToPathfindMap(obj);
+		  }
 		}
 	} else {
 		DEBUG_LOG(("WARNING - ThingTemplate '%s' not found.", objType.str()));
