@@ -38,5 +38,5 @@ typedef BitFlags<SPECIALPOWER_COUNT>	SpecialPowerMaskType;
 //---
 #define SPECIALPOWER_MAX_COUNT 512
 
-typedef BitFlags<SPECIALPOWER_MAX_COUNT>	SpecialPowerMaskUniqueType;
+typedef BitFlags<SPECIALPOWER_MAX_COUNT>	SpecialPowerIDMaskType;
 // ---
