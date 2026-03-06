@@ -267,6 +267,13 @@ void RiderChangeContain::onContaining( Object *rider, Bool wasSelected )
 			// Workers and other untrainable riders from ranking up via the bike's experience tracker.
 			bikeTracker->setTrainable(riderTracker->isTrainable());
 #endif
+			//MODDD - TODO - could there be some 'preserveExperienceStrict' setting in the INI for the RiderChangeContain
+			// module to copy experience/rank directly instead of using 'setVeterancyLevel'?
+			// This causes 'm_currentExperience = m_parent->getTemplate()->getExperienceRequired(m_currentLevel)' which
+			// will essentially forget any progression between ranks - ex: if a unit's at 90% of the way from rank 2 to rank 3
+			// and gets on/off a bike, it will receive its old rank 2 veterancy but be 0% of the way toward rank 3.
+			// This should include further rank-ups while on the bike being decided by the rider's experience-required values,
+			// not the bike's (or imply this by the bike having unset / (0,0,0,0) experience-required).
 			bikeTracker->setVeterancyLevel( riderTracker->getVeterancyLevel(), FALSE );
 			riderTracker->setExperienceAndLevel( 0, FALSE );
 			break;

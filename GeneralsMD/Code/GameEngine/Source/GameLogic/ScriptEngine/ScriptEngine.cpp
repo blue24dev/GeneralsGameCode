@@ -5603,6 +5603,12 @@ void ScriptEngine::reset()
 
 	// clear topple directions
 	m_toppleDirections.clear();
+	
+	//MODDD - reset this string so that one leftover from a previous game that isn't even playing doesn't make
+	// it to a saved game & start playing again when the game's loaded (ex: lobby music from skirmish/network menu).
+	// Putting it here instead of 'newMap' since MilesAudioManager stops all sounds when its 'reset' is called,
+	// often something like SkirmishGamesOptionsMenu.cpp -> reallyDoStart -> TheGameLogic->clearGameData(FALSE) -> GameEngine::reset.
+	m_currentTrackName.clear();
 
 }
 

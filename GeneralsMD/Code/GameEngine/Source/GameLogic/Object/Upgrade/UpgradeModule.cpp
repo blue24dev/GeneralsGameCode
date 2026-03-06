@@ -182,7 +182,7 @@ void UpgradeMux::giveSelfUpgrade()
 	upgradeImplementation();
 
 	//MODDD - UPDATE. Below is referring to an earlier point where I moved 'setUpgradeExecuted' above 'upgradeImplementation'.
-	// However, this caused a bug: China satelite hack upgrades (basically 'SpyVisionSpecialPower' - see that '.h' file)
+	// However, this caused a bug: China satellite hack upgrades (basically 'SpyVisionSpecialPower' - see that '.h' file)
 	// no longer work because that file's 'upgradeImplementation' checks 'isAlreadyUpgraded()' for not being the case,
 	// which would be the case even the very first time upgradeImplementation is called when
 	// 'upgradeImplementation'/'setUpgradeExecuted' are swapped.
