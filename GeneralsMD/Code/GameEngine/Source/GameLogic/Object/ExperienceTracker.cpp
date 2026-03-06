@@ -35,6 +35,8 @@
 #include "GameLogic/GameLogic.h"
 #include "GameLogic/Object.h"
 
+//MODDD
+#include "GameLogic/Module/ContainModule.h"
 
 
 //-------------------------------------------------------------------------------------------------
@@ -162,6 +164,20 @@ Bool ExperienceTracker::canGainExpForLevel(Int levelsToGain) const
 	return (newLevel > m_currentLevel);
 }
 
+//MODDD - helper
+Object* getContainModuleRider(ContainModuleInterface* contain)
+{
+	const ContainedItemsList *riderList = contain->getContainedItemsList();
+	ContainedItemsList::const_iterator riderIterator;
+	riderIterator = riderList->begin();
+	if( riderIterator != riderList->end() )
+	{
+		return *riderIterator;
+	}
+
+	return nullptr;
+}
+
 //-------------------------------------------------------------------------------------------------
 void ExperienceTracker::addExperiencePoints( Int experienceGain, Bool canScaleForBonus)
 {
@@ -189,10 +205,48 @@ void ExperienceTracker::addExperiencePoints( Int experienceGain, Bool canScaleFo
 
 	m_currentExperience += amountToGain;
 
+	//MODDD - fix for china tank bunkers in the Contra mod always getting max veterancy in 1 kill.
+	// Automatic fixes for RiderChangeContain like this usually isn't a good idea for how much hacky stuff out
+	// there depends on it to work a certain way no matter how nonsensical it might be.
+	// However, I think this one's a safe bet: if the current object has an experienceRequired of (0,0,0,0)
+	// (experience points needed to get thank rank including #0), assume it's bogus and shouldn't be used.
+	// Checking element #1 should suffice since anything meaningfully setting this shouldn't make it take 0 points
+	// to get to the first rank.
+	// See if the object has a 'Contain' module ('RiderChangeContain' is a subclass) and use its rider to draw
+	// experience-required values instead. Any other containers (ex: humvees, chinooks) should have their own
+	// experience-required values or be marked non-trainable to avoid this route entirely anyway.
+	// Lastly, consider the 'ExperienceSinkForRider' setting seen throughout the INI files. I assume this wouldn't
+	// work in the tank bunker example because we do want the bunker(bike) itself to be affected by the experience.
+	// If the setting would work there anyway & not break anything / cause new issues, this fix can be disregarded.
+	// MODDD - TODO - could argue there should be better logic for 'RierChangeContain' to preserve experience & use
+	// the rider for any experienceRequired/etc. attributes too, like a 'strictPreserveExperience' setting for the INI to use.
+	// (more notes on the 'MODDD - TODO' in RiderChangeContain)
+	// ---
+	// 
+	Object* experienceReqSource = m_parent;
+	if (m_parent->getTemplate()->getExperienceRequired(1) == 0 && m_parent->getContain() != nullptr)
+	{
+		Object* rider = getContainModuleRider(m_parent->getContain());
+		if (rider != nullptr)
+		{
+			experienceReqSource = rider;
+		}
+	}
+
+
 	Int levelIndex = 0;
+	//MODDD - replaced 'm_parent' with 'experienceReqSource' per above
+	// ---
+	/*
 	while( ( (levelIndex + 1) < LEVEL_COUNT)
 		&&  m_currentExperience >= m_parent->getTemplate()->getExperienceRequired(levelIndex + 1)
 		)
+	*/
+	// ---
+	while( ( (levelIndex + 1) < LEVEL_COUNT)
+		&&  m_currentExperience >= experienceReqSource->getTemplate()->getExperienceRequired(levelIndex + 1)
+		)
+	// ---
 	{
 		// If there is a higher level to qualify for, and I qualify for it, advance the index
 		levelIndex++;

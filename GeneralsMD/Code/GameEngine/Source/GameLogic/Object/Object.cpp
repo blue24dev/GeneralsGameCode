@@ -6005,7 +6005,10 @@ void Object::look()
 					}
 
 					// Other players can also be looking through our eyes.
-					lookingMask |= m_visionSpiedMask;
+					//MODDD - replacing retail behavior. Don't allow cloaked units, etc. to be revealed during spy abilities
+					// (or rather, clear fog/shroud).
+					//lookingMask |= m_visionSpiedMask;
+					lookingMask |= getFilteredVisionSpiedMask();
 				}
 #else
 				// Separate player mask for neutral/enemy players that happen to be looking at the object, either through
@@ -6034,7 +6037,8 @@ void Object::look()
 
 				// If not already handled by 'revealToAll' (already shown to all players regardless of 'SpiedMask'),
 				// allow the remaining non-allied players using a spy ability, but don't unshroud jammed territory.
-				if (!revealToAll) {
+				if (!revealToAll)
+				{
 					//MODDD - replacing retail behavior. Don't allow cloaked units, etc. to be revealed during spy abilities
 					// (or rather, clear fog/shroud).
 					lookingMaskJammable = getFilteredVisionSpiedMask();
