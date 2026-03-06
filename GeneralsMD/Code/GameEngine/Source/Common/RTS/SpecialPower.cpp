@@ -138,7 +138,7 @@ static_assert(ARRAY_SIZE(SpecialPowerMaskType::s_bitNameList) == SpecialPowerMas
 // This should probably use a clone of the 'BitFlags' class that doesn't have the name list.
 // Or, move the name list & related methods to a new subclass of 'BitFlags' instead, if that's feasible.
 template<>
-const char* const SpecialPowerMaskUniqueType::s_bitNameList[] =
+const char* const SpecialPowerIDMaskType::s_bitNameList[] =
 {
 	nullptr
 };

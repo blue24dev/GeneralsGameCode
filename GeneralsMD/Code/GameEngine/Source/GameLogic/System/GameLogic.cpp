@@ -3167,7 +3167,11 @@ void GameLogic::selectObject(Object *obj, Bool createNewSelection, PlayerMaskTyp
 		// This appears to be a UI-only situation. Honestly the stuff above not automatically calling for something
 		// like this (making a player select something in game logic -> keep the UI in sync for the affected player
 		// locally) seems weird to me.
-		if( affectClient && player == ThePlayerList->getLocalPlayer() )
+		// UPDATE - TheSuperHackers changes have since covered this, see SpectreGunshipDeploymentUpdate.cpp's call to here.
+		// Its 'affectClient' param was changed from 'TRUE' to 'newGunship->isLocallyControlled()'.
+		// I still wonder if my fix (adding '&& player == ThePlayerList->getLocalPlayer()' to the condition below) is
+		// broader to cover other rare cases, but leaving things as they are for now.
+		if( affectClient )
 		{
 			Drawable *draw = obj->getDrawable();
 			if( draw )
