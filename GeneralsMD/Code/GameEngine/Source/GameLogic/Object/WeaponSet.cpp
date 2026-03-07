@@ -817,6 +817,19 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 		then choose the gun and go back to wanting to choose the missile, etc
 	*/
 
+	//MODDD - bugfix for scud launchers without an explicit weapon choice selection (no UI button clicked)
+	// sometimes switching weapons right before firing. Even without clicking a button, one choice is clearly
+	// selected and should be consistently used.
+	// If the weapon is already attacking, why allow for selecting something else?
+	// See a NOTE further down.
+	// Also, could make the caller ('AIAttackState::onEnter/update' in my case) check for the current weapon
+	// being in the 'PRE_ATTACK' state and handle that there instead. Then again a weapon being locked terminates
+	// shortly into this method too just below.
+	// ---
+	if (m_weapons[m_curWeapon]->getStatus() == PRE_ATTACK)
+		return TRUE;
+	// ---
+
 	if( isCurWeaponLocked() )
 		return TRUE; // I have been forced into choosing a specific weapon, so it is right until someone says otherwise
 
@@ -854,7 +867,12 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 		CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
 		if( ( okSrcs & (1 << cmdSource) ) == 0 )
 		{
-			if( !( okSrcs & CMD_DEFAULT_SWITCH_WEAPON ) )
+			//MODDD - this is a mistake in retail. See above: '1 << cmdSource'.
+			// a CMD choice has to be converted to that power of 2 to make sense for this comparison.
+			// That is, when the allowed-source bitmask was made and it found 'DEFAULT_SWITCH_WEAPON', it didn't
+			// add 4 to the bitmask, it added '2^4 -> 16'.
+			//if( !( okSrcs & CMD_DEFAULT_SWITCH_WEAPON ) )
+			if( !( okSrcs & (1 << CMD_DEFAULT_SWITCH_WEAPON) ) )
 			{
 				continue;
 			}
@@ -882,6 +900,11 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 
 		Real damage = weapon->estimateWeaponDamage(obj, victim);
 		Real attackRange = weapon->getAttackRange(obj);
+		//MODDD - NOTE. This looks good at a glance, but I noticed this fails if the status is 'PRE_ATTACK'.
+		// A scud launcher could switch to the other weapon immediately simply because this frame is 'PRE_ATTACK'
+		// instead of 'READY_TO_FIRE', even though the first weapon was perfectly fine the whole time.
+		// I don't think switching should be possible at that point.
+		// See an addition further above ("MODDD - if the weapon"...)
 		Bool weaponIsReady = (weapon->getStatus() == READY_TO_FIRE);
 
 		const AIUpdateInterface* ai = obj->getAI();
