@@ -826,7 +826,10 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 	// being in the 'PRE_ATTACK' state and handle that there instead. Then again a weapon being locked terminates
 	// shortly into this method too just below.
 	// ---
-	if (m_weapons[m_curWeapon]->getStatus() == PRE_ATTACK)
+	// And why is a null-check needed on 'm_weapons[m_curWeapon]'? In the contra shell menu, the game will crash
+	// because an object "Aslt_GLAInfantryStingerSoldier" has curWeapon=0 and m_weapons[0] set to NULL, but has
+	// a secondary weapon (m_weapons[1] isn't null). Beats me!
+	if (m_weapons[m_curWeapon] != nullptr && m_weapons[m_curWeapon]->getStatus() == PRE_ATTACK)
 		return TRUE;
 	// ---
 
