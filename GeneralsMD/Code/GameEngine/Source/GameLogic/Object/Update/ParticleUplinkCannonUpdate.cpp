@@ -1069,6 +1069,11 @@ void ParticleUplinkCannonUpdate::createOrbitToTargetLaser( UnsignedInt growthFra
 			// the rest of the sound system that won't be affected by position updates from here.
 			// It looks like 'addAudioEvent' adds a copy of the current 'AudioEventRTS' so changes to this
 			// source instance won't carry over to that one.    Fun...
+			// UPDATE - and now this has been addressed by TheSuperHackers - see the small blocks around
+			// "audioPos.z += ORBITAL_BEAM_AUDIO_Z_OFFSET;".
+			// However, I still think the source of the audio should be the ground instead of 500 points above like in retail.
+			// I'll keep my edits in for now (see comment label above for the rest), think of this as finer precision
+			// for the sound itself on top of TheSuperHacker's change to preserve retail behavior.
 			m_annihilationSound.setPlaySoundFromGround(TRUE);
 
 			m_annihilationSound.setPlayingHandle( TheAudio->addAudioEvent( &m_annihilationSound ) );

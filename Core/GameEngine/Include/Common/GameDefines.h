@@ -232,6 +232,20 @@
 // Toggling this causes a tiny compile error that shows save compatibility being broken.
 #define DOUBLE_MAX_PLAYER_COUNT TRUE
 
+// In the retail game, if multiple buildings are sources of different special powers using the same special power enum
+// (ex: in the Contra mod, having a particle cannon and strategic bombing building -> both use enum 'SPECIAL_PARTICLE_UPLINK_CANNON'),
+// they will both be tracked on the same sidebar button (show the soonest cooldown between them, count how many are ready).
+// However, when the unintended special power is selected (ex: playing laser general in the above example -> it looks like a particle
+// cannon fire button -> trying to use strategic bombing from the button), a circle-slash(deny) icon appears and the
+// user can't actually use the ability from there.
+// This is because the sidebar does a cheap enum check for most areas, but to actually fire, it requires a strict
+// check that fails. Using the ability from the superweapon building itself works but the bug still makes the sidebar misleading.
+// Short version: This fix realizes the issue sooner by checking for special power ID instead of enum. The sidebar
+// won't be fooled by having multiple sources of the same enum choice that aren't for the same special power.
+// See another document for the 'long version' for more details and other ideas for improvements.
+// Toggling this setting breaks save compatibility since the new bitmask is added to object save data.
+#define SIDEBAR_ENUM_CONFLICT_FIX TRUE
+
 // Map display names have the player count extension (ex: "my map name (4)" for a 4-player map)
 // even if the player count is 1 or 0(?).
 #define MAP_NAME_PLAYER_COUNT_EXTENSION_ALWAYS TRUE

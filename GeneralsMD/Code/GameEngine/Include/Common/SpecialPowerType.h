@@ -131,7 +131,12 @@ enum SpecialPowerType CPP_11(: Int)
 	// don't forget to add new strings to SpecialPowerMaskType::s_bitNameList[]
 };
 
-//MODDD
-typedef UnsignedInt SpecialPowerIDType;
-
 	// Definition of these names is located in SpecialPower.cpp
+
+#if SIDEBAR_ENUM_CONFLICT_FIX
+#define SPECIALPOWER_MAX_COUNT 512
+typedef UnsignedInt SpecialPowerIDType;
+#else
+// Not doing the fix -> redirect 'SpecialPowerIDType' to the enum type
+typedef SpecialPowerType SpecialPowerIDType;
+#endif

@@ -414,7 +414,9 @@ void Object::constructorEnd()
 		if( spTemplate )
 		{
 			SET_SPECIALPOWERMASK( m_specialPowerBits, spTemplate->getSpecialPowerType() );
+#if SIDEBAR_ENUM_CONFLICT_FIX
 			SET_SPECIALPOWERIDMASK( m_specialPowerIDBits, spTemplate->getSpecialPowerTypeUnique() );
+#endif
 		}
 	}
 
@@ -3732,7 +3734,12 @@ Bool Object::hasSpecialPower( SpecialPowerType type ) const
 //MODDD
 Bool Object::hasSpecialPowerID( SpecialPowerIDType type ) const
 {
+#if SIDEBAR_ENUM_CONFLICT_FIX
 	return TEST_SPECIALPOWERIDMASK( m_specialPowerIDBits, type );
+#else
+	// same as 'hasSpecialPower'
+	return TEST_SPECIALPOWERMASK( m_specialPowerBits, type );
+#endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -5201,7 +5208,9 @@ void Object::xfer( Xfer *xfer )
 		xfer->xferSnapshot(&m_weaponSet);
 
 		m_specialPowerBits.xfer( xfer );
+#if SIDEBAR_ENUM_CONFLICT_FIX
 		m_specialPowerIDBits.xfer( xfer );
+#endif
 
 		xfer->xferAsciiString(&m_commandSetStringOverride);
 

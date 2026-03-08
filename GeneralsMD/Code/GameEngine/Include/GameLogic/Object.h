@@ -124,7 +124,11 @@ enum RadarPriorityType CPP_11(: Int);
 enum CanAttackResult CPP_11(: Int);
 
 //MODDD - copying the typedef should be ok I think?
+#if SIDEBAR_ENUM_CONFLICT_FIX
 typedef UnsignedInt SpecialPowerIDType;
+#else
+typedef SpecialPowerType SpecialPowerIDType;
+#endif
 
 // For ObjectScriptStatusBit
 #include "GameLogic/ObjectScriptStatusBits.h"
@@ -842,9 +846,11 @@ private:
 	WeaponBonusConditionFlags			m_weaponBonusCondition;
 	Byte													m_lastWeaponCondition[WEAPONSLOT_COUNT];
 
-	//MODDD
-	SpecialPowerMaskType					m_specialPowerBits;
-	SpecialPowerIDMaskType					m_specialPowerIDBits; ///< bits determining what kind of special abilities this object has access to.
+	SpecialPowerMaskType					m_specialPowerBits; ///< bits determining what kind of special abilities this object has access to.
+#if SIDEBAR_ENUM_CONFLICT_FIX
+	// one bit per special power instead, never shared unlike the special power enum values that 'm_specialPowerBits' uses
+	SpecialPowerIDMaskType					m_specialPowerIDBits;
+#endif
 
 	//////////////////////////////////////< for the non-stacking healers like ambulance and propaganda
 	ObjectID m_soleHealingBenefactorID; ///< who is the only other object that can give me this non-stacking heal benefit?

@@ -1930,16 +1930,15 @@ SpecialPowerType SpecialAbilityUpdate::getSpecialPowerType() const
 	return getTemplate()->getSpecialPowerType();
 }
 
-//MODDD
-/*
-SpecialPowerType SpecialAbilityUpdate::getSpecialPowerTypeUnique() const
-{
-	return getTemplate()->getSpecialPowerType();
-}
-*/
+//MODDD - let having the fix or not decide whether the 'Unique' getter gets the ID or the enum 'm_type'.
 SpecialPowerIDType SpecialAbilityUpdate::getSpecialPowerTypeUnique() const
 {
+#if SIDEBAR_ENUM_CONFLICT_FIX
 	return getTemplate()->getID();
+#else
+	// without the fix, 'SpecialPowerIDType' is a redirect to 'SpecialPowerType' anyway
+	return getTemplate()->getSpecialPowerType();
+#endif
 }
 
 //-------------------------------------------------------------------------------------------------

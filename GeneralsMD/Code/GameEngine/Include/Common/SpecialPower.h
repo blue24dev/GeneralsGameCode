@@ -89,6 +89,7 @@ inline void FLIP_SPECIALPOWERMASK(SpecialPowerMaskType& m)
 }
 
 //MODDD - new copy below
+#if SIDEBAR_ENUM_CONFLICT_FIX
 #define MAKE_SPECIALPOWERID_MASK(k) SpecialPowerIDMaskType(SpecialPowerIDMaskType::kInit, (k))
 
 inline Bool TEST_SPECIALPOWERIDMASK(const SpecialPowerIDMaskType& m, SpecialPowerIDType t)
@@ -124,6 +125,7 @@ inline void FLIP_SPECIALPOWERIDMASK(SpecialPowerIDMaskType& m)
 {
 	m.flip();
 }
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -138,17 +140,24 @@ public:
 	// virtual destructor prototype provided by MemoryPoolObject
 
 	static const FieldParse* getFieldParse() { return m_specialPowerFieldParse; }
-
-	//MODDD - implementation moved to .cpp
-	void friend_setNameAndID(const AsciiString& name, UnsignedInt id);
-
+	
+	void friend_setNameAndID(const AsciiString& name, UnsignedInt id)
+	{
+		m_name = name;
+		m_id = id;
+	}
+	
 	AsciiString getName() const { return getFO()->m_name; }
 	UnsignedInt getID() const { return getFO()->m_id; }
 	SpecialPowerType getSpecialPowerType() const { return getFO()->m_type; }
 
-	//MODDD
-	//SpecialPowerType getSpecialPowerTypeUnique() const { return getFO()->m_type; }
+	//MODDD - let having the fix or not decide whether the 'Unique' getter gets the ID or the enum 'm_type'.
+#if SIDEBAR_ENUM_CONFLICT_FIX
 	SpecialPowerIDType getSpecialPowerTypeUnique() const { return getFO()->getID(); }
+#else
+	// without the fix, 'SpecialPowerIDType' is a redirect to 'SpecialPowerType' anyway
+	SpecialPowerIDType getSpecialPowerTypeUnique() const { return getFO()->m_type; }
+#endif
 
 	UnsignedInt getReloadTime() const { return getFO()->m_reloadTime; }
 	ScienceType getRequiredScience() const { return getFO()->m_requiredScience; }
