@@ -339,7 +339,7 @@
 // They're tweaked to be more of an average case, but a one-size-fits-all is difficult, especially considering that most maps probably
 // never gave much thought to times of day other than the one they're saved with - keep that in mind of shadows look wonky on some maps/TOD's.
 // NOTE - beware of bugs observed while this is on, though they don't usually make the game unplayable - see the readme.
-#define REAL_TIME_TOD_CHANGE FALSE
+#define REAL_TIME_TOD_CHANGE TRUE
 
 // TODO - edit the save/load feature to include the time-of-day at the time the game is saved?
 // Leaving that out for now since the saved game would only work with builds where 'REAL_TIME_TOD_CHANGE' is in agreement.
@@ -357,7 +357,7 @@
 
 // Every 'x' frames, the current time of day is applied (applied to the renderer -> affects in-game).
 // At 1, runs every frame (likely not necessary).
-#define TOD_UPDATE_INTERVAL 10
+#define TOD_UPDATE_INTERVAL 150
 
 // helper '#define' to avoid a lot of '#if... #else' replacements.
 // (edits elsewhere mainly replaced 'TheGlobalData->m_timeOfDay', unlabled changes since that's straightforward)
