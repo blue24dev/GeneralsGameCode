@@ -1930,6 +1930,18 @@ SpecialPowerType SpecialAbilityUpdate::getSpecialPowerType() const
 	return getTemplate()->getSpecialPowerType();
 }
 
+//MODDD
+/*
+SpecialPowerType SpecialAbilityUpdate::getSpecialPowerTypeUnique() const
+{
+	return getTemplate()->getSpecialPowerType();
+}
+*/
+SpecialPowerIDType SpecialAbilityUpdate::getSpecialPowerTypeUnique() const
+{
+	return getTemplate()->getID();
+}
+
 //-------------------------------------------------------------------------------------------------
 // This looks for a special object with specified producer ID
 //-------------------------------------------------------------------------------------------------

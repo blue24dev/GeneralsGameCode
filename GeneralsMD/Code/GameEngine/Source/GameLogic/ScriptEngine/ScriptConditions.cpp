@@ -2302,7 +2302,7 @@ Bool ScriptConditions::evaluateSkirmishCommandButtonIsReady( Parameter * /* pSki
 	for (DLINK_ITERATOR<Object> iter = theTeam->iterate_TeamMemberList(); !iter.done(); iter.advance()) {
 		Object *pObj = iter.cur();
 		if (commandButton->getSpecialPowerTemplate()) {
-			if( !pObj->hasSpecialPower( commandButton->getSpecialPowerTemplate()->getSpecialPowerType() ) ) {
+			if( !pObj->hasSpecialPowerID( commandButton->getSpecialPowerTemplate()->getSpecialPowerTypeUnique() ) ) {
 				continue;
 			}
 		} else if (!commandButton->getUpgradeTemplate()) {

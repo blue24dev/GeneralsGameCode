@@ -414,6 +414,7 @@ void Object::constructorEnd()
 		if( spTemplate )
 		{
 			SET_SPECIALPOWERMASK( m_specialPowerBits, spTemplate->getSpecialPowerType() );
+			SET_SPECIALPOWERIDMASK( m_specialPowerIDBits, spTemplate->getSpecialPowerTypeUnique() );
 		}
 	}
 
@@ -3728,6 +3729,12 @@ Bool Object::hasSpecialPower( SpecialPowerType type ) const
 	return TEST_SPECIALPOWERMASK( m_specialPowerBits, type );
 }
 
+//MODDD
+Bool Object::hasSpecialPowerID( SpecialPowerIDType type ) const
+{
+	return TEST_SPECIALPOWERIDMASK( m_specialPowerIDBits, type );
+}
+
 //-------------------------------------------------------------------------------------------------
 Bool Object::hasAnySpecialPower() const
 {
@@ -5194,6 +5201,7 @@ void Object::xfer( Xfer *xfer )
 		xfer->xferSnapshot(&m_weaponSet);
 
 		m_specialPowerBits.xfer( xfer );
+		m_specialPowerIDBits.xfer( xfer );
 
 		xfer->xferAsciiString(&m_commandSetStringOverride);
 
@@ -7074,6 +7082,29 @@ SpecialPowerModuleInterface* Object::findSpecialPowerModuleInterface( SpecialPow
 	return nullptr;
 }
 
+//MODDD
+SpecialPowerModuleInterface* Object::findSpecialPowerModuleInterfaceID( SpecialPowerIDType type ) const
+{
+	for (BehaviorModule** m = m_behaviors; *m; ++m)
+	{
+		SpecialPowerModuleInterface* sp = (*m)->getSpecialPower();
+		if (!sp)
+			continue;
+
+		if (type == SPECIAL_INVALID)
+		{
+			return sp;
+		}
+
+		const SpecialPowerTemplate *spTemplate = sp->getSpecialPowerTemplate();
+		if (spTemplate && spTemplate->getSpecialPowerTypeUnique() == type)
+		{
+			return sp;
+		}
+	}
+	return nullptr;
+}
+
 // ------------------------------------------------------------------------------------------------
 // Search our special power modules for the first occurrence of a shortcut special.
 // ------------------------------------------------------------------------------------------------
@@ -7175,6 +7206,25 @@ SpecialAbilityUpdate* Object::findSpecialAbilityUpdate( SpecialPowerType type ) 
 		{
 			SpecialAbilityUpdate *spUpdate = (SpecialAbilityUpdate*)spInterface;
 			if( spUpdate->getSpecialPowerType() == type )
+			{
+				return spUpdate;
+			}
+		}
+	}
+
+	return nullptr;
+}
+
+//MODDD
+SpecialAbilityUpdate* Object::findSpecialAbilityUpdateID( SpecialPowerIDType type ) const
+{
+	for( BehaviorModule** u = m_behaviors; *u; ++u )
+	{
+		SpecialPowerUpdateInterface *spInterface = (*u)->getSpecialPowerUpdateInterface();
+		if( spInterface && spInterface->isSpecialAbility() )
+		{
+			SpecialAbilityUpdate *spUpdate = (SpecialAbilityUpdate*)spInterface;
+			if( spUpdate->getSpecialPowerTypeUnique() == type )
 			{
 				return spUpdate;
 			}

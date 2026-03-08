@@ -277,7 +277,7 @@ CBCommandStatus ControlBar::processCommandUI( GameWindow *control,
 		{
 			//Determine the object that would construct it.
 			const SpecialPowerTemplate *spTemplate = commandButton->getSpecialPowerTemplate();
-			SpecialPowerType spType = spTemplate->getSpecialPowerType();
+			SpecialPowerIDType spType = spTemplate->getSpecialPowerTypeUnique();
 			Object* obj = ThePlayerList->getLocalPlayer()->findMostReadyShortcutSpecialPowerOfType( spType );
 			if( !obj )
 				break;
@@ -839,7 +839,7 @@ CBCommandStatus ControlBar::processCommandUI( GameWindow *control,
 		case GUI_COMMAND_SPECIAL_POWER_FROM_SHORTCUT:
 		{
 			const SpecialPowerTemplate *spTemplate = commandButton->getSpecialPowerTemplate();
-			SpecialPowerType spType = spTemplate->getSpecialPowerType();
+			SpecialPowerIDType spType = spTemplate->getSpecialPowerTypeUnique();
 
 			Object* obj = ThePlayerList->getLocalPlayer()->findMostReadyShortcutSpecialPowerOfType( spType );
 			if( !obj )
