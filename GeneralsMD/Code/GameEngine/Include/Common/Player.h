@@ -288,7 +288,7 @@ public:
 
 	// Finds a short-cut firing special power of specified type returning the first ready power or
 	// the most ready if none ready.
-	Object* findMostReadyShortcutSpecialPowerOfType( SpecialPowerType spType );
+	Object* findMostReadyShortcutSpecialPowerOfType( SpecialPowerIDType spType );
 
 	//Find specified thing template's most ready weapon.
 	Object* findMostReadyShortcutWeaponForThing( const ThingTemplate *thing, UnsignedInt &mostReadyPercentage );
@@ -298,7 +298,7 @@ public:
 	Bool hasAnyShortcutSpecialPower();
 
 	// Counts available shortcut special power of specified type that can fire now.
-	Int countReadyShortcutSpecialPowersOfType( SpecialPowerType spType );
+	Int countReadyShortcutSpecialPowersOfType( SpecialPowerIDType spType );
 
 	/// return t if the player has the given science, either intrinsically, via specialization, or via capture.
 	Bool hasScience(ScienceType t) const;

@@ -1015,7 +1015,7 @@ CommandAvailability ControlBar::getCommandAvailability( const CommandButton *com
 			|| command->getCommandType() == GUI_COMMAND_SPECIAL_POWER_CONSTRUCT_FROM_SHORTCUT )
 	{
 		if (ThePlayerList && ThePlayerList->getLocalPlayer())
-			obj = ThePlayerList->getLocalPlayer()->findMostReadyShortcutSpecialPowerOfType( command->getSpecialPowerTemplate()->getSpecialPowerType() );
+			obj = ThePlayerList->getLocalPlayer()->findMostReadyShortcutSpecialPowerOfType( command->getSpecialPowerTemplate()->getSpecialPowerTypeUnique() );
 		else
 			obj = nullptr;
 	}
@@ -1422,7 +1422,7 @@ CommandAvailability ControlBar::getCommandAvailability( const CommandButton *com
 				GadgetButtonDrawInverseClock( applyToWin, percent, m_buildUpClockColor );
 				return COMMAND_NOT_READY;
 			}
-			else if( SpecialAbilityUpdate *spUpdate = obj->findSpecialAbilityUpdate( command->getSpecialPowerTemplate()->getSpecialPowerType() ) )
+			else if( SpecialAbilityUpdate *spUpdate = obj->findSpecialAbilityUpdateID( command->getSpecialPowerTemplate()->getSpecialPowerTypeUnique() ) )
 			{
 				if( spUpdate && spUpdate->isPowerCurrentlyInUse( command ) )
 				{

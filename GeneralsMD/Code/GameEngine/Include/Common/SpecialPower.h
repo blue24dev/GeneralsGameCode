@@ -88,6 +88,43 @@ inline void FLIP_SPECIALPOWERMASK(SpecialPowerMaskType& m)
 	m.flip();
 }
 
+//MODDD - new copy below
+#define MAKE_SPECIALPOWERID_MASK(k) SpecialPowerIDMaskType(SpecialPowerIDMaskType::kInit, (k))
+
+inline Bool TEST_SPECIALPOWERIDMASK(const SpecialPowerIDMaskType& m, SpecialPowerIDType t)
+{
+	return m.test(t);
+}
+inline Bool TEST_SPECIALPOWERIDMASK_ANY(const SpecialPowerIDMaskType& m, const SpecialPowerIDMaskType& mask)
+{
+	return m.anyIntersectionWith(mask);
+}
+inline Bool TEST_SPECIALPOWERIDMASK_MULTI(const SpecialPowerIDMaskType& m, const SpecialPowerIDMaskType& mustBeSet, const SpecialPowerIDMaskType& mustBeClear)
+{
+	return m.testSetAndClear(mustBeSet, mustBeClear);
+}
+inline Bool SPECIALPOWERIDMASK_ANY_SET(const SpecialPowerIDMaskType& m)
+{
+	return m.any();
+}
+inline void CLEAR_SPECIALPOWERIDMASK(SpecialPowerIDMaskType& m)
+{
+	m.clear();
+}
+inline void SET_SPECIALPOWERIDMASK( SpecialPowerIDMaskType& m, SpecialPowerIDType t, Int val = 1 )
+{
+	m.set( t, val );
+}
+inline void SET_ALL_SPECIALPOWERIDMASK_BITS(SpecialPowerIDMaskType& m)
+{
+	m.clear();
+	m.flip();
+}
+inline void FLIP_SPECIALPOWERIDMASK(SpecialPowerIDMaskType& m)
+{
+	m.flip();
+}
+
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 class SpecialPowerTemplate : public Overridable
@@ -108,6 +145,11 @@ public:
 	AsciiString getName() const { return getFO()->m_name; }
 	UnsignedInt getID() const { return getFO()->m_id; }
 	SpecialPowerType getSpecialPowerType() const { return getFO()->m_type; }
+
+	//MODDD
+	//SpecialPowerType getSpecialPowerTypeUnique() const { return getFO()->m_type; }
+	SpecialPowerIDType getSpecialPowerTypeUnique() const { return getFO()->getID(); }
+
 	UnsignedInt getReloadTime() const { return getFO()->m_reloadTime; }
 	ScienceType getRequiredScience() const { return getFO()->m_requiredScience; }
 	const AudioEventRTS *getInitiateSound() const { return &getFO()->m_initiateSound; }

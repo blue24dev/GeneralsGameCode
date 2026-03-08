@@ -123,6 +123,9 @@ enum WeaponStatus CPP_11(: Int);
 enum RadarPriorityType CPP_11(: Int);
 enum CanAttackResult CPP_11(: Int);
 
+//MODDD - copying the typedef should be ok I think?
+typedef UnsignedInt SpecialPowerIDType;
+
 // For ObjectScriptStatusBit
 #include "GameLogic/ObjectScriptStatusBits.h"
 
@@ -349,9 +352,15 @@ public:
 
 	// Ditto for special powers -- Kris
 	SpecialPowerModuleInterface* findSpecialPowerModuleInterface( SpecialPowerType type ) const;
+	//MODDD
+	SpecialPowerModuleInterface* findSpecialPowerModuleInterfaceID( SpecialPowerIDType type ) const;
 	SpecialPowerModuleInterface* findAnyShortcutSpecialPowerModuleInterface() const;
 	SpecialAbilityUpdate* findSpecialAbilityUpdate( SpecialPowerType type ) const;
+	//MODDD
+	SpecialAbilityUpdate* findSpecialAbilityUpdateID( SpecialPowerIDType type ) const;
 	SpecialPowerCompletionDie* findSpecialPowerCompletionDie() const;
+
+	//MODDD - TODO - why even have the param? not used. Remove it?
 	SpecialPowerUpdateInterface* findSpecialPowerWithOverridableDestinationActive( SpecialPowerType type = SPECIAL_INVALID ) const;
 	SpecialPowerUpdateInterface* findSpecialPowerWithOverridableDestination( SpecialPowerType type = SPECIAL_INVALID ) const;
 
@@ -583,6 +592,8 @@ public:
 	/// return true if the template has the specified special power flag set
 	// @todo: inline
 	Bool hasSpecialPower( SpecialPowerType type ) const;
+	//MODDD
+	Bool hasSpecialPowerID( SpecialPowerIDType type ) const;
 	Bool hasAnySpecialPower() const;
 
 	void setWeaponBonusCondition(WeaponBonusConditionType wst);
@@ -831,7 +842,9 @@ private:
 	WeaponBonusConditionFlags			m_weaponBonusCondition;
 	Byte													m_lastWeaponCondition[WEAPONSLOT_COUNT];
 
-	SpecialPowerMaskType					m_specialPowerBits; ///< bits determining what kind of special abilities this object has access to.
+	//MODDD
+	SpecialPowerMaskType					m_specialPowerBits;
+	SpecialPowerIDMaskType					m_specialPowerIDBits; ///< bits determining what kind of special abilities this object has access to.
 
 	//////////////////////////////////////< for the non-stacking healers like ambulance and propaganda
 	ObjectID m_soleHealingBenefactorID; ///< who is the only other object that can give me this non-stacking heal benefit?

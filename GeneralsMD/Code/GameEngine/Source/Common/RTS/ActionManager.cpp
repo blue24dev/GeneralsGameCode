@@ -1475,7 +1475,7 @@ Bool ActionManager::canDoSpecialPowerAtLocation( const Object *obj, const Coord3
 	if (checkSourceRequirements)
 	{
 		//First check, if our object can do this special power.
-		if( !obj->hasSpecialPower( spTemplate->getSpecialPowerType() ) )
+		if( !obj->hasSpecialPowerID( spTemplate->getSpecialPowerTypeUnique() ) )
 		{
 			return false;
 		}
@@ -1597,7 +1597,7 @@ Bool ActionManager::canDoSpecialPowerAtObject( const Object *obj, const Object *
 	if (checkSourceRequirements)
 	{
 		//First check, if our object can do this special power.
-		if( !obj->hasSpecialPower( spTemplate->getSpecialPowerType() ) )
+		if( !obj->hasSpecialPowerID( spTemplate->getSpecialPowerTypeUnique() ) )
 		{
 			return false;
 		}
@@ -1859,7 +1859,7 @@ Bool ActionManager::canDoSpecialPower( const Object *obj, const SpecialPowerTemp
 	if (checkSourceRequirements)
 	{
 		//First check, if our object can do this special power.
-		if( !obj->hasSpecialPower( spTemplate->getSpecialPowerType() ) )
+		if( !obj->hasSpecialPowerID( spTemplate->getSpecialPowerTypeUnique() ) )
 		{
 			return false;
 		}

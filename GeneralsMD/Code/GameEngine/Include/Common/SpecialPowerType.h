@@ -132,6 +132,6 @@ enum SpecialPowerType CPP_11(: Int)
 };
 
 //MODDD
-typedef int SpecialPowerIDType;
+typedef UnsignedInt SpecialPowerIDType;
 
 	// Definition of these names is located in SpecialPower.cpp

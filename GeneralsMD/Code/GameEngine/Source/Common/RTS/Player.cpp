@@ -1203,7 +1203,7 @@ struct PlayerObjectFindInfo
 {
 	Player* player;
 	Object* obj;
-	SpecialPowerType spType;
+	SpecialPowerIDType spType;
 	const ThingTemplate *thing;
 	UnsignedInt lowestReadyFrame;
 	UnsignedInt highestPercentage;
@@ -1260,9 +1260,9 @@ static void doFindSpecialPowerSourceObject( Object *obj, void *userData )
 				return;
 			}
 		}
-		else if( obj->hasSpecialPower( info->spType ) )
+		else if( obj->hasSpecialPowerID( info->spType ) )
 		{
-			SpecialPowerModuleInterface *spmInterface = obj->findSpecialPowerModuleInterface( info->spType );
+			SpecialPowerModuleInterface *spmInterface = obj->findSpecialPowerModuleInterfaceID( info->spType );
 			if( spmInterface && !spmInterface->isScriptOnly() )
 			{
 				UnsignedInt readyFrame = spmInterface->getReadyFrame();
@@ -1310,9 +1310,9 @@ static void doCountSpecialPowersReady( Object *obj, void *userData )
 			&& !obj->testStatus( OBJECT_STATUS_SOLD )
 			&& !obj->isEffectivelyDead() )
 	{
-		if( obj->hasSpecialPower( info->spType ) )
+		if( obj->hasSpecialPowerID( info->spType ) )
 		{
-			SpecialPowerModuleInterface *spmInterface = obj->findSpecialPowerModuleInterface( info->spType );
+			SpecialPowerModuleInterface *spmInterface = obj->findSpecialPowerModuleInterfaceID( info->spType );
 			if( spmInterface && !spmInterface->isScriptOnly() )
 			{
 
@@ -1448,7 +1448,7 @@ Object* Player::findNaturalCommandCenter()
 }
 
 //-------------------------------------------------------------------------------------------------
-Object* Player::findMostReadyShortcutSpecialPowerOfType( SpecialPowerType spType )
+Object* Player::findMostReadyShortcutSpecialPowerOfType( SpecialPowerIDType spType )
 {
 	PlayerObjectFindInfo info;
 	info.player = this;
@@ -1511,7 +1511,7 @@ Bool Player::hasAnyShortcutSpecialPower()
 }
 
 //-------------------------------------------------------------------------------------------------
-Int Player::countReadyShortcutSpecialPowersOfType( SpecialPowerType spType )
+Int Player::countReadyShortcutSpecialPowersOfType( SpecialPowerIDType spType )
 {
 	PlayerObjectFindInfo info;
 	info.spType = spType;

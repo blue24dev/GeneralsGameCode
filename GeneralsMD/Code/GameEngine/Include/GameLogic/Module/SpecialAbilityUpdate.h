@@ -41,6 +41,9 @@ class SpecialPowerModule;
 class FXList;
 enum SpecialPowerType CPP_11(: Int);
 
+//MODDD - copying the typedef should be ok I think?
+typedef UnsignedInt SpecialPowerIDType;
+
 #define SPECIAL_ABILITY_HUGE_DISTANCE 10000000.0f
 
 //-------------------------------------------------------------------------------------------------
@@ -199,6 +202,10 @@ public:
 	UnsignedInt getSpecialObjectMax() const;
 	Object* findSpecialObjectWithProducerID( const Object *target );
 	SpecialPowerType getSpecialPowerType() const;
+
+	//MODDD
+	//SpecialPowerType getSpecialPowerTypeUnique() const;
+	SpecialPowerIDType getSpecialPowerTypeUnique() const;
 
 protected:
 	void onExit( Bool cleanup );
