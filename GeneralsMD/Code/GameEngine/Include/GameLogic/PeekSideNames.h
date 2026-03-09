@@ -1,5 +1,5 @@
 //MODDD - new file
-// Only relevant if the 'CAMPAIGN_FORCE' constant is on.
+// Only relevant for FGC_CAMPAIGN.
 // Offers custom 'SidesDataChunk' & needed parsers to find the names of all sides (players to generate on
 // running a game) within a map's file data.
 // Has a few utility methods and exposed result variables near the beginning.
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#if CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 #include "Common/AsciiString.h"
 #include "Common/UnicodeString.h"
 #include "Common/STLTypedefs.h"

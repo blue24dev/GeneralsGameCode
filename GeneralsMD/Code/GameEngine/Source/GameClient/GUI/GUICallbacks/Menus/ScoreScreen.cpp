@@ -2095,7 +2095,7 @@ void grabMultiPlayerInfo()
 	// If there were ever a case where <# of human players doing co-op> + <# of baked-in map AI players> exceeds 8, rows after 8 would be missing.
 	// That can be an argument for combining AI players into one "Enemy General" row - see points below for more detail.
 	// Or, edit other places to allow more than 8 rows?  I dunno.
-#if GENERALS_CHALLENGE_FORCE
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
 	Player* civilianPlayer = ThePlayerList->findPlayerWithNameKey(NAMEKEY("PlyrCivilian"));
 	//Player* thePlayerRef = ThePlayerList->findPlayerWithNameKey(NAMEKEY("ThePlayer"));
 	for (int i = 0; i < ThePlayerList->getPlayerCount(); i++) {
@@ -2133,8 +2133,8 @@ void grabMultiPlayerInfo()
 		count ++;
 	}
 
-#elif CAMPAIGN_FORCE
-  // And for using 'CAMPAIGN_FORCE' instead. A copy of above that doesn't exclude human players since campaign maps don't
+#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
+  // And for campaign mode instead. A copy of above that doesn't exclude human players since campaign maps don't
 	// provide nor generate "player<0-7>", so just include all players without special checks.
 	// To be more accurate to the original single-player behavior, could look at 'grabSinglePlayerInfo' to see how it
 	// groups computer players together to copy that much over, but would prefer to keep human players separate to

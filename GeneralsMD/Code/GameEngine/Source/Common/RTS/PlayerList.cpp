@@ -202,10 +202,10 @@ void PlayerList::populateSlotPlayerRefs()
 	// connected users in a network game).
 	Bool isCampaignMap;
 
-	// Check the '_FORCE' constants for an easy assumption
-#if GENERALS_CHALLENGE_FORCE
+	// Check the setting for an easy assumption
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
 	isCampaignMap = FALSE;
-#elif CAMPAIGN_FORCE
+#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 	isCampaignMap = TRUE;
 #else
 	// No constant to tell us. Check the game mode and the usual generals challenge check.
@@ -363,15 +363,15 @@ void PlayerList::newGame()
 			setLocal = true;
 		}
 		
-		//MODDD - NOTE - this block should never be needed to tell who the local player is for 'CAMPAIGN_FORCE'.
+		//MODDD - NOTE - this block should never be needed to tell who the local player is for FGC_CAMPAIGN.
 		// Who the local player is, is determined by setting 'TheKey_multiplayerIsLocal' for a side & it's reached
 		// parsing that side's dict here (see above).
 		// This works in case a player other than the first human player is the local player for this machine
-		// (co-op mode under 'CAMPAIGN_FORCE').
+		// (co-op mode under FGC_CAMPAIGN).
 		// You could argue that all non-network game modes should also use the 'TheKey_multiplayerIsLocal' way for
 		// consistency and remove this block entirely (probably only campaign & shell game modes, even generals challenge
 		// is just a reskin of skirmish).
-#if !CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT != FGC_CAMPAIGN
 		if (!setLocal && !TheNetwork && d->getBool(TheKey_playerIsHuman))
 		{
 			setLocalPlayer(p);

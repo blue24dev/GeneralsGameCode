@@ -311,10 +311,10 @@ void StartPressed()
 		return;
 	}
 
-	//MODDD - don't show the sandbox mode message for either '_FORCE' constant.
+	//MODDD - don't show the sandbox mode message for GC or campaign mode.
 	// Skirmish/network-menu assigned settings aren't as relevant to the game in these cases.
 	// There are still enemies in the map even if all slot players are on the same team.
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT == FGC_NONE
 	if (numRandom + teams.size() < 2)
 	{
 		UnicodeString text;

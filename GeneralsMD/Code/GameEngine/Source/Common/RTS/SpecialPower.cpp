@@ -133,15 +133,18 @@ const char* const SpecialPowerMaskType::s_bitNameList[] =
 };
 static_assert(ARRAY_SIZE(SpecialPowerMaskType::s_bitNameList) == SpecialPowerMaskType::NumBits + 1, "Incorrect array size");
 
+#if SIDEBAR_ENUM_CONFLICT_FIX
 //MODDD - dummy bit name list because this will never be used by parsing.
 //MODDD - TODO
 // This should probably use a clone of the 'BitFlags' class that doesn't have the name list.
 // Or, move the name list & related methods to a new subclass of 'BitFlags' instead, if that's feasible.
+// Or there's a much better alternative to using this codebase's 'BitFlags' for this anyway.
 template<>
 const char* const SpecialPowerIDMaskType::s_bitNameList[] =
 {
 	nullptr
 };
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -241,13 +244,6 @@ SpecialPowerTemplate::SpecialPowerTemplate()
 SpecialPowerTemplate::~SpecialPowerTemplate()
 {
 
-}
-
-//MODDD - implementation moved to here
-void SpecialPowerTemplate::friend_setNameAndID(const AsciiString& name, UnsignedInt id)
-{
-	m_name = name;
-	m_id = id;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////

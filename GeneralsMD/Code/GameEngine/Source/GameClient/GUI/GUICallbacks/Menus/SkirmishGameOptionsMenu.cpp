@@ -149,8 +149,9 @@ static Bool buttonPushed = FALSE;
 static Bool stillNeedsToSetOptions = FALSE;
 void skirmishUpdateSlotList();
 static void populateSkirmishBattleHonors();
-//MODDD - quick test
+#if HONORS_TEST
 static void testHonors();
+#endif
 enum{ GREATER_NO_FPS_LIMIT = 60};
 Bool doUpdateSlotList = TRUE;
 
@@ -441,19 +442,19 @@ void reallyDoStart()
 	if (md)
 	{
 
-#if GENERALS_CHALLENGE_FORCE
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
 		// Some things during setup for a generals challenge map (GameLogic.cpp) still expect there to be a non-null
 		// game info ('isSkirmish' being FALSE would imply GAME_SINGLE_PLAYER -> null game info - game info is
 		// needed to carry in-menu choices AKA slot info).
 		// The generals-challenge-specific game mode won't be used for this macro setting so may as well rely on the
 		// skirmish game mode for any number of players.
 		isSkirmish = TRUE;
-#elif CAMPAIGN_FORCE
+#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 		// Although 'isSkirmish = FALSE' would imply GAME_SINGLE_PLAYER, may as well always be a skirmish game mode here.
 		// Co-op mode (playing originally intended single-player maps as multiplayer) requires a network game mode
 		// unconditionally, so always requiring a variable-player-game mode for starting a game through the
-		// skirmish menu is consistent. And '_FORCE' macro settings turn off unwanted meddling implied from being a
-		// skirmish/network game mode so things work as expected.
+		// skirmish menu is consistent. And FORCE_GAME_CONTEXT choices of GC/Campaign turn off unwanted meddling
+		// implied from being a skirmish/network game mode so things work as expected.
 		isSkirmish = TRUE;
 #else
 		// retail
@@ -770,9 +771,13 @@ void positionStartSpots( AsciiString mapName, GameWindow *buttonMapStartPosition
 		AsciiString waypointName;
 		Int i = 0;
 
-		//MODDD - why the 'isMultiplayer' part of that?
-		//for(; i < mmd.m_numPlayers && mmd.m_isMultiplayer; ++i )
+#if FORCE_GAME_CONTEXT == FGC_NONE
+		//MODDD - NOTE - why the 'isMultiplayer' part of that? just skip the whole loop if that condition fails.
+		for(; i < mmd.m_numPlayers && mmd.m_isMultiplayer; ++i )
+#else
+		// allow this for any other FGC choice, not that campaign maps should have this anyway
 		for(; i < mmd.m_numPlayers; ++i )
+#endif
 		{
 			waypointName.format("Player_%d_Start", i+1); // start pos waypoints are 1-based
 			WaypointMap::iterator wmIt = mmd.m_waypoints.find(waypointName);
@@ -1180,7 +1185,9 @@ void InitSkirmishGameGadgets()
 	}
 
 	populateSkirmishBattleHonors();
-	//testHonors();
+#if HONORS_TEST
+	testHonors();
+#endif
 }
 
 void skirmishUpdateSlotList()
@@ -1248,7 +1255,15 @@ void updateSkirmishGameOptions()
 	const MapMetaData *md = TheMapCache->findMap(TheSkirmishGameInfo->getMap());
 	if (md)
 	{
+#if FORCE_GAME_CONTEXT == FGC_NONE
 		isSkirmish = md->m_isMultiplayer; // we can now select solo campaign maps in Skirmish.
+#else
+		// For GC mode, still want to be able to select your faction for 1-player maps.
+		//MODDD - TODO
+		// For Campaign mode not having a choice makes sense, but there's co-op mode.
+		// Blanking everything for there is probably ok to but playing things safe for now.
+		isSkirmish = TRUE;
+#endif
     GadgetStaticTextSetText(textEntryMapDisplay, md->m_displayName);
 	}
 	else
@@ -1259,9 +1274,7 @@ void updateSkirmishGameOptions()
 		GadgetStaticTextSetText(textEntryMapDisplay, mapDisplay);
 	}
 
-	//MODDD - always use the 1st way instead so a 1-player map doesn't hide every single slot
-	//if (isSkirmish)
-	if (TRUE)
+	if (isSkirmish)
 	{
 		ShowUnderlyingGUIElements(TRUE, layoutFilename, parentName, gadgetsToHide, perPlayerGadgetsToHide );
 	}
@@ -1357,8 +1370,11 @@ void SkirmishGameOptionsMenuInit( WindowLayout *layout, void *userData )
 	UnsignedInt isPreorder = 0;
 	GetUnsignedIntFromRegistry("", "Preorder", isPreorder);
 
-	//MODDD - quick test (commented out)
-	//if (isPreorder != 0)
+#if !FORCE_PREORDER_STATUS
+	if (isPreorder != 0)
+#else
+	if (TRUE)
+#endif
 	{
 		TheSkirmishGameInfo->markPlayerAsPreorder(0);
 	}
@@ -1839,7 +1855,7 @@ const Image* lookupRankImage(AsciiString side, Int rank)
 	return img;
 }
 
-//MODDD - quick test
+#if HONORS_TEST
 void testHonors() {
 	static int countah = 0;
 	GameWindow *list = TheWindowManager->winGetWindowFromId(nullptr, NAMEKEY("SkirmishGameOptionsMenu.wnd:ListboxInfo"));
@@ -1940,6 +1956,7 @@ void testHonors() {
 		countah = 0;
 	}
 }
+#endif
 // --------------------------------------------------------------------------------------
 
 void populateSkirmishBattleHonors()
@@ -2316,8 +2333,12 @@ void populateSkirmishBattleHonors()
 
 	UnsignedInt isPreorder = 0;
 	GetUnsignedIntFromRegistry("", "Preorder", isPreorder);
-	//MODDD - quick test (commented out)
-	//if (isPreorder != 0)
+	
+#if !FORCE_PREORDER_STATUS
+	if (isPreorder != 0)
+#else
+	if (TRUE)
+#endif
 	{
 		InsertBattleHonor(list, TheMappedImageCollection->findImageByName("OfficersClub"), TRUE,
 			BATTLE_HONOR_OFFICERSCLUB, row, column);

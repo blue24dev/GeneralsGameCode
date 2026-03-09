@@ -34,9 +34,6 @@
 
 typedef BitFlags<SPECIALPOWER_COUNT>	SpecialPowerMaskType;
 
-//MODDD
-//---
-#define SPECIALPOWER_MAX_COUNT 512
-
+#if SIDEBAR_ENUM_CONFLICT_FIX
 typedef BitFlags<SPECIALPOWER_MAX_COUNT>	SpecialPowerIDMaskType;
-// ---
+#endif

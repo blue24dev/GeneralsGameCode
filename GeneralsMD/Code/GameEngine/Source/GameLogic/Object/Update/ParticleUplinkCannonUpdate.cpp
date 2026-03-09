@@ -61,6 +61,9 @@
 // TheSuperHackers @fix Mirelle 04/02/2026: Raised from 500.0f so that
 // enormous camera heights cannot see above the laser origin.
 constexpr const Real ORBITAL_BEAM_Z_OFFSET = 3500.0f;
+// TheSuperHackers @fix The positional audio is now decoupled from the beam origin.
+// 500 units represent the height of the original audio emitter.
+constexpr const Real ORBITAL_BEAM_AUDIO_Z_OFFSET = 500.0f;
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -648,6 +651,9 @@ UpdateSleepTime ParticleUplinkCannonUpdate::update()
 					templateLaserRadius = update->getTemplateLaserRadius();
 					visualLaserRadius = update->getCurrentLaserRadius();
 				}
+				Coord3D audioPos = m_currentTargetPosition;
+				audioPos.z += ORBITAL_BEAM_AUDIO_Z_OFFSET;
+				beam->setPosition( &audioPos );
 			}
 			// TheSuperHackers @refactor helmutbuhler/xezon 17/05/2025
 			// Originally the damageRadius was calculated with a value updated by LaserUpdate::clientUpdate.
@@ -1047,6 +1053,9 @@ void ParticleUplinkCannonUpdate::createOrbitToTargetLaser( UnsignedInt growthFra
 					orbitPosition.z += ORBITAL_BEAM_Z_OFFSET;
 					update->initLaser( nullptr, nullptr, &orbitPosition, &m_initialTargetPosition, "", growthFrames );
 				}
+				Coord3D audioPos = m_initialTargetPosition;
+				audioPos.z += ORBITAL_BEAM_AUDIO_Z_OFFSET;
+				beam->setPosition( &audioPos );
 			}
 		}
 		if( m_annihilationSound.getEventName().isNotEmpty() )
@@ -1060,6 +1069,11 @@ void ParticleUplinkCannonUpdate::createOrbitToTargetLaser( UnsignedInt growthFra
 			// the rest of the sound system that won't be affected by position updates from here.
 			// It looks like 'addAudioEvent' adds a copy of the current 'AudioEventRTS' so changes to this
 			// source instance won't carry over to that one.    Fun...
+			// UPDATE - and now this has been addressed by TheSuperHackers - see the small blocks around
+			// "audioPos.z += ORBITAL_BEAM_AUDIO_Z_OFFSET;".
+			// However, I still think the source of the audio should be the ground instead of 500 points above like in retail.
+			// I'll keep my edits in for now (see comment label above for the rest), think of this as finer precision
+			// for the sound itself on top of TheSuperHacker's change to preserve retail behavior.
 			m_annihilationSound.setPlaySoundFromGround(TRUE);
 
 			m_annihilationSound.setPlayingHandle( TheAudio->addAudioEvent( &m_annihilationSound ) );

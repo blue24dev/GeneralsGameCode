@@ -825,10 +825,10 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 	// Also, could make the caller ('AIAttackState::onEnter/update' in my case) check for the current weapon
 	// being in the 'PRE_ATTACK' state and handle that there instead. Then again a weapon being locked terminates
 	// shortly into this method too just below.
+	// Also, the 'm_weapons[m_curWeapon]' null check is needed because the default 'm_curWeapon' choice is PRIMARY (0),
+	// even for weapon sets that lack a primary weapon (only define secondary and/or tertiary). Example: assault stinger
+	// infantry in the Contra mod.
 	// ---
-	// And why is a null-check needed on 'm_weapons[m_curWeapon]'? In the contra shell menu, the game will crash
-	// because an object "Aslt_GLAInfantryStingerSoldier" has curWeapon=0 and m_weapons[0] set to NULL, but has
-	// a secondary weapon (m_weapons[1] isn't null). Beats me!
 	if (m_weapons[m_curWeapon] != nullptr && m_weapons[m_curWeapon]->getStatus() == PRE_ATTACK)
 		return TRUE;
 	// ---

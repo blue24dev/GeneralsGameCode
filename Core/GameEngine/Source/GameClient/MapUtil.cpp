@@ -62,7 +62,7 @@
 #include "GameNetwork/NetworkDefs.h"
 
 //MODDD
-#if CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 #include "GameLogic/PeekSideNames.h"
 #endif
 
@@ -238,7 +238,7 @@ static Bool loadMap( AsciiString filename )
 	file.registerParser( "WorldInfo", AsciiString::TheEmptyString, ParseWorldDictDataChunk );
 	file.registerParser( "ObjectsList", AsciiString::TheEmptyString, ParseObjectsDataChunk );
 
-	//MODDD - if 'CAMPAIGN_FORCE' is on, the user needs to be able to see how many slot players a campaign map
+	//MODDD - if 'FGC_CAMPAIGN' is on, the user needs to be able to see how many slot players a campaign map
 	// expects to support (available positions to fill for co-op, likely the whole point of this).
 	// The normal way the game decides on max players is how many "Player_#_Start" waypoints there are.
 	// That won't work for campaign maps because they don't necessarily have these waypoints (if they do, likely only
@@ -249,7 +249,7 @@ static Bool loadMap( AsciiString filename )
 	// the map supports (probably just 2 at "player1" though).
 	// If there isn't a "player1' side, the retail default of "Player_#_Start" waypoint checks still works. A map
 	// without even the "Player_1_Start" waypoint still has a reported minimum of 1 player - that suffices.
-#if CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 		PeekSideNames::peekedSideNamesSoftCount = 0;
 		file.registerParser( "SidesList", AsciiString::TheEmptyString,	PeekSideNames::ParseSidesDataChunk );
 #endif
@@ -710,7 +710,7 @@ Bool MapCache::addMap(
 	md.m_doesExist = TRUE;
 	md.m_waypoints.update();
 
-#if !CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT != FGC_CAMPAIGN
 	// retail
 	md.m_numPlayers = md.m_waypoints.m_numStartSpots;
 #else

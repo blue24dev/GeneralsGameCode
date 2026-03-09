@@ -476,7 +476,7 @@ void PopulateInGameDiplomacyPopup()
 			if (slot->isAI())
 				isInGame = true;
 
-#if !CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT != FGC_CAMPAIGN
 			AsciiString playerName;
 			playerName.format("player%d", slotNum);
 			Player *player = ThePlayerList->findPlayerWithNameKey(NAMEKEY(playerName));

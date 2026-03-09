@@ -383,7 +383,7 @@ GameMessageDisposition LookAtTranslator::translateGameMessage(const GameMessage 
 			{
 				constexpr const Real Scale = 0.01f;
 				const Real angle = Scale * (m_currentPos.y - m_anchor.y);
-				TheTacticalView->userSetPitch( TheTacticalView->getPitch() + angle );
+				TheTacticalView->userSetPitch( TheTacticalView->getPitch() - angle );
 				m_anchor = msg->getArgument( 0 )->pixel;
 			}
 
@@ -550,6 +550,7 @@ GameMessageDisposition LookAtTranslator::translateGameMessage(const GameMessage 
 		{
 			DEBUG_ASSERTCRASH(!m_isPitching, ("hmm, mismatched m_isPitching"));
 			m_isPitching = true;
+			m_anchor = m_currentPos;
 			disp = DESTROY_MESSAGE;
 			break;
 		}
@@ -605,6 +606,7 @@ GameMessageDisposition LookAtTranslator::translateGameMessage(const GameMessage 
 			//DEBUG_ASSERTCRASH(!m_isChangingFOV, ("hmm, mismatched m_isChangingFOV"));
 			m_isChangingFOV = true;
 			m_anchor = m_currentPos;
+			disp = DESTROY_MESSAGE;
 			break;
 		}
 #endif // _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
@@ -615,6 +617,7 @@ GameMessageDisposition LookAtTranslator::translateGameMessage(const GameMessage 
 		{
 		//	DEBUG_ASSERTCRASH(m_isChangingFOV, ("hmm, mismatched m_isChangingFOV"));
 			m_isChangingFOV = false;
+			disp = DESTROY_MESSAGE;
 			break;
 		}
 #endif // _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS

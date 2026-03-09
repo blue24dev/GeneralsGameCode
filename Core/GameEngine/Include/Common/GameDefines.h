@@ -138,6 +138,28 @@
 // Several are listed at the very bottom - look there for things commented out beneath the descriptions for definitions.
 // 
 // -------------------------------------------------------------
+
+// Setting to play maps intended for specific/single-player scenarios through the skirmish/network menu.
+// This is needed because there is no way for the game to automatically tell which maps were intended for
+// skirmish/network, generals challenge, or the campaign, so how to handle the map has to be hardcoded into
+// the build or turned into a UI setting at some point. Could also find some reliable way to determine the
+// context the map was intended for, though beware of how poorly standardized some things are (ex: there is
+// no convention for the human player's player name in campaign maps, it can be anything).
+// Choices for the setting with descriptions are further down.
+#define FGC_NONE 0
+#define FGC_GENERALS_CHALLENGE 1
+#define FGC_CAMPAIGN 2
+//#define FORCE_GAME_CONTEXT FGC_NONE
+
+// ------------------------------
+// FGC_NONE:
+// Use for retail behavior. Maps are treated as skirmish maps as originally intended - baked-in sides info is
+// used to decide how a computer player assigned a particular faction plays and unexpected non-civilian/neutral
+// sides are removed. Although there is a fallback to play 1-player maps in the single-player game mode to work
+// as usual (ex: campaign/GC maps), this doesn't allow the map to support multiple human players for co-op (provided
+// the maps are edited for additional start waypoint(s) or non-computer side(s) for other players to use).
+
+// FGC_GENERALS_CHALLENGE:
 // Use this to be able to play generals challenge maps (possibly any single player campaign map?) as a skirmish map
 // for two reasons:
 // * Able to choose any particular generals challenge map + your general without loading a game or
@@ -156,12 +178,11 @@
 // Lastly, don't use this setting for playing the generals challenge normally (starting a new GC campaign from
 // the main menu UI: choosing a difficulty + general -> vs. screen, OR loading a saved game from winning one).
 // Adjustments made to force a skirmish map to work for that may break playing them the original way.
-//#define GENERALS_CHALLENGE_FORCE FALSE
 
+// FGC_CAMPAIGN:
 // Simpler one to let non-GC campaign missions work as usual, that is, ones with a fixed side / starting units
 // the player controls instead of making initial adjustments for the assumed skirmish mode.
-// This is mutually exclusive of GENERALS_CHALLENGE_FORCE - both should not be set to 'TRUE'.
-//#define CAMPAIGN_FORCE FALSE
+// ------------------------------
 
 // Difficulty for scripts & AI where unspecified by skirmish setting, such as generals challenge played as a skirmish map
 // (AI player doesn't come from player slots assigned in the skirmish menu)
@@ -231,6 +252,20 @@
 // since as-is, the map uses enough players to only allow for adding 1 more.
 // Toggling this causes a tiny compile error that shows save compatibility being broken.
 #define DOUBLE_MAX_PLAYER_COUNT TRUE
+
+// In the retail game, if multiple buildings are sources of different special powers using the same special power enum
+// (ex: in the Contra mod, having a particle cannon and strategic bombing building -> both use enum 'SPECIAL_PARTICLE_UPLINK_CANNON'),
+// they will both be tracked on the same sidebar button (show the soonest cooldown between them, count how many are ready).
+// However, when the unintended special power is selected (ex: playing laser general in the above example -> it looks like a particle
+// cannon fire button -> trying to use strategic bombing from the button), a circle-slash(deny) icon appears and the
+// user can't actually use the ability from there.
+// This is because the sidebar does a cheap enum check for most areas, but to actually fire, it requires a strict
+// check that fails. Using the ability from the superweapon building itself works but the bug still makes the sidebar misleading.
+// Short version: This fix realizes the issue sooner by checking for special power ID instead of enum. The sidebar
+// won't be fooled by having multiple sources of the same enum choice that aren't for the same special power.
+// See another document for the 'long version' for more details and other ideas for improvements.
+// Toggling this setting breaks save compatibility since the new bitmask is added to object save data.
+#define SIDEBAR_ENUM_CONFLICT_FIX TRUE
 
 // Map display names have the player count extension (ex: "my map name (4)" for a 4-player map)
 // even if the player count is 1 or 0(?).
@@ -377,8 +412,7 @@
 
 // ----------------------------------------------------------------------------------------------------------
 // Bundles of settings here for convenient access
-#define GENERALS_CHALLENGE_FORCE FALSE
-#define CAMPAIGN_FORCE FALSE
+#define FORCE_GAME_CONTEXT FGC_NONE
 #define DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY DIFFICULTY_HARD
 #define FORCE_HUMAN_PLAYER_START_MONEY 0
 #define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS FALSE

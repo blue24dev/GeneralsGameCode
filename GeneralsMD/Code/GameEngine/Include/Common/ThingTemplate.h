@@ -610,6 +610,9 @@ public:
 
 	Bool isPrerequisite() const { return m_isPrerequisite; }
 
+	//MODDD - getter
+	Bool isMaxSimultaneousDeterminedBySuperweaponRestriction() const { return m_maxSimultaneousDeterminedBySuperweaponRestriction; }
+
 	const WeaponTemplateSet* findWeaponTemplateSet(const WeaponSetFlags& t) const;
 	const ArmorTemplateSet* findArmorTemplateSet(const ArmorSetFlags& t) const;
 
