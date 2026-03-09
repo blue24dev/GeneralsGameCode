@@ -1625,7 +1625,7 @@ Int ThingTemplate::calcTimeToBuild( const Player* player) const
 	const UnsignedInt startMin = 15;
 	const UnsignedInt endMin = 60;
 	const float startModifier = 1.00;
-	const float endModifier = 0.78;
+	const float endModifier = 0.83;
 	
 	if(player->getPlayerType() == PLAYER_COMPUTER)
 	{
