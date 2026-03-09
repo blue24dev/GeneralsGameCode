@@ -198,7 +198,7 @@ ActiveBody::ActiveBody( Thing *thing, const ModuleData* moduleData ) :
 		  // For Contra: super units won't be affected by the health buff.
 			// Cheezy way to tell is see if 'maxSimultaneousDeterminedBySuperweaponRestriction' is set for a non-structure.
 			// This won't catch things forced to a limit of 1 like commando units, so, suppose that works out nicely.
-			if (obj->isMaxSimultaneousDeterminedBySuperweaponRestriction())
+			if (obj->getTemplate()->isMaxSimultaneousDeterminedBySuperweaponRestriction())
 			{
 				// skip
 			}
