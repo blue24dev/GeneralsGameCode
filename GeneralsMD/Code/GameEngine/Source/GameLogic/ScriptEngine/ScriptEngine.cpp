@@ -5995,7 +5995,7 @@ Player *ScriptEngine::getSkirmishEnemyPlayer()
 	if (m_currentPlayer) {
 		Player *enemy = m_currentPlayer->getCurrentEnemy();
 		if (enemy==nullptr) {
-			//MODDD - TODO.
+			//MODDD - TODO
 			// This is making a broad assumption that any non-computer-marked player (same as PLAYER_HUMAN) makes sense
 			// to be an enemy of this computer player. However, what about the rare case a computer player is allied
 			// with the local player (single-player) or the slot players (co-op)?

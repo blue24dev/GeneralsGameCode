@@ -149,8 +149,9 @@ static Bool buttonPushed = FALSE;
 static Bool stillNeedsToSetOptions = FALSE;
 void skirmishUpdateSlotList();
 static void populateSkirmishBattleHonors();
-//MODDD - quick test
+#if HONORS_TEST
 static void testHonors();
+#endif
 enum{ GREATER_NO_FPS_LIMIT = 60};
 Bool doUpdateSlotList = TRUE;
 
@@ -1184,7 +1185,9 @@ void InitSkirmishGameGadgets()
 	}
 
 	populateSkirmishBattleHonors();
-	//testHonors();
+#if HONORS_TEST
+	testHonors();
+#endif
 }
 
 void skirmishUpdateSlotList()
@@ -1852,7 +1855,7 @@ const Image* lookupRankImage(AsciiString side, Int rank)
 	return img;
 }
 
-//MODDD - quick test
+#if HONORS_TEST
 void testHonors() {
 	static int countah = 0;
 	GameWindow *list = TheWindowManager->winGetWindowFromId(nullptr, NAMEKEY("SkirmishGameOptionsMenu.wnd:ListboxInfo"));
@@ -1953,6 +1956,7 @@ void testHonors() {
 		countah = 0;
 	}
 }
+#endif
 // --------------------------------------------------------------------------------------
 
 void populateSkirmishBattleHonors()
