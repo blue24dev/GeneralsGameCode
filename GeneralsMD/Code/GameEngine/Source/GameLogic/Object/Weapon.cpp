@@ -2013,7 +2013,7 @@ void Weapon::computeBonus(const Object *source, WeaponBonusConditionFlags extraB
 	else if (source->isKindOf(KINDOF_INFANTRY)) {
 		Real current = bonus.getField(WeaponBonus::RANGE);
 		bonus.setField(WeaponBonus::RANGE, current + 0.20f);
-		Real current = bonus.getField(WeaponBonus::DAMAGE);
+		current = bonus.getField(WeaponBonus::DAMAGE);
 		bonus.setField(WeaponBonus::DAMAGE, current + 0.10f);
 	}
 	// Everything else can get a little more range anyway
