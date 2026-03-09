@@ -195,20 +195,30 @@ ActiveBody::ActiveBody( Thing *thing, const ModuleData* moduleData ) :
 			m_initialHealth *= 1.75;
 		}
 	} else {
-			KindOfMaskType tempMask;
-			tempMask.set(KINDOF_INFANTRY);
-			tempMask.set(KINDOF_VEHICLE);
-			tempMask.set(KINDOF_AIRCRAFT);
-			tempMask.set(KINDOF_HUGE_VEHICLE);
-			// don't these should be needed, nor forbidding UNATTACKABLE?
-			//tempMask.set(KINDOF_DOZER);
-			//tempMask.set(KINDOF_HARVESTER);
-			if (obj->isAnyKindOf(tempMask)) {
-				// a non-structure unit (not some weird system/inner-detail thing): have a little more health anyway
-				m_currentHealth *= 1.20;
-				m_prevHealth *= 1.20;
-				m_maxHealth *= 1.20;
-				m_initialHealth *= 1.20;
+		  // For Contra: super units won't be affected by the health buff.
+			// Cheezy way to tell is see if 'maxSimultaneousDeterminedBySuperweaponRestriction' is set for a non-structure.
+			// This won't catch things forced to a limit of 1 like commando units, so, suppose that works out nicely.
+			if (obj->isMaxSimultaneousDeterminedBySuperweaponRestriction())
+			{
+				// skip
+			}
+			else
+			{
+				KindOfMaskType tempMask;
+				tempMask.set(KINDOF_INFANTRY);
+				tempMask.set(KINDOF_VEHICLE);
+				tempMask.set(KINDOF_AIRCRAFT);
+				tempMask.set(KINDOF_HUGE_VEHICLE);
+				// don't these should be needed, nor forbidding UNATTACKABLE?
+				//tempMask.set(KINDOF_DOZER);
+				//tempMask.set(KINDOF_HARVESTER);
+				if (obj->isAnyKindOf(tempMask)) {
+					// a non-structure unit (not some weird system/inner-detail thing): have a little more health anyway
+					m_currentHealth *= 1.20;
+					m_prevHealth *= 1.20;
+					m_maxHealth *= 1.20;
+					m_initialHealth *= 1.20;
+				}
 			}
 	}
 	*/

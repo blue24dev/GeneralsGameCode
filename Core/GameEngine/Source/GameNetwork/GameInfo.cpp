@@ -869,9 +869,9 @@ Bool GameInfo::isMultiPlayer()
 
 Bool GameInfo::isSandbox()
 {
-	//MODDD - if either '_FORCE' constant is on, never say this is 'sandbox' mode.
+#if FORCE_GAME_CONTEXT != FGC_NONE
+	//MODDD - if this is GC or campaign mode, never say this is 'sandbox' mode.
 	// Slot players may be on the same team, but there are likely still enemies to these players on the map.
-#if GENERALS_CHALLENGE_FORCE || CAMPAIGN_FORCE
 	return FALSE;
 #endif
 

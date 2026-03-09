@@ -177,9 +177,8 @@ Bool VictoryConditions::multipleAlliancesExist()
 //-------------------------------------------------------------------------------------------------
 void VictoryConditions::update()
 {
-#if GENERALS_CHALLENGE_FORCE || CAMPAIGN_FORCE
-	//MODDD - CHANGE
-	// Early termination.
+#if FORCE_GAME_CONTEXT != FGC_NONE
+	//MODDD - Early termination.
 	// Check for default defeat conditions removed.
 	// Doing the generals challenge normally has "isMultiplayer()" showing 0, and even localSlotNum being -1.
 	// So these checks never run for there, they may as well not run here either.

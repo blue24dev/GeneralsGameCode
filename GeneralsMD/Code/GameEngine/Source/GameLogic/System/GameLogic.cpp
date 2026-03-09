@@ -1177,7 +1177,7 @@ void GameLogic::setGameMode( GameMode mode )
 	updateDisplayBusyState();
 }
 
-#if CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 // Figure out which side baked into the map represents "me", the one creating the game or joining someone
 // else's in a network game.
 // Needed because campaign maps are a special case: unlike skirmish and generals challenge maps that create
@@ -1187,8 +1187,8 @@ void GameLogic::setGameMode( GameMode mode )
 // first (host of the game) will play as.
 // One side should have its dict receive a 'TRUE' value at 'TheKey_multiplayerIsLocal' - this will be the side
 // the currrent machine(user) will play as in-game.
-// Lastly, this isn't needed for GENERALS_CHALLENGE_FORCE & neither '_FORCE' choice because both cases use
-// the skirmish map system (always a "player#" that knows which belongs to the current machine).
+// Lastly, this isn't needed for FGC_CHALLENGE_FORCE/CAMPAIGN because both cases use the skirmish map system
+// (always a "player#" that knows which belongs to the current machine).
 //MODDD - TODO - couldn't 'populateHumanPlayerRefs' in PlayerList handle this too?
 // Do whatever a side having 'TheKey_multiplayerIsLocal' does to declare that this player is for the local user/machine.
 SidesInfo* getMultiplayerLocalSide()
@@ -1246,7 +1246,7 @@ SidesInfo* getMultiplayerLocalSide()
 		// Failure. ??? Not sure
 		/*
 		AsciiString errorText;
-		errorText.format("fatal error! CAMPAIGN_FORCE is on and your shell map lacks a single non-computer player.");
+		errorText.format("fatal error! FGC_CAMPAIGN is on and your shell map lacks a single non-computer player.");
 		RELEASE_CRASH(errorText.str());
 		*/
 		return nullptr;
@@ -1298,7 +1298,7 @@ SidesInfo* getMultiplayerLocalSide()
 
 		// Failure (no non-computer side - how?)
 		AsciiString errorText;
-		errorText.format("fatal error! CAMPAIGN_FORCE is on and this map lacks a side/player for this user to play as.\nThere must be at least one human-marked side/player, though some expected choices such as \"ThePlayer\", \"Player\", or \"player0\" will receive precedence.");
+		errorText.format("fatal error! FGC_CAMPAIGN is on and this map lacks a side/player for this user to play as.\nThere must be at least one human-marked side/player, though some expected choices such as \"ThePlayer\", \"Player\", or \"player0\" will receive precedence.");
 		RELEASE_CRASH(errorText.str());
 	}
 	else
@@ -1314,7 +1314,7 @@ SidesInfo* getMultiplayerLocalSide()
 		// non-computer-marked players as-is that clearly aren't intended for multiplayer (not intended
 		// for someone to actually play as). Guessing at that point isn't wise.
 		AsciiString errorText;
-		errorText.format("fatal error! CAMPAIGN_FORCE is on and this map lacks a side/player for this user to play as.\nA side/player of \"player%d\" was expected but not found.", localSlotNum);
+		errorText.format("fatal error! FGC_CAMPAIGN is on and this map lacks a side/player for this user to play as.\nA side/player of \"player%d\" was expected but not found.", localSlotNum);
 		RELEASE_CRASH(errorText.str());
 	}
 	return nullptr;
@@ -1417,11 +1417,11 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	TheWritableGlobalData->m_loadScreenRender = TRUE;	///< mark it so only a few select things are rendered during load
 	TheWritableGlobalData->m_TiVOFastMode = FALSE;	//always disable the TIVO fast-forward mode at the start of a new game.
 
-	//MODDD - involve macro settings for how this is decided
+	//MODDD - involve the setting for how this is decided
 	Bool isChallengeCampaign;
-#if GENERALS_CHALLENGE_FORCE
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
 	isChallengeCampaign = TRUE;
-#elif CAMPAIGN_FORCE
+#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 	isChallengeCampaign = FALSE;
 #else
 	// retail
@@ -1454,14 +1454,14 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 		{
 		  TheGameInfo = TheSkirmishGameInfo;
 		}
-		//MODDD - #if wrapper. For GENERALS_CHALLENGE_FORCE, there is no need for this check as the skirmish game
+		//MODDD - #if wrapper. For GENERALS_CHALLENGE, there is no need for this check as the skirmish game
 		// mode should be used instead for non-network games.
-		// For GENERALS_CHALLENGE_FORCE, it may be possible to generate a 'TheChallengeGameInfo' like the generals
+		// It may be possible to generate a 'TheChallengeGameInfo' for FGC_GENERALS_CHALLENGE like the generals
 		// challenge menu normally does & populate it with anything from 'TheSkirmishGameInfo' in place of what
 		// the normal GC menu does, but this doesn't seem worth it considering how 'TheGameInfo' for network games
 		// would also need to be considered. Replacing a MP gamemode with a SP one might have issues without some
 		// attention to whatever the MP needs to do that's special (I assume something?) but feel free to test that out.
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT == FGC_NONE
 		else if(isChallengeCampaign)
 		{
 			TheGameInfo = TheChallengeGameInfo;
@@ -1492,7 +1492,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	// to easily be decided by macro setting.
 	Bool isStandardSlotGameOrReplay;
 
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT == FGC_NONE
 	// retail
 	isSkirmishOrSkirmishReplay = FALSE;
 	if (TheGameInfo)
@@ -1515,10 +1515,10 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	isStandardSlotGameOrReplay = FALSE;
 #endif
 
-	//MODDD - several places should be skipped for 'CAMPAIGN_FORCE' even if the game isn't null.
+	//MODDD - several places should be skipped for FGC_CAMPAIGN even if the game isn't null.
 	// Ex: co-op (network) games have a non-null game info but should still avoid some automatic behavior.
 	Bool doAutomaticPostGamePlayerSetup;
-#if CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 	doAutomaticPostGamePlayerSetup = FALSE;
 #else
 	doAutomaticPostGamePlayerSetup = (TheGameInfo != nullptr);
@@ -1746,7 +1746,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 		}
 	}
 
-#if CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 	SidesInfo* sideInfo = getMultiplayerLocalSide();
 	if (sideInfo != nullptr)
 	{

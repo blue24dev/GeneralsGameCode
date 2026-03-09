@@ -178,7 +178,7 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 		// Check to see if slots are available (map started from the skirmish/network menus).
 		// Can decide if a slot player's corresponding slot was actually occupied (given a connected player).
 		// Basically, don't attack/target a slot that's using a dummy computer player (not participating anyway).
-		// Note that 'TheGameInfo' is NULL for playing the campaign the normally intended way without 'CAMPAIGN_FORCE'.
+		// Note that 'TheGameInfo' is NULL for playing the campaign the normally intended way without FGC_CAMPAIGN.
 		// No slot info means the game is 'single-player' (of course you're here) so this check wouldn't have a purpose anyway.
 		if (TheGameInfo)
 		{
@@ -230,10 +230,10 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 	/*
 	Bool isCampaignMap;
 
-	// Check the '_FORCE' constants for an easy assumption
-#if GENERALS_CHALLENGE_FORCE
+	// Check the setting for an easy assumption
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
 	isCampaignMap = FALSE;
-#elif CAMPAIGN_FORCE
+#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 	isCampaignMap = TRUE;
 #else
 	// No constant to tell us. Check the game mode and the usual generals challenge check.
@@ -5999,14 +5999,14 @@ Player *ScriptEngine::getSkirmishEnemyPlayer()
 			// This is making a broad assumption that any non-computer-marked player (same as PLAYER_HUMAN) makes sense
 			// to be an enemy of this computer player. However, what about the rare case a computer player is allied
 			// with the local player (single-player) or the slot players (co-op)?
-			// And in a real skirmish/network game (not '_FORCE' constants being used to play an abnormal map), couldn't this
-			// computer player happen to be allies or enemies with any slot player, human or not?
+			// And in a real skirmish/network game (FORCE_GAME_CONTEXT=FGC_NONE, not being used to play a GC/campaign map),
+			// couldn't this computer player happen to be allies or enemies with any slot player, human or not?
 			// UPDATE - always use my redirect and choose what to do there instead.
 			// ---
 			// Longer explanation:
 			// In the original game, this just stops at the first computer-marked (presumably human) player. This often
 			// works for the campaign, and always for Generals Challenge maps where a computer player's enemy is always *the* human/local user playing the game.
-			// However, now that the campaign & generals challenge can be played in network mode / co-op ('_FORCE' constants), choosing randomly
+			// However, now that the campaign & generals challenge can be played in network mode / co-op (FORCE_GAME_CONTEXT choices), choosing randomly
 			// between any possible opponents instead of always choosing the first human player makes more sense.
 			// I don't understand how the retail logic would be OK for skmirish. Couldn't a computer player happen to be allies with the earliest human player,
 			// or even if they are enemies, have other enemy computer players that should be picked some of the time instead?
@@ -6041,9 +6041,9 @@ Player *ScriptEngine::getSkirmishEnemyPlayer()
 //-------------------------------------------------------------------------------------------------
 Player *ScriptEngine::getPlayerFromAsciiString(const AsciiString& playerString)
 {
-#if GENERALS_CHALLENGE_FORCE
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
 	Bool is_GeneralsChallengeContext = TRUE;
-#elif CAMPAIGN_FORCE
+#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 	Bool is_GeneralsChallengeContext = FALSE;
 #else
 	// retail - decide if it's the case per context as usual
@@ -6055,14 +6055,14 @@ Player *ScriptEngine::getPlayerFromAsciiString(const AsciiString& playerString)
 		// However, they've also built many of their single player maps with this string, where "ThePlayer" is not intended as an alias.
 		// ---
 		//MODDD - replacing this. 'getLocalPlayer' will return a different choice per machine in network games (ex: whether you're "player0" or "player1"
-		// in GC maps played in the new co-op mode with GENERALS_CHALLENGE_FORCE).
+		// in GC maps played in the new co-op mode with FGC_GENERALS_CHALLENGE).
 		// The new 'getFirstSlotPlayer' will get the first slot-based player on all machines, or the only player in single-player (cover all use cases).
 		// ---
-		// LAST UPDATE - turns out the original is still best for retail (neither '_FORCE' constant), oddly enough.
+		// LAST UPDATE - turns out the original is still best for retail (FGC_NONE), oddly enough.
 		// This won't have issues used in GC/campaign played normally (always single player), and in skirmish/network games,
 		// the scripts happen to only use the local player for what music to play (not a sync issue).
 		// Forcing the 1st player to be used unconditionally means everyone gets that player's music instead of their own.
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT == FGC_NONE
 		return ThePlayerList->getLocalPlayer();
 #else
 		// Still makes sense if either constant is on in case of GC/campaign being played in co-op mode.
@@ -6192,9 +6192,9 @@ PolygonTrigger *ScriptEngine::getQualifiedTriggerAreaByName( AsciiString name )
 //-------------------------------------------------------------------------------------------------
 Team * ScriptEngine::getTeamNamed(const AsciiString& teamName)
 {
-#if GENERALS_CHALLENGE_FORCE
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
 	Bool is_GeneralsChallengeContext = TRUE;
-#elif CAMPAIGN_FORCE
+#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 	Bool is_GeneralsChallengeContext = FALSE;
 #else
 	// retail - decide if it's the case per context as usual
@@ -6470,10 +6470,11 @@ void ScriptEngine::doNamedMapReveal(const AsciiString& revealName)
 	Coord3D pos;
 	pos = *way->getLocation();
 
-	//MODDD - force for all players if this const is on
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+	//MODDD
+#if FORCE_GAME_CONTEXT == FGC_NONE
 	ThePartitionManager->doShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, player->getPlayerMask());
 #else
+	// force for all players
 	ThePartitionManager->doShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, getHumanPlayerMask());
 #endif
 }
@@ -6508,10 +6509,11 @@ void ScriptEngine::undoNamedMapReveal(const AsciiString& revealName)
 	Coord3D pos;
 	pos = *way->getLocation();
 
-	//MODDD - force for all players if this const is on
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+	//MODDD
+#if FORCE_GAME_CONTEXT == FGC_NONE
 	ThePartitionManager->undoShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, player->getPlayerMask());
 #else
+	// force for all players
 	ThePartitionManager->undoShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, getHumanPlayerMask());
 #endif
 }

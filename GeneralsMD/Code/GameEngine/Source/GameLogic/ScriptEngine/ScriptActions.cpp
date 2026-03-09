@@ -3105,7 +3105,7 @@ void ScriptActions::doRevealMapAtWaypoint(const AsciiString& waypointName, Real 
 	}
 #endif
 
-#if GENERALS_CHALLENGE_FORCE
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
 	if (TheGameLogic->getGameMode() != GAME_SHELL) {
 		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
 			// fall through
@@ -3122,18 +3122,19 @@ void ScriptActions::doRevealMapAtWaypoint(const AsciiString& waypointName, Real 
 	}
 
 	// thanks for making me need to do this visual studio.......
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT == FGC_NONE
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
 #endif
 	PlayerMaskType playerMask;
 
-	//MODDD - if this constant is on, always apply to all human players instead
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+	//MODDD
+#if FORCE_GAME_CONTEXT == FGC_NONE
 	if (player && playerName.isNotEmpty())
 		playerMask = player->getPlayerMask();
 	else
 		playerMask = getHumanPlayerMask();
 #else
+	// always apply to all human players instead
 	playerMask = getHumanPlayerMask();
 #endif
 
@@ -3157,7 +3158,7 @@ void ScriptActions::doShroudMapAtWaypoint(const AsciiString& waypointName, Real 
 	}
 #endif
 
-#if GENERALS_CHALLENGE_FORCE
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
 	if (TheGameLogic->getGameMode() != GAME_SHELL) {
 		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
 			// fall through
@@ -3174,18 +3175,19 @@ void ScriptActions::doShroudMapAtWaypoint(const AsciiString& waypointName, Real 
 	}
 
 	// thanks for making me need to do this visual studio.......
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT == FGC_NONE
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
 #endif
 	PlayerMaskType playerMask;
 
-	//MODDD - if this constant is on, always apply to all human players instead
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+	//MODDD
+#if FORCE_GAME_CONTEXT == FGC_NONE
 	if (player && playerName.isNotEmpty())
 		playerMask = player->getPlayerMask();
 	else
 		playerMask = getHumanPlayerMask();
 #else
+	// always apply to all human players instead
 	playerMask = getHumanPlayerMask();
 #endif
 
@@ -3219,7 +3221,7 @@ void ScriptActions::doRevealMapEntire(const AsciiString& playerName)
 	}
 #endif
 
-#if GENERALS_CHALLENGE_FORCE
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
 	if (TheGameLogic->getGameMode() != GAME_SHELL) {
 		// Copy of the loop-thru players route further down. Just do this to apply any reveal to all players for co-op friendliness
 		// (so long as the script is referring to either 'ThePlayer' or 'player0', in case of manual edits done elsewhere - ex: don't do this for both 'player0' and 'player1', etc.)
@@ -3235,7 +3237,7 @@ void ScriptActions::doRevealMapEntire(const AsciiString& playerName)
 		}
 		return;
 	}
-#elif CAMPAIGN_FORCE
+#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 	if (TheGameLogic->getGameMode() != GAME_SHELL) {
 		// Just do it for all human players.
 		for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
@@ -3281,7 +3283,7 @@ void ScriptActions::doRevealMapEntirePermanently( Bool reveal, const AsciiString
 	}
 #endif
 
-#if GENERALS_CHALLENGE_FORCE
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
 	if (TheGameLogic->getGameMode() != GAME_SHELL) {
 		// Copy of the loop-thru players route further down. Just do this to apply any reveal to all players for co-op friendliness
 		// (so long as the script is referring to either 'ThePlayer' or 'player0', in case of manual edits done elsewhere - ex: don't do this for both 'player0' and 'player1', etc.)
@@ -3300,7 +3302,7 @@ void ScriptActions::doRevealMapEntirePermanently( Bool reveal, const AsciiString
 		}
 		return;
 	}
-#elif CAMPAIGN_FORCE
+#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 	if (TheGameLogic->getGameMode() != GAME_SHELL) {
 		for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
 		{
@@ -3354,7 +3356,7 @@ void ScriptActions::doShroudMapEntire(const AsciiString& playerName)
 	}
 #endif
 
-#if GENERALS_CHALLENGE_FORCE
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
 	if (TheGameLogic->getGameMode() != GAME_SHELL) {
 		// Copy of the loop-thru players route further down. Just do this to apply any reveal to all players for co-op friendliness
 		// (so long as the script is referring to either 'ThePlayer' or 'player0', in case of manual edits done elsewhere - ex: don't do this for both 'player0' and 'player1', etc.)
@@ -3370,7 +3372,7 @@ void ScriptActions::doShroudMapEntire(const AsciiString& playerName)
 		}
 		return;
 	}
-#elif CAMPAIGN_FORCE
+#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 	if (TheGameLogic->getGameMode() != GAME_SHELL) {
 		for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
 		{
@@ -6395,9 +6397,9 @@ void ScriptActions::doRevealMapAtWaypointPermanent(const AsciiString& waypointNa
 	}
 #endif
 
-	//MODDD - nevermind, a few edits in ScriptEngine.cpp is much easier...
+	//MODDD - nevermind, a few edits in ScriptEngine.cpp is much easier
 	/*
-#if GENERALS_CHALLENGE_FORCE
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
 	if (TheGameLogic->getGameMode() != GAME_SHELL) {
 		// Copy of the loop-thru players route further down. Just do this to apply any reveal to all players for co-op friendliness
 		// (so long as the script is referring to either 'ThePlayer' or 'player0', in case of manual edits done elsewhere - ex: don't do this for both 'player0' and 'player1', etc.)
@@ -6422,7 +6424,7 @@ void ScriptActions::doRevealMapAtWaypointPermanent(const AsciiString& waypointNa
 #endif
   */
 	// However, can block calls that aren't to one of the expected player choices
-#if GENERALS_CHALLENGE_FORCE
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
 	if (TheGameLogic->getGameMode() != GAME_SHELL) {
 		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
 			// fall through

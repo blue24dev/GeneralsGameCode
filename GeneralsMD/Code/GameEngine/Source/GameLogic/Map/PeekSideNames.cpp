@@ -1,6 +1,5 @@
 //MODDD - new file
-
-#if CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
 
 #include "Common/DataChunk.h"

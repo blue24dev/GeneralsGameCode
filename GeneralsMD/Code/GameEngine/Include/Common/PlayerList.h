@@ -172,8 +172,8 @@ private:
 	Player				*m_players[MAX_PLAYER_COUNT];
 
 //MODDD - add a list of references to players meant to be playable by someone connected to the game since
-// they aren't generated (names "player<0-7") as expected by network mode in CAMPAIGN_FORCE.
-// UPDATE - going to allow this for any choice of '_FORCE' including none at all.
+// they aren't generated (names "player<0-7") as expected by network mode in FGC_CAMPAIGN.
+// UPDATE - going to allow this for any choice of FORCE_GAME_CONTEXT including NONE.
 // May as well have hard links to any players in case these have special signifiance elsewhere than having
 // to do "player#" string lookups so often (not purposefully replacing all of them for now, though).
 // (public for now for laziness)

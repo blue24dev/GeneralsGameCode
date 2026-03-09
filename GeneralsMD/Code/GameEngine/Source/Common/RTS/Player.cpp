@@ -2061,7 +2061,7 @@ void Player::killPlayer()
 	}
 
 //MODDD
-#if !GENERALS_CHALLENGE_FORCE && !CAMPAIGN_FORCE
+#if FORCE_GAME_CONTEXT == FGC_NONE
 	if (TheGameLogic->isInSinglePlayerGame()) {
 #else
   // Treat this as a single player game like the original GC or campaign mission would

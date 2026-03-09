@@ -2010,7 +2010,20 @@ void Weapon::computeBonus(const Object *source, WeaponBonusConditionFlags extraB
 		Real current = bonus.getField(WeaponBonus::RANGE);
 		bonus.setField(WeaponBonus::RANGE, current + 0.25f);
 	}
+	// Go ahead and give infantry some constant bonuses since their garrisoned bonus has been toned down.
+	else if (source->isKindOf(KINDOF_INFANTRY)) {
+		Real current = bonus.getField(WeaponBonus::RANGE);
+		bonus.setField(WeaponBonus::RANGE, current + 0.20f);
+		Real current = bonus.getField(WeaponBonus::DAMAGE);
+		bonus.setField(WeaponBonus::DAMAGE, current + 0.10f);
+	}
+	// Everything else can get a little more range anyway
+	else {
+		Real current = bonus.getField(WeaponBonus::RANGE);
+		bonus.setField(WeaponBonus::RANGE, current + 0.10f);
+	}
 	*/
+	
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -3761,14 +3774,14 @@ void WeaponBonusSet::parseWeaponBonusSet(INI* ini)
 		if (wf == WeaponBonus::DAMAGE)
 		{
 			// as of retail, 125%
-			// (rockets & anti-infantry with a range bonus are obnoxious enough behind concrete to begin with, why bonus damage to begin with???)
+			// rockets & anti-infantry with a range bonus are obnoxious enough behind concrete to begin with, why bonus damage to begin with?
 			v = 1.00f;
 		}
 		else if (wf == WeaponBonus::RANGE)
 		{
 			// as of retail, 133%
-			// (I don't think the bonus I gave to base defenses through the bonus system applies at the same time as this)
-			v = 1.28f;
+			// I don't think the bonus I gave to base defenses through the bonus system applies at the same time as this
+			v = 1.20f;
 		}
 	}
 	*/
