@@ -91,7 +91,7 @@ void Money::deposit(UnsignedInt amountToDeposit, Bool playSound, Bool trackIncom
 
 	//MODDD - extra money hack for AI players (new way - scalar on income sources)
 	// ------------------------------------------------------
-#if defined(COMPUTER_PLAYER_MONEY_SCALAR):
+#if defined(COMPUTER_PLAYER_MONEY_SCALAR)
 	if (amountToDeposit < 2500) {
 		Player* player = ThePlayerList->getNthPlayer(m_playerIndex);
 		if (player != nullptr && player->getPlayerType() == PLAYER_COMPUTER) {

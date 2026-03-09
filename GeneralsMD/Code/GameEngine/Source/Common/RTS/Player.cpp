@@ -867,7 +867,7 @@ void Player::initFromDict(const Dict* d)
 
 	//MODDD - added, overrides starting money from skirmish setting or an absolute default
 	// (only seen if a map script doesn't soon override that)
-#if defined(FORCE_HUMAN_PLAYER_START_MONEY) && FORCE_HUMAN_PLAYER_START_MONEY != 0:
+#if defined(FORCE_HUMAN_PLAYER_START_MONEY) && FORCE_HUMAN_PLAYER_START_MONEY != 0
 	if (getPlayerType() == PLAYER_HUMAN) {
 		m_money.withdraw(m_money.countMoney());
 		m_money.deposit( FORCE_HUMAN_PLAYER_START_MONEY, FALSE );
