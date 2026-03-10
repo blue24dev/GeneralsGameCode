@@ -32,8 +32,12 @@
 #include "Common/BitFlagsIO.h"
 #include "Common/SpecialPowerType.h"
 
+//MODDD
+#include "Common/BitFlagsRaw.h"
+#include "Common/BitFlagsRawIO.h"
+
 typedef BitFlags<SPECIALPOWER_COUNT>	SpecialPowerMaskType;
 
 #if SIDEBAR_ENUM_CONFLICT_FIX
-typedef BitFlags<SPECIALPOWER_MAX_COUNT>	SpecialPowerIDMaskType;
+typedef BitFlagsRaw<SPECIALPOWER_MAX_COUNT>	SpecialPowerIDMaskType;
 #endif

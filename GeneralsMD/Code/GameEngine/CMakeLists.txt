@@ -16,6 +16,11 @@ set(GAMEENGINE_SRC
     Include/Common/BezierSegment.h
     Include/Common/BitFlags.h
     Include/Common/BitFlagsIO.h
+    
+    #MODDD - new files
+    Include/Common/BitFlagsRaw.h
+    Include/Common/BitFlagsRawIO.h
+
     Include/Common/BorderColors.h
     Include/Common/BuildAssistant.h
     Include/Common/ClientUpdateModule.h
@@ -562,6 +567,10 @@ set(GAMEENGINE_SRC
     Source/Common/Bezier/BezFwdIterator.cpp
     Source/Common/Bezier/BezierSegment.cpp
     Source/Common/BitFlags.cpp
+
+    #MODDD
+    Source/Common/BitFlagsRaw.cpp
+
     Source/Common/CommandLine.cpp
 #    Source/Common/crc.cpp
 #    Source/Common/CRCDebug.cpp
