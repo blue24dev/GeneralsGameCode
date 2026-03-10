@@ -117,6 +117,8 @@
 #include "Common/AudioEventInfo.h"
 #include "Common/DynamicAudioEventInfo.h"
 
+//MODDD
+#include "Common/BitFlagsRawIO.h"
 //MODDD - temp hack
 #include "GameLogic/Module/ActiveShroudUpgrade.h"
 

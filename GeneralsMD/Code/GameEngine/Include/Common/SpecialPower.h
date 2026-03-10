@@ -89,8 +89,10 @@ inline void FLIP_SPECIALPOWERMASK(SpecialPowerMaskType& m)
 }
 
 //MODDD - new copy below
+// Why is this even a thing anyway, what's wrong with just calling the member functions from elsewhere?
 #if SIDEBAR_ENUM_CONFLICT_FIX
-#define MAKE_SPECIALPOWERID_MASK(k) SpecialPowerIDMaskType(SpecialPowerIDMaskType::kInit, (k))
+// won't work, nothing uses this anyway
+//#define MAKE_SPECIALPOWERID_MASK(k) SpecialPowerIDMaskType(SpecialPowerIDMaskType::kInit, (k))
 
 inline Bool TEST_SPECIALPOWERIDMASK(const SpecialPowerIDMaskType& m, SpecialPowerIDType t)
 {

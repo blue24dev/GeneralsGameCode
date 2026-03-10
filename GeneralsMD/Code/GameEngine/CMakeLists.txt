@@ -16,6 +16,11 @@ set(GAMEENGINE_SRC
     Include/Common/BezierSegment.h
     Include/Common/BitFlags.h
     Include/Common/BitFlagsIO.h
+    
+    #MODDD - new files
+    Include/Common/BitFlagsRaw.h
+    Include/Common/BitFlagsRawIO.h
+
     Include/Common/BorderColors.h
     Include/Common/BuildAssistant.h
     Include/Common/ClientUpdateModule.h
@@ -232,7 +237,7 @@ set(GAMEENGINE_SRC
     Include/GameLogic/AIDock.h
     Include/GameLogic/AIGuard.h
     Include/GameLogic/AIGuardRetaliate.h
-    Include/GameLogic/AIPathfind.h
+#    Include/GameLogic/AIPathfind.h
     Include/GameLogic/AIPlayer.h
     Include/GameLogic/AISkirmishPlayer.h
     Include/GameLogic/AIStateMachine.h
@@ -562,6 +567,10 @@ set(GAMEENGINE_SRC
     Source/Common/Bezier/BezFwdIterator.cpp
     Source/Common/Bezier/BezierSegment.cpp
     Source/Common/BitFlags.cpp
+
+    #MODDD
+    Source/Common/BitFlagsRaw.cpp
+
     Source/Common/CommandLine.cpp
 #    Source/Common/crc.cpp
 #    Source/Common/CRCDebug.cpp
@@ -830,7 +839,7 @@ set(GAMEENGINE_SRC
     Source/GameLogic/AI/AIGroup.cpp
     Source/GameLogic/AI/AIGuard.cpp
     Source/GameLogic/AI/AIGuardRetaliate.cpp
-    Source/GameLogic/AI/AIPathfind.cpp
+#    Source/GameLogic/AI/AIPathfind.cpp
     Source/GameLogic/AI/AIPlayer.cpp
     Source/GameLogic/AI/AISkirmishPlayer.cpp
     Source/GameLogic/AI/AIStates.cpp
