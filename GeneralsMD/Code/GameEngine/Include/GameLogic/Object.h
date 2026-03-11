@@ -178,23 +178,25 @@ public:
 	//MODDD - added param 'objectInitLockLocalTemp', swapped 'team' and 'objectStatusMask' order
 	Object(const ThingTemplate *thing, Team *team, const ObjectStatusMaskType &objectStatusMask, Bool objectInitLockLocalTemp);
 
-	//MODDD
-	void earlyConstructor(const ThingTemplate* tt);
+	//MODDD - all are new except 'initObject'
 	void createBehaviorModules_PRE(const ThingTemplate* tt);
 	void createBehaviorModules(const ThingTemplate* tt);
-	void loadInit();
-	void initHookup();
-	void constructorEnd();
 	void constructorOnActualTeamAssigned();
 	void setStartVeterancy();
 	void callModuleOnObjectCreated();
 	void runCreateModules();
-	void gamePostLoad();
+	void initHookup();
+	void earlyConstructor(const ThingTemplate* tt);
+	void loadInit();
 	void initObject();
+	void constructorEnd();
+	void gamePostLoad();
+	void finishInGameInit();
 	Bool isInitLocked();
 	Bool isInitLockedHard();
 	Int getMoneySpentOnMe();
 	void setMoneySpentOnMe(Int moneySpentOnMe);
+	// ---
 
 	void onDestroy();																							///< run during TheGameLogic::destroyObject
 

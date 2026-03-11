@@ -15,7 +15,7 @@
 
 class Xfer;
 
-// Note: assumes 'NUMBITS' is divisible by 8 for now
+// Note: 'NUMBITS' should always be divisible by 8 (a byte)
 template <size_t NUMBITS>
 class BitFlagsRaw
 {

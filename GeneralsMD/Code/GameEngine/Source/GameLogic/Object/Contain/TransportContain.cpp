@@ -140,10 +140,18 @@ TransportContain::TransportContain( Thing *thing, const ModuleData *moduleData )
 }
 
 //MODDD - added event
-void TransportContain::onObjectCreated() {
+void TransportContain::onObjectCreated()
+{
 	OpenContain::onObjectCreated();
-	// Tempting, but going to leave this up to each subclass to handle on its own for safety
-	//TransportContain::createPayload();
+	//MODDD - new line
+	// Should be fine to do this for all subclasses.
+	// However, InternetHackContain and RailedTransportContain are the only subclasses I'm aware of that didn't
+	// make calls to 'createPayload()' in 'onObjectCreated' (didn't implement it nor was
+	// 'TransportContain::createPayload()' base class behavior) as of retail.
+	// Curiously, OverlordContain and HelixContain both made their own calls to 'createPayload' from
+	// 'onObjectCreated' as of retail.
+	// For info, TransportContain is the highest level class that has 'createPayload'.
+	createPayload();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -462,6 +470,11 @@ void TransportContain::createPayload()
 			{
 				DEBUG_CRASH( ( "DeliverPayload: PutInContainer %s is full, or not valid for the payload %s!", object->getName().str(), self->m_initialPayload.name.str() ) );
 			}
+
+			//MODDD - should run this. Ex: 'LockWeaponCreate::onBuildComplete()' was being missed in units spawned
+			// through support powers, causing slightly different behavior from units made normally (called that).
+			call_objectOnBuildComplete(payload);
+
 		}
 		contain->enableLoadSounds( TRUE );
 	}
@@ -476,6 +489,8 @@ UpdateSleepTime TransportContain::update()
 {
 	const TransportContainModuleData *moduleData = getTransportContainModuleData();
 
+	//MODDD - TODO - is this ever needed now that 'onObjectCreated' should always handle this?
+	// see if this condition ever passes anymore
 	if( m_payloadCreated == FALSE )
 		createPayload();
 
