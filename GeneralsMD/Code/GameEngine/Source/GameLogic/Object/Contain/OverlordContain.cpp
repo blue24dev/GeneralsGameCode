@@ -106,7 +106,9 @@ OverlordContain::~OverlordContain()
 
 void OverlordContain::onObjectCreated()
 {
-  OverlordContain::createPayload();
+	//MODDD - no need, just call the parent since this is handle in the base class now
+  //OverlordContain::createPayload();
+	TransportContain::onObjectCreated();
 }
 
 //-------------------------------------------------------------------------------------------------

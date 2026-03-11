@@ -827,9 +827,7 @@ UpdateSleepTime ProductionUpdate::update()
 
 							//MODDD - now that the position/angle is known
 							// ---
-							newObj->runCreateModules();
-							newObj->constructorEnd();
-							newObj->gamePostLoad();
+							newObj->finishInGameInit();
 							// ---
 
 							// since we successfully exited via this door, we should NOT call unreserveDoorForExit

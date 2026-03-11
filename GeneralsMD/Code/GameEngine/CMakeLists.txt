@@ -16,11 +16,10 @@ set(GAMEENGINE_SRC
     Include/Common/BezierSegment.h
     Include/Common/BitFlags.h
     Include/Common/BitFlagsIO.h
-    
-    #MODDD - new files
+    #MODDD - new
     Include/Common/BitFlagsRaw.h
+    #MODDD - new
     Include/Common/BitFlagsRawIO.h
-
     Include/Common/BorderColors.h
     Include/Common/BuildAssistant.h
     Include/Common/ClientUpdateModule.h
@@ -483,7 +482,7 @@ set(GAMEENGINE_SRC
     Include/GameLogic/ObjectScriptStatusBits.h
     Include/GameLogic/ObjectTypes.h
     Include/GameLogic/PartitionManager.h
-    # MODDD - new
+    #MODDD - new
     Include/GameLogic/PeekSideNames.h
     Include/GameLogic/PolygonTrigger.h
     Include/GameLogic/Powers.h
@@ -567,10 +566,8 @@ set(GAMEENGINE_SRC
     Source/Common/Bezier/BezFwdIterator.cpp
     Source/Common/Bezier/BezierSegment.cpp
     Source/Common/BitFlags.cpp
-
-    #MODDD
+    #MODDD - new
     Source/Common/BitFlagsRaw.cpp
-
     Source/Common/CommandLine.cpp
 #    Source/Common/crc.cpp
 #    Source/Common/CRCDebug.cpp
@@ -846,7 +843,7 @@ set(GAMEENGINE_SRC
     Source/GameLogic/AI/AITNGuard.cpp
     Source/GameLogic/AI/Squad.cpp
     Source/GameLogic/AI/TurretAI.cpp
-    # MODDD - new
+    #MODDD - new
     Source/GameLogic/Map/PeekSideNames.cpp
     Source/GameLogic/Map/PolygonTrigger.cpp
     Source/GameLogic/Map/SidesList.cpp

@@ -656,12 +656,35 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 	const Object *containedBy = source->getContainedBy();
 	Bool hasAWeaponInRange = FALSE;
 	Bool hasAWeapon				 = FALSE;
-	for (Int slot = 0; slot < WEAPONSLOT_COUNT - 1; ++slot)
+	//MODDD - renamed 'slot' to 'i', just be consistent.
+	for (Int i = 0; i < WEAPONSLOT_COUNT - 1; ++i)
 	{
-		Weapon *weaponToTestForRange = m_weapons[ m_curWeapon ];
+		//MODDD - DANGIT WESTWOOD!     YA DUN GOOFED
+		// You checked the same 'curWeapon' 3 times instead of each available weapon!
+		//Weapon *weaponToTestForRange = m_weapons[ m_curWeapon ];
+		Weapon *weaponToTestForRange = m_weapons[ i ];
+
 		if ( weaponToTestForRange )
 		{
 			hasAWeapon = TRUE;
+
+			//MODDD - copying this check from 'chooseBestWeaponForTarget' so that the odd case of technically having
+			// a weapon that can attack but being unable to select later it by failing the command-source-check doesn't
+			// happen. Including a 'locked' check since this shouldn't stop the only forced choice from working.
+			// ---
+			if (!isCurWeaponLocked())
+			{
+				CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
+				if( ( okSrcs & (1 << commandSource) ) == 0 )
+				{
+						if( !( okSrcs & (1 << CMD_DEFAULT_SWITCH_WEAPON) ) )
+						{
+							continue;
+						}
+				}
+			}
+			// ---
+
 			if ((m_totalAntiMask & targetAntiMask) == 0)//we don't care to check for this weapon
 				continue;
 
@@ -737,7 +760,33 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 		for( Int i = first; i >= last ; --i )
 		{
 			Weapon *weapon = m_weapons[ i ];
-			if (weapon && weapon->estimateWeaponDamage( source, victim ))
+
+			//MODDD - moving the null-check here for more flexibility
+			if (weapon == nullptr)
+			{
+				continue;
+			}
+
+			//MODDD - copying this check from 'chooseBestWeaponForTarget' so that the odd case of technically having
+			// a weapon that can attack but being unable to select later it by failing the command-source-check doesn't
+			// happen. Including a 'locked' check since this shouldn't stop the only forced choice from working.
+			// ---
+			if (!isCurWeaponLocked())
+			{
+				CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
+				if( ( okSrcs & (1 << commandSource) ) == 0 )
+				{
+						if( !( okSrcs & (1 << CMD_DEFAULT_SWITCH_WEAPON) ) )
+						{
+							continue;
+						}
+				}
+			}
+			// ---
+
+			//MODDD - null-check moved to further above
+			//if (weapon && weapon->estimateWeaponDamage( source, victim ))
+			if (weapon->estimateWeaponDamage( source, victim ))
 			{
 				//Kris: Aug 22, 2003
 				//Surgical fix so Jarmen Kell doesn't get a targeting cursor on enemy vehicles unless he is in snipe mode.
@@ -833,11 +882,20 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 		return TRUE;
 	// ---
 
-	if( isCurWeaponLocked() )
-		return TRUE; // I have been forced into choosing a specific weapon, so it is right until someone says otherwise
+	//MODDD - handling this differently further down so locked weapons can still deny letting a unit move toward
+	// something it still can't attack. Ex: a group selection to attack something with some unit that can't attack it,
+	// just because the unit's weapon is locked doesn't mean it shouldn't realize it can't participate sooner like
+	// units that aren't locked.
+	//if( isCurWeaponLocked() )
+	//	return TRUE; // I have been forced into choosing a specific weapon, so it is right until someone says otherwise
 
 	if (victim == nullptr)
 	{
+		//MODDD - include a check for 'isCurWeaponLocked()' to end just like earlier in this case without changing
+		// the current weapon.
+		if( isCurWeaponLocked() )
+			return TRUE;
+
 		// Weapon lock is checked first for specific attack- ground powers.  Otherwise, we will reproduce the old behavior
 		// and make only Primary attack the ground.
 		m_curWeapon = PRIMARY_WEAPON;
@@ -855,25 +913,55 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 	WeaponSlotType currentDecision = PRIMARY_WEAPON;
 	WeaponSlotType currentDecisionBackup = PRIMARY_WEAPON;
 
+	//MODDD - if locked, only check the current weapon, otherwise same as retail (run through all weapons).
+	Int firstWeaponIndex, lastWeaponIndex;
+	if( isCurWeaponLocked() )
+	{
+		firstWeaponIndex = m_curWeapon;
+		lastWeaponIndex = m_curWeapon;
+	}
+	else
+	{
+		firstWeaponIndex = WEAPONSLOT_COUNT - 1;
+		lastWeaponIndex = PRIMARY_WEAPON;
+	}
+
 	// go backwards, so that in the event of ties, the primary weapon is preferred
-	for (Int i = WEAPONSLOT_COUNT - 1; i >= PRIMARY_WEAPON ; --i)
+	//MODDD - involve the index-selection above now
+	//for (Int i = WEAPONSLOT_COUNT - 1; i >= PRIMARY_WEAPON ; --i)
+	for( Int i = firstWeaponIndex; i >= lastWeaponIndex ; --i )
 	{
 		/*
 			First: eliminate the weapons that cannot be used.
 		*/
 
+		//MODDD - replacing with something moved from below
+		/*
 		// no weapon in this slot.
 		if (!m_weapons[i])
 			continue;
+		*/
+		// ---
+		Weapon* weapon = m_weapons[i];
+		if (weapon == nullptr)
+			continue;
+		// ---
 
 		// weapon not allowed to be specified via this command source.
 		CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
 		if( ( okSrcs & (1 << cmdSource) ) == 0 )
 		{
+			//MODDD - NOTE. This looks a bit confusing at first glance.
+			// At this point this call's 'cmdSource' not allowed, like being CMD_FROM_PLAYER but the object's WeaponSet's
+			// usage of this weapon didn't mention that in the INI file. The standard route is to block allowing this weapon
+			// in this case.
+			// However, an exception is made if the usage of this weapon includes the 'DEFAULT_SWITCH_WEAPON' source.
+			// Then further below will proceed despite coming from a normally unwanted source.
+			// ---
 			//MODDD - this is a mistake in retail. See above: '1 << cmdSource'.
 			// a CMD choice has to be converted to that power of 2 to make sense for this comparison.
 			// That is, when the allowed-source bitmask was made and it found 'DEFAULT_SWITCH_WEAPON', it didn't
-			// add 4 to the bitmask, it added '2^4 -> 16'.
+			// add 4 to the bitmask, it added '2^4 -> 16', so this change checks for that instead.
 			//if( !( okSrcs & CMD_DEFAULT_SWITCH_WEAPON ) )
 			if( !( okSrcs & (1 << CMD_DEFAULT_SWITCH_WEAPON) ) )
 			{
@@ -881,9 +969,12 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 			}
 		}
 
+		//MODDD - do this above instead
+		/*
 		Weapon* weapon = m_weapons[i];
 		if (weapon == nullptr)
 			continue;
+		*/
 
 		// No bad wrong!  Being out of range does not mean this weapon can not affect the target!
 		// weapon out of range.
@@ -987,6 +1078,14 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 				}
 				break;
 		}
+	}
+
+	//MODDD - using a simpler check than below if the current weapon is locked.
+	if ( isCurWeaponLocked() )
+	{
+		// No need to change the current weapon on success, since only the current weapon was checked.
+		// Even on failure, don't switch to primary because this is locked (good retail behavior).
+		return found || foundBackup;
 	}
 
 	if ( found )

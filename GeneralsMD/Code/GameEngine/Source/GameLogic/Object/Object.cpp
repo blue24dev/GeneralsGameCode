@@ -261,8 +261,8 @@ AsciiString DebugDescribeObject(const Object *obj)
 	return ret;
 }
 
-//MODDD - simple constructor that only needs a template. Expectation is that 'Object::Xfer' is called by the
-// caller afterwards, followed by 'constructorEnd' after other info is known.
+//MODDD - new simple constructor that only needs a template. Expectation is that 'Object::Xfer' is called by
+// the caller afterwards, followed by 'constructorEnd' after other info is known.
 // This allows logic that depends on the template and nothing else to run first, instead of running team-
 // related script for the neutral player's team once regardless of whether the object actually belongs to that.
 Object::Object( const ThingTemplate *tt ) :
@@ -322,7 +322,8 @@ Object::Object( const ThingTemplate *tt ) :
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
-//MODDD - added param 'objectInitLockLocalTemp', swapped 'team' and 'objectStatusMask' order
+//MODDD - original object constructor.
+// Added param 'objectInitLockLocalTemp', swapped 'team' and 'objectStatusMask' order
 Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& objectStatusMask, Bool objectInitLockLocalTemp) :
 	//MODDD - chaining this to the simpler constructor above should work, also moving all the 0-initted stuff
 	// to there
@@ -374,241 +375,7 @@ Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& 
 	this->moneySpentOnMe = 0;
 }
 
-void Object::initHookup()
-{
-	// Don't involve the radar system if this is loading a game, when radar data is loaded this will be handled.
-	if (!(isInitLocked() && globalXferStatus == XFER_LOAD)) {
-		TheRadar->addObject( this );
-	}
-
-	// register the object with the GameLogic
-	TheGameLogic->registerObject( this );
-
-	// TheSuperHackers @bugfix Mauller/xezon 02/08/2025 sendObjectCreated needs calling before CreateModule's are initialized to prevent drawable related crashes
-	// This predominantly occurs with the veterancy create module when the chemical suits upgrade is unlocked as it tries to set the terrain decal.
-
-	// emit message announcing object's creation
-	TheGameLogic->sendObjectCreated( this );
-
-	ThePartitionManager->registerObject( this );
-}
-
-//MODDD - new method with some of the Object constructor's script.
-// Call this after an object has finished loading ('xfer') so that per-object init can finish.
-// Note that this is for immediately after an object has finished loading, and doesn't require all other
-// objects to have finished loading / been added to the game (see 'gamePostLoad' instead)
-void Object::constructorEnd()
-{
-
-	//MODDD - the rest are a few things moved from 'Object::initObject' that should probably run sooner than later
-	for (int i = 0; i < WEAPONSLOT_COUNT; ++i)
-		m_lastWeaponCondition[i] = WSF_INVALID;
-
-	//For each special power module that we have, add it's type to the specialpower bits. This is
-	//for optimal access later.
-	for (BehaviorModule** m = m_behaviors; *m; ++m)
-	{
-		SpecialPowerModuleInterface* sp = (*m)->getSpecialPower();
-		if (!sp)
-			continue;
-
-		const SpecialPowerTemplate *spTemplate = sp->getSpecialPowerTemplate();
-		if( spTemplate )
-		{
-			SET_SPECIALPOWERMASK( m_specialPowerBits, spTemplate->getSpecialPowerType() );
-#if SIDEBAR_ENUM_CONFLICT_FIX
-			SET_SPECIALPOWERIDMASK( m_specialPowerIDBits, spTemplate->getSpecialPowerTypeUnique() );
-#endif
-		}
-	}
-
-	this->initObject();
-}
-
-//MODDD - event to be called when the object's actual team is assigned, as opposed to the dummy 'neutral' (#0)
-// team assigned while loading a saved game.
-// Note that this also execpts the modules to be created ('createBehaviorModules' should have occurred beforehand).
-void Object::constructorOnActualTeamAssigned()
-{
-	AIUpdateInterface *ai = getAIUpdateInterface();
-	//MODDD - assuming 'getTeam()' and 'm_team->getPrototype()' isn't null, then null checks for them after?
-	// Fixed, though these should never be null at this point to begin with (nor were they ever observed to be).
-	if (ai && m_team && m_team->getPrototype()) {
-		ai->setAttitude(m_team->getPrototype()->getTemplateInfo()->m_initialTeamAttitude);
-		if (m_team->getPrototype()->getAttackPriorityName().isNotEmpty()) {
-			AsciiString name = m_team->getPrototype()->getAttackPriorityName();
-			const AttackPriorityInfo *info = TheScriptEngine->getAttackInfo(name);
-			if (info && info->getName().isNotEmpty()) {
-				ai->setAttackInfo(info);
-			}
-		}
-	}
-}
-
-void Object::setStartVeterancy()
-{
-	// If a valid team has been assigned me, then I have a Player I can ask about my starting level
-	//MODDD - NOTE - this is sneaky because veterency changes lead to
-	//   onVeterancyLevelChanged -> updateUpgradeModules
-	// Which can loop through all other game objects. May as well wait for everything to finish being added to the game.
-	// Also - note that the original intent was for this to run before any behavior's 'onCreate' calls below.
-	// This allows any 'VeterancyGainCreate' modules to override what's here, I assume.
-	// Though this could also occur after and just take the experience tracker's 'minVeterancyLevel' into
-	// account I would assume.
-	// And, don't apply this when loading a game. The 'xfer' for experienceTracker handles this and this INI
-	// veterancy default would just be overridden anyway.
-	// Its inner 'updateUpgradeModules();' only runs if this changes veterancy, which doesn't seem needed anway
-	// for a few reasons,
-	//   1: as of retail, things that start at rank 0 & have a higher rank as of a saved game don't reach that
-	//   2: part of 'Object::initObject' already calls 'updateUpgradeModules();'
-	// By this logic you could argue this wouldn't even need to go through 'setVeterancyLevel', just set the
-	// veterancy stat in 'm_experienceTracker' directly like 'ExperienceTracker::xfer' does.
-	const Player* controller = getControllingPlayer();
-	m_experienceTracker->setVeterancyLevel( controller->getProductionVeterancyLevel( getTemplate()->getName() ) );
-
-}
-
-void Object::callModuleOnObjectCreated()
-{
-	//MODDD - important to call this at the right time.
-	// For AIUpdate, does 'm_stateMachine = makeStateMachine();'. Missing that in time can cause problems, most
-	// places don't check that for being null.
-	for (BehaviorModule** b = m_behaviors; *b; ++b)
-	{
-		(*b)->onObjectCreated();
-	}
-}
-
-void Object::runCreateModules()
-{
-
-	// run the create function for the thing
-	for (BehaviorModule** m = m_behaviors; *m; ++m)
-	{
-		CreateModuleInterface* create = (*m)->getCreate();
-		if (!create)
-			continue;
-
-		create->onCreate();
-	}
-}
-
-//MODDD - to be called after all objects are finished being added to the map per object, not after individual
-// object init unless this is in-game.
-void Object::gamePostLoad()
-{
-	//MODDD - new event: 'onGamePostLoad', for things that prefer all units be available
-	/*
-	for (BehaviorModule** b = m_behaviors; *b; ++b)
-	{
-		(*b)->onGamePostLoad();
-	}
-	*/
-	
-	updateUpgradeModules();
-
-	//MODDD - NOTE - this would probably be fine in 'constructorEnd' but just being safe for now
-	// (nahh)
-	/*
-	AIUpdateInterface *ai = getAIUpdateInterface();
-	if (ai) {
-		ai->setAttitude(getTeam()->getPrototype()->getTemplateInfo()->m_initialTeamAttitude);
-		if (m_team && m_team->getPrototype() && m_team->getPrototype()->getAttackPriorityName().isNotEmpty()) {
-			AsciiString name = m_team->getPrototype()->getAttackPriorityName();
-			const AttackPriorityInfo *info = TheScriptEngine->getAttackInfo(name);
-			if (info && info->getName().isNotEmpty()) {
-				ai->setAttackInfo(info);
-			}
-		}
-	}
-	*/
-}
-
-//MODDD - init before 'xfer'
-void Object::earlyConstructor(const ThingTemplate* tt)
-{
-
-#if defined(RTS_DEBUG)
-	m_hasDiedAlready = false;
-#endif
-	//Modules have not been created yet!
-	//MODDD - TODO - the only place that uses 'areModulesReady' is one place in Player.cpp, if the need for
-	// that were removed (maybe the setTeam call during object init send a yes/no param?), this var could be
-	// removed.
-	m_modulesReady = false;
-
-	Int i;
-
-	m_formationOffset.x = m_formationOffset.y = 0.0f;
-	m_iPos.zero();
-	for (i = 0; i < MAX_PLAYER_COUNT; ++i)
-	{
-		m_visionSpiedBy[i] = 0;
-	}
-
-	for( i = 0; i < DISABLED_COUNT; i++ )
-	{
-		m_disabledTillFrame[ i ] = NEVER;
-	}
-
-	m_weaponBonusCondition = 0;
-	m_curWeaponSetFlags.clear();
-
-	// Object's set of these persist for the life of the object.
-	// MODDD - removing all 'reset' calls, this was always redundant with the constructor, which already calls that.
-	m_partitionLastLook = newInstance(ObjectThreatValueParms);
-#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
-	m_partitionLastLookJammable = newInstance(ObjectThreatValueParms);
-#endif
-	m_partitionRevealAllLastLook = newInstance(ObjectThreatValueParms);
-	m_partitionLastShroud = newInstance(ObjectThreatValueParms);
-	m_partitionLastThreat = newInstance(ObjectThreatValueParms);
-	m_partitionLastValue = newInstance(ObjectThreatValueParms);
-
-	// must set ID to zero, since some of these set methods
-	// will cause network messages to be sent
-	// which use this ID.
-	m_id = INVALID_ID;
-	m_producerID = INVALID_ID;
-	m_builderID = INVALID_ID;
-
-	//MODDD - moved... well, default just in case for now, it's the 'constructor' thing to do after all
-	//m_status = objectStatusMask;
-	m_status = OBJECT_STATUS_MASK_NONE;
-
-	m_layer = LAYER_GROUND;
-
-	m_group = nullptr;
-
-	m_constructionPercent = CONSTRUCTION_COMPLETE;  // complete by default
-
-	m_visionRange = tt->friend_calcVisionRange();
-	m_shroudClearingRange = tt->friend_calcShroudClearingRange();
-	if( m_shroudClearingRange == -1.0f )
-		m_shroudClearingRange = m_visionRange;// Backwards compatible, and perfectly logical default to assign
-	m_shroudRange = 0.0f;
-
-	m_singleUseCommandUsed = false;
-
-	//MODDD - moving this since loading a game will soon override this
-	// assign unique object id
-	//setID( TheGameLogic->allocateObjectID() );
-
-	m_numTriggerAreasActive = 0;
-	m_enteredOrExitedFrame = 0;
-	m_isSelectable = tt->isKindOf(KINDOF_SELECTABLE);
-
-	m_healthBoxOffset.zero();// this is used for units that are amorphous, like angry mob
-
-	//disable occlusion for some time after object is created to allow them to exit the factory/building.
-	m_safeOcclusionFrame = TheGameLogic->getFrame()+tt->getOcclusionDelay();
-
-
-	m_soleHealingBenefactorID = INVALID_ID; ///< who is the only other object that can give me this non-stacking heal benefit?
-	m_soleHealingBenefactorExpirationFrame = 0; ///< on what frame can I accept healing (thus to switch) from a new benefactor
-
-}
-
+//MODDD
 void Object::createBehaviorModules_PRE(const ThingTemplate* tt)
 {
 	Int totalModules = tt->getBehaviorModuleInfo().getCount() + NUM_SLEEP_HELPERS;  // need to take into account all the helper modules
@@ -858,6 +625,183 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 	m_modulesReady = true;
 }
 
+
+//MODDD - event to be called when the object's actual team is assigned, as opposed to the dummy 'neutral' (#0)
+// team assigned while loading a saved game.
+// Note that this also execpts the modules to be created ('createBehaviorModules' should have occurred beforehand).
+void Object::constructorOnActualTeamAssigned()
+{
+	AIUpdateInterface *ai = getAIUpdateInterface();
+	//MODDD - assuming 'getTeam()' and 'm_team->getPrototype()' isn't null, then null checks for them after?
+	// Fixed, though these should never be null at this point to begin with (nor were they ever observed to be).
+	if (ai && m_team && m_team->getPrototype()) {
+		ai->setAttitude(m_team->getPrototype()->getTemplateInfo()->m_initialTeamAttitude);
+		if (m_team->getPrototype()->getAttackPriorityName().isNotEmpty()) {
+			AsciiString name = m_team->getPrototype()->getAttackPriorityName();
+			const AttackPriorityInfo *info = TheScriptEngine->getAttackInfo(name);
+			if (info && info->getName().isNotEmpty()) {
+				ai->setAttackInfo(info);
+			}
+		}
+	}
+}
+
+//MODDD
+void Object::setStartVeterancy()
+{
+	// If a valid team has been assigned me, then I have a Player I can ask about my starting level
+	//MODDD - NOTE - this is sneaky because veterency changes lead to
+	//   onVeterancyLevelChanged -> updateUpgradeModules
+	// Which can loop through all other game objects. May as well wait for everything to finish being added to the game.
+	// Also - note that the original intent was for this to run before any behavior's 'onCreate' calls below.
+	// This allows any 'VeterancyGainCreate' modules to override what's here, I assume.
+	// Though this could also occur after and just take the experience tracker's 'minVeterancyLevel' into
+	// account I would assume.
+	// And, don't apply this when loading a game. The 'xfer' for experienceTracker handles this and this INI
+	// veterancy default would just be overridden anyway.
+	// Its inner 'updateUpgradeModules();' only runs if this changes veterancy, which doesn't seem needed anway
+	// for a few reasons,
+	//   1: as of retail, things that start at rank 0 & have a higher rank as of a saved game don't reach that
+	//   2: part of 'Object::initObject' already calls 'updateUpgradeModules();'
+	// By this logic you could argue this wouldn't even need to go through 'setVeterancyLevel', just set the
+	// veterancy stat in 'm_experienceTracker' directly like 'ExperienceTracker::xfer' does.
+	const Player* controller = getControllingPlayer();
+	m_experienceTracker->setVeterancyLevel( controller->getProductionVeterancyLevel( getTemplate()->getName() ) );
+
+}
+
+//MODDD
+void Object::callModuleOnObjectCreated()
+{
+	//MODDD - important to call this at the right time.
+	// For AIUpdate, does 'm_stateMachine = makeStateMachine();'. Missing that in time can cause problems, most
+	// places don't check that for being null.
+	for (BehaviorModule** b = m_behaviors; *b; ++b)
+	{
+		(*b)->onObjectCreated();
+	}
+}
+
+//MODDD
+void Object::runCreateModules()
+{
+
+	// run the create function for the thing
+	for (BehaviorModule** m = m_behaviors; *m; ++m)
+	{
+		CreateModuleInterface* create = (*m)->getCreate();
+		if (!create)
+			continue;
+
+		create->onCreate();
+	}
+}
+
+//MODDD
+void Object::initHookup()
+{
+	// Don't involve the radar system if this is loading a game, when radar data is loaded this will be handled.
+	if (!(isInitLocked() && globalXferStatus == XFER_LOAD)) {
+		TheRadar->addObject( this );
+	}
+
+	// register the object with the GameLogic
+	TheGameLogic->registerObject( this );
+
+	// TheSuperHackers @bugfix Mauller/xezon 02/08/2025 sendObjectCreated needs calling before CreateModule's are initialized to prevent drawable related crashes
+	// This predominantly occurs with the veterancy create module when the chemical suits upgrade is unlocked as it tries to set the terrain decal.
+
+	// emit message announcing object's creation
+	TheGameLogic->sendObjectCreated( this );
+
+	ThePartitionManager->registerObject( this );
+}
+
+//MODDD - init before 'xfer'
+void Object::earlyConstructor(const ThingTemplate* tt)
+{
+
+#if defined(RTS_DEBUG)
+	m_hasDiedAlready = false;
+#endif
+	//Modules have not been created yet!
+	//MODDD - TODO - the only place that uses 'areModulesReady' is one place in Player.cpp, if the need for
+	// that were removed (maybe the setTeam call during object init send a yes/no param?), this var could be
+	// removed.
+	m_modulesReady = false;
+
+	Int i;
+
+	m_formationOffset.x = m_formationOffset.y = 0.0f;
+	m_iPos.zero();
+	for (i = 0; i < MAX_PLAYER_COUNT; ++i)
+	{
+		m_visionSpiedBy[i] = 0;
+	}
+
+	for( i = 0; i < DISABLED_COUNT; i++ )
+	{
+		m_disabledTillFrame[ i ] = NEVER;
+	}
+
+	m_weaponBonusCondition = 0;
+	m_curWeaponSetFlags.clear();
+
+	// Object's set of these persist for the life of the object.
+	// MODDD - removing all 'reset' calls, this was always redundant with the constructor, which already calls that.
+	m_partitionLastLook = newInstance(ObjectThreatValueParms);
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	m_partitionLastLookJammable = newInstance(ObjectThreatValueParms);
+#endif
+	m_partitionRevealAllLastLook = newInstance(ObjectThreatValueParms);
+	m_partitionLastShroud = newInstance(ObjectThreatValueParms);
+	m_partitionLastThreat = newInstance(ObjectThreatValueParms);
+	m_partitionLastValue = newInstance(ObjectThreatValueParms);
+
+	// must set ID to zero, since some of these set methods
+	// will cause network messages to be sent
+	// which use this ID.
+	m_id = INVALID_ID;
+	m_producerID = INVALID_ID;
+	m_builderID = INVALID_ID;
+
+	//MODDD - moved... well, default just in case for now, it's the 'constructor' thing to do after all
+	//m_status = objectStatusMask;
+	m_status = OBJECT_STATUS_MASK_NONE;
+
+	m_layer = LAYER_GROUND;
+
+	m_group = nullptr;
+
+	m_constructionPercent = CONSTRUCTION_COMPLETE;  // complete by default
+
+	m_visionRange = tt->friend_calcVisionRange();
+	m_shroudClearingRange = tt->friend_calcShroudClearingRange();
+	if( m_shroudClearingRange == -1.0f )
+		m_shroudClearingRange = m_visionRange;// Backwards compatible, and perfectly logical default to assign
+	m_shroudRange = 0.0f;
+
+	m_singleUseCommandUsed = false;
+
+	//MODDD - moving this since loading a game will soon override this
+	// assign unique object id
+	//setID( TheGameLogic->allocateObjectID() );
+
+	m_numTriggerAreasActive = 0;
+	m_enteredOrExitedFrame = 0;
+	m_isSelectable = tt->isKindOf(KINDOF_SELECTABLE);
+
+	m_healthBoxOffset.zero();// this is used for units that are amorphous, like angry mob
+
+	//disable occlusion for some time after object is created to allow them to exit the factory/building.
+	m_safeOcclusionFrame = TheGameLogic->getFrame()+tt->getOcclusionDelay();
+
+
+	m_soleHealingBenefactorID = INVALID_ID; ///< who is the only other object that can give me this non-stacking heal benefit?
+	m_soleHealingBenefactorExpirationFrame = 0; ///< on what frame can I accept healing (thus to switch) from a new benefactor
+
+}
+
 //MODDD - new method to run a different form of init calls on loading this object from a saved game
 void Object::loadInit()
 {
@@ -878,6 +822,9 @@ void Object::loadInit()
 	constructorEnd();
 }
 
+//MODDD - NOTE - this isn't new, and was originally sandwiched between the Object constructor & deconstructor.
+// This method is now grouped together with the rest of the new methods I added to splitup object init.
+// ---
 //-------------------------------------------------------------------------------------------------
 /** Emit message announcing object's creation
  * Note: Have to do this in virtual init() method because virtual methods
@@ -975,17 +922,101 @@ void Object::initObject()
 	}
 }
 
-Bool Object::isInitLocked() {
-	return objectInitLock || this->objectInitLockLocal;
-}
-Bool Object::isInitLockedHard() {
-	return objectInitLock;
+//MODDD - new method with some of the Object constructor's script.
+// Call this after an object has finished loading ('xfer') so that per-object init can finish.
+// Note that this is for immediately after an object has finished loading, and doesn't require all other
+// objects to have finished loading / been added to the game (see 'gamePostLoad' instead)
+void Object::constructorEnd()
+{
+
+	//MODDD - the rest are a few things moved from 'Object::initObject' that should probably run sooner than later
+	for (int i = 0; i < WEAPONSLOT_COUNT; ++i)
+		m_lastWeaponCondition[i] = WSF_INVALID;
+
+	//For each special power module that we have, add it's type to the specialpower bits. This is
+	//for optimal access later.
+	for (BehaviorModule** m = m_behaviors; *m; ++m)
+	{
+		SpecialPowerModuleInterface* sp = (*m)->getSpecialPower();
+		if (!sp)
+			continue;
+
+		const SpecialPowerTemplate *spTemplate = sp->getSpecialPowerTemplate();
+		if( spTemplate )
+		{
+			SET_SPECIALPOWERMASK( m_specialPowerBits, spTemplate->getSpecialPowerType() );
+#if SIDEBAR_ENUM_CONFLICT_FIX
+			SET_SPECIALPOWERIDMASK( m_specialPowerIDBits, spTemplate->getSpecialPowerTypeUnique() );
+#endif
+		}
+	}
+
+	this->initObject();
 }
 
-Int Object::getMoneySpentOnMe() {
+//MODDD - to be called after all objects are finished being added to the map per object, not after individual
+// object init unless this is in-game.
+void Object::gamePostLoad()
+{
+	//MODDD - new event: 'onGamePostLoad', for things that prefer all units be available
+	/*
+	for (BehaviorModule** b = m_behaviors; *b; ++b)
+	{
+		(*b)->onGamePostLoad();
+	}
+	*/
+	
+	updateUpgradeModules();
+
+	//MODDD - NOTE - this would probably be fine in 'constructorEnd' but just being safe for now
+	// (nahh)
+	/*
+	AIUpdateInterface *ai = getAIUpdateInterface();
+	if (ai) {
+		ai->setAttitude(getTeam()->getPrototype()->getTemplateInfo()->m_initialTeamAttitude);
+		if (m_team && m_team->getPrototype() && m_team->getPrototype()->getAttackPriorityName().isNotEmpty()) {
+			AsciiString name = m_team->getPrototype()->getAttackPriorityName();
+			const AttackPriorityInfo *info = TheScriptEngine->getAttackInfo(name);
+			if (info && info->getName().isNotEmpty()) {
+				ai->setAttackInfo(info);
+			}
+		}
+	}
+	*/
+}
+
+//MODDD - convenience feature to bundle a few event calls that should be made on offsetting the last parts
+// of init, most likely by calling 'TheThingFactory->newObject' with 'objectInitLockLocalTemp=true'.
+// This is done to let the last tasks finish after more specifics are set by the caller.
+// Ex: ProductionUpdate module of a war factory can create an object with 'objectInitLockLocalTemp=true',
+// move it to where the production exit is, and then call 'finishInGameInit()' here so the object's modules
+// are initialized with the final position known.
+//MODDD - TODO - check for other places to integrate this. OCL execution generating items, TransportContain initial payload generation, etc.
+// This may fix the bug of several display-only issues like glowing-red minefield in the bottom-left corner of
+// the map (default 0,0 origin), most likely because something happened during some object's init that depended
+// on the position before it was set by the caller (init's always finised by that point as of retail).
+void Object::finishInGameInit()
+{
+	runCreateModules();
+	constructorEnd();
+	gamePostLoad();
+}
+
+//MODDD - all new
+Bool Object::isInitLocked()
+{
+	return objectInitLock || this->objectInitLockLocal;
+}
+Bool Object::isInitLockedHard()
+{
+	return objectInitLock;
+}
+Int Object::getMoneySpentOnMe()
+{
 	return moneySpentOnMe;
 }
-void Object::setMoneySpentOnMe(Int moneySpentOnMe) {
+void Object::setMoneySpentOnMe(Int moneySpentOnMe)
+{
 	this->moneySpentOnMe = moneySpentOnMe;
 }
 

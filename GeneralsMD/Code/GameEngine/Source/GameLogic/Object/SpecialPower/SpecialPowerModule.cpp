@@ -384,7 +384,13 @@ Real SpecialPowerModule::getPercentReady() const
 		{
 			reloadTime += LOGICFRAMES_PER_SECOND * 60 * 4;
 		}
+		else if (getObject()->getTemplate()->isMaxSimultaneousDeterminedBySuperweaponRestriction())
+		{
+			// For contra: affect superunit abilities too
+			reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
+		}
 	}
+
 	Real percent = 1.0f - ((readyFrame - TheGameLogic->getFrame()) /
 												 (Real)reloadTime);
 	// ---------
@@ -494,6 +500,12 @@ void SpecialPowerModule::startPowerRecharge()
 		{
 			reloadTime += LOGICFRAMES_PER_SECOND * 60 * 4;
 		}
+		else if (getObject()->getTemplate()->isMaxSimultaneousDeterminedBySuperweaponRestriction())
+		{
+			// For contra: affect superunit abilities too
+			reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
+		}
+
 		m_availableOnFrame = TheGameLogic->getFrame() + reloadTime;
 		// ---------
 	}

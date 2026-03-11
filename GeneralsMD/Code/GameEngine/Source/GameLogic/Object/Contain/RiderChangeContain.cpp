@@ -150,10 +150,10 @@ RiderChangeContain::~RiderChangeContain()
 }
 
 //MODDD - added event. Also, several other 'TransportContain' subclasses do this.
-//MODDD - TODO - add this to InternetHackContain, RailedTransportContain?
-// Are there any other TransportContain subclasses?
 void RiderChangeContain::onObjectCreated() {
-	RiderChangeContain::createPayload();
+	//MODDD - no need, just call the parent since this is handle in the base class now
+	//RiderChangeContain::createPayload();
+	TransportContain::onObjectCreated();
 }
 
 //-------------------------------------------------------------------------------------------------

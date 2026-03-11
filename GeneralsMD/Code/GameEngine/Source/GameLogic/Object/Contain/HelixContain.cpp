@@ -107,7 +107,9 @@ HelixContain::~HelixContain()
 
 void HelixContain::onObjectCreated()
 {
-  HelixContain::createPayload();
+	//MODDD - no need, just call the parent since this is handle in the base class now
+  //HelixContain::createPayload();
+	TransportContain::onObjectCreated();
 }
 
 
