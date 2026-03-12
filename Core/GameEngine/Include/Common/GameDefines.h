@@ -412,7 +412,7 @@
 
 // ----------------------------------------------------------------------------------------------------------
 // Bundles of settings here for convenient access
-#define FORCE_GAME_CONTEXT FGC_NONE
+#define FORCE_GAME_CONTEXT FGC_GENERALS_CHALLENGE
 #define DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY DIFFICULTY_HARD
 #define FORCE_HUMAN_PLAYER_START_MONEY 0
 #define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS FALSE

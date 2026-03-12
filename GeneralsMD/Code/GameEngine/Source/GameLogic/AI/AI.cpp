@@ -433,14 +433,12 @@ void AI::parseAiDataDefinition( INI* ini )
 		ini->initFromINI( TheAI->m_aiData, TheAIFieldParseTable );
 
 		//MODDD - for me only. Greater guard mode radius.
-		/*
-		if (TheAI->m_aiData->m_guardInnerModifierHuman < 2.75) {
-			TheAI->m_aiData->m_guardInnerModifierHuman = 2.75;
+		if (TheAI->m_aiData->m_guardInnerModifierHuman < 2.4) {
+			TheAI->m_aiData->m_guardInnerModifierHuman = 2.4;
 		}
-		if (TheAI->m_aiData->m_guardOuterModifierHuman < 3.25) {
-			TheAI->m_aiData->m_guardOuterModifierHuman = 3.25;
+		if (TheAI->m_aiData->m_guardOuterModifierHuman < 2.7) {
+			TheAI->m_aiData->m_guardOuterModifierHuman = 2.7;
 		}
-		*/
 
 	}
 }

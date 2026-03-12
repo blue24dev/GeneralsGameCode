@@ -1147,16 +1147,18 @@ void ThingTemplate::validate()
 		} else if(this->isKindOf(KINDOF_FS_BASE_DEFENSE)) {
 			// to be less spammable since each one's health boost is more noticeable
 			this->m_buildCost *= 1.15;
-			this->m_visionRange *= 1.35;
+			this->m_visionRange *= 1.4;
 		} else {
 			// all other buildings
-			this->m_buildTime *= 1.12;
-			this->m_visionRange *= 1.3;
+			this->m_buildTime *= 1.15;
+			this->m_visionRange *= 1.2;
 		}
 	} else {
 		// non-buildings
-		this->m_buildTime *= 1.08;
-		this->m_visionRange *= 1.3;
+		if (this->m_buildTime > 0 && this->m_visionRange > 0) {
+			this->m_buildTime *= 1.08;
+			this->m_visionRange *= 1.3;
+		}
 	}
 
 	// Make things that are exclusively dozers cheaper.
@@ -1190,7 +1192,7 @@ void ThingTemplate::validate()
 	// Beware of side effects like revealed fog of war that doesn't un-reveal. This is not well understood.
 	// Checking for being above 0 first appears to fix this. Are negative values used in some places?
 	if (this->m_shroudClearingRange > 0) {
-		this->m_shroudClearingRange *= 1.50f;
+		this->m_shroudClearingRange *= 1.40f;
 	}
 
 	if (m_shadowTextureName.isEmpty())
@@ -1625,7 +1627,7 @@ Int ThingTemplate::calcTimeToBuild( const Player* player) const
 	const UnsignedInt startMin = 15;
 	const UnsignedInt endMin = 60;
 	const float startModifier = 1.00;
-	const float endModifier = 0.83;
+	const float endModifier = 0.78;
 	
 	if(player->getPlayerType() == PLAYER_COMPUTER)
 	{
