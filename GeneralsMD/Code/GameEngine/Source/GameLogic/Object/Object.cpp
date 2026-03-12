@@ -3758,6 +3758,34 @@ void Object::clearWeaponSetFlag(WeaponSetType wst)
 	}
 }
 
+//MODDD - variants that don't call 'updateWeaponSet' so the caller can invoke that after several clear/set-flag
+// calls are finished
+void Object::setWeaponSetFlagNoEvent(WeaponSetType wst)
+{
+	m_curWeaponSetFlags.set(wst);
+	//m_weaponSet.updateWeaponSet(this);
+	if (m_drawable)
+	{
+		m_drawable->setModelConditionState(TheWeaponSetTypeToModelConditionTypeMap[wst]);
+	}
+}
+
+void Object::clearWeaponSetFlagNoEvent(WeaponSetType wst)
+{
+	m_curWeaponSetFlags.set(wst, 0);
+	//m_weaponSet.updateWeaponSet(this);
+	if (m_drawable)
+	{
+		m_drawable->clearModelConditionState(TheWeaponSetTypeToModelConditionTypeMap[wst]);
+	}
+}
+
+//MODDD
+void Object::updateWeaponSet()
+{
+	m_weaponSet.updateWeaponSet(this);
+}
+
 //-------------------------------------------------------------------------------------------------
 Bool Object::hasSpecialPower( SpecialPowerType type ) const
 {
