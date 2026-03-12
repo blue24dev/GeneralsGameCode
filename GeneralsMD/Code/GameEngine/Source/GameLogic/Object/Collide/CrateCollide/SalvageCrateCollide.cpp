@@ -199,8 +199,22 @@ void SalvageCrateCollide::doWeaponSet( Object *other )
 {
 	if( other->testWeaponSetFlag( WEAPONSET_CRATEUPGRADE_ONE ) )
 	{
-		other->clearWeaponSetFlag( WEAPONSET_CRATEUPGRADE_ONE );
-		other->setWeaponSetFlag( WEAPONSET_CRATEUPGRADE_TWO );
+		//MODDD - bugfix for scud launchers unlocking their weapons because the inner 'updateWeaponSet' call changes
+		// to the vanilla version of the weapon that lacks 'WeaponLockSharedAcrossSets' unlike the other 'WeaponSet's
+		// (see the object INI files).
+		// May as well wait for any consecutive flag changes and then update at the end anyway.
+		//MODDD - TODO - why isn't that setting per object instead of per WeaponSet? I don't think it makes sense to
+		// have some weaponsets on the same object have different 'WeaponLockSharedAcrossSets' choices.
+		// The game object could have its current weaponset always permanently locked and not even need 'LockWeaponCreate'
+		// if 'WeaponLockSharedAcrossSets=true' were the case for the object.
+		// ---
+		//other->clearWeaponSetFlag( WEAPONSET_CRATEUPGRADE_ONE );
+		//other->setWeaponSetFlag( WEAPONSET_CRATEUPGRADE_TWO );
+		// ---
+		other->clearWeaponSetFlagNoEvent( WEAPONSET_CRATEUPGRADE_ONE );
+		other->setWeaponSetFlagNoEvent( WEAPONSET_CRATEUPGRADE_TWO );
+		other->updateWeaponSet();
+		// ---
 	}
 	else
 	{

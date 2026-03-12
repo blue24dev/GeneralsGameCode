@@ -432,6 +432,16 @@ void AI::parseAiDataDefinition( INI* ini )
 		// parse the ini weapon definition
 		ini->initFromINI( TheAI->m_aiData, TheAIFieldParseTable );
 
+		//MODDD - for me only. Greater guard mode radius.
+		/*
+		if (TheAI->m_aiData->m_guardInnerModifierHuman < 2.75) {
+			TheAI->m_aiData->m_guardInnerModifierHuman = 2.75;
+		}
+		if (TheAI->m_aiData->m_guardOuterModifierHuman < 3.25) {
+			TheAI->m_aiData->m_guardOuterModifierHuman = 3.25;
+		}
+		*/
+
 	}
 }
 

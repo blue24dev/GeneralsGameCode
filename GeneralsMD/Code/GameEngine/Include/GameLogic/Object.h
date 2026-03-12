@@ -585,6 +585,11 @@ public:
 
 	void setWeaponSetFlag(WeaponSetType wst);
 	void clearWeaponSetFlag(WeaponSetType wst);
+
+	void setWeaponSetFlagNoEvent(WeaponSetType wst);
+	void clearWeaponSetFlagNoEvent(WeaponSetType wst);
+	void updateWeaponSet();
+
 	inline Bool testWeaponSetFlag(WeaponSetType wst) const { return m_curWeaponSetFlags.test(wst); }
 	inline const WeaponSetFlags& getWeaponSetFlags() const { return m_curWeaponSetFlags; }
 	Bool setWeaponLock( WeaponSlotType weaponSlot, WeaponLockType lockType ){ return m_weaponSet.setWeaponLock( weaponSlot, lockType ); }

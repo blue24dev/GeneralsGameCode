@@ -387,7 +387,16 @@ Real SpecialPowerModule::getPercentReady() const
 		else if (getObject()->getTemplate()->isMaxSimultaneousDeterminedBySuperweaponRestriction())
 		{
 			// For contra: affect superunit abilities too
-			reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
+			// If the reload time is under 1 minute, add 30 seconds. Probably not too annoying anyway.
+			// TODO - check for having infinite range, that's a good indicator of how annoying it could be.
+			if (modData->m_specialPowerTemplate->getReloadTime() < LOGICFRAMES_PER_SECOND * 60 * 1)
+			{
+				reloadTime += LOGICFRAMES_PER_SECOND * 30;
+			}
+			else
+			{
+				reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
+			}
 		}
 	}
 
@@ -503,7 +512,16 @@ void SpecialPowerModule::startPowerRecharge()
 		else if (getObject()->getTemplate()->isMaxSimultaneousDeterminedBySuperweaponRestriction())
 		{
 			// For contra: affect superunit abilities too
-			reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
+			// If the reload time is under 1 minute, add 30 seconds. Probably not too annoying anyway.
+			// TODO - check for having infinite range, that's a good indicator of how annoying it could be.
+			if (modData->m_specialPowerTemplate->getReloadTime() < LOGICFRAMES_PER_SECOND * 60 * 1)
+			{
+				reloadTime += LOGICFRAMES_PER_SECOND * 30;
+			}
+			else
+			{
+				reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
+			}
 		}
 
 		m_availableOnFrame = TheGameLogic->getFrame() + reloadTime;
