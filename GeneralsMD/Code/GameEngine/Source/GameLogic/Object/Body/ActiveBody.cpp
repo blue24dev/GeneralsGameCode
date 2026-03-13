@@ -179,7 +179,11 @@ ActiveBody::ActiveBody( Thing *thing, const ModuleData* moduleData ) :
 	Object* obj = getObject();
 	if (obj->isKindOf(KINDOF_STRUCTURE)) {
 		if (obj->isKindOf(KINDOF_FS_SUPERWEAPON)) {
-			// nothing for here - superweapons are plenty beefy enough
+			// less of a boost, plenty to start with anyway
+			m_currentHealth *= 1.15;
+			m_prevHealth *= 1.15;
+			m_maxHealth *= 1.15;
+			m_initialHealth *= 1.15;
 		} else if(obj->isKindOf(KINDOF_FS_BASE_DEFENSE)) {
 			// get more health
 			m_currentHealth *= 1.5;
@@ -194,31 +198,51 @@ ActiveBody::ActiveBody( Thing *thing, const ModuleData* moduleData ) :
 			m_initialHealth *= 1.75;
 		}
 	} else {
-		  // For Contra: super units won't be affected by the health buff.
-			// Cheezy way to tell is see if 'maxSimultaneousDeterminedBySuperweaponRestriction' is set for a non-structure.
-			// This won't catch things forced to a limit of 1 like commando units, so, suppose that works out nicely.
-			if (obj->getTemplate()->isMaxSimultaneousDeterminedBySuperweaponRestriction())
+		// Not a building.
+		// For Contra: super units won't be affected by the health buff.
+		// Cheezy way to tell is see if 'maxSimultaneousDeterminedBySuperweaponRestriction' is set for a non-structure.
+		// This won't catch things forced to a limit of 1 like commando units, so, suppose that works out nicely.
+		if (obj->getTemplate()->isMaxSimultaneousDeterminedBySuperweaponRestriction())
+		{
+			// skip
+		}
+		else
+		{
+			if (!obj->isKindOf(KINDOF_UNATTACKABLE))
 			{
-				// skip
-			}
-			else
-			{
-				KindOfMaskType tempMask;
-				tempMask.set(KINDOF_INFANTRY);
-				tempMask.set(KINDOF_VEHICLE);
-				tempMask.set(KINDOF_AIRCRAFT);
-				tempMask.set(KINDOF_HUGE_VEHICLE);
-				// don't these should be needed, nor forbidding UNATTACKABLE?
-				//tempMask.set(KINDOF_DOZER);
-				//tempMask.set(KINDOF_HARVESTER);
-				if (obj->isAnyKindOf(tempMask)) {
-					// a non-structure unit (not some weird system/inner-detail thing): have a little more health anyway
-					m_currentHealth *= 1.20;
-					m_prevHealth *= 1.20;
-					m_maxHealth *= 1.20;
-					m_initialHealth *= 1.20;
+				if (obj->isKindOf(KINDOF_DOZER))
+				{
+					m_currentHealth *= 1.40;
+					m_prevHealth *= 1.40;
+					m_maxHealth *= 1.40;
+					m_initialHealth *= 1.40;
+				}
+				else if (obj->isKindOf(KINDOF_HARVESTER))
+				{
+					// Be careful with this one, includes combat chinooks in retail generals
+					m_currentHealth *= 1.30;
+					m_prevHealth *= 1.30;
+					m_maxHealth *= 1.30;
+					m_initialHealth *= 1.30;
+				}
+				else
+				{
+					// This is also to make sure this isn't some system/inner-detail thing
+					KindOfMaskType tempMask;
+					tempMask.set(KINDOF_INFANTRY);
+					tempMask.set(KINDOF_VEHICLE);
+					tempMask.set(KINDOF_AIRCRAFT);
+					tempMask.set(KINDOF_HUGE_VEHICLE);
+					if (obj->isAnyKindOf(tempMask)) {
+						// a non-structure unit: have a little more health anyway
+						m_currentHealth *= 1.20;
+						m_prevHealth *= 1.20;
+						m_maxHealth *= 1.20;
+						m_initialHealth *= 1.20;
+					}
 				}
 			}
+		}
 	}
 
 	// force an initially-valid armor setup

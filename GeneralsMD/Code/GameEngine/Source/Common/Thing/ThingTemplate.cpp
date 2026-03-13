@@ -1147,17 +1147,17 @@ void ThingTemplate::validate()
 		} else if(this->isKindOf(KINDOF_FS_BASE_DEFENSE)) {
 			// to be less spammable since each one's health boost is more noticeable
 			this->m_buildCost *= 1.15;
-			this->m_visionRange *= 1.4;
+			this->m_visionRange *= 1.5;
 		} else {
 			// all other buildings
 			this->m_buildTime *= 1.15;
-			this->m_visionRange *= 1.2;
+			this->m_visionRange *= 1.25;
 		}
 	} else {
 		// non-buildings
 		if (this->m_buildTime > 0 && this->m_visionRange > 0) {
 			this->m_buildTime *= 1.08;
-			this->m_visionRange *= 1.3;
+			this->m_visionRange *= 1.4;
 		}
 	}
 
