@@ -1242,6 +1242,8 @@ void ScriptActions::createUnitOnTeamAt(const AsciiString& unitName, const AsciiS
 			{
 				TheAI->pathfinder()->addObjectToPathfindMap(obj);
 		  }
+			//MODDD - in case of other things expected during setup like LockWeaponCreate
+			call_objectOnBuildComplete(obj);
 		}
 	} else {
 		DEBUG_LOG(("WARNING - ThingTemplate '%s' not found.", objType.str()));
