@@ -1420,7 +1420,8 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	//MODDD - involve the setting for how this is decided
 	Bool isChallengeCampaign;
 #if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
-	isChallengeCampaign = TRUE;
+	// Would be 'TRUE', but want to exclude the shell game so there isn't a crash from missing the slot info always expected under this setting when ingame.
+	isChallengeCampaign = (m_gameMode != GAME_SHELL);
 #elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 	isChallengeCampaign = FALSE;
 #else
@@ -1454,7 +1455,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 		{
 		  TheGameInfo = TheSkirmishGameInfo;
 		}
-		//MODDD - #if wrapper. For GENERALS_CHALLENGE, there is no need for this check as the skirmish game
+		//MODDD - #if wrapper. For FGC_GENERALS_CHALLENGE, there is no need for this check as the skirmish game
 		// mode should be used instead for non-network games.
 		// It may be possible to generate a 'TheChallengeGameInfo' for FGC_GENERALS_CHALLENGE like the generals
 		// challenge menu normally does & populate it with anything from 'TheSkirmishGameInfo' in place of what

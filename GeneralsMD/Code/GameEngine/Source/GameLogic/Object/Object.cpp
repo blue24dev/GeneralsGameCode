@@ -3832,41 +3832,102 @@ void Object::onVeterancyLevelChanged( VeterancyLevel oldLevel, VeterancyLevel ne
 	if (body)
 		body->onVeterancyLevelChanged( oldLevel, newLevel, provideFeedback );
 
+	//MODDD - keep track of this here now
+	WeaponBonusConditionFlags oldCondition = m_weaponBonusCondition;
+	
 	switch (newLevel)
 	{
 		case LEVEL_REGULAR:
+			//MODDD - updated to do the inner 'updateWeaponSet' call at the end instead of potentially each time
+			// Same for 'clearWeaponBonusCondition'
+			// ---
+			/*
 			clearWeaponSetFlag(WEAPONSET_VETERAN);
 			clearWeaponSetFlag(WEAPONSET_ELITE);
 			clearWeaponSetFlag(WEAPONSET_HERO);
 			clearWeaponBonusCondition(WEAPONBONUSCONDITION_VETERAN);
 			clearWeaponBonusCondition(WEAPONBONUSCONDITION_ELITE);
 			clearWeaponBonusCondition(WEAPONBONUSCONDITION_HERO);
+			*/
+			// ---
+			clearWeaponSetFlagNoEvent(WEAPONSET_VETERAN);
+			clearWeaponSetFlagNoEvent(WEAPONSET_ELITE);
+			clearWeaponSetFlagNoEvent(WEAPONSET_HERO);
+			clearWeaponBonusConditionNoEvent(WEAPONBONUSCONDITION_VETERAN);
+			clearWeaponBonusConditionNoEvent(WEAPONBONUSCONDITION_ELITE);
+			clearWeaponBonusConditionNoEvent(WEAPONBONUSCONDITION_HERO);
+			// ---
 			break;
 		case LEVEL_VETERAN:
+			//MODDD
+			// ---
+			/*
 			setWeaponSetFlag(WEAPONSET_VETERAN);
 			clearWeaponSetFlag(WEAPONSET_ELITE);
 			clearWeaponSetFlag(WEAPONSET_HERO);
 			setWeaponBonusCondition(WEAPONBONUSCONDITION_VETERAN);
 			clearWeaponBonusCondition(WEAPONBONUSCONDITION_ELITE);
 			clearWeaponBonusCondition(WEAPONBONUSCONDITION_HERO);
+			*/
+			// ---
+			setWeaponSetFlagNoEvent(WEAPONSET_VETERAN);
+			clearWeaponSetFlagNoEvent(WEAPONSET_ELITE);
+			clearWeaponSetFlagNoEvent(WEAPONSET_HERO);
+			setWeaponBonusConditionNoEvent(WEAPONBONUSCONDITION_VETERAN);
+			clearWeaponBonusConditionNoEvent(WEAPONBONUSCONDITION_ELITE);
+			clearWeaponBonusConditionNoEvent(WEAPONBONUSCONDITION_HERO);
+			// ---
 			break;
 		case LEVEL_ELITE:
+			//MODDD
+			// ---
+			/*
 			clearWeaponSetFlag(WEAPONSET_VETERAN);
 			setWeaponSetFlag(WEAPONSET_ELITE);
 			clearWeaponSetFlag(WEAPONSET_HERO);
 			clearWeaponBonusCondition(WEAPONBONUSCONDITION_VETERAN);
 			setWeaponBonusCondition(WEAPONBONUSCONDITION_ELITE);
 			clearWeaponBonusCondition(WEAPONBONUSCONDITION_HERO);
+			*/
+			// ---
+			clearWeaponSetFlagNoEvent(WEAPONSET_VETERAN);
+			setWeaponSetFlagNoEvent(WEAPONSET_ELITE);
+			clearWeaponSetFlagNoEvent(WEAPONSET_HERO);
+			clearWeaponBonusConditionNoEvent(WEAPONBONUSCONDITION_VETERAN);
+			setWeaponBonusConditionNoEvent(WEAPONBONUSCONDITION_ELITE);
+			clearWeaponBonusConditionNoEvent(WEAPONBONUSCONDITION_HERO);
+			// ---
 			break;
 		case LEVEL_HEROIC:
+			//MODDD
+			// ---
+			/*
 			clearWeaponSetFlag(WEAPONSET_VETERAN);
 			clearWeaponSetFlag(WEAPONSET_ELITE);
 			setWeaponSetFlag(WEAPONSET_HERO);
 			clearWeaponBonusCondition(WEAPONBONUSCONDITION_VETERAN);
 			clearWeaponBonusCondition(WEAPONBONUSCONDITION_ELITE);
 			setWeaponBonusCondition(WEAPONBONUSCONDITION_HERO);
+			*/
+			// ---
+			clearWeaponSetFlagNoEvent(WEAPONSET_VETERAN);
+			clearWeaponSetFlagNoEvent(WEAPONSET_ELITE);
+			setWeaponSetFlagNoEvent(WEAPONSET_HERO);
+			clearWeaponBonusConditionNoEvent(WEAPONBONUSCONDITION_VETERAN);
+			clearWeaponBonusConditionNoEvent(WEAPONBONUSCONDITION_ELITE);
+			setWeaponBonusConditionNoEvent(WEAPONBONUSCONDITION_HERO);
+			// ---
 			break;
 	}
+
+	//MODDD - handling this here now
+	// ---
+	if( oldCondition != m_weaponBonusCondition )
+	{
+		weaponSetOnWeaponBonusChange();
+	}
+	updateWeaponSet();
+	// ---
 
 	Bool doAnimation = provideFeedback
 		&& newLevel > oldLevel
@@ -5591,6 +5652,24 @@ void Object::clearWeaponBonusCondition(WeaponBonusConditionType wst)
 		// Our weapon bonus just changed, so we need to immediately update our weapons
 		m_weaponSet.weaponSetOnWeaponBonusChange(this);
 	}
+}
+
+//MODDD - variants that don't cause 'weaponSetOnWeaponBonusChange'. The caller can handle that.
+void Object::setWeaponBonusConditionNoEvent(WeaponBonusConditionType wst)
+{
+	m_weaponBonusCondition |= (1 << wst);
+}
+
+void Object::clearWeaponBonusConditionNoEvent(WeaponBonusConditionType wst)
+{
+	m_weaponBonusCondition &= ~(1 << wst);
+}
+
+//MODDD - to invoke this manually.
+// Note that if the 'source' object isn't the same as 'this', it should be a param like in WeaponSet's method.
+void Object::weaponSetOnWeaponBonusChange()
+{
+	m_weaponSet.weaponSetOnWeaponBonusChange(this);
 }
 
 //-------------------------------------------------------------------------------------------------

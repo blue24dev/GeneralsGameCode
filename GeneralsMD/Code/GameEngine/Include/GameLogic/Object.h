@@ -610,6 +610,11 @@ public:
 	void setWeaponBonusCondition(WeaponBonusConditionType wst);
 	void clearWeaponBonusCondition(WeaponBonusConditionType wst);
 
+	//MODDD
+	void setWeaponBonusConditionNoEvent(WeaponBonusConditionType wst);
+	void clearWeaponBonusConditionNoEvent(WeaponBonusConditionType wst);
+	void weaponSetOnWeaponBonusChange();
+
   // note, the !=0 at the end is important, to convert this into a boolean type! (srj)
 	Bool testWeaponBonusCondition(WeaponBonusConditionType wst) const { return (m_weaponBonusCondition & (1 << wst)) != 0; }
 	inline WeaponBonusConditionFlags getWeaponBonusCondition() const { return m_weaponBonusCondition; }
