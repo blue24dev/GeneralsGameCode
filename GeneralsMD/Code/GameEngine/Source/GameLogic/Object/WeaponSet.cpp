@@ -877,9 +877,13 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 	// Also, the 'm_weapons[m_curWeapon]' null check is needed because the default 'm_curWeapon' choice is PRIMARY (0),
 	// even for weapon sets that lack a primary weapon (only define secondary and/or tertiary). Example: assault stinger
 	// infantry in the Contra mod.
+	// UPDATE - adding 'PRE_ATTACK' as an allowed status further down instead, so this is slightly more responsive to a
+	// sudden need to fail perhaps.
 	// ---
+	/*
 	if (m_weapons[m_curWeapon] != nullptr && m_weapons[m_curWeapon]->getStatus() == PRE_ATTACK)
 		return TRUE;
+	*/
 	// ---
 
 	//MODDD - handling this differently further down so locked weapons can still deny letting a unit move toward
@@ -946,26 +950,31 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 		if (weapon == nullptr)
 			continue;
 		// ---
-
-		// weapon not allowed to be specified via this command source.
-		CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
-		if( ( okSrcs & (1 << cmdSource) ) == 0 )
+		
+		//MODDD - Don't do the CMD source check if the weapon is locked.
+		// Being blocked here can make the unit appear unresponsive to attack commands.
+		if ( !isCurWeaponLocked() )
 		{
-			//MODDD - NOTE. This looks a bit confusing at first glance.
-			// At this point this call's 'cmdSource' not allowed, like being CMD_FROM_PLAYER but the object's WeaponSet's
-			// usage of this weapon didn't mention that in the INI file. The standard route is to block allowing this weapon
-			// in this case.
-			// However, an exception is made if the usage of this weapon includes the 'DEFAULT_SWITCH_WEAPON' source.
-			// Then further below will proceed despite coming from a normally unwanted source.
-			// ---
-			//MODDD - this is a mistake in retail. See above: '1 << cmdSource'.
-			// a CMD choice has to be converted to that power of 2 to make sense for this comparison.
-			// That is, when the allowed-source bitmask was made and it found 'DEFAULT_SWITCH_WEAPON', it didn't
-			// add 4 to the bitmask, it added '2^4 -> 16', so this change checks for that instead.
-			//if( !( okSrcs & CMD_DEFAULT_SWITCH_WEAPON ) )
-			if( !( okSrcs & (1 << CMD_DEFAULT_SWITCH_WEAPON) ) )
+			// weapon not allowed to be specified via this command source.
+			CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
+			if( ( okSrcs & (1 << cmdSource) ) == 0 )
 			{
-				continue;
+				//MODDD - NOTE. This looks a bit confusing at first glance.
+				// At this point this call's 'cmdSource' not allowed, like being CMD_FROM_PLAYER but the object's WeaponSet's
+				// usage of this weapon didn't mention that in the INI file. The standard route is to block allowing this weapon
+				// in this case.
+				// However, an exception is made if the usage of this weapon includes the 'DEFAULT_SWITCH_WEAPON' source.
+				// Then further below will proceed despite coming from a normally unwanted source.
+				// ---
+				//MODDD - this is a mistake in retail. See above: '1 << cmdSource'.
+				// a CMD choice has to be converted to that power of 2 to make sense for this comparison.
+				// That is, when the allowed-source bitmask was made and it found 'DEFAULT_SWITCH_WEAPON', it didn't
+				// add 4 to the bitmask, it added '2^4 -> 16', so this change checks for that instead.
+				//if( !( okSrcs & CMD_DEFAULT_SWITCH_WEAPON ) )
+				if( !( okSrcs & (1 << CMD_DEFAULT_SWITCH_WEAPON) ) )
+				{
+					continue;
+				}
 			}
 		}
 
@@ -981,8 +990,11 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 //		if (!weapon->isWithinAttackRange(obj, victim))
 //			continue;
 
+		//MODDD - caching this
+		WeaponStatus weaponStatus = weapon->getStatus();
+
 		// weapon out of ammo.
-		if (weapon->getStatus() == OUT_OF_AMMO && !weapon->getAutoReloadsClip())
+		if (weaponStatus == OUT_OF_AMMO && !weapon->getAutoReloadsClip())
 			continue;
 
 		// weapon not allowed to target this kind of thing.
@@ -999,11 +1011,20 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 		// instead of 'READY_TO_FIRE', even though the first weapon was perfectly fine the whole time.
 		// I don't think switching should be possible at that point.
 		// See an addition further above ("MODDD - if the weapon"...)
-		Bool weaponIsReady = (weapon->getStatus() == READY_TO_FIRE);
+		// UPDATE - added 'PRE_ATTACK' as an allowed satus here
+		//Bool weaponIsReady = (weaponStatus == READY_TO_FIRE);
+		Bool weaponIsReady = (weaponStatus == READY_TO_FIRE || weaponStatus == PRE_ATTACK);
 
+		//MODDD - NOTE - I don't understand this check. If this check for 'isWeaponSlotOnTurrentAndAimingAtTarget' passes,
+		// 'weaponIsReady' is set to 'false'? Shouldn't this be a way to override the above in case it were false from
+		// a bad status so having a turret focusing on something means pass anyway? This feels like a mistake.
 		const AIUpdateInterface* ai = obj->getAI();
 		if (ai && ai->isWeaponSlotOnTurretAndAimingAtTarget((WeaponSlotType)i, victim))
-			weaponIsReady = false;
+		{
+			//MODDD - per above, changed.
+			//weaponIsReady = false;
+			weaponIsReady = true;
+		}
 
 		// weapon would do no damage against this target.
 		// exception: 'unresistable' weapons are allowed to do zero damage.
@@ -1029,7 +1050,7 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 			damage = HUGE_DAMAGE;
 			attackRange = HUGE_RANGE;
 			// preferred weapons are also kept if they are merely reloading. (if out of ammo, we can punt.)
-			weaponIsReady = (weapon->getStatus() != OUT_OF_AMMO);
+			weaponIsReady = (weaponStatus != OUT_OF_AMMO);
 		}
 
 		switch (criteria)
