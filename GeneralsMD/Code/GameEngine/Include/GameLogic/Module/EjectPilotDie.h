@@ -66,7 +66,7 @@ public:
 	//MODDD - disarming mines gives experience. Removed 'const' on 'dyingObject'
 	static void ejectPilot(const ObjectCreationList* ocl, Object* dyingObject, const Object* damageDealer);
 
-	virtual void onDie( const DamageInfo *damageInfo );
-	virtual DieModuleInterface* getEjectPilotDieInterface() {return this; }
+	virtual void onDie( const DamageInfo *damageInfo ) override;
+	virtual DieModuleInterface* getEjectPilotDieInterface() override {return this; }
 
 };
