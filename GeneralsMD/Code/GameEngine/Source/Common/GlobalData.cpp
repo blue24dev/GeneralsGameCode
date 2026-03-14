@@ -1337,11 +1337,9 @@ void GlobalData::parseGameDataDefinition( INI* ini )
 	//MODDD - for me only. I prefer some changes to the garrisoned bonuses, they seem a bit excessive to me
 	// As of retail, garrison bonuses are
 	// * Damage: +25%
-  // * Range: +33%
-	/*
+	// * Range: +33%
 	TheWritableGlobalData->m_weaponBonusSet->getWeaponBonus()[WEAPONBONUSCONDITION_GARRISONED].setField(WeaponBonus::DAMAGE, 1.00f);
 	TheWritableGlobalData->m_weaponBonusSet->getWeaponBonus()[WEAPONBONUSCONDITION_GARRISONED].setField(WeaponBonus::RANGE, 1.20f);
-	*/
 	
 	// override INI values with user preferences
 	OptionPreferences optionPref;
