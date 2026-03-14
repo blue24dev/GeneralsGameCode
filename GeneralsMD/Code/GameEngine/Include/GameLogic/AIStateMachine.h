@@ -933,6 +933,7 @@ protected:
 EMPTY_DTOR(AIWaitState)
 
 //-----------------------------------------------------------------------------------------------------------
+//MODDD - TODO? - not sure why classes implementing this interface didn't receive the 'override' keyword on methods from here. Ex: TurretAI.h, TurretAI
 class NotifyWeaponFiredInterface	// an ABC
 {
 public:
@@ -992,8 +993,10 @@ public:
 	virtual void notifyNewVictimChosen(Object* victim);
 	virtual const Coord3D* getOriginalVictimPos() const { return &m_originalVictimPos; }
 	virtual Bool isWeaponSlotOkToFire(WeaponSlotType wslot) const { return true; }
-	virtual Bool isAttackingObject() const { return m_isAttackingObject; }
-	virtual Bool isForceAttacking() const { return m_isForceAttacking; }
+	//MODDD - added 'override' keyword since the 'State' parent class now defines this
+	virtual Bool isAttackingObject() const override { return m_isAttackingObject; }
+	//MODDD - same as above
+	virtual Bool isForceAttacking() const override { return m_isForceAttacking; }
 #ifdef STATE_MACHINE_DEBUG
 	virtual AsciiString getName() const ;
 #endif
@@ -1170,7 +1173,7 @@ public:
 	virtual StateReturnType update();
 
 	//MODDD - new
-	virtual Object *getEnemyObject();
+	virtual Object *getEnemyObject() override;
 
 #ifdef STATE_MACHINE_DEBUG
 	virtual AsciiString getName() const ;

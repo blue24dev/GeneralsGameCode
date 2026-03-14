@@ -319,6 +319,9 @@ private:
 	WeaponBonus m_bonus[WEAPONBONUSCONDITION_COUNT];
 
 public:
+	//MODDD - getter for some hackery if needed
+	WeaponBonus* getWeaponBonus();
+
 	void appendBonuses(WeaponBonusConditionFlags flags, WeaponBonus& bonus) const;
 
 	void parseWeaponBonusSet(INI* ini);
