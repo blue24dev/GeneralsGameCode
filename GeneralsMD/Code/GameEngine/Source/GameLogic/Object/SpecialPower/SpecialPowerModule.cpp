@@ -230,7 +230,8 @@ void SpecialPowerModule::onSpecialPowerCreation()
 // from upgrade completion or making a new radar van.
 // Note that this doesn't need to be called for buildings that are instantly spawned (ex: map startup), since
 // the special power already starts charging properly there (construction is N/A at constructor time -> runs).
-void SpecialPowerModule::notifyBuildComplete() {
+void SpecialPowerModule::notifyBuildComplete()
+{
 	startPowerRechargeInit(FALSE);
 }
 
