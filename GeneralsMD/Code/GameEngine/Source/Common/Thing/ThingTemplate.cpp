@@ -1157,7 +1157,13 @@ void ThingTemplate::validate()
 		// non-buildings
 		if (this->m_buildTime > 0 && this->m_visionRange > 0) {
 			this->m_buildTime *= 1.08;
-			this->m_visionRange *= 1.4;
+			// enforce a minimum of 180 vision first.
+			// Note this happens before the multiplication so the real effective minimum is higher.
+			// TODO - can you iterate through weapons to see what the longest range is to see if this should be automatically boosted?
+			if (this->m_visionRange < 180) {
+				this->m_visionRange = 180;
+			}
+			this->m_visionRange *= 1.3;
 		}
 	}
 
@@ -1192,7 +1198,7 @@ void ThingTemplate::validate()
 	// Beware of side effects like revealed fog of war that doesn't un-reveal. This is not well understood.
 	// Checking for being above 0 first appears to fix this. Are negative values used in some places?
 	if (this->m_shroudClearingRange > 0) {
-		this->m_shroudClearingRange *= 1.40f;
+		this->m_shroudClearingRange *= 1.33f;
 	}
 
 	if (m_shadowTextureName.isEmpty())
