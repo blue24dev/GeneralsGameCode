@@ -82,6 +82,9 @@ Which issues occur in / are reproducible in / have a cause within the retail gen
 # Real-time time-of-day change bugs
 With the 'REAL_TIME_TOD_CHANGE' flag on, a few bugs have been observed:
 - The first retail Zero Hour campaign mission will show a black screen in the middle of the intro cutscene. Even after the intro finishes, the rest of the mission will be unplayable as the black screen remains behind the HUD and unit selections don't work as expected.
+- In the retail Zero Hour, the shell map (auto-scrolling camera while pre-game menus are up when not in quickstart mode) will sometimes flicker to a different position, noticed under the following setting choices:
+  #define TOD_CYCLE_LENGTH_FRAMES (LOGICFRAMES_PER_SECOND * 60 * 15)
+  #define TOD_UPDATE_INTERVAL 150
 - Several things, most often civilian and typically captureable tech buildings, can have visual-only bugs when the day changes to night or vice versa (lights/non-lights versions of the models are toggled). Some buildings may have bright purple textures (missing texture indication?), and some may be stuck with a constant muzzle flash like the default state of the model.
 - In the Contra mod, the Assault General's tunnel networks revert to a much more generic cave looking graphic (no player color). This appears to be linked to the change to precache all assets in advance to cover the different times of day (see GameLogic.cpp's mention of the setting above).
 - Several parts are still unfinished for the time-of-day change effect to be completely smooth, most notably
@@ -89,3 +92,4 @@ With the 'REAL_TIME_TOD_CHANGE' flag on, a few bugs have been observed:
 	- The road lighting may appear wrongly colored at times or suddenly shift on time-of-day quarter changes
 	- Updates that are too rapid (see TOD_UPDATE_INTERVAL) may have a noticeable impact on performance, even with a low number of units currently on-screen. Observed with 'TOD_UPDATE_INTERVAL = 10' in debug mode at the start of a 1-player skirmish map.
 	- I see several references to night-versions of player colors like 'getNightIndicatorColor' or 'getNightColor'. If logic like that is currently only checked at startup, it should probably be done in real-time if real-time-TOD-change is enabled so that the normal(day?) color isn't stuck on during night and vice versa. (this is a high-level guess)
+	- See 'InfantryLightMorningScale' in GameData.ini (GlobalData.cpp), and "infantryLightScale = TheGlobalData->m_infantryLightScale[TheGlobalData->m_timeOfDay];" in W3DScene.cpp. This should also be scaled per time of day phase/portion.

@@ -86,12 +86,12 @@ public:
 	// virtual destructor prototype provided by memory pool declaration
 
 	//MODDD
-	virtual StealthDetectorUpdate* getStealthDetector() { return this; }
+	virtual StealthDetectorUpdate* getStealthDetector() override { return this; }
 
 	Bool isSDEnabled() const { return m_enabled; }
 	void setSDEnabled( Bool enabled );
-	virtual UpdateSleepTime update();
-	virtual DisabledMaskType getDisabledTypesToProcess() const { return MAKE_DISABLED_MASK( DISABLED_HELD ); }
+	virtual UpdateSleepTime update() override;
+	virtual DisabledMaskType getDisabledTypesToProcess() const override { return MAKE_DISABLED_MASK( DISABLED_HELD ); }
 
 private:
 	Bool m_enabled;
