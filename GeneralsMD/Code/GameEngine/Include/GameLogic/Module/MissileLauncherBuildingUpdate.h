@@ -99,7 +99,7 @@ public:
 	// virtual destructor prototype provided by memory pool declaration
 
 	//MODDD - adding event
-	virtual void onObjectCreated();
+	virtual void onObjectCreated() override;
 
 	//SpecialPowerUpdateInterface pure virtual implementations
 	virtual Bool initiateIntentToDoSpecialPower(const SpecialPowerTemplate *specialPowerTemplate, const Object *targetObj, const Coord3D *targetPos, const Waypoint *way, UnsignedInt commandOptions ) override;

@@ -93,7 +93,7 @@ public:
 	// virtual destructor prototype provided by memory pool object
 	
 	//MODDD - new
-	virtual Bool canBeSpecialPowerSource() const;
+	virtual Bool canBeSpecialPowerSource() const override;
 
 	virtual void doSpecialPower( UnsignedInt commandOptions ) override;
 	virtual void doSpecialPowerAtObject( Object *obj, UnsignedInt commandOptions ) override;
