@@ -209,6 +209,14 @@ enum WeaponBonusConditionType CPP_11(: Int)
 
 	WEAPONBONUSCONDITION_COUNT
 };
+
+//MODDD - TODO? this seems like a strange choice.
+// I think the point is for particular .cpp files like Weapon.cpp to define 'DEFINE_WEAPONBONUSCONDITION_NAMES' so that
+// only they include the script to create 'TheWeaponBonusNames' here for those particular .cpp files that include
+// 'Weapon.h' here. And being 'static' means this is per .cpp file and not going to cause issues from having the same implementation 'TheWeaponBonusNames' present twice in the compile.
+// However, this means it's getting added twice, once for Weapon.cpp & WeaponBonusUpdate.cpp.
+// Why not remove 'DEFINE_WEAPONBONUSCONDITION_NAMES' & its requirement here completely, prototype 'TheWeaponBonusNames'
+// here ("const char *const TheWeaponBonusNames[]"), implement it in weapon.cpp, and now anywhere can refer to the single implementation.
 #ifdef DEFINE_WEAPONBONUSCONDITION_NAMES
 static const char *const TheWeaponBonusNames[] =
 {
