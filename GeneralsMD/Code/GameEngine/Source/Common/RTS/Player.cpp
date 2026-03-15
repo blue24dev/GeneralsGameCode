@@ -2468,6 +2468,8 @@ void Player::doBountyForKill(const Object* killer, const Object* victim)
 
 	if( bounty )
 	{
+		//MODDD - money cheat check
+		bounty = getCheatAdjustedMoneyAmount(this, bounty);
 
 		getMoney()->deposit( bounty );
 		m_scoreKeeper.addMoneyEarned( bounty );
@@ -4618,3 +4620,14 @@ void Player::loadPostProcess()
 
 }
 
+//MODDD
+UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit)
+{
+	//MODDD - extra money hack for AI players (new way - scalar on income sources)
+#if defined(COMPUTER_PLAYER_MONEY_SCALAR)
+	if (player->getPlayerType() == PLAYER_COMPUTER) {
+		return (UnsignedInt)(((Real)amountToDeposit) * COMPUTER_PLAYER_MONEY_SCALAR);
+	}
+#endif
+	return amountToDeposit;
+}

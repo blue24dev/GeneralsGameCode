@@ -537,6 +537,10 @@ StateReturnType HackInternetState::update()
 						amount = 1;
 						break;
 				}
+				
+				//MODDD - money cheat check
+				amount = getCheatAdjustedMoneyAmount(owner->getControllingPlayer(), amount);
+
 				money->deposit( amount );
 				owner->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( amount );
 
