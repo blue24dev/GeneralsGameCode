@@ -123,14 +123,29 @@ void AutoDepositUpdate::awardInitialCaptureBonus( Player *player )
 	if(!player || !m_awardInitialCaptureBonus || getAutoDepositUpdateModuleData()->m_initialCaptureBonus <= 0)
 		return;
 
+	//MODDD - going to cache the value and let the player upgrade bonus apply, may as well.
+	// ---
+	/*
 	player->getMoney()->deposit( getAutoDepositUpdateModuleData()->m_initialCaptureBonus );
 	player->getScoreKeeper()->addMoneyEarned( getAutoDepositUpdateModuleData()->m_initialCaptureBonus );
+	*/
+	// ---
+	//MODDD - money cheat check
+	int moneyAmount = getAutoDepositUpdateModuleData()->m_initialCaptureBonus;
+	
+	moneyAmount = getCheatAdjustedMoneyAmount(player, moneyAmount);
+	
+	player->getMoney()->deposit( moneyAmount );
+	player->getScoreKeeper()->addMoneyEarned( moneyAmount );
+	// ---
 
+	//MODDD - lol wrong comment there. Anyway, 'getAutoDepositUpdateModuleData()->m_initialCaptureBonus' -> 'moneyAmount'
 	//Display cash income floating over the blacklotus
-	if(getAutoDepositUpdateModuleData()->m_initialCaptureBonus > 0)
+	if(moneyAmount > 0)
 	{
 		UnicodeString moneyString;
-		moneyString.format( TheGameText->fetch( "GUI:AddCash" ), getAutoDepositUpdateModuleData()->m_initialCaptureBonus );
+		//MODDD - 'getAutoDepositUpdateModuleData()->m_initialCaptureBonus' -> 'moneyAmount'
+		moneyString.format( TheGameText->fetch( "GUI:AddCash" ), moneyAmount );
 		Coord3D pos;
 		pos.set( getObject()->getPosition() );
 		pos.z += 10.0f; //add a little z to make it show up above the unit.
@@ -166,10 +181,16 @@ UpdateSleepTime AutoDepositUpdate::update()
 
 		int moneyAmount = modData->m_depositAmount + getUpgradedSupplyBoost();
 
+		//MODDD - money cheat check
+		moneyAmount = getCheatAdjustedMoneyAmount(getObject()->getControllingPlayer(), moneyAmount);
+
 		if( modData->m_isActualMoney )
 		{
 			getObject()->getControllingPlayer()->getMoney()->deposit( moneyAmount );
-			getObject()->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( modData->m_depositAmount);
+
+			//MODDD - why isn't this just using 'moneyAmount'? other places use the same post-adjustment value instead of the raw input
+			//getObject()->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( modData->m_depositAmount);
+			getObject()->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( moneyAmount );
 		}
 
 		if (moneyAmount > 0 && getObject()->isLogicallyVisible())

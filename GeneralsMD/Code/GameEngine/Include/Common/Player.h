@@ -837,3 +837,7 @@ private:
 	// Can be -1 to mean player side isn't associated with a slot (neutral, civilian, or from a side otherwise baked into the map).
 public: Int slotIndex;
 };
+
+//MODDD - in case of money cheats
+// (going here because most things dealing with money have to know what a 'Player' is)
+UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit);

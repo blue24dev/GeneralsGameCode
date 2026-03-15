@@ -4281,19 +4281,18 @@ void ScriptActions::doTransferTeamToPlayer(const AsciiString& teamName, const As
 //-------------------------------------------------------------------------------------------------
 void ScriptActions::doSetMoney(const AsciiString& playerName, Int money)
 {
-	//MODDD
-#if BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS
-	Player* playerPRE = TheScriptEngine->getPlayerFromAsciiString(playerName);
-	if (playerPRE && playerPRE->getPlayerType() == PLAYER_HUMAN) {
-		return;
-	}
-#endif
-
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
 
 	if (!player) {
 		return;
 	}
+	
+	//MODDD
+#if BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS
+	if (player->getPlayerType() == PLAYER_HUMAN) {
+		return;
+	}
+#endif
 
 	Money *m = player->getMoney();
 	if (!m)
