@@ -412,13 +412,13 @@
 
 // ----------------------------------------------------------------------------------------------------------
 // Bundles of settings here for convenient access
-#define FORCE_GAME_CONTEXT FGC_GENERALS_CHALLENGE
+#define FORCE_GAME_CONTEXT FGC_NONE
 #define DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY DIFFICULTY_HARD
 #define FORCE_HUMAN_PLAYER_START_MONEY 0
 #define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS TRUE
 
-#define COMPUTER_PLAYER_MONEY_SCALAR 3.5
-#define COMPUTER_PLAYER_EXPERIENCE_SCALAR 1.1
+#define COMPUTER_PLAYER_MONEY_SCALAR 4.0
+#define COMPUTER_PLAYER_EXPERIENCE_SCALAR 1.6
 #define REMOVE_FOG_OF_WAR FALSE
 #define REMOVE_FOG_OF_WAR_ALT FALSE
 #define NOOB_MODE TRUE
