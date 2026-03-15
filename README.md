@@ -85,6 +85,8 @@ With the 'REAL_TIME_TOD_CHANGE' flag on, a few bugs have been observed:
 - In the retail Zero Hour, the shell map (auto-scrolling camera while pre-game menus are up when not in quickstart mode) will sometimes flicker to a different position, noticed under the following setting choices:
   #define TOD_CYCLE_LENGTH_FRAMES (LOGICFRAMES_PER_SECOND * 60 * 15)
   #define TOD_UPDATE_INTERVAL 150
+- Minor bug: the camera will sometimes reposition itself during an update per 'TOD_UPDATE_INTERVAL' if against the edge of the map.
+  Ex: zoom in as far as possible, move to the left edge of the map, and zoom out. When the TOD system updates, the camera will likely be nudged closer to the playable area. This is likely the place it should have been restricted to in the first place - most likely, the TOD update caused the camera to check its allowed bounds & update accordingly. Still looks weird to appear like an inconsistent sudden change to a user unaware of this.
 - Several things, most often civilian and typically captureable tech buildings, can have visual-only bugs when the day changes to night or vice versa (lights/non-lights versions of the models are toggled). Some buildings may have bright purple textures (missing texture indication?), and some may be stuck with a constant muzzle flash like the default state of the model.
 - In the Contra mod, the Assault General's tunnel networks revert to a much more generic cave looking graphic (no player color). This appears to be linked to the change to precache all assets in advance to cover the different times of day (see GameLogic.cpp's mention of the setting above).
 - Several parts are still unfinished for the time-of-day change effect to be completely smooth, most notably
