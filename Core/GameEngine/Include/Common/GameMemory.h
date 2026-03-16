@@ -65,7 +65,7 @@
 // ------------
 */
 
-// MODDD - added a new macro setting: 'MEMORYPOOL_DEBUG_GARBAGE_FILL'.
+//MODDD - added a new macro setting: 'MEMORYPOOL_DEBUG_GARBAGE_FILL'.
 // If 'MEMORYPOOL_DEBUG_GARBAGE_FILL' is on, the '0xdeadbeef'-writes to give memory an obvious default will still take effect.
 // It is implied 'TRUE' if 'MEMORYPOOL_DEBUG' is 'TRUE' (the new setting being 'FALSE' in this case is not meaningful).
 // This way, places throughout the codebase can simply check 'MEMORYPOOL_DEBUG_GARBAGE_FILL' to tell if memory should be garbage-filled

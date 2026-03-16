@@ -2060,20 +2060,28 @@ void grabMultiPlayerInfo()
 	}
 
 	// Add each player and score to the map. THis allows us to sort the players based on score.
-	for( Int i = 0; i < MAX_SLOTS; ++i)
+	//MODDD - use the new 'm_slotPlayerRefs' instead so 'FGC_CAMPAIGN' can correctly get the first player.
+	// Its name wasn't standardized so it isn't necessarily "player0" for campaign maps, nor are players
+	// generated per slots in that case unlike for skirmish / generals challenge maps.
+	//for( Int i = 0; i < MAX_SLOTS; ++i)
+	for( Int i = 0; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 	{
-		playerName.format("player%d",i);
-		player = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(playerName));
-		if(player)
-		{
+		//MODDD - per above
+		//playerName.format("player%d",i);
+		//player = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(playerName));
+		Player *player = ThePlayerList->m_slotPlayerRefs[i];
+		//MODDD - no need for null check on this
+		//if(player)
+		//{
 			Int score = player->getScoreKeeper()->calculateScore();
 			it = scores.find( score );
 			if (it != scores.end())
 			score += adder++;
 			scores[score] = player;
 			++playerCount;
-		}
+		//}
 	}
+	//MODDD - TODO - what is the significance of 'hideWindows' above? Seems I can add additional rows past that just fine?
 	hideWindows(playerCount);
 	Int count =0;
 	RevScoreMapIt revIt;
@@ -2094,10 +2102,15 @@ void grabMultiPlayerInfo()
 	// Just keep in mind - this is limited to showing 8 rows for the assumed 8 multiplayer-available players.
 	// If there were ever a case where <# of human players doing co-op> + <# of baked-in map AI players> exceeds 8, rows after 8 would be missing.
 	// That can be an argument for combining AI players into one "Enemy General" row - see points below for more detail.
-	// Or, edit other places to allow more than 8 rows?  I dunno.
-#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
+	// Or, edit other places to allow more than 8 rows?
+  //MODDD - TODO. For FGC_CAMPAIGN.
+	// Instead of using the same logic below for that, could be more accurate to the original single-player scorescreen behavior.
+	// Look at 'grabSinglePlayerInfo' to see how it groups computer players together to copy that much over, but would
+	// prefer to keep slot players separate to see individual score info there (people like to see their own stats).
+	// Grouping only computer players together as rows like "GLA Enemies" like as-is, and still keeping slot players separate should suffice.
+	// ---
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE || FORCE_GAME_CONTEXT == FGC_CAMPAIGN
 	Player* civilianPlayer = ThePlayerList->findPlayerWithNameKey(NAMEKEY("PlyrCivilian"));
-	//Player* thePlayerRef = ThePlayerList->findPlayerWithNameKey(NAMEKEY("ThePlayer"));
 	for (int i = 0; i < ThePlayerList->getPlayerCount(); i++) {
 		// Iterate through all players (not necessarily slot players, includes players baked into the map).
 		// Only want players baked into the map here, i.e. the AI controlled general that owns the map.
@@ -2106,53 +2119,31 @@ void grabMultiPlayerInfo()
 		// kind of like how single-player logic for the score screen combines all 'enemies'.
 		// Look to there for inspiration I suppose.
 		Player* player = ThePlayerList->getNthPlayer(i);
-		// A player with an invalid or empty name isn't being used - avoid that too
-		/*
-		if (!player || player->getPlayerNameKey() == NAMEKEY_INVALID || KEYNAME(player->getPlayerNameKey()).getLength() == 0 || player->isPlayerObserver()) {
+		
+		// Exclude slot players - already added by the loop above
+		if (player->slotIndex != -1)
+		{
 			continue;
 		}
-		*/
-		// Actually just an observer check is enough - using 'getPlayerCount()' instead of 'MAX_PLAYERS' above
-		if (player->isPlayerObserver()) {
-			continue;
-		}
-		if (player == ThePlayerList->getNeutralPlayer() || player == civilianPlayer || /*player == thePlayerRef ||*/ player->getPlayerType() == PLAYER_HUMAN) {
-			// no, neutral/civilian stats aren't very interesting.
-			// And exclude "ThePlayer" that's supposed to be specified in challenge maps
-			// Actually, a "PLAYER_HUMAN" check should take care of that (marked not AI controlled in the editor I presume?)
-			continue;
-		}
-		const char* playerName = TheNameKeyGenerator->keyToName(player->getPlayerNameKey()).str();
-		if (strlen(playerName) == 7 && strncmp("player", playerName, strlen("player")) == 0 &&
-			playerName[6] >= '0' && playerName[6] <= '9') {
-			// player0-7 are slot players, already listed at this point, so no
-			continue;
-		}
-		// All passed - include in addition to the slot players already listed
-		populatePlayerInfo(player, count);
-		count ++;
-	}
 
-#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
-  // And for campaign mode instead. A copy of above that doesn't exclude human players since campaign maps don't
-	// provide nor generate "player<0-7>", so just include all players without special checks.
-	// To be more accurate to the original single-player behavior, could look at 'grabSinglePlayerInfo' to see how it
-	// groups computer players together to copy that much over, but would prefer to keep human players separate to
-	// see individual score info there (people like to see their own stats).
-	// Grouping only computer players together as rows like "GLA Enemies", keeping human players separate should suffice.
-	// ---
-	// (copy of above for now with some removals - see comments in the original block further above)
-	Player* civilianPlayer = ThePlayerList->findPlayerWithNameKey(NAMEKEY("PlyrCivilian"));
-	for (int i = 0; i < ThePlayerList->getPlayerCount(); i++) {
-		Player* player = ThePlayerList->getNthPlayer(i);
-		if (player->isPlayerObserver()) {
+		// A player with an invalid or empty name isn't being used - avoid that too
+		// Actually just an observer check is enough - also for 'getPlayerCount()' instead of 'MAX_PLAYERS' for the loop's condition above
+		// old condition: (!player || player->getPlayerNameKey() == NAMEKEY_INVALID || KEYNAME(player->getPlayerNameKey()).getLength() == 0 || player->isPlayerObserver())
+		if (player->isPlayerObserver())
+		{
 			continue;
 		}
-		if (player == ThePlayerList->getNeutralPlayer() || player == civilianPlayer) {
-			// no, neutral/civilian stats aren't very interesting.
+
+		// Exclude the neutral and civilian players.
+		// Also, exclude human-marked players.
+		// This would cover the dummy "ThePlayer" in GC maps, and any other non-slot human-marked players, not interesting
+		// because they wouldn't have a connected human player (non-slot) nor computer to make the player do anything.
+		if (player == ThePlayerList->getNeutralPlayer() || player == civilianPlayer || player->getPlayerType() == PLAYER_HUMAN)
+		{
 			continue;
 		}
-		// All passed - include in addition to the slot players already listed
+
+		// All passed - add a row for this player
 		populatePlayerInfo(player, count);
 		count ++;
 	}

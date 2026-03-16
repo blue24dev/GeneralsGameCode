@@ -227,7 +227,7 @@ void BorderTool::mouseUp(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldBu
 			// Delete it.
 			// Note that this expects the clear-logic below to set 'm_modifyBorderNdx' back to -1.
 			// Can do it here & return if things below get much more complicated.
-			// MODDD - TODO - On deleting a border, go through all script actions involving the border
+			//MODDD - TODO - On deleting a border, go through all script actions involving the border
 			// to refer to the border at one index less if they refered to an index above the index deleted.
 			// Ones that referred to the deleted index exactly should complain that they need to be set to something else
 			// and not just accept the next boundary that then occupies that color.

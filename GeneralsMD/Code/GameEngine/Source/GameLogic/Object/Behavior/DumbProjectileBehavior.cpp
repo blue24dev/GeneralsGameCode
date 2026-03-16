@@ -487,7 +487,7 @@ Bool DumbProjectileBehavior::calcFlightPath(Bool recalcNumSegments)
 #endif
 	}
 	
-	// MODDD - NOTE - the BezierSegment algorithm doesn't do anything if 'numSegments' (first param) is under 2 -
+	//MODDD - NOTE - the BezierSegment algorithm doesn't do anything if 'numSegments' (first param) is under 2 -
 	// 'm_flightPath' would be left empty (seg=0) or with 1 point with a lazy default of (0,0,0) (seg=1).
 	// Hence the handling above.
 	// ---UPDATE - made these points before TheSuperHackers changes - trying with the changes seen above reverted

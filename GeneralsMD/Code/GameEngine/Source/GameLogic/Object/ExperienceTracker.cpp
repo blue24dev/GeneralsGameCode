@@ -218,7 +218,7 @@ void ExperienceTracker::addExperiencePoints( Int experienceGain, Bool canScaleFo
 	// Lastly, consider the 'ExperienceSinkForRider' setting seen throughout the INI files. I assume this wouldn't
 	// work in the tank bunker example because we do want the bunker(bike) itself to be affected by the experience.
 	// If the setting would work there anyway & not break anything / cause new issues, this fix can be disregarded.
-	// MODDD - TODO - could argue there should be better logic for 'RierChangeContain' to preserve experience & use
+	//MODDD - TODO - could argue there should be better logic for 'RierChangeContain' to preserve experience & use
 	// the rider for any experienceRequired/etc. attributes too, like a 'strictPreserveExperience' setting for the INI to use.
 	// (more notes on the 'MODDD - TODO' in RiderChangeContain)
 	// ---
