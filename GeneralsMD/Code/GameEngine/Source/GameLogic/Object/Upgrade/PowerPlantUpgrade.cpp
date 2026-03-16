@@ -187,6 +187,6 @@ void PowerPlantUpgrade::loadPostProcess()
 	// extend base class
 	UpgradeModule::loadPostProcess();
 
-	// MODDD - apply-on-load moved to 'xfer'
+	//MODDD - apply-on-load moved to 'xfer'
 
 }

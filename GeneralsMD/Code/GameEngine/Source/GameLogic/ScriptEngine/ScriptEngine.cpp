@@ -180,7 +180,7 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 		// Basically, don't attack/target a slot that's using a dummy computer player (not participating anyway).
 		// Note that 'TheGameInfo' is NULL for playing the campaign the normally intended way without FGC_CAMPAIGN.
 		// No slot info means the game is 'single-player' (of course you're here) so this check wouldn't have a purpose anyway.
-		if (TheGameInfo)
+		if (TheGameInfo != nullptr)
 		{
 			GameSlot *slot = TheGameInfo->getSlot(i);
 			if (!slot->isOccupied())
@@ -199,7 +199,7 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 		availablePlayerListSoftCount++;
 	}
 
-	// MODDD - if this is a campaign map, allow selecting baked-in map players that 'currentPlayer' is enemies with as well,
+	//MODDD - if this is a campaign map, allow selecting baked-in map players that 'currentPlayer' is enemies with as well,
 	// so long as they aren't already linked to a slot player (checked above already - don't double dip) and are actually
 	// a reasonable target (not some non-human player that can't actually do anything with units because it has no AI).
 	// This is a clear addition to the base game where choosing computer-marked players as enemies, at least in
@@ -296,7 +296,7 @@ Player* getFirstSlotPlayer()
 			continue;
 		}
 
-		if (TheGameInfo)
+		if (TheGameInfo != nullptr)
 		{
 			GameSlot *slot = TheGameInfo->getSlot(i);
 			if (!slot->isOccupied())
@@ -8171,7 +8171,7 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts()
 	// Also - only going to do this whenever 'cleanupSequentialScript' is called with 2nd param 'cleanDanglers' set to 'false', just since that's when I
 	// noticed the issue (3rd call to be specific, but doing this everywhere until I understand the issue better).
 	// ---
-	// MODDD - TODO
+	//MODDD - TODO
 	// UPDATE - since an update from TheSuperHackers (Commit desc: "Restore retail compatibility for sequential scripts...", SHA: fcc193a66a7c575e95ee2f201622aca55e581267),
 	// it's possible that my bugfix is entirely unneeded.  Verify if this is the case.
 	// Testing this now - removed my inclusions, see if the issue never happens on the co-op vs. AirForce general map by Sriracha, or on Firestorm vs. Dr Thrax.

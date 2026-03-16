@@ -748,7 +748,7 @@ void Object::earlyConstructor(const ThingTemplate* tt)
 	m_curWeaponSetFlags.clear();
 
 	// Object's set of these persist for the life of the object.
-	// MODDD - removing all 'reset' calls, this was always redundant with the constructor, which already calls that.
+	//MODDD - removing all 'reset' calls, this was always redundant with the constructor, which already calls that.
 	m_partitionLastLook = newInstance(ObjectThreatValueParms);
 #if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
 	m_partitionLastLookJammable = newInstance(ObjectThreatValueParms);
@@ -6070,7 +6070,7 @@ PlayerMaskType Object::getFilteredVisionSpiedMask() {
 	// Disguised. If disguised as an enemy, count as spy-able
 	// (leaving out 'isKindOf( KINDOF_DISGUISER )', I imagine having the DISGUISED status implies this)
 	// ---
-	// MODDD - TODO
+	//MODDD - TODO
 	// I imagine it would be proper for the spy vision update to check for a unit being disguised/undetected
 	// and use the player the unit is disguised as for diplomacy (enemies with that or not) and re-evaluating
 	// the unit's own 'visionSpiedMask' on changing the disguise.

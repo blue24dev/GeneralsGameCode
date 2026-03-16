@@ -2282,7 +2282,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	#endif
 
 	// place initial network buildings/units
-	// MODDD - replaced 'TheGame' part of condition (1st term)
+	//MODDD - replaced 'TheGame' part of condition (1st term)
 	if (doAutomaticPostGamePlayerSetup && !loadingSaveGame)
 	{
 		Int progressCount = LOAD_PROGRESS_LOOP_INITIAL_NETWORK_BUILDINGS;
@@ -2485,21 +2485,17 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 				localPlayer->setPlayerRelationship(thePlayerEnemy, ENEMIES);
 				*/
 				///////////////////////////////////////////////////////////////
-				for (int i=0; i<MAX_SLOTS; ++i)
+				for (int i=0; i<ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 				{
 					GameSlot *slot = TheGameInfo->getSlot(i);
-
-					if (!slot || !slot->isOccupied())
+					if (!slot->isOccupied())
+					{
 						continue;
-
-					AsciiString playerName;
-					playerName.format("player%d", i);
-					Player *player = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(playerName));
-
-					if (player) {
-						thePlayerEnemy->setPlayerRelationship(player, ENEMIES);
-						player->setPlayerRelationship(thePlayerEnemy, ENEMIES);
 					}
+					
+					Player *player = ThePlayerList->m_slotPlayerRefs[i];
+					thePlayerEnemy->setPlayerRelationship(player, ENEMIES);
+					player->setPlayerRelationship(thePlayerEnemy, ENEMIES);
 				}
 				///////////////////////////////////////////////////////////////
 			}
@@ -2529,64 +2525,51 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			}
 			*/
 			///////////////////////////////////////////////////////////////
-			for (int i=0; i<MAX_SLOTS; ++i)
+			// Since there isn't a dummy "ThePlayer" to use to decide which player is the enemy (AI general that
+			// starts with map control), we'll just assume that each slot player should be enemies with non-slot
+			// players that aren't neutral or civilian.
+			// Basically, the multiplayer-set team alliances are unaffected (don't force them to be enemies with
+			// each other), and make all slot players enemies with players not assigned by a slot (ex: AI enemy
+			// general player baked into the map).
+			Player* civilianPlayer = ThePlayerList->findPlayerWithNameKey(NAMEKEY("PlyrCivilian"));
+			for (int i=0; i<ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 			{
 				GameSlot *slot = TheGameInfo->getSlot(i);
-
-				if (!slot || !slot->isOccupied())
+				if (!slot->isOccupied())
+				{
 					continue;
+				}
 
-				AsciiString playerName;
-				playerName.format("player%d", i);
-				Player *player = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(playerName));
-
-				if (player) {
-					// Since there isn't a dummy "ThePlayer" to use to decide which player is the enemy (AI general that
-					// starts with map control), we'll just assume that each slot player should be enemies with non-slot
-					// players that aren't neutral or civilian.
-					// Basically, the multiplayer-set team alliances are unaffected (don't force them to be enemies with
-					// each other), and make all slot players enemies with players not assigned by a slot (AI general
-					// player baked into the map).
-
-					Player* civilianPlayer = ThePlayerList->findPlayerWithNameKey(NAMEKEY("PlyrCivilian"));
-
-					for (Int i2 = 0; i2 < ThePlayerList->getPlayerCount(); i2++)
+				Player *player = ThePlayerList->m_slotPlayerRefs[i];
+				for (Int i2 = 0; i2 < ThePlayerList->getPlayerCount(); i2++)
+				{
+					Player *thatPlayer = ThePlayerList->getNthPlayer(i2);
+					if (thatPlayer == player)
 					{
-						Relationship rel;
-						Player *thatPlayer = ThePlayerList->getNthPlayer(i2);
-						if(thatPlayer == player) {
-							// Found the same 'thatPlayer' as 'player' - bound to happen on going through all players.
-							// Skip
-							continue;
-						}
-
-						if (thatPlayer == ThePlayerList->getNeutralPlayer() || thatPlayer == civilianPlayer) {
-							// Found the neutral or civilian player - naturally, we're neutral
-							rel = NEUTRAL;
-						} else {
-							// If the other player isn't neutral/civilian, decide if we're going to force them to be enemies.
-							// If the other player is a slot player, don't do anything (leave this up to defaults from multiplayer-assigned teams).
-							// Otherwise, they're enemies (assume they're enemies with anything else baked into the map).
-							// ---
-							// Get the other player's name.  If it starts with "player" and is followed by a single number, this is a slot player.
-							// There is a special place in hell for mappers that happen to name map-baked-in players exactly "player0", "player1", etc.
-
-							const char* thatPlayerName = TheNameKeyGenerator->keyToName(thatPlayer->getPlayerNameKey()).str();
-							if (
-								strlen(thatPlayerName) == 7 && strncmp("player", thatPlayerName, strlen("player")) == 0 &&
-								thatPlayerName[6] >= '0' && thatPlayerName[6] <= '9'
-								) {
-								// The other player is a slot player - don't do anything
-								continue;
-							} else {
-								// Other player isn't a slot player (baked in the map) - enemies, we are
-								rel = ENEMIES;
-							}
-						}
-
-						player->setPlayerRelationship(thatPlayer, rel);
-						thatPlayer->setPlayerRelationship(player, rel);
+						// same player - skip
+						continue;
 					}
+					
+					Relationship rel;
+					if (thatPlayer == ThePlayerList->getNeutralPlayer() || thatPlayer == civilianPlayer)
+					{
+						// Found the neutral or civilian player - naturally, we're neutral
+						rel = NEUTRAL;
+					}
+					// If the other player isn't neutral/civilian, decide if we're going to force them to be enemies.
+					else if (thatPlayer->slotIndex == -1)
+					{
+						// other player isn't a slot player - enemies
+						rel = ENEMIES;
+					}
+					else
+					{
+						// other player is a slot player - skip, leave to relationship per 'skirmish menu'-assigned teams
+						continue;
+					}
+
+					player->setPlayerRelationship(thatPlayer, rel);
+					thatPlayer->setPlayerRelationship(player, rel);
 				}
 			}
 			///////////////////////////////////////////////////////////////

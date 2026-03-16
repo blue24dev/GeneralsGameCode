@@ -331,6 +331,6 @@ void OverchargeBehavior::loadPostProcess()
 	// extend base class
 	UpdateModule::loadPostProcess();
 
-	// MODDD - apply-on-load moved to 'xfer'
+	//MODDD - apply-on-load moved to 'xfer'
 
 }
