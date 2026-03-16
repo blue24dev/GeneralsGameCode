@@ -1512,6 +1512,21 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	}
 	isStandardSlotGameOrReplay = (TheGameEngine->isMultiplayerSession() || isSkirmishOrSkirmishReplay);
 #else
+	//MODDD - simpler version of the above loop just to call 'saveOffOriginalInfo', mainly to get some small
+	// details correct for the load screen in some circumstances.
+	// Note that for FGC_CAMPAIGN, slot info (anything specified in the skirmish/network menu) is ignored as
+	// everything about who a connected user plays as is decided by the map.
+	if (TheGameInfo)
+	{
+		if (!loadingSaveGame)
+		{
+			for (Int i=0; i<MAX_SLOTS; ++i)
+			{
+				GameSlot *slot = TheGameInfo->getSlot(i);
+				slot->saveOffOriginalInfo();
+			}
+		}
+	}
 	isSkirmishOrSkirmishReplay = FALSE;
 	isStandardSlotGameOrReplay = FALSE;
 #endif
