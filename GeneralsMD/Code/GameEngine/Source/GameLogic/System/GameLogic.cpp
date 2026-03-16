@@ -1512,6 +1512,21 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	}
 	isStandardSlotGameOrReplay = (TheGameEngine->isMultiplayerSession() || isSkirmishOrSkirmishReplay);
 #else
+	//MODDD - simpler version of the above loop just to call 'saveOffOriginalInfo', mainly to get some small
+	// details correct for the load screen in some circumstances.
+	// Note that for FGC_CAMPAIGN, slot info (anything specified in the skirmish/network menu) is ignored as
+	// everything about who a connected user plays as is decided by the map.
+	if (TheGameInfo)
+	{
+		if (!loadingSaveGame)
+		{
+			for (Int i=0; i<MAX_SLOTS; ++i)
+			{
+				GameSlot *slot = TheGameInfo->getSlot(i);
+				slot->saveOffOriginalInfo();
+			}
+		}
+	}
 	isSkirmishOrSkirmishReplay = FALSE;
 	isStandardSlotGameOrReplay = FALSE;
 #endif
@@ -2841,10 +2856,8 @@ static void findAndSelectCommandCenter(Object *obj, void* alreadyFound)
 //MODDD - new
 // Run the parts of per-obj init that were waiting for all objects to be populated first from some major
 // object-loading event (fresh map start, loading a saved game)
-void GameLogic::runPostInitOnObjects() {
-	//MODDD - TEST - no
-	//return;
-
+void GameLogic::runPostInitOnObjects()
+{
 	Object *obj;
 	for( obj = getFirstObject(); obj; obj = obj->getNextObject() )
 	{
@@ -2854,7 +2867,8 @@ void GameLogic::runPostInitOnObjects() {
 
 //MODDD - handle some other behavior normally called by the load-system that non-loaded games
 // (fresh map start) now expects
-void GameLogic::runPostInitOnObjectsExtra() {
+void GameLogic::runPostInitOnObjectsExtra()
+{
 	// Call this to setup sleepy updates, now that updates within objects would have been blocked
 	// uhh.. no, don't block sleepy updates for non-loaded games, somehow doing this here just isn't working
 	//TheGameLogic->loadPostProcess();
@@ -4327,7 +4341,17 @@ void GameLogic::update()
 			UpdateSleepTime sleepLen = UPDATE_SLEEP_NONE;	// default, if it is disabled.
 
 			DisabledMaskType dis = u->friend_getObject()->getDisabledFlags();
-			if (!dis.any() || dis.anyIntersectionWith(u->getDisabledTypesToProcess()))
+
+			//MODDD - changing the condition to require lacking any disallowed disabled-types, instead of passing if there is
+			// at least one allowed disabled-type.
+			// This caused some things to unexpectedly work just because they had one type allowed by
+			// 'getDisabledTypesToProcess()' like DISABLED_HELD (often present in sub-objects / things attached to something
+			// else like the avenger turrets). Addons for an underpowered base defense should not continue to work just
+			// because they have 'DISABLED_HELD' and 'getDisabledTypesToProcess()' allows that one type.
+			// Example: in the Firestorm mod, the fortress battery base defense structure - addon turret continues to work when the structure is underpowered.
+			// Also, note the order of 'anyInverseIntersectionWith' is important - want the inverse of allowed types, not what this object is currently disabled by ('dis').
+			//if (!dis.any() || dis.anyIntersectionWith(u->getDisabledTypesToProcess()))
+			if (!dis.any() || !u->getDisabledTypesToProcess().anyInverseIntersectionWith(dis))
 			{
 				USE_PERF_TIMER(GameLogic_update_sleepy)
 

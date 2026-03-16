@@ -227,6 +227,19 @@ public:
 		return tmp.m_bits.any();
 	}
 
+	//MODDD - new combo
+	// Also, like 'countInverseIntersection', a copy of 'this' is getting flipped, not the param
+	Bool anyInverseIntersectionWith(const BitFlags& that) const
+	{
+		// Also, for a test - why not clone the inner 'm_bits' here instead of the whole 'this'?
+		// Going to guess there's no difference in this case since this class doesn't have any virtual methods
+		// (no vtable) and 'm_bits' is its only field.
+		std::bitset<NUMBITS> tmp = this->m_bits;
+		tmp.flip();
+		tmp &= that.m_bits;
+		return tmp.any();
+	}
+
 	//MODDD - 'or' operator to see which bits are 1 in either/both of the bitmasks. Doesn't modify this instance.
 	BitFlags getOr( const BitFlags& that ) const
 	{

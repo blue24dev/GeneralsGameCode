@@ -59,10 +59,6 @@ enum PlayingWhich CPP_11(: Int)
 
 struct PlayingAudio
 {
-	//MODDD - TEST. going to make everything volatile here for safety (including what's in 'union').
-	// As-is, only 'm_status' was marked volatile
-	// ...oh. that's a whole bucket of compile errors.   okay not trying this yet.
-	// Have some initializers below anyway just in case, any risk of memory wonkiness will not be tolerated.
 	union
 	{
 		HSAMPLE m_sample;
