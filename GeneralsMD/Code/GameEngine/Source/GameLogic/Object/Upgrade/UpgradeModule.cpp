@@ -135,13 +135,11 @@ Bool UpgradeMux::wouldUpgrade( const UpgradeMaskType& keyMask ) const
 	// With the fix below, this dormant behavior will run and these EMP missiles will be horrifically overpowered.
 	// Better question is why this module is in the INI to begin with, if never having an effect is the best case scenario.
 	// TLDR: introduce this 'fix' to a mod ecosystem that never expected this at your own risk.
-
+	// ---
 	//MODDD - for me only (enable anyway?)
-	/*
 	if(!activation.any() && !m_upgradeExecuted) {
 	  return TRUE;
 	}
-	*/
 
 	//Make sure we have activation conditions and we haven't performed the upgrade already.
 	if( activation.any() && keyMask.any() && !m_upgradeExecuted )

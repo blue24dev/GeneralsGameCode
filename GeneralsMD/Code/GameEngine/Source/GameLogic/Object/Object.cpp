@@ -417,6 +417,10 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 	*curB++ = m_smcHelper;
 
 	//Inactive bodies can't take special damage since they can't take damage
+	//MODDD - moved to ThingTemplate so deciding whether there is an 'InactiveBody' module can be done shortly after
+	// parsing instead of every single time an object is created
+	// ---
+	/*
 	Bool isInactiveBody = FALSE;
 	for( Int infoIndex = 0; infoIndex < mi.getCount(); ++infoIndex )
 	{
@@ -430,6 +434,10 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 			break;
 		}
 	}
+	*/
+	// ---
+	Bool isInactiveBody = tt->getHasInactiveBodyModule();
+	// ---
 
 	if( !isInactiveBody )
 	{
@@ -552,61 +560,6 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 			m_physics = (PhysicsBehavior*)newMod;
 		}
 	}
-
-	/*
-	//MODDD - for me only
-	// Temp hack. Add active-shroud-generation to anything that is a stealth detector.
-	// This lets shroud generation be easy to see/test in mods that never use the shroud generating module (including retail).
-	// Requires the "MODDD - for me only" block in 'UpgradeModule.cpp' to be enabled so lacking a condition still lets this work.
-  if (m_stealthDetector != nullptr) {
-	  // First, do you already have this
-	  modName = AsciiString("ActiveShroudUpgrade");
-	  static NameKeyType tempKey = NAMEKEY(modName);
-		Module *mod = mod = findModule(tempKey);
-		if(mod == nullptr) {
-
-			// the detector needs to support types other than 'MINE' and 'DEMOTRAP'.
-			// why bother if not?
-			// (also allow if 'extraDetectKindof' has no bits set - means this wasn't specified so imply everything)
-			KindOfMaskType testMask;
-			testMask.set(KINDOF_MINE);
-			testMask.set(KINDOF_DEMOTRAP);
-			testMask.flip();
-			if (
-				(
-					!m_stealthDetector->getStealthDetectorUpdateModuleData()->m_extraDetectKindof.any() ||
-					m_stealthDetector->getStealthDetectorUpdateModuleData()->m_extraDetectKindof.getAnd(testMask).any()
-				)
-				// even if you're a detector, a vision of 0 tells me something isn't quite right
-				&& getVisionRange() > 0
-			) {
-				// proceed
-				//mi.getInfoVector().push_back(Nugget(modName, AsciiString("Module_GENERATED4567"), data, interfaceMask, inheritable, overrideableByLikeKind));
-
-				AsciiString moduleTag = AsciiString("Module_GENERATED4567");
-				ModuleInfo& mi2 = ((ThingTemplate*)tt)->getBehaviorModuleInfoEvil();
-				ModuleData* data = TheModuleFactory->newModuleDataFromINI(nullptr, modName, MODULETYPE_BEHAVIOR, moduleTag);
-		
-				ActiveShroudUpgradeModuleData* mdCast = (ActiveShroudUpgradeModuleData*)data;
-				//mdCast->m_newShroudRange = this->getVisionRange();
-				Real testRange = m_stealthDetector->getStealthDetectorUpdateModuleData()->m_detectionRange;
-				if (testRange == 0) {
-					testRange = getVisionRange();
-				}
-				mdCast->m_newShroudRange = testRange * 0.75;
-
-				mi2.addModuleInfo((ThingTemplate*)tt, modName, moduleTag, data, (MODULEINTERFACE_UPDATE), false);
-
-				//ActiveShroudUpgradeModuleData md;
-				//int whut = md.m_upgradeMuxData.m_triggerUpgradeNames.size();
-				//whut = whut;
-
-				BehaviorModule* newMod = (BehaviorModule*)TheModuleFactory->newModule(this, modName, data, MODULETYPE_BEHAVIOR);
-				*curB++ = newMod;
-			}
-		}
-  }
-	*/
 
 	*curB = nullptr;
 
@@ -4261,6 +4214,8 @@ void Object::updateObjValuesFromMapProperties(Dict* properties)
 	if (exists && valInt >= 0) {
 		BodyModuleInterface* body = getBodyModule();
 		if (body)	{
+			//MODDD - for me only
+			//valInt = healthAdjustmentFilter(this, valInt);
 			body->setMaxHealth(valInt);
 		}
 	}
@@ -4269,6 +4224,8 @@ void Object::updateObjValuesFromMapProperties(Dict* properties)
 	if (exists) {
 		BodyModuleInterface* body = getBodyModule();
 		if (body)	{
+			//MODDD - for me only
+			//valInt = healthAdjustmentFilter(this, valInt);
 			body->setInitialHealth(valInt);
 		}
 	}
@@ -6054,7 +6011,6 @@ Real Object::determineNonJammableShroudClearingRange( Real shroudClearingRangeJa
 // Undetected stealthed units shouldn't be spied on, they are unfairly revealed by clearing shroud/fog around them.
 // Disguised units can be treated as the player they're disguised as instead (disguised successfully as something
 // the spying player is still enemies with -> stays spied on, otherwise no, that would be unfairly revealed like stealth).
-//MODDD - TODO - '#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS' this since it's only used in that case, same for in Object.h
 PlayerMaskType Object::getFilteredVisionSpiedMask() {
 	Bool stealthed = (testStatus( OBJECT_STATUS_STEALTHED ) && !testStatus( OBJECT_STATUS_DETECTED ) && !testStatus( OBJECT_STATUS_DISGUISED ) );
 	if (stealthed) {

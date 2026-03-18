@@ -458,7 +458,7 @@ void GameEngine::init()
 
 
 
-	#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+	#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 		// If we're in Debug, load the Debug settings as well.
 		ini.loadFileDirectory( "Data\\INI\\GameDataDebug", INI_LOAD_OVERWRITE, nullptr );
 	#endif
@@ -629,7 +629,7 @@ void GameEngine::init()
 
 		TheMetaMap->generateMetaMap();
 
-#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 		ini.loadFileDirectory("Data\\INI\\CommandMapDebug", INI_LOAD_MULTIFILE, nullptr);
 #endif
 

@@ -128,9 +128,25 @@ ActiveBodyModuleData::ActiveBodyModuleData()
 {
 	m_maxHealth = 0;
 	m_initialHealth = 0;
+
+	//MODDD
+	m_subdualDamageToDisable = 0;
+
 	m_subdualDamageCap = 0;
 	m_subdualDamageHealRate = 0;
 	m_subdualDamageHealAmount = 0;
+}
+
+//MODDD - does the original 'INI::parseReal' and then sets 'm_subdualDamageToDisable' from 'maxHealth' since
+// this wasn't part of the INI files as-is
+static void ActiveBody_parseMaxHealth( INI* ini, void* instance, void *store, const void* userData )
+{
+	INI::parseReal(ini, instance, store, userData);
+	// 'subdualDamageToDisable' will default to 'maxHealth'.
+	// There could be parsing support for 'subdualDamageToDisable' to give it its own value too, but a default
+	// is needed for retail / existing mods to continue to work as expected.
+	ActiveBodyModuleData* _this = (ActiveBodyModuleData*)instance;
+	_this->m_subdualDamageToDisable = _this->m_maxHealth;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -141,7 +157,8 @@ void ActiveBodyModuleData::buildFieldParse(MultiIniFieldParse& p)
 
 	static const FieldParse dataFieldParse[] =
 	{
-		{ "MaxHealth",						INI::parseReal,						nullptr,		offsetof( ActiveBodyModuleData, m_maxHealth ) },
+		//MODDD - changed 'INI::parseReal' to '::parseMaxHealth'
+		{ "MaxHealth",						::ActiveBody_parseMaxHealth,						nullptr,		offsetof( ActiveBodyModuleData, m_maxHealth ) },
 		{ "InitialHealth",				INI::parseReal,						nullptr,		offsetof( ActiveBodyModuleData, m_initialHealth ) },
 
 		{ "SubdualDamageCap",					INI::parseReal,									nullptr,		offsetof( ActiveBodyModuleData, m_subdualDamageCap ) },
@@ -175,53 +192,8 @@ ActiveBody::ActiveBody( Thing *thing, const ModuleData* moduleData ) :
 	m_maxHealth = getActiveBodyModuleData()->m_maxHealth;
 	m_initialHealth = getActiveBodyModuleData()->m_initialHealth;
 
-	/*
-	//MODDD - for me only
-	Object* obj = getObject();
-	if (obj->isKindOf(KINDOF_STRUCTURE)) {
-		if (obj->isKindOf(KINDOF_FS_SUPERWEAPON)) {
-			// nothing for here - superweapons are plenty beefy enough
-		} else if(obj->isKindOf(KINDOF_FS_BASE_DEFENSE)) {
-			// get more health
-			m_currentHealth *= 1.5;
-			m_prevHealth *= 1.5;
-			m_maxHealth *= 1.5;
-			m_initialHealth *= 1.5;
-		} else {
-			// buildings otherwise
-			m_currentHealth *= 1.75;
-			m_prevHealth *= 1.75;
-			m_maxHealth *= 1.75;
-			m_initialHealth *= 1.75;
-		}
-	} else {
-		  // For Contra: super units won't be affected by the health buff.
-			// Cheezy way to tell is see if 'maxSimultaneousDeterminedBySuperweaponRestriction' is set for a non-structure.
-			// This won't catch things forced to a limit of 1 like commando units, so, suppose that works out nicely.
-			if (obj->getTemplate()->isMaxSimultaneousDeterminedBySuperweaponRestriction())
-			{
-				// skip
-			}
-			else
-			{
-				KindOfMaskType tempMask;
-				tempMask.set(KINDOF_INFANTRY);
-				tempMask.set(KINDOF_VEHICLE);
-				tempMask.set(KINDOF_AIRCRAFT);
-				tempMask.set(KINDOF_HUGE_VEHICLE);
-				// don't these should be needed, nor forbidding UNATTACKABLE?
-				//tempMask.set(KINDOF_DOZER);
-				//tempMask.set(KINDOF_HARVESTER);
-				if (obj->isAnyKindOf(tempMask)) {
-					// a non-structure unit (not some weird system/inner-detail thing): have a little more health anyway
-					m_currentHealth *= 1.20;
-					m_prevHealth *= 1.20;
-					m_maxHealth *= 1.20;
-					m_initialHealth *= 1.20;
-				}
-			}
-	}
-	*/
+	//MODDD
+	m_subdualDamageToDisable = getActiveBodyModuleData()->m_subdualDamageToDisable;
 
 	// force an initially-valid armor setup
 	validateArmorAndDamageFX();
@@ -549,7 +521,11 @@ void ActiveBody::attemptDamage( DamageInfo *damageInfo )
 		// of health to prevent indefinite subdue status when internally shifting health across the threshold.
 		Bool wasSubdued = isSubdued();
 		internalAddSubdualDamage(amount);
-		Bool nowSubdued = m_maxHealth <= m_currentSubdualDamage;
+
+		//MODDD
+		//Bool nowSubdued = m_maxHealth <= m_currentSubdualDamage;
+		Bool nowSubdued = m_subdualDamageToDisable <= m_currentSubdualDamage;
+		
 		alreadyHandled = TRUE;
 		allowModifier = FALSE;
 
@@ -951,7 +927,6 @@ void ActiveBody::setMaxHealth( Real maxHealth, MaxHealthChangeType healthChangeT
 	Real prevMaxHealth = m_maxHealth;
 	m_maxHealth = maxHealth;
 	m_initialHealth = maxHealth;
-
 	switch( healthChangeType )
 	{
 		case PRESERVE_RATIO:
@@ -1379,12 +1354,16 @@ void ActiveBody::onSubdualChange( Bool isNowSubdued )
 Bool ActiveBody::isSubdued() const
 {
 #if RETAIL_COMPATIBLE_CRC
-	return m_maxHealth <= m_currentSubdualDamage;
+	//MODDD
+	//return m_maxHealth <= m_currentSubdualDamage;
+	return m_subdualDamageToDisable <= m_currentSubdualDamage;
 #else
   // TheSuperHackers @info Projectiles don't receive the DISABLED_SUBDUED flag (or any flag for
 	// that matter) when jammed, so we have to check their subdual damage directly.
 	if (getObject()->isKindOf(KINDOF_PROJECTILE))
-		return m_maxHealth <= m_currentSubdualDamage;
+		//MODDD
+		//return m_maxHealth <= m_currentSubdualDamage;
+		return m_subdualDamageToDisable <= m_currentSubdualDamage;
 
 	return getObject()->isDisabledByType(DISABLED_SUBDUED);
 #endif
@@ -1623,6 +1602,9 @@ void ActiveBody::xfer( Xfer *xfer )
 
 	// max health
 	xfer->xferReal( &m_maxHealth );
+
+	//MODDD
+	xfer->xferReal( &m_subdualDamageToDisable );
 
 	// initial health
 	xfer->xferReal( &m_initialHealth );

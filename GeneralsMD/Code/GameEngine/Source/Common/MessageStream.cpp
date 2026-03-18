@@ -342,7 +342,7 @@ const char *GameMessage::getCommandTypeAsString(GameMessage::Type t)
 	CASE_LABEL(MSG_META_DIPLOMACY)
 	CASE_LABEL(MSG_META_OPTIONS)
 
-#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 	CASE_LABEL(MSG_META_HELP)
 #endif
 
@@ -407,7 +407,7 @@ const char *GameMessage::getCommandTypeAsString(GameMessage::Type t)
 	CASE_LABEL(MSG_META_STEP_FRAME)
 	CASE_LABEL(MSG_META_STEP_FRAME_ALT)
 
-#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 	CASE_LABEL(MSG_META_DEMO_TOGGLE_BEHIND_BUILDINGS)
 	CASE_LABEL(MSG_META_DEMO_TOGGLE_LETTERBOX)
 	CASE_LABEL(MSG_META_DEMO_TOGGLE_MESSAGE_TEXT)
@@ -522,11 +522,11 @@ const char *GameMessage::getCommandTypeAsString(GameMessage::Type t)
 	CASE_LABEL(MSG_META_DEBUG_SLEEPY_UPDATE_PERFORMANCE)
 	CASE_LABEL(MSG_META_DEBUG_WIN)
 	CASE_LABEL(MSG_META_DEMO_TOGGLE_DEBUG_STATS)
-#endif // _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#endif // _ALLOW_DEBUG_CHEATS_IN_DEBUG
 
-#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 	CASE_LABEL(MSG_META_DEMO_TOGGLE_AUDIODEBUG)
-#endif// _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#endif// _ALLOW_DEBUG_CHEATS_IN_DEBUG
 
 #ifdef DUMP_PERF_STATS
 	CASE_LABEL(MSG_META_DEMO_PERFORM_STATISTICAL_DUMP)
@@ -680,7 +680,7 @@ const char *GameMessage::getCommandTypeAsString(GameMessage::Type t)
 	CASE_LABEL(MSG_CREATE_FORMATION)
 	CASE_LABEL(MSG_LOGIC_CRC)
 
-#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 	CASE_LABEL(MSG_DEBUG_KILL_SELECTION)
 	CASE_LABEL(MSG_DEBUG_HURT_OBJECT)
 	CASE_LABEL(MSG_DEBUG_KILL_OBJECT)
@@ -1015,7 +1015,7 @@ void MessageStream::removeTranslator( TranslatorID id )
 
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
-#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 
 Bool isInvalidDebugCommand( GameMessage::Type t )
 {
@@ -1105,7 +1105,7 @@ void MessageStream::propagateMessages()
 		for( msg=m_firstMessage; msg; msg=next )
 		{
 			if (ss->m_translator
-#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 				&& !isInvalidDebugCommand(msg->getType())
 #endif
 				)

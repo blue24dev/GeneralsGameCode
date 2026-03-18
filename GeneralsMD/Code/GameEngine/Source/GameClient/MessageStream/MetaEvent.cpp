@@ -214,7 +214,7 @@ static const LookupListRec GameMessageMetaTypeNames[] =
 
 #endif
 
-#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 	{ "HELP",																			GameMessage::MSG_META_HELP },
 
 	{ "DEMO_TOGGLE_BEHIND_BUILDINGS",							GameMessage::MSG_META_DEMO_TOGGLE_BEHIND_BUILDINGS },
@@ -339,12 +339,12 @@ static const LookupListRec GameMessageMetaTypeNames[] =
 	{ "DEBUG_OBJECT_ID_PERFORMANCE",							GameMessage::MSG_META_DEBUG_OBJECT_ID_PERFORMANCE },
 	{ "DEBUG_DRAWABLE_ID_PERFORMANCE",						GameMessage::MSG_META_DEBUG_DRAWABLE_ID_PERFORMANCE },
 	{ "DEBUG_SLEEPY_UPDATE_PERFORMANCE",					GameMessage::MSG_META_DEBUG_SLEEPY_UPDATE_PERFORMANCE },
-#endif // _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#endif // _ALLOW_DEBUG_CHEATS_IN_DEBUG
 
 
-#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 	{ "DEMO_TOGGLE_AUDIODEBUG",										GameMessage::MSG_META_DEMO_TOGGLE_AUDIODEBUG },
-#endif// _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#endif// _ALLOW_DEBUG_CHEATS_IN_DEBUG
 #ifdef DUMP_PERF_STATS
 	{ "DEMO_PERFORM_STATISTICAL_DUMP",						GameMessage::MSG_META_DEMO_PERFORM_STATISTICAL_DUMP },
 #endif//DUMP_PERF_STATS
@@ -872,7 +872,7 @@ MetaMapRec *MetaMap::getMetaMapRec(GameMessage::Type t)
 		}
 	}
 
-#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 	{
 		// Is useful for Generals and Zero Hour.
 		MetaMapRec *map = TheMetaMap->getMetaMapRec(GameMessage::MSG_META_DEMO_REMOVE_PREREQ);
@@ -895,7 +895,7 @@ MetaMapRec *MetaMap::getMetaMapRec(GameMessage::Type t)
 			map->m_usableIn = COMMANDUSABLE_GAME;
 		}
 	}
-#endif // _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#endif // _ALLOW_DEBUG_CHEATS_IN_DEBUG
 }
 
 //-------------------------------------------------------------------------------------------------

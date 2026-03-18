@@ -195,9 +195,6 @@ UpdateSleepTime StealthDetectorUpdate::update()
 		visionRange = data->m_detectionRange;
 	}
 
-	//MODDD - for me only
-	//visionRange *= 1.2;
-
 	Bool foundSomeone = FALSE;
 
 	SimpleObjectIterator *iter = ThePartitionManager->iterateObjectsInRange(
