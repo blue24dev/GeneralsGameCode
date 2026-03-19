@@ -406,16 +406,44 @@ CameraClass::ProjectionResType CameraClass::Project(Vector3 & dest,const Vector3
 	Vector3 cam_point;
 	Matrix3D::Transform_Vector(CameraInvTransform,ws_point,&cam_point);
 
+	//MODDD - moving this to after the proper dest.X/Y/Z setting further below.
+	// Several other places will still use the 'dest' output param from this call even if the output value here
+	// is 'OUTSIDE_NEAR_CLIP'.
+	// This is an issue because the (0,0,0) default point here will still be treated normally - ex: points on a polygon
+	// completely outside of the screen can be treated as in the center of the screen & count as the best fit -> get
+	// selected unexpectedly.
+	// Ex: callstack to look at:
+	//   PointerTool::mouseDown
+	//   PolygonTool::poly_pickOnMouseDown
+	//   PolygonTool::pickPolygon
+	//   PolygonTool::poly_pickPoint
+	//     The outcome of a (0,0,0) point mentioned above causes 'screenLoc' to be set to the center of the screen, which can cause results to be inaccurate
+	//     (nothing cares that 'docToViewCoords' returned false in this case, and more specific return info from 'CameraClass::Project' such as 'OUTSIDE_NEAR_CLIP' is not available at this point)
+	//   WbView3d::docToViewCoords
+	//   CameraClass::Project <here>
+	// If there was a reason to avoid doing the 'X/Y/Z' assignment below so terminating early here is still best, look at
+	// anywhere that depends on this call and if the return is 'OUTSIDE_NEAR_CLIP', treat the 'dest' point as invalid
+	// memory - can't involve it anywhere.
+	// Another idea: allowing callers to see the specific reason for failing to return (if ignoring 'dest' on any false
+	// return all the same doesn't suffice) such as checking for 'OUTSIDE_NEAR_CLIP' as a failure reason specifically.
+	// After some testing, I don't think any of this is needed.
+	/*
 	if (cam_point.Z > -ZNear) {
 		dest.Set(0,0,0);
 		return OUTSIDE_NEAR_CLIP;
 	}
+	*/
 
 	Vector4 view_point = ProjectionTransform * cam_point;
 	float oow = 1.0f / view_point.W;
 	dest.X = view_point.X * oow;
 	dest.Y = view_point.Y * oow;
 	dest.Z = view_point.Z * oow;
+
+	//MODDD - moved to here without the '0,0,0' default
+	if (cam_point.Z > -ZNear) {
+		return OUTSIDE_NEAR_CLIP;
+	}
 
 	if (dest.Z > 1.0f) {
 		return OUTSIDE_FAR_CLIP;
