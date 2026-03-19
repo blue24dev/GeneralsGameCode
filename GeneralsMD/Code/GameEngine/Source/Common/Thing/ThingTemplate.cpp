@@ -1574,7 +1574,8 @@ Int ThingTemplate::calcTimeToBuild( const Player* player) const
 	Int buildTime = getBuildTime() * LOGICFRAMES_PER_SECOND;
 
 	//MODDD - for me only
-	buildTime = buildTimeAdjustmentFilter(player, buildTime);
+	// fuck you :D
+	//buildTime = buildTimeAdjustmentFilter(player, buildTime);
 
 	buildTime *= player->getHandicap()->getHandicap(Handicap::BUILDTIME, this);
 
