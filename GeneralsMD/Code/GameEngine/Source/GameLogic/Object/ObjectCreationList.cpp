@@ -136,7 +136,7 @@ public:
 	}
 
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
-	virtual Object* create( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const
+	virtual Object* create( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const override
 	{
 		if (!primaryObj || !primary || !secondary)
 		{
@@ -184,7 +184,7 @@ public:
 	}
 
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
-	virtual Object* create( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const
+	virtual Object* create( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const override
 	{
 		if (!primaryObj || !primary || !secondary)
 		{
@@ -267,13 +267,13 @@ public:
 	}
 
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
-	virtual Object* create(Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const
+	virtual Object* create(Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const override
 	{
 		return create( primaryObj, primary, secondary, true, lifetimeFrames );
 	}
 
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
-	virtual Object* create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 ) const
+	virtual Object* create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 ) const override
 	{
 		if (!primaryObj || !primary || !secondary)
 		{
@@ -627,7 +627,7 @@ public:
 	}
 
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primary'
-	virtual Object* create( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const
+	virtual Object* create( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const override
 	{
 		if (primary)
 		{
@@ -659,7 +659,7 @@ public:
 	}
 
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
-	virtual Object* create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const
+	virtual Object* create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const override
 	{
 		DEBUG_CRASH(("You must call this effect with an object, not a location"));
 		return nullptr;
@@ -785,7 +785,7 @@ public:
 	}
 
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primary'
-	virtual Object* create(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const
+	virtual Object* create(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const override
 	{
 		if (primary)
 		{
@@ -802,7 +802,7 @@ public:
 	}
 
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
-	virtual Object* create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const
+	virtual Object* create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const override
 	{
 		if (primary)
 		{
