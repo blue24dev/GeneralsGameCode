@@ -154,7 +154,7 @@ UpgradeTemplate::~UpgradeTemplate()
 //-------------------------------------------------------------------------------------------------
 Int UpgradeTemplate::calcTimeToBuild( Player *player ) const
 {
-#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 	if( player->buildsInstantly() )
 	{
 		return 1;
