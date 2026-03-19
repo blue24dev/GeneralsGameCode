@@ -56,7 +56,7 @@
 // ------------------------------------------------------------------------------------------------
 UnsignedInt Money::withdraw(UnsignedInt amountToWithdraw, Bool playSound)
 {
-#if defined(RTS_DEBUG)
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 	Player* player = ThePlayerList->getNthPlayer(m_playerIndex);
 	if (player != nullptr && player->buildsForFree())
 		return 0;

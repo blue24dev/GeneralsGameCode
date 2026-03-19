@@ -1574,14 +1574,14 @@ Int ThingTemplate::calcTimeToBuild( const Player* player) const
 	Int buildTime = getBuildTime() * LOGICFRAMES_PER_SECOND;
 
 	//MODDD - for me only
-	//buildTime = buildtimeAdjustmentFilter(player, buildTime);
+	//buildTime = buildTimeAdjustmentFilter(player, buildTime);
 
 	buildTime *= player->getHandicap()->getHandicap(Handicap::BUILDTIME, this);
 
 	Real factionModifier = 1 + player->getProductionTimeChangePercent( getName() );
 	buildTime *= factionModifier;
 
-#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 	if( player->buildsInstantly() )
 	{
 		buildTime = 1;
@@ -1873,6 +1873,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	// Temp hack. Add active-shroud-generation to anything that is a stealth detector.
 	// This lets shroud generation be easy to see/test in mods that never use the shroud generating module (including retail).
 	// Requires the "MODDD - for me only" block in 'UpgradeModule.cpp' to be enabled so lacking a condition still lets this work.
+	/*
   if (foundStealthDetectorUpdate && !foundActiveShroudUpgrade)
 	{
 		static AsciiString ActiveShroudUpgradeName = AsciiString("ActiveShroudUpgrade");
@@ -1914,7 +1915,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			//*curB++ = newMod;
 		}
   }
-
+	*/
 }
 
 Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
@@ -1926,7 +1927,7 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 	const float endModifier = 0.75;
 
 	Int _buildTime = buildTime;
-	if(player->getPlayerType() == PLAYER_COMPUTER)
+	if (player->getPlayerType() == PLAYER_COMPUTER)
 	{
 		UnsignedInt frame = TheGameLogic->getFrame();
 		if (frame <= (30 * 60) * startMin)

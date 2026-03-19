@@ -409,12 +409,12 @@ void Player::init(const PlayerTemplate* pt)
 	//MODDD
 	slotIndex = -1;
 
-#if defined(RTS_DEBUG)
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 	m_DEMO_ignorePrereqs = FALSE;
 	m_DEMO_freeBuild = FALSE;
 #endif
 
-#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 	m_DEMO_instantBuild = FALSE;
 #endif
 
@@ -2978,7 +2978,7 @@ Bool Player::canBuild(const ThingTemplate *tmplate) const
 				prereqsOK = false;
 		}
 
-#if defined(RTS_DEBUG)
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 		if (ignoresPrereqs())
 			prereqsOK = true;
 #endif
