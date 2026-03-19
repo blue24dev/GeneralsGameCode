@@ -802,7 +802,7 @@ private:
 //-----------------------------------------------------------------------------
 
 //MODDD - for me only
-#if 0
+#if 1
 void automaticThingTemplateChanges(ThingTemplate* _this);
 Int buildTimeAdjustmentFilter(const Player* player, Int buildTime);
 Real getHealthMulti(const ThingTemplate* _this);
