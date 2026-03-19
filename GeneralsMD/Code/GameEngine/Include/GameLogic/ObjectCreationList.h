@@ -196,11 +196,11 @@ class ObjectCreationListStore : public SubsystemInterface
 public:
 
 	ObjectCreationListStore();
-	~ObjectCreationListStore();
+	virtual ~ObjectCreationListStore() override;
 
-	void init() { }
-	void reset() { }
-	void update() { }
+	virtual void init() override { }
+	virtual void reset() override { }
+	virtual void update() override { }
 
 	/**
 		return the ObjectCreationList with the given namekey.

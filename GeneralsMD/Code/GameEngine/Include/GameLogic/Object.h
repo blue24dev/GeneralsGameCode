@@ -709,9 +709,9 @@ protected:
 	// All of our cheating for radars and power go here.
 
 	// snapshot methods
-	void crc( Xfer *xfer );
-	void xfer( Xfer *xfer );
-	void loadPostProcess();
+	virtual void crc( Xfer *xfer ) override;
+	virtual void xfer( Xfer *xfer ) override;
+	virtual void loadPostProcess() override;
 
 	void handleShroud();
 	void handleValueMap();
@@ -725,10 +725,10 @@ protected:
 	Bool didEnterOrExit() const;
 
 	void setID( ObjectID id );
-	virtual Object *asObjectMeth() { return this; }
-	virtual const Object *asObjectMeth() const { return this; }
+	virtual Object *asObjectMeth() override { return this; }
+	virtual const Object *asObjectMeth() const override { return this; }
 
-	virtual Real calculateHeightAboveTerrain() const;		// Calculates the actual height above terrain.  Doesn't use cache.
+	virtual Real calculateHeightAboveTerrain() const override;		// Calculates the actual height above terrain.  Doesn't use cache.
 
 	void updateTriggerAreaFlags();
 	void setTriggerAreaFlagsForChangeInPosition();
@@ -752,7 +752,7 @@ protected:
 	void addThreat();
 	void removeThreat();
 
-	virtual void reactToTransformChange(const Matrix3D* oldMtx, const Coord3D* oldPos, Real oldAngle);
+	virtual void reactToTransformChange(const Matrix3D* oldMtx, const Coord3D* oldPos, Real oldAngle) override;
 
 private:
 
