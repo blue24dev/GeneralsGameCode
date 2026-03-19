@@ -197,7 +197,7 @@ LogClass BonePosLog("bonePositions.txt");
 extern AsciiString TheThingTemplateBeingParsedName;
 #endif
 
-#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 extern Real TheSkateDistOverride;
 #endif
 
@@ -2261,7 +2261,7 @@ Real W3DModelDraw::getCurAnimDistanceCovered() const
 	if (m_curState != nullptr && m_whichAnimInCurState >= 0)
 	{
 		const W3DAnimationInfo& animInfo = m_curState->m_animations[m_whichAnimInCurState];
-	#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+	#if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 		if (TheSkateDistOverride != 0.0f)
 			return TheSkateDistOverride;
 	#endif
@@ -3756,13 +3756,16 @@ Bool W3DModelDraw::handleWeaponFireFX(WeaponSlotType wslot, Int specificBarrelTo
 		//MODDD - Real-time time-of-day change
 		// Adding a check on 'm_weaponRecoilInfoVec'. This is a quick patch, should probably just not clear this on changing time-of-day during a game.
 		// At least I assume that's what's happening? (Crashes during the Zero Hour splash screen on day/night change, make the cycle time short to make it happen sooner)
-		if (m_weaponRecoilInfoVec[wslot].size() > 0) {
+		if (m_weaponRecoilInfoVec[wslot].size() > 0)
+		{
 			WeaponRecoilInfo& recoil = m_weaponRecoilInfoVec[wslot][specificBarrelToUse];
 			recoil.m_state = WeaponRecoilInfo::RECOIL_START;
 			recoil.m_recoilRate = getW3DModelDrawModuleData()->m_initialRecoil;
 			if (info.m_muzzleFlashBone != 0)
 				info.setMuzzleFlashHidden(m_renderObject, false);
-		} else {
+		}
+		else
+		{
 			// for breakpoints
 			int x;
 			x = 4;

@@ -402,12 +402,12 @@
 	#define TIME_OF_DAY_SOURCE tod_model
 #endif
 
-// '_BLOCK_DEBUG_DEMO_MESSAGE_INPUTS' is used elsewhere.
-// This means only checks on '_BLOCK_DEBUG_DEMO_MESSAGE_INPUTS' needed without having to check 'RTS_DEBUG' everytime.
+// '_ALLOW_DEBUG_CHEATS_IN_DEBUG' is used elsewhere.
+// This means only checks on '_ALLOW_DEBUG_CHEATS_IN_DEBUG' needed without having to check 'RTS_DEBUG' everytime.
 #if defined(RTS_DEBUG)
-#define _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS !BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
+#define _ALLOW_DEBUG_CHEATS_IN_DEBUG !BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
 #else
-#define _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS FALSE
+#define _ALLOW_DEBUG_CHEATS_IN_DEBUG FALSE
 #endif
 
 // ----------------------------------------------------------------------------------------------------------

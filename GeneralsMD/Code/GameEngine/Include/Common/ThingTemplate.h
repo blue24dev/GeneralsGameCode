@@ -451,10 +451,6 @@ public:
 	const ModuleInfo& getBehaviorModuleInfo() const { return m_behaviorModuleInfo; }
 	const ModuleInfo& getDrawModuleInfo() const { return m_drawModuleInfo; }
 	const ModuleInfo& getClientUpdateModuleInfo() const { return m_clientUpdateModuleInfo; }
-	
-	//MODDD - version that returns a non-const reference for your hacky desires
-	ModuleInfo& getBehaviorModuleInfoEvil() { return m_behaviorModuleInfo; }
-
 	const Image *getSelectedPortraitImage() const { return m_selectedPortraitImage; }
 	const Image *getButtonImage() const { return m_buttonImage; }
 
@@ -613,6 +609,11 @@ public:
 	//MODDD - getter
 	Bool isMaxSimultaneousDeterminedBySuperweaponRestriction() const { return m_maxSimultaneousDeterminedBySuperweaponRestriction; }
 
+	//MODDD
+	void determineHasInactiveBodyModule();
+	Bool getHasInactiveBodyModule() const;
+	void setHasInactiveBodyModule(Bool hasInactiveBodyModule);
+
 	const WeaponTemplateSet* findWeaponTemplateSet(const WeaponSetFlags& t) const;
 	const ArmorTemplateSet* findArmorTemplateSet(const ArmorSetFlags& t) const;
 
@@ -631,6 +632,9 @@ public:
 	AsciiString getUpgradeCameoName( Int n)const{ return m_upgradeCameoUpgradeNames[n];	}
 
 	const WeaponTemplateSetVector& getWeaponTemplateSets() const {return m_weaponTemplateSets;}
+
+	//MODDD
+	friend void automaticThingTemplateChanges(ThingTemplate* _this);
 
 protected:
 
@@ -771,6 +775,9 @@ private:
 	Bool					m_armorCopiedFromDefault;
 	Bool					m_weaponsCopiedFromDefault;
 
+	//MODDD
+	Bool m_hasInactiveBodyModule;
+
 	// ---- Byte-sized things
 	Byte					m_radarPriority;						///< does object appear on radar, and if so at what priority
 	Byte					m_transportSlotCount;				///< how many "slots" we take in a transport (0 == not transportable)
@@ -793,3 +800,9 @@ private:
 //-----------------------------------------------------------------------------
 //           Externals
 //-----------------------------------------------------------------------------
+
+//MODDD - for me only
+void automaticThingTemplateChanges(ThingTemplate* _this);
+Int buildTimeAdjustmentFilter(const Player* player, Int buildTime);
+Real getHealthMulti(const ThingTemplate* _this);
+Real healthAdjustmentFilter(Object* obj, Real healthVal);

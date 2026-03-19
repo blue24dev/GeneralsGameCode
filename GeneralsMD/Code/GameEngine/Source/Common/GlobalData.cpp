@@ -557,7 +557,7 @@ GlobalData::GlobalData()
 		m_theOriginal = this;
 	m_next = nullptr;
 
-#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 	m_specialPowerUsesDelay = TRUE;
 #endif
   m_TiVOFastMode = FALSE;

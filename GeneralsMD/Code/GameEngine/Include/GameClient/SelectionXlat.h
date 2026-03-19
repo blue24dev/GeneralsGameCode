@@ -69,7 +69,7 @@ public:
 	void setDragSelecting(Bool dragSelect);
 	void setLeftMouseButton(Bool state);
 
-#if defined(RTS_DEBUG) || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
   Bool m_HandOfGodSelectionMode;
   Bool isHandOfGodSelectionMode() { return m_HandOfGodSelectionMode; };
 #endif

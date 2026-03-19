@@ -50,6 +50,9 @@ class ActiveBodyModuleData : public BodyModuleData
 public:
 	Real m_maxHealth;
 	Real m_initialHealth;
+	
+	//MODDD - new
+	Real m_subdualDamageToDisable;
 
 	Real m_subdualDamageCap;								///< Subdual damage will never accumulate past this
 	UnsignedInt m_subdualDamageHealRate;		///< Every this often, we drop subdual damage...
@@ -148,6 +151,9 @@ private:
   Real									m_maxHealth;						///< max health this object can have
   Real									m_initialHealth;				///< starting health for this object
 	Real									m_currentSubdualDamage;	///< Starts at zero and goes up.  Inherited modules will do something when "subdued".
+
+	//MODDD - new
+	Real m_subdualDamageToDisable;
 
 	BodyDamageType				m_curDamageState;				///< last known damage state
 	UnsignedInt						m_nextDamageFXTime;

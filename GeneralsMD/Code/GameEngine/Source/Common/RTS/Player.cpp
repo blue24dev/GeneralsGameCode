@@ -1269,7 +1269,7 @@ static void doFindSpecialPowerSourceObject( Object *obj, void *userData )
 			{
 				UnsignedInt readyFrame = spmInterface->getReadyFrame();
 
-#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 				// Everything is ready if timers are debug off'd
 				if( ! TheGlobalData->m_specialPowerUsesDelay )
 					readyFrame = 0;
@@ -1326,7 +1326,7 @@ static void doCountSpecialPowersReady( Object *obj, void *userData )
 
 				UnsignedInt readyFrame = spmInterface->getReadyFrame();
 
-#if _BLOCK_DEBUG_DEMO_MESSAGE_INPUTS || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG || defined(_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 				// Everything is ready if timers are debug off'd
 				if( ! TheGlobalData->m_specialPowerUsesDelay )
 					readyFrame = 0;

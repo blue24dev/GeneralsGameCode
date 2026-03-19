@@ -792,6 +792,10 @@ Int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
                       LPSTR lpCmdLine, Int nCmdShow )
 {
 	Int exitcode = 1;
+	
+	//MODDD - a forced pause so the debugger can be attached to work during startup stuff like INI parsing.
+	// Because starting a program in another folder with the debugger attached & able to find files around itself is too hard for visual studio to do.
+  //SleepEx(5000, FALSE);
 
 #ifdef RTS_PROFILE
   Profile::StartRange("init");
