@@ -426,13 +426,11 @@ CameraClass::ProjectionResType CameraClass::Project(Vector3 & dest,const Vector3
 	// memory - can't involve it anywhere.
 	// Another idea: allowing callers to see the specific reason for failing to return (if ignoring 'dest' on any false
 	// return all the same doesn't suffice) such as checking for 'OUTSIDE_NEAR_CLIP' as a failure reason specifically.
-	// After some testing, I don't think any of this is needed.
-	/*
+	// UPDATE - reverting, make callers react to this better. Having a side effect of wrongly selecting points in a different way with this fix.
 	if (cam_point.Z > -ZNear) {
 		dest.Set(0,0,0);
 		return OUTSIDE_NEAR_CLIP;
 	}
-	*/
 
 	Vector4 view_point = ProjectionTransform * cam_point;
 	float oow = 1.0f / view_point.W;
@@ -441,9 +439,11 @@ CameraClass::ProjectionResType CameraClass::Project(Vector3 & dest,const Vector3
 	dest.Z = view_point.Z * oow;
 
 	//MODDD - moved to here without the '0,0,0' default
+	/*
 	if (cam_point.Z > -ZNear) {
 		return OUTSIDE_NEAR_CLIP;
 	}
+	*/
 
 	if (dest.Z > 1.0f) {
 		return OUTSIDE_FAR_CLIP;

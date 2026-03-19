@@ -188,13 +188,17 @@ Int PolygonTool::poly_pickPoint(PolygonTrigger *pTrig, CPoint viewPt, WbView* pV
 		cpt.z = iLoc.z;
 		cpt.z = 0;
 		CPoint screenLoc;
-		pView->docToViewCoords(cpt, &screenLoc);
-		Int dx = screenLoc.x-viewPt.x;
-		Int dy = screenLoc.y - viewPt.y;
-		if (dy<0) dy = -dy;
-		if (dx<0) dx = -dx;
-		if (dx<=PICK_PIXELS && dy<= PICK_PIXELS) {
-			return i;
+		//MODDD - require the point to actually be on-screen (return true)
+		// Wrapping the rest of the block with an if-statement
+		if (pView->docToViewCoords(cpt, &screenLoc))
+		{
+			Int dx = screenLoc.x-viewPt.x;
+			Int dy = screenLoc.y - viewPt.y;
+			if (dy<0) dy = -dy;
+			if (dx<0) dx = -dx;
+			if (dx<=PICK_PIXELS && dy<= PICK_PIXELS) {
+				return i;
+			}
 		}
 	}
 	return -1;
