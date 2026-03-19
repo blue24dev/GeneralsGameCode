@@ -4215,7 +4215,7 @@ void Object::updateObjValuesFromMapProperties(Dict* properties)
 		BodyModuleInterface* body = getBodyModule();
 		if (body)	{
 			//MODDD - for me only
-			//valInt = healthAdjustmentFilter(this, valInt);
+			valInt = healthAdjustmentFilter(this, valInt);
 			body->setMaxHealth(valInt);
 		}
 	}
@@ -4225,7 +4225,7 @@ void Object::updateObjValuesFromMapProperties(Dict* properties)
 		BodyModuleInterface* body = getBodyModule();
 		if (body)	{
 			//MODDD - for me only
-			//valInt = healthAdjustmentFilter(this, valInt);
+			valInt = healthAdjustmentFilter(this, valInt);
 			body->setInitialHealth(valInt);
 		}
 	}
