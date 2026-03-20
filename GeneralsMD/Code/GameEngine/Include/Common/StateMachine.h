@@ -320,7 +320,7 @@ public:
 	Object *getGoalObject();
 	const Object *getGoalObject() const;
 
-	//MODDD - new
+	//MODDD - new. Not virtual, not expected to be overridden.
 	Object *getEnemyObject();
 
 	void setGoalPosition( const Coord3D *pos );
