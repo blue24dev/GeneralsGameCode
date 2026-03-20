@@ -1745,6 +1745,9 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		_this->m_visionRange *= 1.3;
 	}
 
+	//MODDD - for the insane speeds of some mods
+	_this->m_buildTime *= 2.0;
+
 	// Make things that are exclusively dozers cheaper.
 	// This that are dozers and harvesters at the same time (GLA workers) don't need as much of a reduction.
 	if (_this->isKindOf(KINDOF_DOZER))
