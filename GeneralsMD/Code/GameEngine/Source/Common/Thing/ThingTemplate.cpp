@@ -1574,8 +1574,7 @@ Int ThingTemplate::calcTimeToBuild( const Player* player) const
 	Int buildTime = getBuildTime() * LOGICFRAMES_PER_SECOND;
 
 	//MODDD - for me only
-	// fuck you :D
-	//buildTime = buildTimeAdjustmentFilter(player, buildTime);
+	buildTime = buildTimeAdjustmentFilter(player, buildTime);
 
 	buildTime *= player->getHandicap()->getHandicap(Handicap::BUILDTIME, this);
 
@@ -1746,7 +1745,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	}
 
 	//MODDD - for the insane speeds of some mods
-	_this->m_buildTime *= 2.0;
+	_this->m_buildTime *= 1.4;
 
 	// Make things that are exclusively dozers cheaper.
 	// This that are dozers and harvesters at the same time (GLA workers) don't need as much of a reduction.
