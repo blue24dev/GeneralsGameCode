@@ -671,7 +671,14 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 			//MODDD - copying this check from 'chooseBestWeaponForTarget' so that the odd case of technically having
 			// a weapon that can attack but being unable to select later it by failing the command-source-check doesn't
 			// happen. Including a 'locked' check since this shouldn't stop the only forced choice from working.
+			// UPDATE - disabling this for now. This seems to be causing a new bug where jarmen kell's pilot snipe & some
+			// saboteur abilities refuse to be used on anything because their command sources are set to NONE (or not properly
+			// filled out regardless). Whether the INI should have done a better job on their auto choose sources
+			// ('AutoChooseSources') or a special exception for having 'NONE' as an autochoose source should mean to allow
+			// any source here could be argued, but I think it's best not to mess with a large mod ecosystem that
+			// banked on this particular method not having 'locked' checks like this.
 			// ---
+			/*
 			if (!isCurWeaponLocked())
 			{
 				CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
@@ -683,6 +690,7 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 						}
 				}
 			}
+			*/
 			// ---
 
 			if ((m_totalAntiMask & targetAntiMask) == 0)//we don't care to check for this weapon
@@ -770,7 +778,11 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 			//MODDD - copying this check from 'chooseBestWeaponForTarget' so that the odd case of technically having
 			// a weapon that can attack but being unable to select later it by failing the command-source-check doesn't
 			// happen. Including a 'locked' check since this shouldn't stop the only forced choice from working.
+			// UPDATE - see longer description above. This part appears much more impactful as it can return an 'OK' result,
+			// so skipping it from having a bad command source is going to cause different behavior vs. retail (i.e. pilot
+			// snipe refuses to be ordered on anything).
 			// ---
+			/*
 			if (!isCurWeaponLocked())
 			{
 				CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
@@ -782,6 +794,7 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 						}
 				}
 			}
+			*/
 			// ---
 
 			//MODDD - null-check moved to further above
