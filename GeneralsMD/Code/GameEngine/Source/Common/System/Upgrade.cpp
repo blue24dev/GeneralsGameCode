@@ -162,7 +162,7 @@ Int UpgradeTemplate::calcTimeToBuild( Player *player ) const
 #endif
 
 	//MODDD - for me only
-	return m_buildTime * 1.1 * LOGICFRAMES_PER_SECOND;
+	return m_buildTime * 1.1 * 1.4 * LOGICFRAMES_PER_SECOND;
 
 	///@todo modify this by power state of player
 	return m_buildTime * LOGICFRAMES_PER_SECOND;
