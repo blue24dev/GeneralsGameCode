@@ -170,6 +170,9 @@ enum Scorches CPP_11(: Int)
 //-------------------------------------------------------------------------------------------------
 enum WeaponSlotType CPP_11(: Int)
 {
+	//MODDD - why not have an enum choice for -1? This is the standard for 'not specified / none in particular' as seen in WeaponSet.cpp.
+	ANY_WEAPON = -1,
+
 	PRIMARY_WEAPON = 0,
 	SECONDARY_WEAPON,
 	TERTIARY_WEAPON,

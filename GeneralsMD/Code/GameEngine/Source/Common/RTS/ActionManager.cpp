@@ -1989,10 +1989,19 @@ Bool ActionManager::canFireWeaponAtObject( const Object *obj, const Object *targ
 	}
 
 	CanAttackResult result;
+	//MODDD - why is the 'specificSlot' param ('slot' as an arg) avoided for everything that isn't the pilot sniper ability (DAMAGE_KLLPILOT above)?
+	// This causes a command with a particular slot in mind to be inspecific (default of 'WEAPON_ANY' for the param) and try every slot.
+	// This might have made more sense to work with some other unkowingly made mistakes that have since been caught.
+	// ---
+	/*
 	if( sniper )
 		result = obj->getAbleToAttackSpecificObject( ATTACK_NEW_TARGET, target, commandSource, slot );
 	else
 		result = obj->getAbleToAttackSpecificObject( ATTACK_NEW_TARGET, target, commandSource );
+	*/
+	// ---
+	result = obj->getAbleToAttackSpecificObject( ATTACK_NEW_TARGET, target, commandSource, slot );
+	// ---
 
 	if( result == ATTACKRESULT_POSSIBLE || result == ATTACKRESULT_POSSIBLE_AFTER_MOVING )
 	{

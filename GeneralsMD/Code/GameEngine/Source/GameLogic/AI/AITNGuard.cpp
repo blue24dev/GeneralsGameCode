@@ -104,6 +104,18 @@ static Object *findBestTunnel(Player *ownerPlayer, const Coord3D *pos)
 {
 	if (!ownerPlayer) return nullptr; // should never happen, but hey.  jba.
 	TunnelTracker *tunnels = ownerPlayer->getTunnelSystem();
+
+	//MODDD - bugfix for a rare crash when a player is defeated in skirmish / everything they had self destructs.
+	// If 'ownerPlayer' is neutral, 'getTunnelSystem()' returns a null pointer - should be a check for that here
+	// like in a few other places. Could argue the neutral player should just get a forever-empty tunnel system
+	// instance anyway (let an alternative to 'initFromDict' like 'initNeutral' do that & handle any other placeholders).
+	// In fact, doing that instead for some peace of mind.
+	// This was observed in the Contra mod likely at the same time a player was defeated.
+	// A stealth general radar van was in "AITNGuardReturnState::OnEnter" while neutral controlled and with 0 health on
+	// its body, 'EFFECTIVELY_DEAD' flag set (likely set to neutral & self-destructed from belonging to a defeated player).
+	// I'm describing this in case a destroyed object from a defeated player continuing to run its state machine for
+	// one more frame like this should be looked into further.
+
 	Object *bestTunnel = nullptr;
 	Real bestDistSqr = 0;
 	const std::list<ObjectID> *allTunnels = tunnels->getContainerList();
