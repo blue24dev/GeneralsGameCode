@@ -311,7 +311,7 @@ void PlayerList::postPlayersInit()
 			moneyRef->withdraw(currentMoney);
 			moneyRef->deposit((UnsignedInt)((float)currentMoney * 1.25f), FALSE, FALSE);
 
-			player->setSkillPointsModifier(1.20f);
+			player->setSkillPointsModifier(1.30f);
 			continue;
 		}
 #endif

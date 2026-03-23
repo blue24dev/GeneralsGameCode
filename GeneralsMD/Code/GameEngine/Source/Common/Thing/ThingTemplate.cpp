@@ -1574,7 +1574,8 @@ Int ThingTemplate::calcTimeToBuild( const Player* player) const
 	Int buildTime = getBuildTime() * LOGICFRAMES_PER_SECOND;
 
 	//MODDD - for me only
-	buildTime = buildTimeAdjustmentFilter(player, buildTime);
+	// (no)
+	//buildTime = buildTimeAdjustmentFilter(player, buildTime);
 
 	buildTime *= player->getHandicap()->getHandicap(Handicap::BUILDTIME, this);
 
@@ -1685,6 +1686,7 @@ ModuleData* ModuleInfo::friend_getNthData(Int i)
 #include "GameLogic/Module/MaxHealthUpgrade.h"
 #include "GameLogic/Module/RebuildHoleExposeDie.h"
 #include "GameLogic/Module/StealthDetectorUpdate.h"
+#include "GameLogic/Module/SpecialAbilityUpdate.h"
 #include "GameLogic/Module/ActiveShroudUpgrade.h"
 
 void automaticThingTemplateChanges(ThingTemplate* _this)
@@ -1795,6 +1797,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	static NameKeyType RebuildHoleExposeDieNameKey = NAMEKEY("RebuildHoleExposeDie");
 	static NameKeyType MaxHealthUpgradeNameKey = NAMEKEY("MaxHealthUpgrade");
 	static NameKeyType StealthDetectorUpdateNameKey = NAMEKEY("StealthDetectorUpdate");
+	static NameKeyType SpecialAbilityUpdateNameKey = NAMEKEY("SpecialAbilityUpdate");
 	static NameKeyType ActiveShroudUpgradeNameKey = NAMEKEY("ActiveShroudUpgrade");
 	
 	Bool foundStealthDetectorUpdate = false;
@@ -1871,7 +1874,19 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			foundStealthDetectorUpdate = true;
 			StealthDetectorUpdateModuleData* _data = (StealthDetectorUpdateModuleData*)data;
 			stealthDetectorData = _data;
-			_data->m_detectionRange *= 1.2;
+			if (_data->m_detectionRange > 0)
+			{
+				  _data->m_detectionRange *= 1.2;
+			}
+		}
+		else if( modNameKey == SpecialAbilityUpdateNameKey )
+		{
+			SpecialAbilityUpdateModuleData* _data = (SpecialAbilityUpdateModuleData*)data;
+			// NOTE - this constant comes from SPECIAL_ABILITY_HUGE_DISTANCE in SpecialAbilityUpdate.h
+			if (_data->m_startAbilityRange > 0 && _data->m_startAbilityRange < 10000000.0f)
+			{
+				_data->m_startAbilityRange *= 1.15;
+			}
 		}
 		else if( modNameKey == ActiveShroudUpgradeNameKey )
 		{
@@ -1975,7 +1990,7 @@ Real getHealthMulti(const ThingTemplate* _this)
 		else
 		{
 			// buildings otherwise
-			return 1.75;
+			return 1.85;
 		}
 	}
 	else
@@ -1994,7 +2009,7 @@ Real getHealthMulti(const ThingTemplate* _this)
 			{
 				if (_this->isKindOf(KINDOF_DOZER))
 				{
-					return 1.40;
+					return 1.50;
 				}
 				else if (_this->isKindOf(KINDOF_HARVESTER))
 				{
@@ -2012,7 +2027,7 @@ Real getHealthMulti(const ThingTemplate* _this)
 					if (_this->isAnyKindOf(tempMask))
 					{
 						// a non-structure unit (not some weird system/inner-detail thing): have a little more health anyway
-						return 1.20;
+						return 1.30;
 					}
 				}
 			}
