@@ -611,6 +611,7 @@ public:
 
 	//MODDD
 	void determineHasInactiveBodyModule();
+	void makeNonCivilianGarrisonableStructureCapturableHack();
 	Bool getHasInactiveBodyModule() const;
 	void setHasInactiveBodyModule(Bool hasInactiveBodyModule);
 

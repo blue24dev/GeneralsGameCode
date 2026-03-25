@@ -1203,6 +1203,13 @@ const Player* GarrisonContain::getApparentControllingPlayer( const Player* obser
 //-------------------------------------------------------------------------------------------------
 void GarrisonContain::recalcApparentControllingPlayer()
 {
+	//MODDD - moving this to 'onContaining', except the 'hokey trick' part.
+	// I haven't seen a need for that, though if that changes, consider something in Object::setOrRestoreTeam
+	// like "ct->setGarrisonTeamWhenEmpty(nullptr);" if the new team is null for a similar effect.
+	// Also, leaving out the 'hokey trick' part. The only time 'm_originalTeam' is applied already does a
+	// 'current team isn't null / teardown' check.
+	// ---
+	/*
 	//Record original team first time through.
 	if( m_originalTeam == nullptr )
 	{
@@ -1214,6 +1221,9 @@ void GarrisonContain::recalcApparentControllingPlayer()
 	// the teams are no longer valid...)
 	if (getObject()->getTeam() == nullptr)
 		m_originalTeam = nullptr;
+	*/
+	// ---
+
 	// Check to see if we have any units contained in our object
 	if( getContainCount() > 0 )
 	{
@@ -1224,18 +1234,30 @@ void GarrisonContain::recalcApparentControllingPlayer()
 		// since the Radar refresh in setTeam will want to use it to decide our color.
 		Bool detected = rider->getStatusBits().test( OBJECT_STATUS_DETECTED );
 		m_hideGarrisonedStateFromNonallies = ( !detected && ( getStealthUnitsContained() == getContainCount() ) );
-
+		
+		//MODDD - this doesn't need to be done on every 'recalcApparentControllingPlayer' call (i.e. unit being garrisoned/
+		// ungarrisoned from this). Looks like the point of this is to maintain the object's team so it's that of the player
+		// garrisoning it with units and reverts back to 'original team' when the last garrisoned member leaves. This could
+		// be done in 'onContaining' for the first member entering an empty building (repeated calls on further units
+		// garrisoning are drawing form the first member as an arbitrary choice anyway) and anytime the last member leaves
+		// (no one inside -> revert to original team). There isn't a smart way to do this in here because there isn't a 'before'
+		// state to know if this has a contain-count of 1 because it went from 0 -> 1 or from 2 -> 1.
+		// Lastly, as an added bonus, this works better with capturable garrisonable buildings so that each member leaving when
+		// everyone is kicked out doesn't re-set the team back to that of each member (reverts the capture's team change).
+		/*
 		Player* controller = rider->getControllingPlayer();
 		Team *team = controller ? controller->getDefaultTeam() : nullptr;
 		if( team )
 		{
 			getObject()->setTeam( team );
 		}
+		*/
 	}
 	else
 	{
 		//Nothing in object, so set team to original team.
-		getObject()->setTeam( m_originalTeam );
+		//MODDD - disabling this. See 'GarrisonContain::onRemoving', which already does this on a contain-count of 0.
+		//getObject()->setTeam( m_originalTeam );
 		m_hideGarrisonedStateFromNonallies = false;
 	}
 
@@ -1636,7 +1658,28 @@ void GarrisonContain::onContaining( Object *obj, Bool wasSelected )
 	// the team of the building is now the same as those that have garrisoned it, be sure
 	// to save our original team tho so that we can revert back to it when all the
 	// occupants are gone
-	//
+	//MODDD - Moved the 'm_originalTeam' assignment here since that's the only time it needs to be set to the
+	// team of the current occupying player instead of in 'recalcApparentControllingPlayer'.
+	// ---
+	// Add a check for this being the first unit garrisoning an empty building (another piece from 'recalc...').
+	if (getContainCount() == 1)
+	{
+		//Record original team first time through.
+		//MODDD - doubt the 'm_originalTeam' null check is needed here, when the first thing is entering it decides the
+		// original team always. Though it probably should be null on arrival here anyway (last one leaving should apply
+		// 'm_originalTeam' and set it to null).
+		m_originalTeam = getObject()->getTeam();
+
+		ContainedItemsList::const_iterator it = getContainList().begin();
+		Object *rider = *it;
+		Player* controller = rider->getControllingPlayer();
+		Team *team = controller ? controller->getDefaultTeam() : nullptr;
+		if( team )
+		{
+			getObject()->setTeam( team );
+		}
+	}
+	// ---
 	recalcApparentControllingPlayer();
 
   Drawable *draw = obj->getDrawable();
@@ -1677,6 +1720,7 @@ void GarrisonContain::onRemoving( Object *obj )
 		// (hokey exception: if our team is null, don't bother -- this
 		// usually means we are being called during game-teardown and
 		// the teams are no longer valid...)
+		//MODDD - TODO. See if this check is still necessary. And I assume a 'm_originalTeam' check isn't needed.
 		if (getObject()->getTeam() != nullptr)
 		{
 			getObject()->setTeam( m_originalTeam );
@@ -1778,6 +1822,14 @@ void GarrisonContain::onObjectCreated()
 				object->getName().str(), self->m_initialRoster.templateName.str() ) );
 		}
 	}
+}
+
+//MODDD - since garrisonable structures are expected / better supported now, need to make a call in case the contain
+// module is a 'GarrisonContain'. When the last occupant leaves, the team is set back to a cached inner 'original team'
+// (would revert the team intended by being captured).
+void GarrisonContain::onCapture( Player *oldOwner, Player *newOwner )
+{
+	setGarrisonTeamWhenEmpty(newOwner->getDefaultTeam());
 }
 
 // ------------------------------------------------------------------------------------------------

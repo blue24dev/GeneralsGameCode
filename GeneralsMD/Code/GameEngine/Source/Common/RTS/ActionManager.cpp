@@ -1066,12 +1066,35 @@ Bool ActionManager::canCaptureBuilding( const Object *obj, const Object *objectT
 	if (isObjectShroudedForAction(obj, objectToCapture, commandSource))
 		return FALSE;
 
+	//MODDD - see the explanation further below at "disagree with this point".
+	// Replacing this block, including a check for the team-when-empty to use instead if available
+	// (implies this is garrisoned - team when empty is more interesting to use for the relationship check then).
+	// ---
+	/*
 	Relationship r = obj->getRelationship(objectToCapture);
 
 	// ensure that it's capturable, and not allied
 	// exception: we can always capture enemy bldgs, regardless of kindof
 	if (!(r == ENEMIES || (objectToCapture->isKindOf(KINDOF_CAPTURABLE) && r != ALLIES)))
 		return false;
+	*/
+	// ---
+	const Team* objectToCaptureTeam = objectToCapture->getTeam();
+	ContainModuleInterface *contain = objectToCapture->getContain();
+	if (contain != nullptr)
+	{
+		Team* teamWhenEmpty = contain->getGarrisonTeamWhenEmpty();
+		if (teamWhenEmpty != nullptr)
+		{
+			//myTeam->getRelationship( that->getTeam() );
+			objectToCaptureTeam = teamWhenEmpty;
+		}
+	}
+
+	Relationship r = obj->getTeam()->getRelationship(objectToCaptureTeam);
+	if (!(r == ENEMIES || (objectToCapture->isKindOf(KINDOF_CAPTURABLE) && r != ALLIES)))
+		return false;
+	// ---
 
 	//If the enemy unit is stealthed and not detected, then we can't capture it!
 	if( objectToCapture->testStatus( OBJECT_STATUS_STEALTHED ) &&
@@ -1081,9 +1104,21 @@ Bool ActionManager::canCaptureBuilding( const Object *obj, const Object *objectT
 		return FALSE;
 	}
 
+	//MODDD - disagree with this point. A garrisoned building can be captured if it's team won't revert to the civilian
+	// player when empty (ex: the contain module's 'original team'). Example: 'GLAPalace' in the retail game.
+	// Note that base defenses are excluded by still having the 'IMMUNE_TO_CAPTURE' flag.
+	// Civilian buildings don't have that, however. But they're still avoided because either, they're ungarrisoned
+	// (obviously neutral = no capture), or they're garrisoned so the GarrisonContain's 'original team' can be used
+	// to judge if this should be capturable instead. Belonging to the civilian player we're neutral with = no sense in
+	// capturing this, as it couldn't be captured when empty.
+	// However, some GLA scenario where the civilian faction is considered an enemy could break this assumption. Could you capture civilian buildings if that were the case?
+	// ---
+	// Disabling this block, adding some things to the relationship above per that explanation.
+	/*
 	// if it's garrisoned already, we cannot capture it.
 	// (unless it's just stealth-garrisoned.)
 	ContainModuleInterface *contain = objectToCapture->getContain();
+
 	if (contain != nullptr && contain->isGarrisonable())
 	{
 		Int containCount = contain->getContainCount();
@@ -1092,6 +1127,7 @@ Bool ActionManager::canCaptureBuilding( const Object *obj, const Object *objectT
 		if (nonStealthContainCount > 0)
 			return FALSE;
 	}
+	*/
 
 	// Also check if the object is a container containing stealth units, tricking
 	// the player into thinking it isn't actually an enemy.

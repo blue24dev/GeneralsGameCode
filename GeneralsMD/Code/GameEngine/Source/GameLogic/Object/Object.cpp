@@ -1358,13 +1358,16 @@ void Object::setOrRestoreTeam( Team* team, Bool restoring )
 	// the team changed we have a change in priorities on the radar if we are
 	// a candidate for the radar as it is
 	//
+	//MODDD - moving to 'onCapture'
+	/*
 	if( m_radarData )
 	{
 
-		// removing it and adding it will cause a resort to happen
+		// removing it and adding it will cause a reset to happen
 		TheRadar->removeObject( this );
 		TheRadar->addObject( this );
 	}
+	*/
 
 	// Tell TheInGameUI that the object has changed hands
 	Int oldPlayerIndex = (oldTeam)?(oldTeam->getControllingPlayer()->getPlayerIndex()):-1;
@@ -2119,6 +2122,15 @@ void Object::setCustomIndicatorColor(Color c)
 		m_indicatorColor = c;
 		if (m_drawable)
 			m_drawable->changedTeam();
+
+		//MODDD - seems like a good idea - update the radar data now instead of needing something to refesh it later like an active map border change
+		if( m_radarData )
+		{
+
+			// removing it and adding it will cause a reset to happen
+			TheRadar->removeObject( this );
+			TheRadar->addObject( this );
+		}
 	}
 }
 
@@ -5415,6 +5427,19 @@ void Object::onCapture( Player *oldOwner, Player *newOwner )
 	// newOwner match doesn't make much sense. What impact is this supposed to have?
 	if (oldOwner == newOwner) {
 		return;
+	}
+
+	//MODDD - moved from setOrRestoreTeam to cover more cases to be included on changing teams by script command too.
+	// This updates the radar data immediately in that case instead of needing to wait for an active map border change
+	// (that does not sound intentional).
+	// Ex: 'Team::setControllingPlayer' called from 'ScriptActions::doTransferTeamToPlayer'.
+	// It only calls 'onCapture' without calling 'defect' nor 'setTeam' like other capture/ownership-transfer mechanics, so some small details were missed.
+	if( m_radarData )
+	{
+
+		// removing it and adding it will cause a reset to happen
+		TheRadar->removeObject( this );
+		TheRadar->addObject( this );
 	}
 
 	// Everybody chills when they captured so they don't keep doing something the new player might not want him to be doing

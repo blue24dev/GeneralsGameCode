@@ -143,6 +143,11 @@ public:
 
   virtual void setEvacDisposition( EvacDisposition disp ) override { m_evacDisposition = disp; };
 
+	//MODDD - new
+	virtual void onCapture( Player *oldOwner, Player *newOwner ) override;
+	virtual Team* getGarrisonTeamWhenEmpty() const override { return m_originalTeam; }
+	virtual void setGarrisonTeamWhenEmpty(Team* team) override { m_originalTeam = team; }
+
 protected:
 
 	virtual void redeployOccupants() override;				///< redeploy the occupants of us at all available garrison points

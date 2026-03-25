@@ -1015,7 +1015,9 @@ void SpecialAbilityUpdate::startPreparation()
 				if( target->checkAndDetonateBoobyTrap(getObject()) )
 				{
 					// Whoops, it was mined.  Cancel if it is now dead.
-					if( target->isEffectivelyDead() )
+          //MODDD - any reason why the 2nd part of the condition was missing when it's present everywhere else in this file?
+					//if( target->isEffectivelyDead() )
+					if( target->isEffectivelyDead() || getObject()->isEffectivelyDead() )
 					{
 						return;
 					}
@@ -1443,12 +1445,21 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
       }
 
       // Just in case we are capturing a building which is already garrisoned by other
+      //MODDDD - removing this. 'target->defect' below ('Object::defect') already leads to a 'removeAllContained'
+      // if the captured thing contains anything. Also, it would be better to leave reacting to a successful capture
+      // up to the thing captured, or have some clear indicator of whether skipping ('break') like as-is is best.
+      // Ex: a civilian building vs. the China bunker. Former is neutral-controlled when empty, latter still belongs
+      // to the owner even when empty. I would argue capturing a neutral-when-empty building should never be possible
+      // to begin with - if you couldn't capture it when it was empty, why just because it's "owned" (really just
+      // decorations) by an enemy player?
+      /*
       ContainModuleInterface * contain =  target->getContain();
       if ( contain && contain->isGarrisonable() )
       {
         contain->removeAllContained( TRUE );
         break; // we do not want to set a neutral building to our team if we are not in it, that would be confusing!
       }
+      */
 
       //Play the "building stolen" EVA event if the local player is the victim!
       if( target && target->isLocallyViewed() )
