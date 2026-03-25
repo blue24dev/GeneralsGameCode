@@ -166,15 +166,19 @@ static Int indexFromMask(UnsignedInt mask)
 GameMessage *NetGameCommandMsg::constructGameMessage() const
 {
 	GameMessage *retval = newInstance(GameMessage)(m_type);
-
-#if FORCE_GAME_CONTEXT != FGC_CAMPAIGN
+	
+	//MODDD - using the new 'slotPlayerRefs' instead in case of games that use map-provided players instead of
+	// generating them by "player#"
+	// ---
+  /*
 	AsciiString name;
 	name.format("player%d", getPlayerID());
 	retval->friend_setPlayerIndex( ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(name))->getPlayerIndex());
-#else
+  */
+	// ---
 	Player* p = ThePlayerList->m_slotPlayerRefs[getPlayerID()];
 	retval->friend_setPlayerIndex(p->getPlayerIndex());
-#endif
+  // ---
 
 	GameMessageArgument *arg = m_argList;
 	while (arg != nullptr) {

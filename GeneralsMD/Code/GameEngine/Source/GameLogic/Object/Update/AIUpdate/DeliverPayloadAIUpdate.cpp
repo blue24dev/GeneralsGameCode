@@ -910,7 +910,8 @@ void DeliveringState::onExit( StateExitType ) // Close the doors
 	//MODDD - this assertion could be triggered by exiting the game while a support power plane is dropping
 	// something. Not practically a bug, but still funny that this is caused by not knowing when this is just
 	// on-game-exit cleanup vs. in-game.
-	if (gameStatus == GAMESTATUS_INGAME) {
+	if (gameStatus == GAMESTATUS_INGAME)
+	{
 		DEBUG_ASSERTCRASH(m_didOpen, ("Not enough time for the doors to open to drop anything!"));
 	}
 				/// @todo srj -- for now, this assumes at most one door

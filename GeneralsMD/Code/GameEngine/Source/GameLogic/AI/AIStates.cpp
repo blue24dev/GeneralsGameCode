@@ -1244,7 +1244,22 @@ static Bool cannotPossiblyAttackObject( State *thisState, void* userData )
 		{
 			return TRUE;
 		}
-		CanAttackResult result = obj->getAbleToAttackSpecificObject( attackType, victim, obj->getAI()->getLastCommandSource() );
+
+		//MODDD - new block. If the weapon is locked, only the current one should be tested.
+		// If 'specificSlot' is more specific than 'ANY_WEAPON', the since-added cmd-source check in'
+		// 'WeaponSet::getAbleToUseWeaponAgainstTarget' is skipped.
+		WeaponSlotType specificSlot;
+		if (obj->isCurWeaponLocked())
+		{
+			specificSlot = obj->getCurrentWeaponSlot();
+		}
+		else
+		{
+			specificSlot = ANY_WEAPON;
+		}
+
+		//MODDD - added arg at the end 'specificSlot'
+		CanAttackResult result = obj->getAbleToAttackSpecificObject( attackType, victim, obj->getAI()->getLastCommandSource(), specificSlot );
 		if( result != ATTACKRESULT_POSSIBLE && result != ATTACKRESULT_POSSIBLE_AFTER_MOVING )
 		{
 			return TRUE;

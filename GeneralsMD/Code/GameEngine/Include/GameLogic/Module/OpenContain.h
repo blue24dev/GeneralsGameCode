@@ -229,6 +229,11 @@ public:
   virtual Object* getClosestRider ( const Coord3D *pos ) override;
 
   virtual void setEvacDisposition( EvacDisposition disp ) override {};
+
+	//MODDD - new
+	virtual Team* getGarrisonTeamWhenEmpty() const override { return nullptr; }
+	virtual void setGarrisonTeamWhenEmpty(Team* team) override {}
+
 protected:
 
 	virtual void monitorConditionChanges();				///< check to see if we need to update our occupant positions from a model change or anything else

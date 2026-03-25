@@ -522,6 +522,9 @@ public:
 	Real getLargestWeaponRange() const;
 	UnsignedInt getMostPercentReadyToFireAnyWeapon() const;
 
+	//MODDD - added
+	WeaponSlotType getCurrentWeaponSlot() const { return m_weaponSet.getCurWeaponSlot(); };
+
 	Weapon* getWeaponInWeaponSlot(WeaponSlotType wslot) const { return m_weaponSet.getWeaponInWeaponSlot(wslot); }
 	UnsignedInt getWeaponInWeaponSlotCommandSourceMask( WeaponSlotType wSlot ) const { return m_weaponSet.getNthCommandSourceMask( wSlot ); }
 

@@ -1144,6 +1144,7 @@ void ThingTemplate::validate()
 
 	//MODDD
 	determineHasInactiveBodyModule();
+	makeNonCivilianGarrisonableStructureCapturableHack();
 
 	if (m_shadowTextureName.isEmpty())
 	{
@@ -1650,6 +1651,24 @@ void ThingTemplate::determineHasInactiveBodyModule()
 		}
 	}
 	setHasInactiveBodyModule(isInactiveBody);
+}
+
+//MODDD - make buildings that are normally built by the player (non-civilian) and garrisonable, capturable.
+// Typically this combo has the "IMMUNE_TO_CAPTURE" flag (ex: 'GLAPalace' in retail generals), though I fail to see why.
+// Why should a poorly defended building with poor anti-infantry garrisoned be impossible to capture?
+// This excludes base defenses, which are fine to remain uncapturable.
+void ThingTemplate::makeNonCivilianGarrisonableStructureCapturableHack()
+{
+	// does not apply to base defenses
+	if (this->isKindOf(KINDOF_FS_BASE_DEFENSE) || this->isKindOf(KINDOF_TECH_BASE_DEFENSE))
+	{
+		return;
+	}
+	
+	if (this->isKindOf(KINDOF_GARRISONABLE_UNTIL_DESTROYED) && this->isKindOf(KINDOF_IMMUNE_TO_CAPTURE))
+	{
+		m_kindof.set(KINDOF_IMMUNE_TO_CAPTURE, 0);
+	}
 }
 
 //MODDD

@@ -476,13 +476,17 @@ void PopulateInGameDiplomacyPopup()
 			if (slot->isAI())
 				isInGame = true;
 
-#if FORCE_GAME_CONTEXT != FGC_CAMPAIGN
+			//MODDD - using the new 'slotPlayerRefs' instead in case of games that use map-provided players instead of
+			// generating them by "player#"
+			// ---
+			/*
 			AsciiString playerName;
 			playerName.format("player%d", slotNum);
 			Player *player = ThePlayerList->findPlayerWithNameKey(NAMEKEY(playerName));
-#else
+			*/
+			// ---
 			Player* player = ThePlayerList->m_slotPlayerRefs[slotNum];
-#endif
+			// ---
 			
 			Bool isAlive = !TheVictoryConditions->hasSinglePlayerBeenDefeated(player);
 			Bool isObserver = player->isPlayerObserver();

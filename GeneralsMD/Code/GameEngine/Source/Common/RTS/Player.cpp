@@ -780,6 +780,18 @@ void Player::deletePlayerAI()
 	m_ai = nullptr;
 }
 
+//MODDD - new, init only for the neutral player (no dict expected). Also called from 'PlayerList->newGame()'.
+// Interestingly enough there is still sides info #0 for the neutral player, though I'm guessing it isn't
+// meant to be meaningfully configurable from the editor anyway (no difference hardcoding everything / leaving
+// this as mostly defaults leftover from the base 'Player::init()' done on all players on ending/starting a game).
+void Player::initNeutral()
+{
+	// Copied from 'initFromDict' - otherwise never done uniquely for the neutral player.
+	// For more info, see AITNGuard.cpp, "MODDD - bugfix for a rare crash when a player is defeated in skirmish / everything they had self destructs."
+	deleteInstance(m_tunnelSystem);
+	m_tunnelSystem = newInstance(TunnelTracker);
+}
+
 //=============================================================================
 // This is called from PlayerList->newGame()
 //
@@ -4304,6 +4316,8 @@ void Player::xfer( Xfer *xfer )
 		xfer->xferSnapshot( m_resourceGatheringManager );
 
 	// tunnel tracking system
+	//MODDD - 'm_tunnelSystem' is guaranteed not null, no need for this check / saving whether it exists beforehand
+	/*
 	Bool tunnelTrackerPresent = m_tunnelSystem ? TRUE : FALSE;
 	xfer->xferBool( &tunnelTrackerPresent );
 	if( (tunnelTrackerPresent == TRUE && m_tunnelSystem == nullptr) ||
@@ -4315,6 +4329,7 @@ void Player::xfer( Xfer *xfer )
 
 	}
 	if( m_tunnelSystem )
+	*/
 		xfer->xferSnapshot( m_tunnelSystem );
 
 	// default team

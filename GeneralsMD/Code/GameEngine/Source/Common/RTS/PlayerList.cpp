@@ -335,6 +335,15 @@ void PlayerList::newGame()
 
 	reset();
 
+	//MODDD - a special init for the neutral player since 'initFromDict' is never called for this one.
+	// Note that 'm_playerCount' is always set to 1 on resetting the player list, so 'm_players[0]' (always the neutral
+	// player) is skipped in the loop below. Could argue the 'pname.isEmpty()' check could be removed and just start the
+	// loop at 'i = 1' to skip 'getSideInfo(0)' since that's also the source of the neutral player.
+	// Or to expect any index to be the neutral player anyway, 'PlayerList::reset' could start at 'm_playerCount=0', let
+	// the first (hopefully only / present once) empty-named sideInfo set the neutral player index, and use the special
+	// init on that one & skip the rest of the loop for that index.
+	getNeutralPlayer()->initNeutral();
+
 	// ok, now create the rest of players we need.
 	Bool setLocal = false;
 	for( i = 0; i < TheSidesList->getNumSides(); i++)

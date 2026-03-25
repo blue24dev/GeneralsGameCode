@@ -216,6 +216,8 @@ public:
 	void newMap();			///< player after map loaded opportunity
 
 	void init(const PlayerTemplate* pt);
+	//MODDD
+	void initNeutral();
 	void initFromDict(const Dict* d);
 	void setDefaultTeam();
 
