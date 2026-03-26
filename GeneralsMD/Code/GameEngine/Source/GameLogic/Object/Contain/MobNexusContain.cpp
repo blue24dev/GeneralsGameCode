@@ -440,7 +440,9 @@ Bool MobNexusContain::tryToEvacuate( Bool exposeStealthedUnits )
 			exitObjectViaDoor( obj, exitDoor );
 			exitedAnyone = true;
 
-			if( obj->isKindOf( KINDOF_STEALTH_GARRISON ) && exposeStealthedUnits )
+			//MODDD - replacing 'KINDOF_STEALTH_GARRISON' check
+			//if( obj->isKindOf( KINDOF_STEALTH_GARRISON ) && exposeStealthedUnits )
+			if( obj->isStealthGarrison() && exposeStealthedUnits )
 			{
 				StealthUpdate* stealth = obj->getStealth();
 				if( stealth )

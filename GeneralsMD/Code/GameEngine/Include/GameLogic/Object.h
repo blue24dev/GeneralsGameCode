@@ -684,6 +684,8 @@ public:
 
 	//MODDD - New
 	Bool isRecognizableToEnemy() const;
+	//MODDD - New
+	Bool isStealthGarrison() const;
 
 	//MODDD - New
 	Bool canClearMines() const;

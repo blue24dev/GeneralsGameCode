@@ -51,13 +51,26 @@ StealthUpgrade::~StealthUpgrade()
 void StealthUpgrade::upgradeImplementation()
 {
 	// The logic that does the stealthupdate will notice this and start stealthing
-	Object *me = getObject();
-	me->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_CAN_STEALTH ) );
+	Object *obj = getObject();
+	//MODDD - I think it's better to call the attached 'stealthUpdate' and let it handle how to react to this upgrade
+	// instead of doing that here, similar to 'GrantStealthBehavior''s 'stealth->receiveGrant();' call.
+	// Could argue that here could even make the exact same call but have a param to avoid the instant reaction.
+	// Needing a normal cloak delay from an upgrade turning it on feels more organic vs. clicking to trigger it with a special power like GrantStealthBehavior.
+	// For now, keeping those as two separate methods to resemble retail moreso.
+ 	// ---
+	//obj->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_CAN_STEALTH ) );
+	// ---
+	StealthUpdate* stealth = obj->getStealth();
+	if( stealth )
+	{
+		stealth->receiveUpgrade();
+	}
+	// ---
 
 	//Grant stealth to spawns if applicable.
-	if( me->isKindOf( KINDOF_SPAWNS_ARE_THE_WEAPONS ) )
+	if( obj->isKindOf( KINDOF_SPAWNS_ARE_THE_WEAPONS ) )
 	{
-		SpawnBehaviorInterface *sbInterface = me->getSpawnBehaviorInterface();
+		SpawnBehaviorInterface *sbInterface = obj->getSpawnBehaviorInterface();
 		if( sbInterface )
 		{
 			sbInterface->giveSlavesStealthUpgrade( TRUE );

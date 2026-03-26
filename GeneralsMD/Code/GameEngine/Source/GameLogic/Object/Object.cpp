@@ -1447,7 +1447,8 @@ void Object::setStatus( ObjectStatusMaskType objectStatus, Bool set )
 		m_status.clear( objectStatus );
 
 	//MODDD - Inverted condition to return early instead of surrounding the rest of the method.
-	if (m_status == oldStatus) {
+	if (m_status == oldStatus)
+	{
 		return;
 	}
 
@@ -1460,6 +1461,21 @@ void Object::setStatus( ObjectStatusMaskType objectStatus, Bool set )
 		// Damaged repulsable civilians scare (repulse) other civs, but only
 		// for a short amount of time... use the repulsor helper to turn off repulsion shortly.
 		m_repulsorHelper->sleepUntil(TheGameLogic->getFrame() + 2*LOGICFRAMES_PER_SECOND);
+	}
+
+	//MODDD - if whether this object is able to use stealth or not changed (ex: upgrade just enabled it where it wasn't previously),
+	// need to notify the thing I'm inside of to adjust its stealth-count.
+	if( statusChanged.test( OBJECT_STATUS_CAN_STEALTH ) )
+	{
+		Object* containedBy = getContainedBy();
+		if (containedBy != nullptr)
+		{
+			ContainModuleInterface *containedByContainModule = getContain();
+			if (containedByContainModule != nullptr)
+			{
+				containedByContainModule->onContainedCanStealthChange( set );
+			}
+		}
 	}
 
 	//MODDD - replaced block
@@ -1479,8 +1495,10 @@ void Object::setStatus( ObjectStatusMaskType objectStatus, Bool set )
 	//MODDD - 'm_visionSpiedMask != 0' check is new.
 	// If anyone is currently spying on this unit (or, trying to), need to re-run fog-of-war-update in case
 	// the unit's visibility changed and would affect what the spy ability should reveal.
-	if (getTemplate()->getShroudRevealToAllRange() > 0.0f || m_visionSpiedMask != 0) {
-		if (statusChanged.test( OBJECT_STATUS_STEALTHED ) || statusChanged.test( OBJECT_STATUS_DETECTED ) || statusChanged.test( OBJECT_STATUS_DISGUISED )) {
+	if (getTemplate()->getShroudRevealToAllRange() > 0.0f || m_visionSpiedMask != 0)
+	{
+		if (statusChanged.test( OBJECT_STATUS_STEALTHED ) || statusChanged.test( OBJECT_STATUS_DETECTED ) || statusChanged.test( OBJECT_STATUS_DISGUISED ))
+		{
 			handlePartitionCellMaintenance();
 		}
 	}
@@ -2578,7 +2596,8 @@ Bool Object::isHero() const
 // and not trying to fool them (not disguised). Note that a detected disguised unit immediately loses the disguise.
 // Doesn't consider defection stuff, not meaningfully testable for me.
 //-------------------------------------------------------------------------------------------------
-Bool Object::isRecognizableToEnemy() const {
+Bool Object::isRecognizableToEnemy() const
+{
 	// Not necessary, checking the status should be enough
 	//StealthUpdate* stealth = getStealth();
 	if ((!testStatus( OBJECT_STATUS_STEALTHED ) && !testStatus( OBJECT_STATUS_DISGUISED )) || testStatus( OBJECT_STATUS_DETECTED )) {
@@ -2586,6 +2605,21 @@ Bool Object::isRecognizableToEnemy() const {
 		return TRUE;
 	}
 	return FALSE;
+}
+
+//MODDD - NEW. Check whether this object would be considered stealth to a garrisonable building.
+// This makes changing the criteria easier than having to edit several places.
+Bool Object::isStealthGarrison() const
+{
+	// As-is way
+	return isKindOf( KINDOF_STEALTH_GARRISON );
+	// New - instead of a constant 'KINDOF' choice, just allow any unit that has some stealth ability.
+	// Being stealthed while standing still is the minimum and good enough, since that's the behavior of a garrisoned
+	// building in 'stealth' mode anyway.
+	// MODDD - TODO. For more precision, consider checking whether a member happens to be stealthed
+	// at the moment instead (ex: a jarmen kell that doesn't de-stealth on firing would still be stealthed -> building
+	// appearance is unaffected). This check would need to be done every frame instead of on something entering/exitig a building just to adjust contained-counts.
+	//return testStatus( OBJECT_STATUS_CAN_STEALTH );
 }
 
 //MODDD - NEW. Similar to 'isClearingMines', but for whether the attached object is capable of clearing mines,
