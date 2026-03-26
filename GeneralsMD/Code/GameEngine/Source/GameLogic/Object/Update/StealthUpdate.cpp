@@ -243,6 +243,17 @@ void StealthUpdate::receiveGrant( Bool active, UnsignedInt frames )
 
 }
 
+//MODDD - new. Added so 'StealthUpgrade' can let the corresponding 'StealthUpdate' (here) decide what to do instead.
+void StealthUpdate::receiveUpgrade( Bool active )
+{
+  Object *obj = getObject();
+  if ( obj == nullptr )
+    return;
+
+	// Note that 'clearStatus' just redirects to 'setStatus(<mask>, false)', so passing the 'active' param works fine here
+	obj->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_CAN_STEALTH ), active );
+}
+
 
 //-------------------------------------------------------------------------------------------------
 Bool StealthUpdate::allowedToStealth( Object *stealthOwner ) const
@@ -291,6 +302,12 @@ Bool StealthUpdate::allowedToStealth( Object *stealthOwner ) const
 		return FALSE;
 	}
 
+	//MODDD - Note. I have to wonder what the story behind this is.
+	// Requiring a structure to be present for some units to be able to stealth seems strange, there is no other
+	// example of something granting some passive quality like stealth mechanics across other units just by existing.
+	// There are some references to the bit's name 'NO_BLACK_MARKET' in the INI files in retail, but they're only for
+	// stealthed units cut from some of the new generals (commented out anyway).
+	// This could probably be removed as I highly doubt any mods would use / rely on this.
 	if( flags & STEALTH_ONLY_WITH_BLACK_MARKET && m_nextBlackMarketCheckFrame < now )
 	{
 		//randomize timer a little incase we have a whole bunch on the same frame.

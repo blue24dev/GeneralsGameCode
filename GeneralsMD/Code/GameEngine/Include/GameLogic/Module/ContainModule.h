@@ -210,7 +210,9 @@ public:
 	//MODDD - new. To easily tell if something is a GarrisonContain and has a team that the object will be reverted
 	// to when empty.
 	virtual Team* getGarrisonTeamWhenEmpty() const = 0;
-	virtual void setGarrisonTeamWhenEmpty(Team* team) = 0;
+	virtual void setGarrisonTeamWhenEmpty( Team* team ) = 0;
+	//MODDD - event when something inside of this Contain has toggled its 'can-stealth' status, likely caused by an upgrade
+	virtual void onContainedCanStealthChange( Bool newContainedCanStealth ) = 0;
 
 };
 //-------------------------------------------------------------------------------------------------

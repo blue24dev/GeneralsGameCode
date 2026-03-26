@@ -232,7 +232,8 @@ public:
 
 	//MODDD - new
 	virtual Team* getGarrisonTeamWhenEmpty() const override { return nullptr; }
-	virtual void setGarrisonTeamWhenEmpty(Team* team) override {}
+	virtual void setGarrisonTeamWhenEmpty( Team* team ) override {}
+	virtual void onContainedCanStealthChange( Bool newContainedCanStealth ) override;
 
 protected:
 

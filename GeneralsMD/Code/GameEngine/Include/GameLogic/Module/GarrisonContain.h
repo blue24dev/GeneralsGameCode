@@ -146,7 +146,7 @@ public:
 	//MODDD - new
 	virtual void onCapture( Player *oldOwner, Player *newOwner ) override;
 	virtual Team* getGarrisonTeamWhenEmpty() const override { return m_originalTeam; }
-	virtual void setGarrisonTeamWhenEmpty(Team* team) override { m_originalTeam = team; }
+	virtual void setGarrisonTeamWhenEmpty( Team* team ) override { m_originalTeam = team; }
 
 protected:
 

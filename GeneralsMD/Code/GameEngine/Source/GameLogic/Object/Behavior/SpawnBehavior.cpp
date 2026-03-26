@@ -482,7 +482,16 @@ void SpawnBehavior::giveSlavesStealthUpgrade( Bool grantStealth )
 		Object *obj = TheGameLogic->findObjectByID( *it );
 		if( obj )
 		{
-			obj->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_CAN_STEALTH ), grantStealth );
+			//MODDD - leave it to StealthUpdate instead, already described this
+			// ---
+			//obj->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_CAN_STEALTH ), grantStealth );
+			// ---
+		  StealthUpdate* stealth = obj->getStealth();
+			if( stealth )
+			{
+				stealth->receiveUpgrade(grantStealth);
+			}
+			// ---
 		}
 	}
 }

@@ -385,7 +385,10 @@ void OpenContain::addToContainList( Object *rider )
 {
 	m_containList.push_back(rider);
 	m_containListSize++;
-	if( rider->isKindOf( KINDOF_STEALTH_GARRISON ) )
+	
+	//MODDD - replacing 'KINDOF_STEALTH_GARRISON' check
+	//if( rider->isKindOf( KINDOF_STEALTH_GARRISON ) )
+	if( rider->isStealthGarrison() )
 	{
 		m_stealthUnitsContained++;
 	}
@@ -433,7 +436,6 @@ void OpenContain::removeFromContain( Object *rider, Bool exposeStealthUnits )
 		// Change the order of these things at your own peril.
 		Object* rider = *it;
 		m_containList.erase(it);
-		m_containListSize--;
 		onRemoveFromContain( rider, exposeStealthUnits );
 	}
 
@@ -464,7 +466,6 @@ void OpenContain::removeAllContained( Bool exposeStealthUnits )
 		//it = m_containList.erase(it);
 		Object* rider = *it;
 		it = m_containList.erase(it);
-		m_containListSize--;
 		onRemoveFromContain( rider, exposeStealthUnits );
 	}
 
@@ -650,6 +651,20 @@ Object* OpenContain::getClosestRider( const Coord3D *pos )
    return closest; //Could be null!
 }
 
+//MODDD
+void OpenContain::onContainedCanStealthChange( Bool newContainedCanStealth )
+{
+	// 'm_containListSize' includes all occupants regardless of being considered stealth-able - no change there
+	if (newContainedCanStealth)
+	{
+		m_stealthUnitsContained++;
+	}
+	else
+	{
+		m_stealthUnitsContained--;
+	}
+}
+
 
 
 
@@ -689,8 +704,10 @@ void OpenContain::onRemoveFromContain( Object *rider, Bool exposeStealthUnits )
 	// remove item from list
 	//MODDD - don't handle here
 	//m_containList.erase(it);
-	//m_containListSize--;
-	if( rider->isKindOf( KINDOF_STEALTH_GARRISON ) )
+	m_containListSize--;
+	//MODDD - replacing 'KINDOF_STEALTH_GARRISON' check
+	//if( rider->isKindOf( KINDOF_STEALTH_GARRISON ) )
+	if( rider->isStealthGarrison() )
 	{
 		DEBUG_ASSERTCRASH( m_stealthUnitsContained > 0, ("OpenContain::removeFromContainViaIterator - Removing stealth unit but stealth count is %d", m_stealthUnitsContained) );
 		m_stealthUnitsContained--;
@@ -866,7 +883,9 @@ void OpenContain::onCollide( Object *other, const Coord3D *loc, const Coord3D *n
 		{
 			if( rider->getAI() )
 			{
-				if( rider->isKindOf( KINDOF_STEALTH_GARRISON ) )
+				//MODDD - replacing 'KINDOF_STEALTH_GARRISON' check
+				//if( rider->isKindOf( KINDOF_STEALTH_GARRISON ) )
+				if( rider->isStealthGarrison() )
 				{
 					// aiExit is needed to walk away from the building well, but it doesn't take the Unstealth flag
           StealthUpdate* stealth = rider->getStealth();
@@ -1413,7 +1432,9 @@ void OpenContain::markAllPassengersDetected()
 		++it;
 
 		// call it
-		if( rider->isKindOf( KINDOF_STEALTH_GARRISON ) )
+		//MODDD - replacing 'KINDOF_STEALTH_GARRISON' check
+		//if( rider->isKindOf( KINDOF_STEALTH_GARRISON ) )
+		if( rider->isStealthGarrison() )
 		{
 			StealthUpdate* stealth = rider->getStealth();
 			if( stealth )
