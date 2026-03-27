@@ -1667,6 +1667,16 @@ void ThingTemplate::makeNonCivilianGarrisonableStructureCapturableHack()
 	if (this->isKindOf(KINDOF_GARRISONABLE_UNTIL_DESTROYED) && this->isKindOf(KINDOF_IMMUNE_TO_CAPTURE))
 	{
 		m_kindof.set(KINDOF_IMMUNE_TO_CAPTURE, 0);
+		// While we're at it, add the CAPTURABLE flag if it's missing.
+		// Seems it's only needed to make the building capturable if it's neutral to the current player (ex: civilian
+		// controlled tech buildings at the start of skirmish games like oil derricks). Typically any enemy building without
+		// 'IMMUNE_TO_CAPTURE' is capturable with or without this flag. Still, seems proper to just add the flag as player-
+		// built structures tend to have it (if they ever occur neutral, capturable too).
+		// The building-hack-disable ability also mentions the 'CAPTURABLE' flag in a few places, oddly enough.
+		if (!this->isKindOf(KINDOF_CAPTURABLE))
+		{
+			m_kindof.set(KINDOF_CAPTURABLE, 1);
+		}
 	}
 }
 

@@ -89,7 +89,7 @@ enum
 	The return value from addAudioEvent can be saved in case the sound needs to loop and/or be
 	terminated at some point.
 
-	To reomve a playing sound, the call TheAudio->removeAudioEvent(...) is used. This will search
+	To remove a playing sound, the call TheAudio->removeAudioEvent(...) is used. This will search
 	the list of currently playing audio for the specified handle, and kill the attached sound. It
 	will play a decay sound, if one is specified.
 

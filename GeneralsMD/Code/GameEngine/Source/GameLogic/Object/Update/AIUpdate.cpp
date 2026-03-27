@@ -416,7 +416,7 @@ void AIUpdateInterface::doPathfind( PathfindServicesInterface *pathfinder )
 		if (repulsor) {
 			pos2 = *repulsor->getPosition();
 		}
-		//MODDD - PathHandle - sent to the handle (this is a temp var now)
+		//MODDD - PathHandle, using a temp var
 		Path* path = pathfinder->findSafePath(getObject(), m_locomotorSet,
 			getObject()->getPosition(),
 			&pos1, 	&pos2,
@@ -424,12 +424,13 @@ void AIUpdateInterface::doPathfind( PathfindServicesInterface *pathfinder )
 		assignPath(path);
 		return;
 	}
-	if (m_isApproachPath & !isDoingGroundMovement()) {
+	//MODDD - changed '&' operator to '&&'
+	if (m_isApproachPath && !isDoingGroundMovement()) {
 		m_isApproachPath = false;
 	}
 	if (m_isApproachPath) {
 		destroyPath();
-		//MODDD - PathHandle
+		//MODDD - PathHandle, using a temp var
 		Path* path = pathfinder->findClosestPath(getObject(), m_locomotorSet, getObject()->getPosition(),
 			&m_requestedDestination, m_isBlockedAndStuck, 0.2f, FALSE );
 		assignPath(path);
@@ -602,7 +603,7 @@ enum {WAYPOINT_PATH_LIMIT=1024};
 void AIUpdateInterface::setPathFromWaypoint(const Waypoint *way, const Coord2D *offset)
 {
 	destroyPath();
-	//MODDD - PathHandle - sent to the handle (this is a temp var now)
+	//MODDD - PathHandle, using a temp var
 	Path* path = newInstance(Path);
 	assignPath(path);
 	Coord3D pos = *getObject()->getPosition();
@@ -1662,11 +1663,11 @@ Bool AIUpdateInterface::computeQuickPath( const Coord3D *destination )
 	// destroy previous path
 	destroyPath();
 	if (getObject()->isKindOf(KINDOF_AIRCRAFT) && !getObject()->isKindOf(KINDOF_PROJECTILE)) {
-		//MODDD - PathHandle - sent to the handle (this is a temp var now)
+		//MODDD - PathHandle, using a temp var
 		Path* path = TheAI->pathfinder()->getAircraftPath(getObject(), destination);
 		assignPath(path);
 	} else {
-		//MODDD - PathHandle - sent to the handle (this is a temp var now)
+		//MODDD - PathHandle, using a temp var
 		Path* path = newInstance(Path);
 		assignPath(path);
 		path->prependNode( destination, LAYER_GROUND );
@@ -1808,7 +1809,6 @@ Bool AIUpdateInterface::computePath( PathfindServicesInterface *pathServices, Co
 	m_blockedFrames = 0;
 	m_isBlockedAndStuck = FALSE;
 	//MODDD - PathHandle
-	//if (m_path)
 	if (m_pathHandle.getPath())
 		return TRUE;
 
@@ -1828,7 +1828,6 @@ Bool AIUpdateInterface::computeAttackPath( PathfindServicesInterface *pathServic
 		// jba intense debug
 		//CRCDEBUG_LOG(("Info - RePathing very quickly %d, %d.", m_pathTimestamp, TheGameLogic->getFrame()));
 		//MODDD - PathHandle
-		//if (m_path && m_isBlockedAndStuck)
 		if (m_pathHandle.getPath() && m_isBlockedAndStuck)
 		{
 			setIgnoreCollisionTime(2*LOGICFRAMES_PER_SECOND);
@@ -1914,7 +1913,7 @@ Bool AIUpdateInterface::computeAttackPath( PathfindServicesInterface *pathServic
 			getCurLocomotor()->setNoSlowDownAsApproachingDest(TRUE);
 		}
 		Bool ok = computePath(pathServices, &tmp);
-		//MODDD - PathHandle - making a temp var for this
+		//MODDD - PathHandle, using a temp var
 		Path* path = m_pathHandle.getPath();
 		if (path==nullptr) return false;
 		Real dx, dy;
@@ -1975,7 +1974,7 @@ Bool AIUpdateInterface::computeAttackPath( PathfindServicesInterface *pathServic
 		//	("position we just calced is not acceptable"));
 
 		// First, see if our path already goes to the destination.
-		//MODDD - PathHandle - temp var for this
+		//MODDD - PathHandle, using a temp var
 		Path* path = m_pathHandle.getPath();
 		if (path)
 		{
@@ -2017,7 +2016,7 @@ Bool AIUpdateInterface::computeAttackPath( PathfindServicesInterface *pathServic
 		TheAI->pathfinder()->setIgnoreObstacleID( getIgnoredObstacleID() );
 
 		// compute a ground-based path
-		//MODDD - PathHandle - assignment, temp var for this
+		//MODDD - PathHandle, using a temp var
 		Path* path = pathServices->findAttackPath( getObject(), m_locomotorSet, getObject()->getPosition(),
 			victim, &localVictimPos, weapon);
 		assignPath(path);
@@ -2062,7 +2061,6 @@ Bool AIUpdateInterface::computeAttackPath( PathfindServicesInterface *pathServic
 	m_isBlockedAndStuck = FALSE;
 	//CRCDEBUG_LOG(("AIUpdateInterface::computeAttackPath() done"));
 	//MODDD - PathHandle
-	//if (m_path)
 	if (m_pathHandle.getPath())
 		return TRUE;
 
@@ -2531,7 +2529,7 @@ Real AIUpdateInterface::getLocomotorDistanceToGoal()
 			{
 				const Object *me = getObject();
 				const Coord3D *dest = getGoalPosition();
-				//MODDD - PathHandle, 'm_path' -> 'm_pathHandle.getPath()'
+				//MODDD - PathHandle
 				if (m_pathHandle.getPath()->getLastNode()) {
 					dest = m_pathHandle.getPath()->getLastNode()->getPosition();
 				}
@@ -3332,13 +3330,11 @@ void AIUpdateInterface::privateMoveAwayFromUnit( Object *unit, CommandSourceType
 		wakeUpNow();
 		m_stateMachine->setTemporaryState(AI_MOVE_OUT_OF_THE_WAY, 10*LOGICFRAMES_PER_SECOND);
 		//MODDD - PathHandle
-		//if (m_path)
 		if (m_pathHandle.getPath())
 		{
 	 		if( !getObject()->isKindOf(KINDOF_NO_COLLIDE))// If I don't collide with things, I don't need to tell them to get out of the way
 			{
-				//MODDD - PathHandle
-				//TheAI->pathfinder()->moveAllies(getObject(), m_path);
+				//MODDD - PathHandle, send the path handle as a parma instead
 				TheAI->pathfinder()->moveAllies(getObject(), &m_pathHandle);
 			}
 		}
@@ -5240,7 +5236,6 @@ void AIUpdateInterface::xfer( Xfer *xfer )
 
 	xfer->xferBool(&m_waitingForPath);
 	//MODDD - PathHandle
-	//Bool gotPath = (m_path != nullptr);
 	Bool gotPath = (m_pathHandle.getPath() != nullptr);
 	xfer->xferBool(&gotPath);
 	if (xfer->getXferMode() == XFER_LOAD)	{
@@ -5252,7 +5247,6 @@ void AIUpdateInterface::xfer( Xfer *xfer )
 	}
 	if (gotPath) {
 		//MODDD - PathHandle
-		//xfer->xferSnapshot(m_path);
 		xfer->xferSnapshot(m_pathHandle.getPath());
 	}
 	xfer->xferObjectID(&m_requestedVictimID);

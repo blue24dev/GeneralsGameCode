@@ -312,6 +312,13 @@ BaseHeightMapRenderObjClass::BaseHeightMapRenderObjClass()
 	DX8Wrapper::SetCleanupHook(this);
 }
 
+//MODDD
+void BaseHeightMapRenderObjClass::assignMap(WorldHeightMap* pMap)
+{
+	//m_map = pMap;
+	REF_PTR_SET(m_map, pMap);
+}
+
 void BaseHeightMapRenderObjClass::setTextureLOD(Int lod)
 {
 	if (m_treeBuffer)
@@ -1757,12 +1764,6 @@ void BaseHeightMapRenderObjClass::initDestAlphaLUT()
 		REF_PTR_RELEASE(surf);
 		m_currentMinWaterOpacity = TheWaterTransparency->m_minWaterOpacity;
 	}
-}
-
-//MODDD
-void BaseHeightMapRenderObjClass::assignMap(WorldHeightMap* pMap) {
-	//m_map = pMap;
-	REF_PTR_SET(m_map, pMap);
 }
 
 //=============================================================================
