@@ -10293,7 +10293,7 @@ Bool Pathfinder::moveAllies(Object *obj, PathHandle *pathHandle)
 	// path being parsed here ('aiMoveAwayFromUnit'), check the ID of the current path handle to see if the path
 	// has been destroyed/re-created since this call. That's a good sign this method call should stop to prevent
 	// a rare crash from the 'node' pointer going '0xdeadbeef', if release mode's exception debug info is to be trusted.
-	int cachedPathID = pathHandle->getID();
+	UnsignedInt cachedPathID = pathHandle->getID();
 	Path* path = pathHandle->getPath();
 
 #ifdef DO_UNIT_TIMINGS
