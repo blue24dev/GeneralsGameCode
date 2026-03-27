@@ -1055,3 +1055,67 @@ void AI::loadPostProcess()
 }
 
 
+
+//MODDD - PathHandle - implementations
+PathHandle::PathHandle() :
+	m_ID(0),
+	m_nextID(0),
+	m_path(nullptr)
+{
+	// empty
+}
+
+UnsignedInt PathHandle::getID() const
+{
+	return m_ID;
+}
+
+Path* PathHandle::getPath() const
+{
+	return m_path;
+}
+
+void PathHandle::reset()
+{
+	// Similar to the constructor, but uses 'deletePath' to delete the inner path in case there still is one
+	m_ID = 0;
+	m_nextID = 1;
+	deletePath();
+}
+
+// Delete the inner path. Also sets the ID to 0 so checkes with a cached ID still work as expected (recognize the deletion).
+// Note that if 'assignPath' is expected to be called immediately / negligibly after, no need to call 'deletePath' first since
+// 'assignPath' will already include this before setting the inner path.
+void PathHandle::deletePath()
+{
+	if (m_path != nullptr)
+	{
+		m_ID = 0;
+		deleteInstance(m_path);
+		m_path = nullptr;
+	}
+}
+
+// Assign the inner path. Deletes the existing one if needed.
+void PathHandle::setPath(Path* path)
+{
+	if (m_path != nullptr)
+	{
+		deleteInstance(m_path);
+	}
+
+	if (path != nullptr)
+	{
+		// 'nextID' keeps track of the ID to use on the next assignment so this can persist even if 'ID' is set to 0 on 'deletePath'.
+		m_ID = m_nextID;
+		++m_nextID;
+	}
+	else
+	{
+		// an ID of 0 when set to a null path - keep the ID 1-1 with that
+		m_ID = 0;
+	}
+	m_path = path;
+}
+
+
