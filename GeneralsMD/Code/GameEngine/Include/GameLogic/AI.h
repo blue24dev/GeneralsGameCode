@@ -1053,3 +1053,30 @@ private:
 
 	mutable VecObjectID	m_lastRequestedIDList;			///< this is used so we can return by reference, saving a copy
 };
+
+//MODDD - PathHandle - new class
+// Holds the original path as well as an ID so a method can tell if a path has been re-assigned since the path was
+// initially provided in the same method (ex: re-assigned by some deeper call during a loop).
+// Also, note that simply having the same ID as an earlier point doesn't mean the Path hansn't been tampered with, like
+// had nodes removed/added. If more precision is needed, that should be addressed.
+// Possible idea: a count of node add/remove operations that's adjusted accordingly in the handle and recorded by the caller -> stop if the cached node-op count disagrees.
+// Included here instead of 'AIPathfind.h' so 'AIUpdate.h' can get its size to use it as a non-pointer member field.
+class PathHandle
+{
+public:
+	PathHandle();
+	
+	UnsignedInt getID() const;
+	// Does there need to be a 'const'-in-front copy? Don't think so?
+	Path* getPath() const;
+
+	void reset();
+
+	void deletePath();
+	void setPath(Path* path);
+
+private:
+	UnsignedInt m_ID;
+	UnsignedInt m_nextID;
+	Path* m_path;
+};

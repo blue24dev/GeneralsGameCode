@@ -10285,8 +10285,16 @@ void Pathfinder::removeUnitFromPathfindMap(  Object *obj )
 	removeGoal(obj);
 }
 
-Bool Pathfinder::moveAllies(Object *obj, Path *path)
+//MODDD - PathHandle. Receive the path handle instead of the path itself.
+//Bool Pathfinder::moveAllies(Object *obj, Path *path)
+Bool Pathfinder::moveAllies(Object *obj, PathHandle *pathHandle)
 {
+	//MODDD - fine to accesss the raw path at first, but after a call that has the potential to destroy the very
+	// path being parsed here ('aiMoveAwayFromUnit'), check the ID of the current path handle to see if the path
+	// has been destroyed/re-created since this call. That's a good sign this method call should stop to prevent
+	// a rare crash from the 'node' pointer going '0xdeadbeef', if release mode's exception debug info is to be trusted.
+	int cachedPathID = pathHandle->getID();
+	Path* path = pathHandle->getPath();
 
 #ifdef DO_UNIT_TIMINGS
 #pragma MESSAGE("*** WARNING *** DOING DO_UNIT_TIMINGS!!!!")
@@ -10314,7 +10322,15 @@ if (g_UT_startTiming) return false;
 	if (obj->getAIUpdateInterface()) {
 		ignoreId = obj->getAIUpdateInterface()->getIgnoredObstacleID();
 	}
-	for( node = path->getLastNode(); node && node != path->getFirstNode(); node = node->getPrevious() )	{
+
+	//MODDD - DEBUG. Pointer to every object told to move out of the way by this loop.
+	std::list<Object*> objectListDebug;
+	Object* objectReachedThisIteration = nullptr;
+	int nodeIndex = 0;
+	
+	//MODDD - debug
+	//for( node = path->getLastNode(); node && node != path->getFirstNode(); node = node->getPrevious() )	{
+	for( node = path->getLastNode(); node && node != path->getFirstNode(); nodeIndex++, objectListDebug.push_back(objectReachedThisIteration), objectReachedThisIteration = nullptr, node = node->getPrevious() )	{
 		ICoord2D curCell;
 		worldToCell(node->getPosition(), &curCell);
 		Int i, j;
@@ -10373,8 +10389,25 @@ if (g_UT_startTiming) return false;
 				}
 #endif
 
+				//MODDD - debug
+				objectReachedThisIteration = otherObj;
+
 				//DEBUG_LOG(("Moving ally"));
 				otherObj->getAI()->aiMoveAwayFromUnit(obj, CMD_FROM_AI);
+
+				//MODDD - and now for the moment of truth.
+				if (pathHandle->getID() != cachedPathID)
+				{
+					// I think it's fine to break out of the loop -> reach the 'return true' at the bottom.
+					// Nowhere in the as-is codebase depends on the outcome of this method, so, it's hard to tell what
+					// the intent was. Should it return 'false' because the path was destroyed since the initial call or
+					// 'true' because it reached the 'path->getLastNode()' loop at all?
+					// Guessing the latter because, worst case scenario, every single node could lack an object
+					// to tell to move out of the way ('aiMoveAwayFromUnit' is never called from here) and the whole
+					// method would return true anyway.
+					break;
+				}
+
 			}
 		}
 	}

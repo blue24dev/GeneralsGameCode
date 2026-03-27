@@ -41,6 +41,9 @@ class Weapon;
 class PathfindZoneManager;
 class PathfindCell;
 
+//MODDD
+class PathHandle;
+
 // How close is close enough when moving.
 
 #define PATHFIND_CLOSE_ENOUGH 1.0f
@@ -695,8 +698,10 @@ public:
 	void removeGoal( Object *obj);		///< Removes the given mobile unit's goal cells in the map
 	void updatePos( Object *obj, const Coord3D *newPos);		///< Update the given mobile unit's cells in the map
 	void removePos( Object *obj);		///< Removes the unit's position cells from the map
-
-	Bool moveAllies(Object *obj, Path *path);
+	
+	//MODDD - PathHandle. Receive the path handle instead of the path itself.
+	//Bool moveAllies(Object *obj, Path *path);
+	Bool moveAllies(Object *obj, PathHandle *pathHandle);
 
 	// NOTE - The object MUST NOT MOVE between the call to createAWall... and removeWall...
 	// or BAD THINGS will happen.  jba.

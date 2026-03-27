@@ -469,9 +469,20 @@ public:
 	Bool isWaitingForPath() const {return m_waitingForPath;}
 	Bool isAttackPath() const {return m_isAttackPath;} ///< True if we have a path to an attack location.
 	void cancelPath(); ///< Called if we no longer need the path.
-	Path* getPath() { return m_path; }				///< return the agent's current path
-	const Path* getPath() const { return m_path; }				///< return the agent's current path
+	
+	//MODDD - PathHandle - get the PathHandle instead
+	//Path* getPath() { return m_path; }				///< return the agent's current path
+	//const Path* getPath() const { return m_path; }				///< return the agent's current path
+	// ---
+	// Actually, letting 'getPath()' redirect to getting it from 'pathHandle'.
+	// Just be aware that this defeats the purpose of the handle, unless it isn't needed in that case (should be fine for external calls in most cases).
+	Path* getPath() { return m_pathHandle.getPath(); }
+	const Path* getPath() const { return m_pathHandle.getPath(); }
+	PathHandle* getPathHandle() { return &m_pathHandle; }				///< return the agent's current path
+	const PathHandle* getPathHandle() const { return &m_pathHandle; }				///< return the agent's current path
+
 	void destroyPath();												///< destroy the current path, setting it to null
+
 	UnsignedInt getPathAge() const { return TheGameLogic->getFrame() - m_pathTimestamp; }	///< return the "age" of the path
 	Bool isPathAvailable( const Coord3D *destination ) const; ///< does a path exist between us and the destination
 	Bool isQuickPathAvailable( const Coord3D *destination ) const;  ///< does a path (using quick pathfind) exist between us and the destination
@@ -491,7 +502,11 @@ public:
 	void friend_endingMove();
 
 	void friend_setPath(Path *newPath);
-	Path* friend_getPath() { return m_path; }
+	//MODDD - PathHandle - get the PathHandle instead
+	// Offering both is fine anyway, but redirecting to get the path from the path handle
+	//Path* friend_getPath() { return m_path; }
+	Path* friend_getPath() { return m_pathHandle.getPath(); }
+	PathHandle* friend_getPathHandle() { return &m_pathHandle; }
 
 	void friend_setGoalObject(Object *obj);
 
@@ -678,6 +693,10 @@ public:
 	// only for AIStateMachine.
 	virtual void friend_notifyStateMachineChanged();
 
+protected:
+	//MODDD - new, for internal use only as a convenience feature
+	void assignPath(Path* path);
+
 private:
 	// this should only be called by load/save, or by chooseLocomotorSet.
 	// it does no sanity checking; it just jams it in.
@@ -714,7 +733,10 @@ private:
 	const Waypoint*		m_completedWaypoint;								///< Set to the last waypoint in a path when the FollowWaypointPath is complete.
 
 	// Pathfinding ---------------------------------------------------------------------------------------------
-	Path*				m_path;											///< current path to follow (for moving)
+	//MODDD - PathHandle - replacing 'm_path'
+	//Path*				m_path;											///< current path to follow (for moving)
+	PathHandle m_pathHandle;
+
 	ObjectID		m_requestedVictimID;
 	Coord3D			m_requestedDestination;
 	Coord3D			m_requestedDestination2;
