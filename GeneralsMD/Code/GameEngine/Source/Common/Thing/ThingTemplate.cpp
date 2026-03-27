@@ -1807,7 +1807,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	// Checking for being above 0 first appears to fix this. Are negative values used in some places?
 	if (_this->m_shroudClearingRange > 0)
 	{
-		_this->m_shroudClearingRange *= 1.40f;
+		_this->m_shroudClearingRange *= 1.50f;
 	}
 
 	static NameKeyType ActiveBodyNameKey = NAMEKEY("ActiveBody");
