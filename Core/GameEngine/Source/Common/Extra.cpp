@@ -6,6 +6,8 @@
 #include "Common/Player.h"
 #include "Common/KindOf.h"
 #include "Common/ThingTemplate.h"
+#include "Common/Upgrade.h"
+#include "GameLogic/Object.h"
 #include "GameNetwork/GameInfo.h"
 #include "GameLogic/GameLogic.h"
 
