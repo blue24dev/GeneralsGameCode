@@ -309,17 +309,7 @@ void PlayerList::postPlayersInit()
 			Money* moneyRef = player->getMoney();
 			UnsignedInt currentMoney = moneyRef->countMoney();
 			moneyRef->withdraw(currentMoney);
-			moneyRef->deposit((UnsignedInt)((float)currentMoney * 1.25f), FALSE, FALSE);
-
-			player->setSkillPointsModifier(1.30f);
-			continue;
-		}
-#endif
-
-#if defined(COMPUTER_PLAYER_EXPERIENCE_SCALAR)
-		if (player->getPlayerType() == PLAYER_COMPUTER)
-		{
-			player->setSkillPointsModifier(COMPUTER_PLAYER_EXPERIENCE_SCALAR);
+			moneyRef->deposit((UnsignedInt)((Real)currentMoney * NOOB_START_MONEY_SCALAR), FALSE, FALSE);
 			continue;
 		}
 #endif

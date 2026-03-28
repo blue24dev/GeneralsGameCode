@@ -2481,7 +2481,7 @@ void Player::doBountyForKill(const Object* killer, const Object* victim)
 	if( bounty )
 	{
 		//MODDD - money cheat check
-		bounty = getCheatAdjustedMoneyAmount(this, bounty);
+		APPLY_MONEY_CHEAT(this, bounty);
 
 		getMoney()->deposit( bounty );
 		m_scoreKeeper.addMoneyEarned( bounty );
@@ -2507,7 +2507,15 @@ Bool Player::hasPrereqsForScience(ScienceType t) const
 /// returns TRUE if the player gained/lost levels as a result.
 Bool Player::addSkillPoints(Int delta)
 {
+	//MODDD
+#if RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS || NOOB_MODE
+	// let the filter make changes if applicable
+	Real newMod = playerPromotionExperienceRateFilter(this, m_skillPointsModifier);
+	delta = REAL_TO_INT_CEIL(newMod * INT_TO_REAL(delta));
+#else
+	// retail
 	delta = REAL_TO_INT_CEIL(m_skillPointsModifier * INT_TO_REAL(delta));
+#endif
 
 	if( delta == 0 )
 		return false;
@@ -4643,24 +4651,4 @@ void Player::xfer( Xfer *xfer )
 void Player::loadPostProcess()
 {
 
-}
-
-//MODDD
-UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit)
-{
-	//MODDD - extra money hack for AI players (new way - scalar on income sources)
-	/*
-#if defined(COMPUTER_PLAYER_MONEY_SCALAR)
-	if (player->getPlayerType() == PLAYER_COMPUTER) {
-		return (UnsignedInt)(((Real)amountToDeposit) * COMPUTER_PLAYER_MONEY_SCALAR);
-	}
-#endif
-	*/
-
-	Real scalar = moneyScalarAdjustmentFilter(player);
-	if (scalar != 1.0) {
-		return (UnsignedInt)(((Real)amountToDeposit) * scalar);
-	}
-
-	return amountToDeposit;
 }

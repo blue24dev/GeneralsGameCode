@@ -161,9 +161,6 @@ Int UpgradeTemplate::calcTimeToBuild( Player *player ) const
 	}
 #endif
 
-	//MODDD - for me only
-	return m_buildTime * 1.1 * 1.4 * LOGICFRAMES_PER_SECOND;
-
 	///@todo modify this by power state of player
 	return m_buildTime * LOGICFRAMES_PER_SECOND;
 }
@@ -499,5 +496,10 @@ void UpgradeCenter::parseUpgradeDefinition( INI *ini )
 	// parse the ini definition
 	ini->initFromINI( upgrade, upgrade->getFieldParse() );
 
+	//MODDD - since there isn't a 'validate' method to call like 'thingTemplate->validate()' in ThingFactory.cpp,
+	// handle post-processing here
+#if CUSTOM_ATTRIBUTE_CHANGES
+	automaticUpgradeTemplateChanges(upgrade);
+#endif
 }
 

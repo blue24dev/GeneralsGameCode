@@ -86,6 +86,9 @@
 #include "GameLogic/VictoryConditions.h"
 #include "GameLogic/AIPathfind.h"
 
+//MODDD - may be needed
+#include "GameNetwork/GameInfo.h"
+
 
 // Kind of hacky, but we need to dance on the guts of the terrain.
 extern void oversizeTheTerrain(Int amount);
@@ -6763,29 +6766,30 @@ void ScriptActions::doAffectSkillPointsModifier(const AsciiString& playerName, R
 		return;
 	}
 
-#if NOOB_MODE
-	if (
-		playerDst->getPlayerType() == PLAYER_HUMAN &&
-		playerDst->slotIndex == 1
-	)
-	{
-		Real finalMod = newModifier * 1.20;
-		playerDst->setSkillPointsModifier(finalMod);
-		return;
-	}
-#endif
-	
-#if defined(COMPUTER_PLAYER_EXPERIENCE_SCALAR)
-	if (playerDst->getPlayerType() == PLAYER_COMPUTER)
-	{
-		Real finalMod = newModifier * COMPUTER_PLAYER_EXPERIENCE_SCALAR;
-		playerDst->setSkillPointsModifier(finalMod);
-		return;
-	}
-#endif
-
 	playerDst->setSkillPointsModifier(newModifier);
 
+	//MODDD - if this is generals challenge co-op and this is a promotion experience rate change for the 1st
+	// slot player, apply it to all other slot players. It's fine if this is overridden by other scripts
+	// using this same method, some may already set the experience rate for players other than the 1st.
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
+	if (playerDst->getPlayerType() == PLAYER_HUMAN && playerDst->slotIndex == 0)
+	{
+		// skip player #0 since that experience rate has already been set and is the basis for everyone else
+		for (int i=1; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
+		{
+			Player* player = ThePlayerList->m_slotPlayerRefs[i];
+			if (TheGameInfo != nullptr)
+			{
+				GameSlot *slot = TheGameInfo->getSlot(i);
+				if (!slot->isOccupied())
+				{
+					continue;
+				}
+			}
+			player->setSkillPointsModifier(newModifier);
+		}
+	}
+#endif
 }
 
 //-------------------------------------------------------------------------------------------------

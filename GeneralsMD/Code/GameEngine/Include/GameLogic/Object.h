@@ -864,6 +864,7 @@ private:
 	Byte													m_lastWeaponCondition[WEAPONSLOT_COUNT];
 
 	SpecialPowerMaskType					m_specialPowerBits; ///< bits determining what kind of special abilities this object has access to.
+	//MODDD
 #if SIDEBAR_ENUM_CONFLICT_FIX
 	// one bit per special power instead, never shared unlike the special power enum values that 'm_specialPowerBits' uses
 	SpecialPowerIDMaskType					m_specialPowerIDBits;

@@ -1,5 +1,7 @@
 //MODDD - new file, based off Common/BitFlags.h but with a custom implementation (avoiding std::bitset)
 // to avoid the need for string names per bit and offer access to the raw byte data for easier save/loads.
+// (todo: header stuff)
+
 //MODDD - TODO
 // Could argue the BitFlags class should also store raw bytes instead of relying on std::bitset - I don't
 // see the benefit of it's 'xfer' method (see BitFlagsIO.h) saving the string name of each bit vs. being

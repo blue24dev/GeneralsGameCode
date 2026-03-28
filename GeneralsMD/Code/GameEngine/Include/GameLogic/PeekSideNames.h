@@ -4,6 +4,7 @@
 // running a game) within a map's file data.
 // Has a few utility methods and exposed result variables near the beginning.
 // Setting 'peekedSideNamesSoftCount' back to 0 before expected parsing is run is recommended.
+// (todo: header stuff)
 
 #pragma once
 

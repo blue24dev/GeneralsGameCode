@@ -1,6 +1,6 @@
 //MODDD - new file for enum's common to the worldbuilder, include as needed
 // (todo: header stuff)
-// ---
+
 #pragma once
 
 //MODDD - moved from BorderTool.h, renamed from 'ModificationType'.

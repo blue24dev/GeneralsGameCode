@@ -124,7 +124,7 @@ Bool SupplyCenterDockUpdate::action( Object* docker, Object *drone )
 		Money *ownerPlayerMoney = ownerPlayer->getMoney();
 
 		//MODDD - money cheat check
-		value = getCheatAdjustedMoneyAmount(ownerPlayer, value);
+		APPLY_MONEY_CHEAT(ownerPlayer, value);
 
 		ownerPlayerMoney->deposit(value);
 		ownerPlayer->getScoreKeeper()->addMoneyEarned(value);

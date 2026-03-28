@@ -133,7 +133,7 @@ void AutoDepositUpdate::awardInitialCaptureBonus( Player *player )
 	//MODDD - money cheat check
 	int moneyAmount = getAutoDepositUpdateModuleData()->m_initialCaptureBonus;
 	
-	moneyAmount = getCheatAdjustedMoneyAmount(player, moneyAmount);
+	APPLY_MONEY_CHEAT(player, moneyAmount);
 	
 	player->getMoney()->deposit( moneyAmount );
 	player->getScoreKeeper()->addMoneyEarned( moneyAmount );
@@ -182,7 +182,7 @@ UpdateSleepTime AutoDepositUpdate::update()
 		int moneyAmount = modData->m_depositAmount + getUpgradedSupplyBoost();
 
 		//MODDD - money cheat check
-		moneyAmount = getCheatAdjustedMoneyAmount(getObject()->getControllingPlayer(), moneyAmount);
+		APPLY_MONEY_CHEAT(getObject()->getControllingPlayer(), moneyAmount);
 
 		if( modData->m_isActualMoney )
 		{
