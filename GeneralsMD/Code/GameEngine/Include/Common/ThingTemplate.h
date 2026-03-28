@@ -806,6 +806,7 @@ private:
 #if 1
 void automaticThingTemplateChanges(ThingTemplate* _this);
 Int buildTimeAdjustmentFilter(const Player* player, Int buildTime);
+Real moneyScalarAdjustmentFilter(const Player* player);
 Real getHealthMulti(const ThingTemplate* _this);
 Real healthAdjustmentFilter(Object* obj, Real healthVal);
 #endif

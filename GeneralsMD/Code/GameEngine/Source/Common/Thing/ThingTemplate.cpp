@@ -1575,8 +1575,7 @@ Int ThingTemplate::calcTimeToBuild( const Player* player) const
 	Int buildTime = getBuildTime() * LOGICFRAMES_PER_SECOND;
 
 	//MODDD - for me only
-	// (no)
-	//buildTime = buildTimeAdjustmentFilter(player, buildTime);
+	buildTime = buildTimeAdjustmentFilter(player, buildTime);
 
 	buildTime *= player->getHandicap()->getHandicap(Handicap::BUILDTIME, this);
 
@@ -2000,6 +1999,37 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 		}
 	}
 	return _buildTime;
+}
+
+Real moneyScalarAdjustmentFilter(const Player* player)
+{
+	// AI players can build faster over the course of a long game.
+	const UnsignedInt startMin = 15;
+	const UnsignedInt endMin = 60;
+	const float startModifier = 1.5;
+	const float endModifier = 3.3;
+
+	Real scalar = 1.0;
+	if (player->getPlayerType() == PLAYER_COMPUTER)
+	{
+		UnsignedInt frame = TheGameLogic->getFrame();
+		if (frame <= (30 * 60) * startMin)
+		{
+			scalar *= startModifier;
+		}
+		else if(frame <= (30 * 60) * endMin)
+		{
+			float fracto = (float)(frame - ((30 * 60) * startMin)) / (float)((30 * 60) * (endMin - startMin));
+			float fracto_inv = 1.0f - fracto;
+			
+			scalar *= endModifier + (startModifier - endModifier) * fracto_inv;
+		}
+		else
+		{
+			scalar *= endModifier;
+		}
+	}
+	return scalar;
 }
 
 Real getHealthMulti(const ThingTemplate* _this)

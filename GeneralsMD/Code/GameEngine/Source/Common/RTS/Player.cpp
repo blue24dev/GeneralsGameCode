@@ -4649,10 +4649,18 @@ void Player::loadPostProcess()
 UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit)
 {
 	//MODDD - extra money hack for AI players (new way - scalar on income sources)
+	/*
 #if defined(COMPUTER_PLAYER_MONEY_SCALAR)
 	if (player->getPlayerType() == PLAYER_COMPUTER) {
 		return (UnsignedInt)(((Real)amountToDeposit) * COMPUTER_PLAYER_MONEY_SCALAR);
 	}
 #endif
+	*/
+
+	Real scalar = moneyScalarAdjustmentFilter(player);
+	if (scalar != 1.0) {
+		return (UnsignedInt)(((Real)amountToDeposit) * scalar);
+	}
+
 	return amountToDeposit;
 }
