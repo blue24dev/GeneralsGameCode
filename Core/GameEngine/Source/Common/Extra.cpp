@@ -21,6 +21,7 @@
 #include "GameLogic/Module/MaxHealthUpgrade.h"
 #include "GameLogic/Module/RebuildHoleExposeDie.h"
 #include "GameLogic/Module/StealthDetectorUpdate.h"
+#include "GameLogic/Module/SpecialAbilityUpdate.h"
 #include "GameLogic/Module/ActiveShroudUpgrade.h"
 
 void automaticThingTemplateChanges(ThingTemplate* _this)
@@ -57,21 +58,30 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			// to be less spammable since each one's health boost is more noticeable
 			_this->m_buildCost *= 1.15;
-			_this->m_visionRange *= 1.35;
+			_this->m_visionRange *= 1.5;
 		}
 		else
 		{
 			// all other buildings
-			_this->m_buildTime *= 1.12;
-			_this->m_visionRange *= 1.3;
+			_this->m_buildTime *= 1.15;
+			_this->m_visionRange *= 1.25;
 		}
 	}
 	else
 	{
 		// non-buildings
 		_this->m_buildTime *= 1.08;
+		// enforce a minimum of 180 vision first.
+		// Note this happens before the multiplication so the real effective minimum is higher.
+		// TODO - can you iterate through weapons to see what the longest range is to see if this should be automatically boosted?
+		if (_this->m_visionRange < 180) {
+			_this->m_visionRange = 180;
+		}
 		_this->m_visionRange *= 1.3;
 	}
+
+	//MODDD - for the insane speeds of some mods
+	_this->m_buildTime *= 1.4;
 
 	// Make things that are exclusively dozers cheaper.
 	// This that are dozers and harvesters at the same time (GLA workers) don't need as much of a reduction.
@@ -121,6 +131,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	static NameKeyType RebuildHoleExposeDieNameKey = NAMEKEY("RebuildHoleExposeDie");
 	static NameKeyType MaxHealthUpgradeNameKey = NAMEKEY("MaxHealthUpgrade");
 	static NameKeyType StealthDetectorUpdateNameKey = NAMEKEY("StealthDetectorUpdate");
+	static NameKeyType SpecialAbilityUpdateNameKey = NAMEKEY("SpecialAbilityUpdate");
 	static NameKeyType ActiveShroudUpgradeNameKey = NAMEKEY("ActiveShroudUpgrade");
 	
 	Bool foundStealthDetectorUpdate = false;
@@ -197,7 +208,19 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			foundStealthDetectorUpdate = true;
 			StealthDetectorUpdateModuleData* _data = (StealthDetectorUpdateModuleData*)data;
 			stealthDetectorData = _data;
-			_data->m_detectionRange *= 1.2;
+			if (_data->m_detectionRange > 0)
+			{
+				  _data->m_detectionRange *= 1.2;
+			}
+		}
+		else if( modNameKey == SpecialAbilityUpdateNameKey )
+		{
+			SpecialAbilityUpdateModuleData* _data = (SpecialAbilityUpdateModuleData*)data;
+			// NOTE - this constant comes from SPECIAL_ABILITY_HUGE_DISTANCE in SpecialAbilityUpdate.h
+			if (_data->m_startAbilityRange > 0 && _data->m_startAbilityRange < 10000000.0f)
+			{
+				_data->m_startAbilityRange *= 1.15;
+			}
 		}
 		else if( modNameKey == ActiveShroudUpgradeNameKey )
 		{
@@ -255,7 +278,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 
 void automaticUpgradeTemplateChanges(UpgradeTemplate* _this)
 {
-	_this->m_buildTime *= 1.1;
+	_this->m_buildTime *= 1.1 * 1.4;
 }
 
 Real getHealthMulti(const ThingTemplate* _this)
@@ -275,7 +298,7 @@ Real getHealthMulti(const ThingTemplate* _this)
 		else
 		{
 			// buildings otherwise
-			return 1.75;
+			return 1.85;
 		}
 	}
 	else
@@ -289,18 +312,32 @@ Real getHealthMulti(const ThingTemplate* _this)
 		}
 		else
 		{
-			KindOfMaskType tempMask;
-			tempMask.set(KINDOF_INFANTRY);
-			tempMask.set(KINDOF_VEHICLE);
-			tempMask.set(KINDOF_AIRCRAFT);
-			tempMask.set(KINDOF_HUGE_VEHICLE);
-			// don't think these should be needed, nor forbidding UNATTACKABLE?
-			//tempMask.set(KINDOF_DOZER);
-			//tempMask.set(KINDOF_HARVESTER);
-			if (_this->isAnyKindOf(tempMask))
+
+			if (!_this->isKindOf(KINDOF_UNATTACKABLE))
 			{
-				// a non-structure unit (not some weird system/inner-detail thing): have a little more health anyway
-				return 1.20;
+				if (_this->isKindOf(KINDOF_DOZER))
+				{
+					return 1.50;
+				}
+				else if (_this->isKindOf(KINDOF_HARVESTER))
+				{
+					// Be careful with this one, includes combat chinooks in retail generals
+					return 1.30;
+				}
+				else
+				{
+					// This is also to make sure this isn't some system/inner-detail thing
+					KindOfMaskType tempMask;
+					tempMask.set(KINDOF_INFANTRY);
+					tempMask.set(KINDOF_VEHICLE);
+					tempMask.set(KINDOF_AIRCRAFT);
+					tempMask.set(KINDOF_HUGE_VEHICLE);
+					if (_this->isAnyKindOf(tempMask))
+					{
+						// a non-structure unit (not some weird system/inner-detail thing): have a little more health anyway
+						return 1.30;
+					}
+				}
 			}
 		}
 	}
@@ -369,10 +406,10 @@ UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDepo
 Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 {
 	// AI players can build faster over the course of a long game.
-	const UnsignedInt startMin = 16;
+	const UnsignedInt startMin = 15;
 	const UnsignedInt endMin = 60;
 	const float startModifier = 1.00;
-	const float endModifier = 0.75;
+	const float endModifier = 0.78;
 
 	Int _buildTime = buildTime;
 	if (player->getPlayerType() == PLAYER_COMPUTER)
@@ -403,7 +440,7 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModifier)
 {
 	// AI players receive more experience toward promotions (not individual unit veterancy) per kill over the course of a long game.
-	const UnsignedInt startMin = 16;
+	const UnsignedInt startMin = 15;
 	const UnsignedInt endMin = 60;
 	const float startModifier = 1.10;
 	const float endModifier = 1.50;
