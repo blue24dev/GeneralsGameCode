@@ -2612,14 +2612,14 @@ Bool Object::isRecognizableToEnemy() const
 Bool Object::isStealthGarrison() const
 {
 	// As-is way
-	return isKindOf( KINDOF_STEALTH_GARRISON );
+	//return isKindOf( KINDOF_STEALTH_GARRISON );
 	// New - instead of a constant 'KINDOF' choice, just allow any unit that has some stealth ability.
 	// Being stealthed while standing still is the minimum and good enough, since that's the behavior of a garrisoned
 	// building in 'stealth' mode anyway.
 	// MODDD - TODO. For more precision, consider checking whether a member happens to be stealthed
 	// at the moment instead (ex: a jarmen kell that doesn't de-stealth on firing would still be stealthed -> building
 	// appearance is unaffected). This check would need to be done every frame instead of on something entering/exitig a building just to adjust contained-counts.
-	//return testStatus( OBJECT_STATUS_CAN_STEALTH );
+	return testStatus( OBJECT_STATUS_CAN_STEALTH );
 }
 
 //MODDD - NEW. Similar to 'isClearingMines', but for whether the attached object is capable of clearing mines,
@@ -7614,6 +7614,11 @@ void Object::defect( Team* newTeam, UnsignedInt detectionTime )
 	}
 
 	ContainModuleInterface *ct = getContain();
+
+	//MODDD - when a building is captured (not just a civilian building garrisoned by a different player), need
+	// to let the inner 'original team' update so the last unit leaving doesn't undo the ownership change.
+	if ( ct ) ct->setGarrisonTeamWhenEmpty(this->getControllingPlayer()->getDefaultTeam());
+
 	if( ct  &&  ct->isKickOutOnCapture() )
 	{
 		// Caves really really don't want to do this.
