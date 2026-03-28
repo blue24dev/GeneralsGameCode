@@ -1415,6 +1415,23 @@ void Team::setControllingPlayer(Player *newController)
 		}
 		else
 		{
+			//MODDD - when a building is captured (not just a civilian building garrisoned by a different player), need
+			// to let the inner 'original team' update so the last unit leaving doesn't undo the ownership change.
+			// However, only do this for things that actually belong to the player, not civilian buildings only 'owned'
+			// because units are garrisoned in there. The original team belonging to the old owner should work as a good check.
+			ContainModuleInterface *ct = obj->getContain();
+			if (ct)
+			{
+				Team* garrisonTeamWhenEmp = ct->getGarrisonTeamWhenEmpty();
+				if (garrisonTeamWhenEmp)
+				{
+					if (garrisonTeamWhenEmp->getControllingPlayer() == oldOwner)
+					{
+						ct->setGarrisonTeamWhenEmpty(this->getControllingPlayer()->getDefaultTeam());
+					}
+				}
+			}
+
 			obj->onCapture(oldOwner, newController);
 		}
 	}

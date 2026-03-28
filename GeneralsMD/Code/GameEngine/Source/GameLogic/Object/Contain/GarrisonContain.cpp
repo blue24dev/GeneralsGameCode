@@ -55,6 +55,16 @@
 #include "GameClient/View.h"
 
 
+//MODDD - NOTE - in case you were wondering how units garrisoned in a stealth-garrisoned building at the time something
+// from another player tries to garrison (only time that's possible I think), see 'OpenContain::onCollide'. It has
+// a 'rider->getControllingPlayer() != other->getControllingPlayer()' check for there being different owning players
+// between the one garrisoning and the existing garrisoned member.
+// Capturing a building has both a place in SpecialAbilityUpdate.cpp ('contain->removeAllContained') that kicks out
+// existing members (I disabled this since it seems redundant) and 'Object::defect' that does the same thing.
+// Note that map scripts that change ownership just use 'onCapture' without as strong of a 'defect' or 'setTeam' call,
+// so the kick-out never happens. This can produce some strange scenarios even in the retail state of the codebase.
+
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 enum { MUZZLE_FLASH_LIFETIME = LOGICFRAMES_PER_SECOND / 7 };
 
@@ -1662,6 +1672,8 @@ void GarrisonContain::onContaining( Object *obj, Bool wasSelected )
 	// team of the current occupying player instead of in 'recalcApparentControllingPlayer'.
 	// ---
 	// Add a check for this being the first unit garrisoning an empty building (another piece from 'recalc...').
+	//MODDD - UPDATE - see 'GarrisonContain::addToContainList', doing it there instead for now.
+	/*
 	if (getContainCount() == 1)
 	{
 		//Record original team first time through.
@@ -1679,6 +1691,7 @@ void GarrisonContain::onContaining( Object *obj, Bool wasSelected )
 			getObject()->setTeam( team );
 		}
 	}
+	*/
 	// ---
 	recalcApparentControllingPlayer();
 
@@ -1720,7 +1733,7 @@ void GarrisonContain::onRemoving( Object *obj )
 		// (hokey exception: if our team is null, don't bother -- this
 		// usually means we are being called during game-teardown and
 		// the teams are no longer valid...)
-		//MODDD - TODO. See if this check is still necessary. And I assume a 'm_originalTeam' check isn't needed.
+		//MODDD - TODO. See if this null check is still necessary. And I assume a 'm_originalTeam' null check isn't needed.
 		if (getObject()->getTeam() != nullptr)
 		{
 			getObject()->setTeam( m_originalTeam );
@@ -1824,12 +1837,52 @@ void GarrisonContain::onObjectCreated()
 	}
 }
 
+//MODDD - decide if this unit is entering an empty object to decide if its team should be changed.
+// I think this is better than deciding the change on every single thing entering/exiting like 'recalcApparentControllingPlayer' did as-is.
+void GarrisonContain::addToContainList( Object *obj )
+{
+	// Don't just rely on the current contain counts to decide if this is empty or not.
+	// Ex: garrisoning a building that's stealth-garrisoned by an enemy -> your units can still enter it.
+	// The 'OpenContain::onCollide' method (see notes above) does tell the existing garrison with a different owning player
+	// to exit, but they don't exit within the same frame (they're just told to enter the AI_EXIT state).
+	// So, check for any units garrisoned with a different team than the one entering -> don't count them towards a temporary
+	// 'effective' contain count.
+	// Actually - go ahead and just set the team on-enter.  Even if this call is redundant a lot of the time, it's tolerable.
+	/*
+	ContainedItemsList::iterator it;
+	for (it = m_containList.begin(); it != m_containList.end(); )
+	{
+		Object* rider = *it;
+	}
+	*/
+
+	// Still do the 0-contain-count check to decide if I'm entering an empty building at the time.
+	if (getContainCount() == 0)
+	{
+		m_originalTeam = getObject()->getTeam();
+	}
+
+	// Set the attached object (building)'s team to that if the one garrisoning ('obj').
+	Player* controller = obj->getControllingPlayer();
+	Team *team = controller ? controller->getDefaultTeam() : nullptr;
+	if( team )
+	{
+		getObject()->setTeam( team );
+	}
+
+	OpenContain::addToContainList(obj);
+}
+
 //MODDD - since garrisonable structures are expected / better supported now, need to make a call in case the contain
 // module is a 'GarrisonContain'. When the last occupant leaves, the team is set back to a cached inner 'original team'
 // (would revert the team intended by being captured).
 void GarrisonContain::onCapture( Player *oldOwner, Player *newOwner )
 {
-	setGarrisonTeamWhenEmpty(newOwner->getDefaultTeam());
+	//MODDD - not needed anymore. This is overriding civilian building's 'civilian team' with whatever the new owner is - not good.
+	// need a finer call than this, but still a good intention for player-built things changing ownership.
+	// Oh! check if the old owner is the one control is being transferred from (vs. the civilian player). That should do it.
+	// Has to be done from some other context though - here an 'oldOwner' being the civilian player doesn't tell us much.
+	//setGarrisonTeamWhenEmpty(newOwner->getDefaultTeam());
 }
 
 // ------------------------------------------------------------------------------------------------

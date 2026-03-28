@@ -1701,6 +1701,10 @@ Bool ActionManager::canDoSpecialPowerAtObject( const Object *obj, const Object *
 
 			case SPECIAL_HACKER_DISABLE_BUILDING:
 				//Can only disable buildings...
+				//MODDD - why not use the same check as the on-mouse-hover check?
+				// For that matter, strange that the logic for the hint was much more involved than the check to actually carry it out here.
+				// ---
+				/*
 				if( target->isKindOf( KINDOF_STRUCTURE ) && r == ENEMIES )
 				{
 					//Make sure the building is considered hackable (temp: using capturable)
@@ -1711,7 +1715,10 @@ Bool ActionManager::canDoSpecialPowerAtObject( const Object *obj, const Object *
 					return true;
 				}
 				break;
-
+				*/
+				// ---
+				return canDisableBuildingViaHacking( obj, target, commandSource );
+				// ---
 			case SPECIAL_INFANTRY_CAPTURE_BUILDING:
 			case SPECIAL_BLACKLOTUS_CAPTURE_BUILDING:
 				return canCaptureBuilding( obj, target, commandSource );
@@ -1724,6 +1731,9 @@ Bool ActionManager::canDoSpecialPowerAtObject( const Object *obj, const Object *
 
 			case SPECIAL_CASH_HACK:
 				//Can only disable enemy supply centers.
+				//MODDD - why not use the same check as the on-mouse-hover check?
+				// ---
+				/*
 				if( target->isKindOf( KINDOF_STRUCTURE ) && r == ENEMIES )
 				{
 					//Make sure the building is considered hackable (temp: using capturable)
@@ -1744,6 +1754,10 @@ Bool ActionManager::canDoSpecialPowerAtObject( const Object *obj, const Object *
 					}
 				}
 				break;
+				*/
+				// ---
+				return canStealCashViaHacking( obj, target, commandSource );
+				// ---
 
 			case SPECIAL_DISGUISE_AS_VEHICLE:
 				if( target->isKindOf( KINDOF_VEHICLE )

@@ -144,6 +144,7 @@ public:
   virtual void setEvacDisposition( EvacDisposition disp ) override { m_evacDisposition = disp; };
 
 	//MODDD - new
+	virtual void addToContainList( Object *obj ) override;
 	virtual void onCapture( Player *oldOwner, Player *newOwner ) override;
 	virtual Team* getGarrisonTeamWhenEmpty() const override { return m_originalTeam; }
 	virtual void setGarrisonTeamWhenEmpty( Team* team ) override { m_originalTeam = team; }
