@@ -635,7 +635,9 @@ public:
 	const WeaponTemplateSetVector& getWeaponTemplateSets() const {return m_weaponTemplateSets;}
 
 	//MODDD
+#if CUSTOM_ATTRIBUTE_CHANGES
 	friend void automaticThingTemplateChanges(ThingTemplate* _this);
+#endif
 
 protected:
 
@@ -801,11 +803,3 @@ private:
 //-----------------------------------------------------------------------------
 //           Externals
 //-----------------------------------------------------------------------------
-
-//MODDD - for me only
-#if 0
-void automaticThingTemplateChanges(ThingTemplate* _this);
-Int buildTimeAdjustmentFilter(const Player* player, Int buildTime);
-Real getHealthMulti(const ThingTemplate* _this);
-Real healthAdjustmentFilter(Object* obj, Real healthVal);
-#endif

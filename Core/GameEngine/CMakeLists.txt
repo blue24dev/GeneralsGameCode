@@ -557,6 +557,9 @@ set(GAMEENGINE_SRC
     Include/GameNetwork/WOLBrowser/FEBDispatch.h
     Include/GameNetwork/WOLBrowser/WebBrowser.h
 #    Include/Precompiled/PreRTS.h
+#MODDD
+    Include/Common/Extra.h
+
     Source/Common/AddonCompat.cpp
     Source/Common/Audio/AudioEventRTS.cpp
     Source/Common/Audio/AudioRequest.cpp
@@ -1146,6 +1149,8 @@ set(GAMEENGINE_SRC
     Source/GameNetwork/User.cpp
     Source/GameNetwork/WOLBrowser/WebBrowser.cpp
 #    Source/Precompiled/PreRTS.cpp
+#MODDD
+    Source/Common/Extra.cpp
 )
 
 if(RTS_GAMEMEMORY_ENABLE)

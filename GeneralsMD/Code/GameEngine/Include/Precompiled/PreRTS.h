@@ -129,6 +129,9 @@ class STLSpecialAlloc;
 #include "Common/Thing.h"
 #include "Common/UnicodeString.h"
 
+//MODDD - there are some small utility functions that may as well be known everywhere
+#include "Common/Extra.h"
+
 #if defined(__GNUC__) && defined(_WIN32)
     #pragma GCC diagnostic pop
 #endif

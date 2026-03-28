@@ -58,7 +58,7 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 	money += getUpgradedSupplyBoost(other);
 
 	//MODDD - money cheat check
-	money = getCheatAdjustedMoneyAmount(other->getControllingPlayer(), money);
+	APPLY_MONEY_CHEAT(other->getControllingPlayer(), money)
 
 	other->getControllingPlayer()->getMoney()->deposit( money );
 	other->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( money );

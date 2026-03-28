@@ -260,7 +260,7 @@ void SalvageCrateCollide::doMoney( Object *other )
 	if( money > 0 )
 	{
 		//MODDD - money cheat check
-		money = getCheatAdjustedMoneyAmount(other->getControllingPlayer(), money);
+		APPLY_MONEY_CHEAT(other->getControllingPlayer(), money)
 
 		other->getControllingPlayer()->getMoney()->deposit( money );
 		other->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( money );

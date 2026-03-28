@@ -202,11 +202,6 @@
 // This doesn't affect start moeny set by the skirmish menu.
 //#define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS TRUE
 
-// Multiple of all income for computer players to compensate for the AI's lack of ambition for renewable economic structures
-// when supply docks/piles run out late in the game. Pretty crude check: assumes any money change below X is from most
-// normal in-game means (supply truck, oil derrick, etc.) and not start money or a map script doing it.
-//#define COMPUTER_PLAYER_MONEY_SCALAR 10
-
 // Disable the fog-of-war mechanic entirely. Debugger's dream. Or to watch the AI duke it out without
 // having to be a replay.
 // Hey, you know AI players were already playing without it anyway.
@@ -217,9 +212,12 @@
 // (mutually exclusive with above - don't enable both)
 //#define REMOVE_FOG_OF_WAR_ALT TRUE
 
-// If you pick a particular faction (not AI players), gives some bonuses, basically cheats.
-// Hard-coded check for faction name for this. This is the opposite of professional. 
+// Apply some bonuses to a particular player slot (ex: always the 2nd player, currently player index 1).
+// Requires the player to be non-computer.
+// The other 'NOOB_' prefixed constants only apply for that slot if this is true.
 //#define NOOB_MODE FALSE
+//#define NOOB_START_MONEY_SCALAR 1.25
+//#define NOOB_PLAYER_PROMOTION_EXPERIENCE_RATE_SCALAR 1.10
 
 // Forces extra modifiers based on the current game difficulty, such as reduced unit health/damage for hard
 // difficulty, to be disabled regardless of the setting in the GameData.ini file.
@@ -413,12 +411,37 @@
 // ----------------------------------------------------------------------------------------------------------
 // Bundles of settings here for convenient access
 #define FORCE_GAME_CONTEXT FGC_NONE
+
 #define DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY DIFFICULTY_HARD
+
 #define FORCE_HUMAN_PLAYER_START_MONEY 0
 #define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS FALSE
 
-#define COMPUTER_PLAYER_MONEY_SCALAR 1.25
-#define COMPUTER_PLAYER_EXPERIENCE_SCALAR 1.0
 #define REMOVE_FOG_OF_WAR FALSE
 #define REMOVE_FOG_OF_WAR_ALT FALSE
+
 #define NOOB_MODE FALSE
+#define NOOB_START_MONEY_SCALAR 1.25
+#define NOOB_PLAYER_PROMOTION_EXPERIENCE_RATE_SCALAR 1.15
+
+#define RUN_EXTRA_MONEY_CHEATS FALSE
+#define RUN_BUILD_TIME_CHEATS FALSE
+#define RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS FALSE
+#define CUSTOM_ATTRIBUTE_CHANGES FALSE
+
+// ----------------------------------------------------------------------------------------------------------
+// Some post-setting convenience features
+#if CUSTOM_ATTRIBUTES_CHANGES
+	#define HEALTH_ADJUSTMENT_FILTER(_health) _health = healthAdjustmentFilter(this, _health);
+#else
+	// nothing - no effect
+	#define HEALTH_ADJUSTMENT_FILTER(_health)
+#endif
+
+#if RUN_EXTRA_MONEY_CHEATS
+	// run through the filter to see if this player benefits from cheats
+	#define APPLY_MONEY_CHEAT(_player, _moneyAmount) _moneyAmount = getCheatAdjustedMoneyAmount(_player, _moneyAmount);
+#else
+	// nothing - no effect
+	#define APPLY_MONEY_CHEAT(_player, _moneyAmount)
+#endif
