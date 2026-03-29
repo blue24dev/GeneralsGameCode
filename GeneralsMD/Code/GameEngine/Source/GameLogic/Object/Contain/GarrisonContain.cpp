@@ -1856,18 +1856,28 @@ void GarrisonContain::addToContainList( Object *obj )
 	}
 	*/
 
-	// Still do the 0-contain-count check to decide if I'm entering an empty building at the time.
-	if (getContainCount() == 0)
+	// Only do original-team / current-team setting when ingame, not on loading a game.
+	// When loading a game, the attached object (building)'s current team is already set properly (whichever player has it
+	// garrisoned), and the original team still refers to what it did before (ex: typically 'civilian player's team).
+	// Overriding the original team from that of the 'current' (garrisoned) player is not good.
+	if (globalXferStatus != XFER_LOAD)
 	{
-		m_originalTeam = getObject()->getTeam();
-	}
+		// Still do the 0-contain-count check to decide if I'm entering an empty building at the time.
+		if (getContainCount() == 0)
+		{
+			m_originalTeam = getObject()->getTeam();
+		}
 
-	// Set the attached object (building)'s team to that if the one garrisoning ('obj').
-	Player* controller = obj->getControllingPlayer();
-	Team *team = controller ? controller->getDefaultTeam() : nullptr;
-	if( team )
-	{
-		getObject()->setTeam( team );
+		// Set the attached object (building)'s team to that if the one garrisoning ('obj').
+		// Fine to skip the 'contain-count == 0' check for this, in case the unit is garrisoning a building that is stealth
+		// garrisoned by another player (this kicks existing units out).
+		// For the more usual case of a same-player-owned-garrison, no impact.
+		Player* controller = obj->getControllingPlayer();
+		Team *team = controller ? controller->getDefaultTeam() : nullptr;
+		if( team )
+		{
+			getObject()->setTeam( team );
+		}
 	}
 
 	OpenContain::addToContainList(obj);
