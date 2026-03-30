@@ -340,16 +340,18 @@ static Real calcDistSquared(const Coord3D& a, const Coord3D& b)
 // empty one. Returns 'null' if not already in the list & there are no empty slots left.
 // This stops the potential in the as-is script to give the same object multiple slots if an earlier
 // index expired (became empty).  Ex: already has slot #2 but #0 is empty and so assigned to... not right.
-MinefieldBehavior::ImmuneInfo* MinefieldBehavior::getAvailableImmuneInfoSlot(ObjectID objectID) {
+MinefieldBehavior::ImmuneInfo* MinefieldBehavior::getAvailableImmuneInfoSlot(ObjectID objectID)
+{
+	Int i;
 	// First sweep: is this ID already in the list?
-	for (Int i = 0; i < MAX_IMMUNITY; ++i)
+	for (i = 0; i < MAX_IMMUNITY; ++i)
 	{
 		if (m_immunes[i].id == objectID) {
 			return &m_immunes[i];
 		}
 	}
 	// Second sweep: first empty slot?
-	for (Int i = 0; i < MAX_IMMUNITY; ++i)
+	for (i = 0; i < MAX_IMMUNITY; ++i)
 	{
 		if (m_immunes[i].id == INVALID_ID) {
 			return &m_immunes[i];
@@ -449,7 +451,8 @@ void MinefieldBehavior::onCollide( Object *other, const Coord3D *loc, const Coor
 		*/
 		// ---
 		ImmuneInfo* availableImmuneInfoSlot = getAvailableImmuneInfoSlot(other->getID());
-		if (availableImmuneInfoSlot != nullptr) {
+		if (availableImmuneInfoSlot != nullptr)
+		{
 			// Assign/update it, no difference whether it's the same object going to its own slot or adding a new obect.
 			//DEBUG_LOG(("add/update immunity %d",availableImmuneInfoSlot->id));
 			availableImmuneInfoSlot->id = other->getID();
