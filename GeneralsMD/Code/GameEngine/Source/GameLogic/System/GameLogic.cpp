@@ -1268,14 +1268,16 @@ SidesInfo* getMultiplayerLocalSide()
 	if (localSlotNum == 0)
 	{
 		// The name of the intended side/player to play as in the campaign was inconsistent but was usually one of these.
-		const char* commonPlayerNames[] = {
+		const char* commonPlayerNames[] =
+		{
 			"ThePlayer",
 			"Player",
 			"PlyrPLAYER",
 			"player0"
 		};
 
-		for (int i = 0; i < std::size(commonPlayerNames); ++i) {
+		for (int i = 0; i < sizeof(commonPlayerNames) / sizeof(commonPlayerNames[0]); ++i)
+		{
 			targetPlayerName.set(commonPlayerNames[i]);
 			sideInfo = TheSidesList->findSideInfo(targetPlayerName);
 			if (sideInfo != nullptr)
