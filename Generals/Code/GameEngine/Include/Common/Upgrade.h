@@ -195,6 +195,11 @@ public:
 	const UpgradeTemplate *friend_getPrev() const { return m_prev; }
 	void friend_setUpgradeMask( UpgradeMaskType mask ) { m_upgradeMask = mask; }
 	void friend_makeVeterancyUpgrade(VeterancyLevel v);
+	
+	//MODDD
+#if CUSTOM_ATTRIBUTE_CHANGES
+	friend void automaticUpgradeTemplateChanges(UpgradeTemplate* _this);
+#endif
 
 protected:
 

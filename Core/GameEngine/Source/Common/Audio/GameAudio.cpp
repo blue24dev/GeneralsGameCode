@@ -83,7 +83,8 @@ static const char* TheSpeakerTypes[] =
 	nullptr
 };
 
-static const Int TheSpeakerTypesCount = sizeof(TheSpeakerTypes) / sizeof(TheSpeakerTypes[0]);
+//MODDD - subtract 1 from the result because of the trailing 'nullptr' member
+static const Int TheSpeakerTypesCount = sizeof(TheSpeakerTypes) / sizeof(TheSpeakerTypes[0]) - 1;
 
 static void parseSpeakerType( INI *ini, void *instance, void *store, const void *userData );
 

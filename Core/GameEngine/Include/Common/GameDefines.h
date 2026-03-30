@@ -18,9 +18,6 @@
 
 #pragma once
 
-//MODDD - including so vs6 builds don't freak out on not knowing what all-caps 'TRUE'/'FALSE' is.
-#include "Lib/BaseTypeCore.h"
-
 #include "WWDefines.h"
 
 //MODDD - NOTE - the goal of this fork disagrees with below - enable all fixes regardless.
@@ -29,6 +26,10 @@
 // because of several other changes as of this fork.
 // For terminology, I'm calling these "Settings" or "Macro settings" most often, but "Macro constants" and
 // "Preprocessor Constants/Settings" may be used interchangably with that.
+// Also - use 0 and 1 instead of FALSE and TRUE to signify turning a setting off/on. VC6 builds (older C++ standard)
+// fail according to github's automatic builds if the 'false'/'true' keywords reach the preprocessor.
+// And note the preprocessor constants RTS_GENERALS and RTS_ZEROHOUR defined as 1 for the respective game builds.
+// For script used in both cases ('Core' folder instead of 'Generals'/'GeneralsMD'), it may make sense to involve that.
 // ---
 // Note: Retail compatibility must not be broken before this project officially does.
 // Use RETAIL_COMPATIBLE_CRC and RETAIL_COMPATIBLE_XFER_SAVE to guard breaking changes.
@@ -203,32 +204,32 @@
 // Good if starting player money is forced so that a map script doesn't immediately override it at the start of the game.
 // If a map mistakenly uses a script to add instead of set money at the start of a game, it will work anyway.
 // This doesn't affect start moeny set by the skirmish menu.
-//#define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS TRUE
+//#define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS 1
 
 // Disable the fog-of-war mechanic entirely. Debugger's dream. Or to watch the AI duke it out without
 // having to be a replay.
 // Hey, you know AI players were already playing without it anyway.
-//#define REMOVE_FOG_OF_WAR FALSE
+//#define REMOVE_FOG_OF_WAR 0
 
 // Different way to disable the fog-of-war mechanic, by changing how the game interprets cells vs. acting like
 // every single map started with a map-reveal script action. This way might play better in some cases.
 // (mutually exclusive with above - don't enable both)
-//#define REMOVE_FOG_OF_WAR_ALT TRUE
+//#define REMOVE_FOG_OF_WAR_ALT 1
 
 // Apply some bonuses to a particular player slot (ex: always the 2nd player, currently player index 1).
 // Requires the player to be non-computer.
 // The other 'NOOB_' prefixed constants only apply for that slot if this is true.
-//#define NOOB_MODE FALSE
+//#define NOOB_MODE 0
 //#define NOOB_START_MONEY_SCALAR 1.25
 //#define NOOB_PLAYER_PROMOTION_EXPERIENCE_RATE_SCALAR 1.10
 
 // Forces extra modifiers based on the current game difficulty, such as reduced unit health/damage for hard
 // difficulty, to be disabled regardless of the setting in the GameData.ini file.
-#define DISABLE_UNIT_HEALTH_WEAPON_DIFFICULTY_BONUSES TRUE
+#define DISABLE_UNIT_HEALTH_WEAPON_DIFFICULTY_BONUSES 1
 
 // Changes a few places so that units running over neutral units (civilians, units owned by the neutral/civilian player)
 // is no longer possible. Changes most checks that forbid this from being strictly allies to more broadly being non-enemies.
-#define DONT_RUN_OVER_NEUTRAL_UNITS TRUE
+#define DONT_RUN_OVER_NEUTRAL_UNITS 1
 
 // Setting added in the hopes of preventing a major source of hardware lag: adding to a continually building
 // '<documents>/Command and... Data/Replays/00000000.REP' file for a replay the user may never intend to save/look at anyway.
@@ -237,7 +238,7 @@
 // in memory & do write operations to there instead since modern machines can handle this, hopefully without
 // this having to be a 64-bit program (needing over 4 gig of memory).
 // Also, consider a yes/no option for whether a game should record for a replay before starting the game.
-#define BLOCK_REPLAY_RECORDING_ALWAYS TRUE
+#define BLOCK_REPLAY_RECORDING_ALWAYS 1
 
 // If on, 'MSG_META_DEMO_...' messages, reached by key inputs described in 'CommandMapDebug.ini', won't be handled in debug mode.
 // This setting is good for testing debug builds without the risk of accidentally turning on debug features or cheats by certain key inputs.
@@ -247,12 +248,12 @@
 // It appears that is defined if 'RTS_DEBUG_CHEATS' is set in CMake (not the cases by default).
 // In any case, the 'MSG_META_DEMO_...'(...Debug.ini) and 'MSG_CHEAT_...'(...Demo.ini) sets of messages/files
 // appear to be intended to be mutually exclusive.
-#define BLOCK_DEBUG_DEMO_MESSAGE_INPUTS TRUE
+#define BLOCK_DEBUG_DEMO_MESSAGE_INPUTS 1
 
 // Double the max player count from 16 to 32. Needed for multiplayer for the retail Laser General challenge map to work,
 // since as-is, the map uses enough players to only allow for adding 1 more.
 // Toggling this causes a tiny compile error that shows save compatibility being broken.
-#define DOUBLE_MAX_PLAYER_COUNT TRUE
+#define DOUBLE_MAX_PLAYER_COUNT 1
 
 // In the retail game, if multiple buildings are sources of different special powers using the same special power enum
 // (ex: in the Contra mod, having a particle cannon and strategic bombing building -> both use enum 'SPECIAL_PARTICLE_UPLINK_CANNON'),
@@ -266,17 +267,17 @@
 // won't be fooled by having multiple sources of the same enum choice that aren't for the same special power.
 // See another document for the 'long version' for more details and other ideas for improvements.
 // Toggling this setting breaks save compatibility since the new bitmask is added to object save data.
-#define SIDEBAR_ENUM_CONFLICT_FIX TRUE
+#define SIDEBAR_ENUM_CONFLICT_FIX 1
 
 // Map display names have the player count extension (ex: "my map name (4)" for a 4-player map)
 // even if the player count is 1 or 0(?).
-#define MAP_NAME_PLAYER_COUNT_EXTENSION_ALWAYS TRUE
+#define MAP_NAME_PLAYER_COUNT_EXTENSION_ALWAYS 1
 
 // Replace logic in MapUtil.cpp's 'MapCache::updateCache' to load maps from the filesystem the first time
-// they are requested and avoid the MapCache.ini files. Similar to 'SHOW_SP_OFFICIAL_MAPS_IN_RELEASE=TRUE'
+// they are requested and avoid the MapCache.ini files. Similar to SHOW_SP_OFFICIAL_MAPS_IN_RELEASE set to 1
 // below, but this also fixes a small display bug: map names for maps without a display name (raw file name)
 // in the System tab always being lowercase.
-#define NEW_MAP_LIST_LOAD_LOGIC TRUE
+#define NEW_MAP_LIST_LOAD_LOGIC 1
 
 // Overrides default behavior to block generating the map cache in release mode by default.
 // Otherwise, maps added to your install's 'Maps' folder won't have any effect on the maps shown in map selection.
@@ -287,21 +288,21 @@
 // Documents' 'Maps' folder.
 // It's easier to use an install's 'Maps' folder for maps only intended for that mod since running the game
 // from there is the only way to see those maps. Having a separate install folder per mod is a good rule of thumb.
-// Note that this has no effect if 'NEW_MAP_LIST_LOAD_LOGIC' is on - can imply this setting to be TRUE in that case.
-#define FORCE_UPDATE_MAP_CACHE_IN_RELEASE TRUE
+// Note that this has no effect if 'NEW_MAP_LIST_LOAD_LOGIC' is on - can imply this setting to be on in that case.
+#define FORCE_UPDATE_MAP_CACHE_IN_RELEASE 1
 
 // Show single player official maps even in release builds. These are normally hidden because they include
 // campaign maps and a few debug/test ones.
 // Note that this has no effect if 'BYPASS_MAP_FILTER' is on - all maps would be shown unconditionally & this setting would be ignored.
-#define SHOW_SP_OFFICIAL_MAPS_IN_RELEASE TRUE
+#define SHOW_SP_OFFICIAL_MAPS_IN_RELEASE 1
 
 // If on, no single/multi-player filtering is done in any map chooser, ideally to see single player maps for
 // a network game. Surely you have your reasons.
-#define BYPASS_MAP_FILTER TRUE
+#define BYPASS_MAP_FILTER 1
 
 // Is there a confirmation prompt on exiting the entire program (not just a particular 'game')?
 // Retail's way was to depend on the game being windowed or not, this setting applies regardless of that.
-#define CONFIRMATION_PROMPT_TO_EXIT_PROGRAM FALSE
+#define CONFIRMATION_PROMPT_TO_EXIT_PROGRAM 0
 
 // Value to force 'MaxCameraHeight' in GameData.ini to during cinematic cutscenes, often in campaign maps.
 // They were made with a specific max camera height in mind, and changing it can affect what's shown significantly.
@@ -313,7 +314,7 @@
 #define FORCE_CINEMATIC_MAX_CAMERA_HEIGHT 310
 
 // Whether the 'AudioFootprintInBytes' setting from AudioSettings.ini is forced to a higher value if it's using
-// below a certain value (128 Megabytes) - applies to retail's 5 MB. Setting to 'FALSE' just uses what's in the
+// below a certain value (128 Megabytes) - applies to retail's 5 MB. Setting to 0 just uses what's in the
 // file like retail.
 // There is a poorly understood crash related to long-running games with a large variety of sounds, often
 // during modded games, often an inner crash in mss32.dll (miles sound system library) with not much helpful
@@ -332,7 +333,7 @@
 // As a quick fix, changing 'AudioFootprintInBytes' from retail's 5 MB to 128 MB appears to stop the crash -
 // the shell map scenario above did not crash for a solid 8 hours with this change applied.
 // This setting enforces the minimum of '128 MB' used over the config value if needed so the crash is prevented.
-#define FORCE_HIGHER_AUDIO_CACHE_SIZE TRUE
+#define FORCE_HIGHER_AUDIO_CACHE_SIZE 1
 
 // Context: shroud generation is a mechanic in Generals that the retail game never used, but has
 // been used by some mods like ProGen (stealth general radar van upgrade, ActiveShroudUpgrade in the INI).
@@ -342,8 +343,8 @@
 // That is, territory behind a moving jammer doesn't remain shrouded like the jammer is painting the map black
 // with shroud and leaving it behind as it moves.
 // The shroud-cloud appears to follow the jammer around and disappears if the jammer is destroyed.
-// Also note that permanent map reveals will always go through jam-induced shroud just like retail if this is FALSE.
-#define PARTITIONMANAGER_SHROUD_NONPERSISTENT TRUE
+// Also note that permanent map reveals will always go through jam-induced shroud just like retail if this is 0.
+#define PARTITIONMANAGER_SHROUD_NONPERSISTENT 1
 
 // This setting adds separation between jammable and unjammable looks - cells looked at that lose precedence
 // to shroud generators (jammable) or not (unjammable). Every object has its current look radius as jammable, and
@@ -352,15 +353,15 @@
 // This mechanic also allows temporary map reveals like CIA intelligence or satellite hacks to not reveal jammed territory.
 // Kindof defeats the purpose if they did - jamming should force you to get up close & personal.
 // Toggling this will break save compatibility with saves made with a different setting.
-#define PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS FALSE
+#define PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS 0
 
 // Experimental idea mainly in PartitionManager.h/.cpp to store unlook-queue-items per cell instead of per
 // whole circular-area look. Idea is for an area within a radar jammer to revert back to shroud faster than a
 // typical unlook, but this seems to add a lot of overhead (significant lag) as of testing under debug mode,
 // still the case for release mode to a great extent.
 // Toggling this will break save compatibility with saves made with a different setting.
-// Only tested with 'PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS' set to 'TRUE'.
-#define PARTITIONMANAGER_QUEUE_PER_CELL FALSE
+// Only tested with PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS set to 1.
+#define PARTITIONMANAGER_QUEUE_PER_CELL 0
 
 // ----------------------------------------------------------------------------------------------------------
 // Real-time time-of-day change. The time of day changes over the course of a game. Still uses the map's baked-in time to start.
@@ -375,7 +376,7 @@
 // They're tweaked to be more of an average case, but a one-size-fits-all is difficult, especially considering that most maps probably
 // never gave much thought to times of day other than the one they're saved with - keep that in mind of shadows look wonky on some maps/TOD's.
 // NOTE - beware of bugs observed while this is on, though they don't usually make the game unplayable - see the readme.
-#define REAL_TIME_TOD_CHANGE FALSE
+#define REAL_TIME_TOD_CHANGE 0
 
 // TODO - edit the save/load feature to include the time-of-day at the time the game is saved?
 // Leaving that out for now since the saved game would only work with builds where 'REAL_TIME_TOD_CHANGE' is in agreement.
@@ -408,7 +409,7 @@
 #if defined(RTS_DEBUG)
 #define _ALLOW_DEBUG_CHEATS_IN_DEBUG !BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
 #else
-#define _ALLOW_DEBUG_CHEATS_IN_DEBUG FALSE
+#define _ALLOW_DEBUG_CHEATS_IN_DEBUG 0
 #endif
 
 // ----------------------------------------------------------------------------------------------------------
@@ -418,19 +419,19 @@
 #define DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY DIFFICULTY_HARD
 
 #define FORCE_HUMAN_PLAYER_START_MONEY 0
-#define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS TRUE
+#define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS 1
 
-#define REMOVE_FOG_OF_WAR FALSE
-#define REMOVE_FOG_OF_WAR_ALT FALSE
+#define REMOVE_FOG_OF_WAR 0
+#define REMOVE_FOG_OF_WAR_ALT 0
 
-#define NOOB_MODE TRUE
+#define NOOB_MODE 1
 #define NOOB_START_MONEY_SCALAR 1.25
 #define NOOB_PLAYER_PROMOTION_EXPERIENCE_RATE_SCALAR 1.15
 
-#define RUN_EXTRA_MONEY_CHEATS TRUE
-#define RUN_BUILD_TIME_CHEATS TRUE
-#define RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS TRUE
-#define CUSTOM_ATTRIBUTE_CHANGES TRUE
+#define RUN_EXTRA_MONEY_CHEATS 1
+#define RUN_BUILD_TIME_CHEATS 1
+#define RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS 1
+#define CUSTOM_ATTRIBUTE_CHANGES 1
 
 // ----------------------------------------------------------------------------------------------------------
 // Some post-setting convenience features
