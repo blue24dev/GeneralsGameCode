@@ -140,8 +140,9 @@ Player* PlayerList::findFirstSlotPlayer()
 		"PlyrPLAYER",
 		"player0"
 	};
+	int i;
 
-	for (int i = 0; i < sizeof(commonPlayerNames) / sizeof(commonPlayerNames[0]); ++i)
+	for (i = 0; i < sizeof(commonPlayerNames) / sizeof(commonPlayerNames[0]); ++i)
 	{
 		targetPlayerName.set(commonPlayerNames[i]);
 		playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
@@ -153,7 +154,7 @@ Player* PlayerList::findFirstSlotPlayer()
 	}
 
 	// Fallback: find the first non-computer-marked side.
-	for (int i = 0; i < MAX_PLAYER_COUNT; i++)
+	for (i = 0; i < MAX_PLAYER_COUNT; i++)
 	{
 		playerRef = getNthPlayer(i);
 		if (playerRef->getPlayerType() == PLAYER_HUMAN)
@@ -179,7 +180,8 @@ void PlayerList::populateSlotPlayerRefs()
 	if (TheGameLogic->getGameMode() == GAME_SHELL)
 	{
 		// Shell map: find the first human-marked player, add to the list of slot player refs. That's it.
-		for (int i = 0; i < this->getPlayerCount(); i++)
+		int i;
+		for (i = 0; i < this->getPlayerCount(); i++)
 		{
 			Player* playerRef = getNthPlayer(i);
 			if (playerRef->getPlayerType() == PLAYER_HUMAN)
@@ -238,7 +240,8 @@ void PlayerList::populateSlotPlayerRefs()
 		++m_slotPlayerRefsSoftCount;
 		
 		// For the remaining possible users, search for the expected name: "player<1-7>".
-		for (int i = 1; i < 8; i++)
+		int i;
+		for (i = 1; i < 8; i++)
 		{
 			targetPlayerName.format("player%d", i);
 			playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
@@ -261,7 +264,8 @@ void PlayerList::populateSlotPlayerRefs()
 		// GC or Skirmish map - simple: "player#" for all players.
 		AsciiString targetPlayerName;
 		Player* playerRef;
-		for (int i = 0; i < 8; i++)
+		int i;
+		for (i = 0; i < 8; i++)
 		{
 			targetPlayerName.format("player%d", i);
 			playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
@@ -284,7 +288,8 @@ void PlayerList::populateSlotPlayerRefs()
 //MODDD - new event for handling some cheat/extra-difficulty-related settings to apply to players.
 void PlayerList::postPlayersInit()
 {
-	for (int i=0; i < getPlayerCount(); ++i)
+	int i;
+	for (i=0; i < getPlayerCount(); ++i)
 	{
 		Player* player = ThePlayerList->getNthPlayer(i);
 
