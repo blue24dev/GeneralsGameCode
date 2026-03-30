@@ -108,7 +108,7 @@ inline Real ConvertAngularVelocityInDegreesPerSecToRadsPerFrame(Real degPerSec)
 }
 
 //MODDD
-#if DOUBLE_MAX_PLAYER_COUNT == FALSE
+#if !DOUBLE_MAX_PLAYER_COUNT
 // -----------------------------------------------------------------------------------------------------------
 // ----------------------------------------------------------------------------------------------
 enum
