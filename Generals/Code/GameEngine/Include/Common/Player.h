@@ -789,4 +789,8 @@ private:
 	Squad									*m_currentSelection;		///< This player's currently selected group
 
 	Bool									m_isPlayerDead;
+	
+	//MODDD - convenience feature: index of the slot this player is for.
+	// Can be -1 to mean player side isn't associated with a slot (neutral, civilian, or from a side otherwise baked into the map).
+public: Int slotIndex;
 };

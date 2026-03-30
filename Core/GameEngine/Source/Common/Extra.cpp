@@ -19,7 +19,9 @@
 // includes for hackish edits further below
 #include "GameLogic/Module/ActiveBody.h"
 #include "GameLogic/Module/StructureBody.h"
+#if RTS_ZEROHOUR
 #include "GameLogic/Module/UndeadBody.h"
+#endif
 #include "GameLogic/Module/MaxHealthUpgrade.h"
 #include "GameLogic/Module/RebuildHoleExposeDie.h"
 #include "GameLogic/Module/StealthDetectorUpdate.h"
@@ -49,13 +51,16 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	// so any hackish edits to apply to everything can go here.
 	if (_this->isKindOf(KINDOF_STRUCTURE))
 	{
+#if RTS_ZEROHOUR
 		if (_this->isKindOf(KINDOF_FS_SUPERWEAPON))
 		{
 			// superweapons cost a bit more but already take a while to build - less factor there
 			_this->m_buildCost *= 1.25;
 			_this->m_buildTime *= 1.05;
 		}
-		else if(_this->isKindOf(KINDOF_FS_BASE_DEFENSE))
+		else
+#endif
+		if(_this->isKindOf(KINDOF_FS_BASE_DEFENSE))
 		{
 			// to be less spammable since each one's health boost is more noticeable
 			_this->m_buildCost *= 1.15;
@@ -99,6 +104,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			_this->m_buildCost *= 0.75;
 		}
+#if RTS_ZEROHOUR
 		// and those
 		else if (_this->isKindOf(KINDOF_FS_SUPPLY_CENTER))
 		{
@@ -108,6 +114,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			_this->m_buildCost *= 0.75;
 		}
+#endif
 	}
 
 	// Beware of side effects like revealed fog of war that doesn't un-reveal. This is not well understood.
@@ -119,7 +126,9 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 
 	static NameKeyType ActiveBodyNameKey = NAMEKEY("ActiveBody");
 	static NameKeyType StructureBodyNameKey = NAMEKEY("StructureBody");
+#if RTS_ZEROHOUR
 	static NameKeyType UndeadBodyNameKey = NAMEKEY("UndeadBody");
+#endif
 	static NameKeyType RebuildHoleExposeDieNameKey = NAMEKEY("RebuildHoleExposeDie");
 	static NameKeyType MaxHealthUpgradeNameKey = NAMEKEY("MaxHealthUpgrade");
 	static NameKeyType StealthDetectorUpdateNameKey = NAMEKEY("StealthDetectorUpdate");
@@ -166,6 +175,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 				_data->m_maxHealth *= healthMulti;
 			}
 		}
+#if RTS_ZEROHOUR
 		else if( modNameKey == UndeadBodyNameKey )
 		{
 			UndeadBodyModuleData* _data = (UndeadBodyModuleData*)data;
@@ -179,6 +189,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 				_data->m_secondLifeMaxHealth *= healthMulti;
 			}
 		}
+#endif
 		else if( modNameKey == RebuildHoleExposeDieNameKey )
 		{
 			RebuildHoleExposeDieModuleData* _data = (RebuildHoleExposeDieModuleData*)data;
@@ -264,12 +275,15 @@ Real getHealthMulti(const ThingTemplate* _this)
 {
 	if (_this->isKindOf(KINDOF_STRUCTURE))
 	{
+#if RTS_ZEROHOUR
 		if (_this->isKindOf(KINDOF_FS_SUPERWEAPON))
 		{
 			// superweapons tend to have plenty of health - little boost
 			return 1.15;
 		}
-		else if(_this->isKindOf(KINDOF_FS_BASE_DEFENSE))
+		else
+#endif
+		if(_this->isKindOf(KINDOF_FS_BASE_DEFENSE))
 		{
 			// get more health
 			return 1.5;
@@ -282,6 +296,7 @@ Real getHealthMulti(const ThingTemplate* _this)
 	}
 	else
 	{
+#if RTS_ZEROHOUR
 		// For Contra: super units won't be affected by the health buff.
 		// Cheezy way to tell is see if 'maxSimultaneousDeterminedBySuperweaponRestriction' is set for a non-structure.
 		// This won't catch things forced to a limit of 1 like commando units, so, suppose that works out nicely.
@@ -290,6 +305,7 @@ Real getHealthMulti(const ThingTemplate* _this)
 			// skip
 		}
 		else
+#endif
 		{
 			KindOfMaskType tempMask;
 			tempMask.set(KINDOF_INFANTRY);
