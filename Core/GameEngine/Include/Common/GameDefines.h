@@ -19,7 +19,16 @@
 #pragma once
 
 //MODDD - including so vs6 builds don't freak out on not knowing what all-caps 'TRUE'/'FALSE' is.
-#include "Lib/BaseTypeCore.h"
+//#include "Lib/BaseTypeCore.h"
+// ---
+#ifndef TRUE
+#define TRUE true
+#endif
+
+#ifndef FALSE
+#define FALSE false
+#endif
+// ---
 
 #include "WWDefines.h"
 
