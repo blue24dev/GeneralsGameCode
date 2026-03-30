@@ -406,7 +406,7 @@
 
 // helper '#define' to avoid a lot of '#if... #else' replacements.
 // (edits elsewhere mainly replaced 'TheGlobalData->m_timeOfDay', unlabled changes since that's straightforward)
-#if !REAL_TIME_TOD_CHANGE
+#if REAL_TIME_TOD_CHANGE == FALSE
 	#define TIME_OF_DAY_SOURCE TheGlobalData->m_timeOfDay
 #else
 	#define TIME_OF_DAY_SOURCE tod_model
