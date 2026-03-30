@@ -56,6 +56,9 @@
 #include "WW3D2/dx8caps.h"
 #include "WWMath/vector2i.h"
 
+//MODDD
+#include "GameLogic/Module/ContainModule.h"
+
 
 
 // PRIVATE DATA ///////////////////////////////////////////////////////////////////////////////////
@@ -724,39 +727,72 @@ void W3DRadar::renderObjectList( const RadarObject *listHead, TextureClass *text
 		// ML-- What the heck is this? local-only and neutral-observer-viewed units are stealthy?? Since when?
 		// Now it twinkles for any stealthed object, whether locally controlled or neutral-observer-viewed
 
-		//MODDD - not entirely sure what the above comment is complaining about.
-		// Anyway, it seems weird to me that disguised units from an enemy player's perspective get the stealth-effect.
-		// A player could see that a unit that appears to be theirs isn't stealthed in-game, but is blinking on the mini-map - dead giveaway.
-		// Convincing disguises should appear opaque on the mini-map to non-allies. Color is handled elsewhere properly.
-		if( obj->testStatus( OBJECT_STATUS_STEALTHED ) )
+		//MODDD - not sure what the above comment is referring to, that's repeated twice throughout this file.
+		// Changing this if-then's scope to end before the now-'if (doStealthEffect)'-contained block instead of including it.
+		// Mainly, this does a deeper check for whether to do the pulsating stealth effect (ex: disguised units).
+		// As far as I know, _DISGUISED always includes (on at the same time as) the _STEALTHED status.
+		BOOL doStealthEffect = FALSE;
+		if (obj->testStatus( OBJECT_STATUS_DISGUISED ))
 		{
-			//MODDD - check for being disguised, and an enemy to the local player. Only allies should see disguised units as stealth on the minimap.
-			// Allies would also see disguised units as their owner's color, not the disguised color (color is handled elsewhere).
-			// ---
-			BOOL doStealthEffect = TRUE;
-			if (obj->testStatus( OBJECT_STATUS_DISGUISED )) {
-					if (clientPlayer->getRelationship(obj->getControllingPlayer()->getDefaultTeam()) != ALLIES) {
-							doStealthEffect = FALSE;
+			// Disguised.
+			// As-is, disguised units from an enemy player's perspective (meant to fool them) were getting the stealth effect.
+			// A player could see that a unit that appears to be theirs isn't stealthed in-game, but is blinking on the
+			// mini-map - dead giveaway. The disguised unit should appear opaque on the mini-map to non-allies.
+			// Also, allies would also see disguised units as their owner's color, not the disguised color.
+			// Color is handled elsewhere (Radar::assignObjectColorToRadarObject).
+			if (clientPlayer->getRelationship(obj->getControllingPlayer()->getDefaultTeam()) == ALLIES)
+			{
+				// Me, or allied players, are 'in on it' - looking stealthy is fine.
+				doStealthEffect = TRUE;
+			}
+		}
+		else if( obj->testStatus( OBJECT_STATUS_STEALTHED ) )
+		{
+			// Ordinarily stealthed. Go ahead.
+			doStealthEffect = TRUE;
+		}
+		else
+		{
+			// Not disguised, not stealthed. One more check: is this a garrisoned building that is stealth-contained?
+			// That is, garrisoned by all stealth units & trying to convince enemies it is ungarrisoned, like a disguise.
+			ContainModuleInterface* contain = obj->getContain();
+			if (contain != nullptr)
+			{
+				// Note that the 'apparent controlling player' can be null if this is a contain module that doesn't implement the
+				// method to do that. The base ContainModule's implementation returns 'nullptr' instead of the actual owner,
+				// curiously enough.
+				// This 'apparent player' - 'real player' check has the added bonus of not including a stealth garrisoned
+				// structure that already belong to a player to begin with.
+				// Ex: the enemy garrisoning a GLA palace with stealth rebels.
+				// It would fool you into thinking the building was owned by the same enemy player. *gasp*.
+				const Player* apparentOwningPlayer = contain->getApparentControllingPlayer(clientPlayer);
+				if (apparentOwningPlayer != nullptr && apparentOwningPlayer != obj->getControllingPlayer())
+				{
+					if (clientPlayer->getRelationship(obj->getControllingPlayer()->getDefaultTeam()) == ALLIES)
+					{
+						// Me, or allied players, are 'in on it' - looking stealthy is fine.
+						//MODDD - TODO - at this rare a stealth-garrisoned structure doing the opacity pulsating effect (the model itself) makes sense too.
+						doStealthEffect = TRUE;
 					}
+				}
 			}
-			// ---
+		}
 
-			//MODDD - require this condition. Might want to make this a small helper method to break up some complexity here.
-			if (doStealthEffect) {
-				UnsignedByte r, g, b, a;
-				GameGetColorComponents( argbColor, &r, &g, &b, &a );
+		//MODDD - require this condition. Might want to make this a small helper method to break up some complexity here.
+		if (doStealthEffect)
+		{
+			UnsignedByte r, g, b, a;
+			GameGetColorComponents( argbColor, &r, &g, &b, &a );
 				
-				const UnsignedInt framesForTransition = LOGICFRAMES_PER_SECOND;
-				const UnsignedByte minAlpha = 32;
+			const UnsignedInt framesForTransition = LOGICFRAMES_PER_SECOND;
+			const UnsignedByte minAlpha = 32;
 
-				Real alphaScale = INT_TO_REAL(TheGameLogic->getFrame() % framesForTransition) / (framesForTransition / 2.0f);
-				if( alphaScale > 0.0f )
-					a = REAL_TO_UNSIGNEDBYTE( ((alphaScale - 1.0f) * (255.0f - minAlpha)) + minAlpha );
-				else
-					a = REAL_TO_UNSIGNEDBYTE( (alphaScale * (255.0f - minAlpha)) + minAlpha );
-				argbColor = GameMakeColor( r, g, b, a );
-			}
-
+			Real alphaScale = INT_TO_REAL(TheGameLogic->getFrame() % framesForTransition) / (framesForTransition / 2.0f);
+			if( alphaScale > 0.0f )
+				a = REAL_TO_UNSIGNEDBYTE( ((alphaScale - 1.0f) * (255.0f - minAlpha)) + minAlpha );
+			else
+				a = REAL_TO_UNSIGNEDBYTE( (alphaScale * (255.0f - minAlpha)) + minAlpha );
+			argbColor = GameMakeColor( r, g, b, a );
 		}
 
 		const unsigned int pixelColor = ARGB_Color_To_WW3D_Color(surfaceDesc.Format, argbColor);

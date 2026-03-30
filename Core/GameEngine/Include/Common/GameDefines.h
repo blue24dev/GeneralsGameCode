@@ -18,6 +18,9 @@
 
 #pragma once
 
+//MODDD - including so vs6 builds don't freak out on not knowing what all-caps 'TRUE'/'FALSE' is.
+#include "Lib/BaseTypeCore.h"
+
 #include "WWDefines.h"
 
 //MODDD - NOTE - the goal of this fork disagrees with below - enable all fixes regardless.

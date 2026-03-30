@@ -1161,6 +1161,10 @@ void StealthUpdate::changeVisualDisguise()
 	TheRadar->removeObject( self );
 	TheRadar->addObject( self );
 
+	//MODDD - TODO - try this intead!
+	//MODDD - just call 'assignObjectColorToRadarObject' instead to re-determine the color
+	//TheRadar->assignObjectColorToRadarObject(self);
+
 	// couldn't possibly need to restore a disguise now :)
 	m_xferRestoreDisguise = FALSE;
 

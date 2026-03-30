@@ -225,6 +225,12 @@ public:
 
 	virtual void notifyViewChanged() {} ///< signals that the camera view has changed
 
+	//MODDD - public now (moved here from below) to be called externally instead of having to do 'addObject/removeObject' just to get this.
+	// Doubt this needs to be implemented by 'W3DRadar.cpp' for any deeper behavior (not virtual).
+	// Also, adding an overload that takes just the object for convenience (expected to have a valid 'radar obj' attached).
+	void assignObjectColorToRadarObject( Object *obj );
+	void assignObjectColorToRadarObject( RadarObject *radarObj, Object *obj );
+
 protected:
 
 	// snapshot methods
@@ -249,7 +255,9 @@ protected:
 	Object *searchListForRadarLocationMatch( RadarObject *listHead, ICoord2D *radarMatch );
 
 	void linkRadarObject( RadarObject *newObj, RadarObject **list );
-	void assignObjectColorToRadarObject( RadarObject *radarObj, Object *obj );
+
+	//MODDD - this is now public instead of protected (moved up)
+	//void assignObjectColorToRadarObject( RadarObject *radarObj, Object *obj );
 
 	Bool m_radarHidden[MAX_PLAYER_COUNT]; ///< true when radar is not visible
 	Bool m_radarForceOn[MAX_PLAYER_COUNT]; ///< true when radar is forced to be on

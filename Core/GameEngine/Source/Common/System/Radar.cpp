@@ -1538,6 +1538,25 @@ void Radar::linkRadarObject( RadarObject *newObj, RadarObject **list )
 	}
 }
 
+//MODDD - overload for below, convenience feature
+void Radar::assignObjectColorToRadarObject( Object *obj )
+{
+	assignObjectColorToRadarObject( obj->friend_getRadarData(), obj );
+}
+
+//MODDD - NOTE - this method is only involved on adding a unit to the radar (ex: on creation, or explicitly re-added
+// to the radar by 'TheRadar->removeObject/addObject' calls, see Object.cpp). On-capture / ownership change events have
+// to trigger this method to update the color for the new owner. The disguise feature (StealthUpdate.cpp) is another example.
+// For the stealth pulsating effect, see 'W3DRadar::renderObjectList'. That is done every single render frame instead.
+//MODDD - TODO - I think it would make more sense for an object to either set its color manually: do something like the
+// 'radarObj->setColor' seen at the bottom of this method, or call this method to let its color be re-evaluated without
+// having to remove & re-add the object to the radar system.
+// Example: bomb trucks changing disguise. If that's only done to run this logic to change the color on the minimap,
+// why not just skip add/removing the object from the radar and call this method instead?
+//MODDD - TODO - also let an object specify whether it should to the stealth-pulsating effect.
+// Deciding that has become much more complex (see w3dRadar.cpp), so that may as well be handled once alongside
+// setting the color instead of in real-time. Doing both color & stealth-pulsating effect decisions in the same
+// run-through just makes sense, deciding both involves similar checks. Call here accordingly to do the update.
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
 void Radar::assignObjectColorToRadarObject( RadarObject *radarObj, Object *obj )
@@ -1568,7 +1587,7 @@ void Radar::assignObjectColorToRadarObject( RadarObject *radarObj, Object *obj )
 				Player *disguisedPlayer = ThePlayerList->getNthPlayer( update->getDisguisedPlayerIndex() );
 				//MODDD - removed the 'clientPlayer->isPlayerActive' check. Let's see...
 				// * Normal game: an inactive player is out of the game - could they look at the radar while defeated perhaps? Disguises can still fool them.
-				// * Observer looking through an inacive player's eyes: see above, why not continued to be fooled like they would have been?
+				// * Observer looking through an inacive player's eyes: see above, why not continue to be fooled like they would have been?
 				if( owningPlayer->getRelationship( clientPlayer->getDefaultTeam() ) != ALLIES /*&& clientPlayer->isPlayerActive()*/ )
 				{
 					//Neutrals and enemies will see this disguised unit as the team it's disguised as.
