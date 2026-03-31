@@ -314,11 +314,7 @@ Object::Object( const ThingTemplate *tt ) :
 	m_visionSpiedMask (PLAYERMASK_NONE),
 	m_numTriggerAreasActive(0)
 {
-	// Force the thing template to use the most overridden version of itself - jkmcd
-	// Note that after this, the object will be using m_template, which forces the usage of the
-	// most overridden version of tt, so this is okay.
-	tt = (const ThingTemplate *) tt->getFinalOverride();
-	earlyConstructor( tt );
+	initConstructor(tt);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -388,6 +384,9 @@ Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& 
 		return;
 
 	}
+
+	//MODDD - since chaining constructors isn't possible for VC6 builds, have to call this
+	initConstructor(tt);
 
 	this->objectInitLockLocal = TRUE;
 	this->objectInitLockLocalTemp = objectInitLockLocalTemp;
@@ -720,10 +719,11 @@ void Object::initHookup()
 	ThePartitionManager->registerObject( this );
 }
 
-//MODDD - init before 'xfer'
-void Object::earlyConstructor(const ThingTemplate* tt)
+//MODDD - init to call early on. Called as soon as an object is created, even for objects made while loading a saved
+// game ('xfer' when loading).
+// This was started from the as-is codebase's object constructor.
+void Object::initConstructor(const ThingTemplate* tt)
 {
-
 #if defined(RTS_DEBUG)
 	m_hasDiedAlready = false;
 #endif
@@ -732,6 +732,11 @@ void Object::earlyConstructor(const ThingTemplate* tt)
 	// that were removed (maybe the setTeam call during object init send a yes/no param?), this var could be
 	// removed.
 	m_modulesReady = false;
+	
+	// Force the thing template to use the most overridden version of itself - jkmcd
+	// Note that after this, the object will be using m_template, which forces the usage of the
+	// most overridden version of tt, so this is okay.
+	tt = (const ThingTemplate *) tt->getFinalOverride();
 
 	Int i;
 
