@@ -56,39 +56,40 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		if (_this->isKindOf(KINDOF_FS_SUPERWEAPON))
 		{
 			// superweapons cost a bit more but already take a while to build - less factor there
-			_this->m_buildCost *= 1.25;
-			_this->m_buildTime *= 1.05;
+			_this->m_buildCost *= 1.25f;
+			_this->m_buildTime *= 1.05f;
 		}
 		else
 #endif
 		if(_this->isKindOf(KINDOF_FS_BASE_DEFENSE))
 		{
 			// to be less spammable since each one's health boost is more noticeable
-			_this->m_buildCost *= 1.15;
-			_this->m_visionRange *= 1.5;
+			_this->m_buildCost *= 1.15f;
+			_this->m_visionRange *= 1.5f;
 		}
 		else
 		{
 			// all other buildings
-			_this->m_buildTime *= 1.15;
-			_this->m_visionRange *= 1.25;
+			_this->m_buildTime *= 1.15f;
+			_this->m_visionRange *= 1.25f;
 		}
 	}
 	else
 	{
 		// non-buildings
-		_this->m_buildTime *= 1.08;
+		_this->m_buildTime *= 1.08f;
+
 		// enforce a minimum of 180 vision first.
 		// Note this happens before the multiplication so the real effective minimum is higher.
 		// TODO - can you iterate through weapons to see what the longest range is to see if this should be automatically boosted?
-		if (_this->m_visionRange < 180) {
-			_this->m_visionRange = 180;
+		if (_this->m_visionRange < 180.0f) {
+			_this->m_visionRange = 180.0f;
 		}
-		_this->m_visionRange *= 1.3;
+		_this->m_visionRange *= 1.3f;
 	}
 
-	//MODDD - for the insane speeds of some mods
-	_this->m_buildTime *= 1.4;
+	// EXTRA SLOW-DOWN FOR EVERYTHING
+	_this->m_buildTime *= 1.4f;
 
 	// Make things that are exclusively dozers cheaper.
 	// This that are dozers and harvesters at the same time (GLA workers) don't need as much of a reduction.
@@ -98,13 +99,13 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			// Worker
 			// (200 -> 130)
-			_this->m_buildCost *= 0.65;
+			_this->m_buildCost *= 0.65f;
 		}
 		else
 		{
 			// (1000 -> 500)
 			// Normal dozer (vehicle)
-			_this->m_buildCost *= 0.50;
+			_this->m_buildCost *= 0.50f;
 		}
 	}
 	else
@@ -112,17 +113,17 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		// Also, if something isn't a dozer and is a harvester (chinook, supply truck), cut the price by 25%.
 		if (_this->isKindOf(KINDOF_HARVESTER) && !(_this->isKindOf(KINDOF_CAN_ATTACK)) )
 		{
-			_this->m_buildCost *= 0.75;
+			_this->m_buildCost *= 0.75f;
 		}
 #if RTS_ZEROHOUR
 		// and those
 		else if (_this->isKindOf(KINDOF_FS_SUPPLY_CENTER))
 		{
-			_this->m_buildCost *= 0.75;
+			_this->m_buildCost *= 0.75f;
 		}
 		else if (_this->isKindOf(KINDOF_FS_WARFACTORY))
 		{
-			_this->m_buildCost *= 0.75;
+			_this->m_buildCost *= 0.75f;
 		}
 #endif
 	}
@@ -168,7 +169,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			// Assume if a health value is so absurdly high it shouldn't be touched
 			if (_data->m_maxHealth >= 1000000)continue;
 			Real healthMulti = getHealthMulti(_this);
-			if (healthMulti != 1.0)
+			if (healthMulti != 1.0f)
 			{
 				_data->m_initialHealth *= healthMulti;
 				_data->m_maxHealth *= healthMulti;
@@ -178,9 +179,9 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			StructureBodyModuleData* _data = (StructureBodyModuleData*)data;
 			// Assume if a health value is so absurdly high it shouldn't be touched
-			if (_data->m_maxHealth >= 1000000)continue;
+			if (_data->m_maxHealth >= 1000000.0f)continue;
 			Real healthMulti = getHealthMulti(_this);
-			if (healthMulti != 1.0)
+			if (healthMulti != 1.0f)
 			{
 				_data->m_initialHealth *= healthMulti;
 				_data->m_maxHealth *= healthMulti;
@@ -191,9 +192,9 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			UndeadBodyModuleData* _data = (UndeadBodyModuleData*)data;
 			// Assume if a health value is so absurdly high it shouldn't be touched
-			if (_data->m_maxHealth >= 1000000)continue;
+			if (_data->m_maxHealth >= 1000000.0f)continue;
 			Real healthMulti = getHealthMulti(_this);
-			if (healthMulti != 1.0)
+			if (healthMulti != 1.0f)
 			{
 				_data->m_initialHealth *= healthMulti;
 				_data->m_maxHealth *= healthMulti;
@@ -205,13 +206,13 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			RebuildHoleExposeDieModuleData* _data = (RebuildHoleExposeDieModuleData*)data;
 			// all holes get the same boost.
-			_data->m_holeMaxHealth *= 1.75;
+			_data->m_holeMaxHealth *= 1.75f;
 		}
 		else if( modNameKey == MaxHealthUpgradeNameKey )
 		{
 			MaxHealthUpgradeModuleData* _data = (MaxHealthUpgradeModuleData*)data;
 			Real healthMulti = getHealthMulti(_this);
-			if (healthMulti != 1.0)
+			if (healthMulti != 1.0f)
 			{
 				_data->m_addMaxHealth *= healthMulti;
 			}
@@ -223,7 +224,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			stealthDetectorData = _data;
 			if (_data->m_detectionRange > 0)
 			{
-				  _data->m_detectionRange *= 1.2;
+				  _data->m_detectionRange *= 1.2f;
 			}
 		}
 		else if( modNameKey == SpecialAbilityUpdateNameKey )
@@ -232,7 +233,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			// NOTE - this constant comes from SPECIAL_ABILITY_HUGE_DISTANCE in SpecialAbilityUpdate.h
 			if (_data->m_startAbilityRange > 0 && _data->m_startAbilityRange < 10000000.0f)
 			{
-				_data->m_startAbilityRange *= 1.15;
+				_data->m_startAbilityRange *= 1.15f;
 			}
 		}
 		else if( modNameKey == ActiveShroudUpgradeNameKey )
@@ -278,7 +279,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			if (testRange == 0) {
 				testRange = visionRange;
 			}
-			mdCast->m_newShroudRange = testRange * 0.75;
+			mdCast->m_newShroudRange = testRange * 0.75f;
 
 			mi2.addModuleInfo(_this, ActiveShroudUpgradeName, moduleTag, data, (MODULEINTERFACE_UPDATE), false);
 
@@ -291,7 +292,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 
 void automaticUpgradeTemplateChanges(UpgradeTemplate* _this)
 {
-	_this->m_buildTime *= 1.1 * 1.4;
+	_this->m_buildTime *= 1.1f * 1.4f;
 }
 
 Real getHealthMulti(const ThingTemplate* _this)
@@ -302,19 +303,19 @@ Real getHealthMulti(const ThingTemplate* _this)
 		if (_this->isKindOf(KINDOF_FS_SUPERWEAPON))
 		{
 			// superweapons tend to have plenty of health - little boost
-			return 1.15;
+			return 1.15f;
 		}
 		else
 #endif
 		if(_this->isKindOf(KINDOF_FS_BASE_DEFENSE))
 		{
 			// get more health
-			return 1.5;
+			return 1.5f;
 		}
 		else
 		{
 			// buildings otherwise
-			return 1.85;
+			return 1.85f;
 		}
 	}
 	else
@@ -335,12 +336,12 @@ Real getHealthMulti(const ThingTemplate* _this)
 			{
 				if (_this->isKindOf(KINDOF_DOZER))
 				{
-					return 1.50;
+					return 1.50f;
 				}
 				else if (_this->isKindOf(KINDOF_HARVESTER))
 				{
 					// Be careful with this one, includes combat chinooks in retail generals
-					return 1.30;
+					return 1.30f;
 				}
 				else
 				{
@@ -353,20 +354,20 @@ Real getHealthMulti(const ThingTemplate* _this)
 					if (_this->isAnyKindOf(tempMask))
 					{
 						// a non-structure unit (not some weird system/inner-detail thing): have a little more health anyway
-						return 1.30;
+						return 1.30f;
 					}
 				}
 			}
 		}
 	}
-	return 1.0;
+	return 1.0f;
 }
 
 Real healthAdjustmentFilter(Object* obj, Real healthVal)
 {
 	Real healthMulti = getHealthMulti(obj->getTemplate());
 	Real _healthVal = healthVal;
-	if (healthMulti != 1.0)
+	if (healthMulti != 1.0f)
 	{
 		_healthVal *= healthMulti;
 	}
@@ -381,10 +382,10 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 	// The income bonus for AI players can increase over the course of a long game.
 	const UnsignedInt startMin = 15;
 	const UnsignedInt endMin = 60;
-	const float startModifier = 1.5;
-	const float endModifier = 3.3;
+	const Real startModifier = 1.5f;
+	const Real endModifier = 3.3f;
 
-	Real scalar = 1.0;
+	Real scalar = 1.0f;
 	if (player->getPlayerType() == PLAYER_COMPUTER)
 	{
 		UnsignedInt frame = TheGameLogic->getFrame();
@@ -394,8 +395,8 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 		}
 		else if(frame <= (30 * 60) * endMin)
 		{
-			float fracto = (float)(frame - ((30 * 60) * startMin)) / (float)((30 * 60) * (endMin - startMin));
-			float fracto_inv = 1.0f - fracto;
+			Real fracto = (Real)(frame - ((30 * 60) * startMin)) / (Real)((30 * 60) * (endMin - startMin));
+			Real fracto_inv = 1.0f - fracto;
 			
 			scalar *= endModifier + (startModifier - endModifier) * fracto_inv;
 		}
@@ -412,7 +413,8 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit)
 {
 	Real scalar = moneyScalarAdjustmentFilter(player);
-	if (scalar != 1.0) {
+	if (scalar != 1.0f)
+	{
 		return (UnsignedInt)(((Real)amountToDeposit) * scalar);
 	}
 
@@ -426,8 +428,8 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 	// AI players can build faster over the course of a long game.
 	const UnsignedInt startMin = 15;
 	const UnsignedInt endMin = 60;
-	const float startModifier = 1.00;
-	const float endModifier = 0.78;
+	const float startModifier = 1.00f;
+	const float endModifier = 0.78f;
 
 	Int _buildTime = buildTime;
 	if (player->getPlayerType() == PLAYER_COMPUTER)
@@ -439,8 +441,8 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 		}
 		else if(frame <= (30 * 60) * endMin)
 		{
-			float fracto = (float)(frame - ((30 * 60) * startMin)) / (float)((30 * 60) * (endMin - startMin));
-			float fracto_inv = 1.0f - fracto;
+			Real fracto = (Real)(frame - ((30 * 60) * startMin)) / (Real)((30 * 60) * (endMin - startMin));
+			Real fracto_inv = 1.0f - fracto;
 			
 			_buildTime *= endModifier + (startModifier - endModifier) * fracto_inv;
 		}
@@ -460,8 +462,8 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 	// AI players receive more experience toward promotions (not individual unit veterancy) per kill over the course of a long game.
 	const UnsignedInt startMin = 15;
 	const UnsignedInt endMin = 60;
-	const float startModifier = 1.10;
-	const float endModifier = 1.50;
+	const Real startModifier = 1.10f;
+	const Real endModifier = 1.50f;
 
 	Real _expRateModifier = expRateModifier;
 
@@ -475,8 +477,8 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 		}
 		else if(frame <= (30 * 60) * endMin)
 		{
-			float fracto = (float)(frame - ((30 * 60) * startMin)) / (float)((30 * 60) * (endMin - startMin));
-			float fracto_inv = 1.0f - fracto;
+			Real fracto = (Real)(frame - ((30 * 60) * startMin)) / (Real)((30 * 60) * (endMin - startMin));
+			Real fracto_inv = 1.0f - fracto;
 			
 			_expRateModifier *= endModifier + (startModifier - endModifier) * fracto_inv;
 		}
@@ -491,7 +493,7 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 	#if NOOB_MODE
 	if (player->getPlayerType() == PLAYER_HUMAN && player->slotIndex == 1)
 	{
-		_expRateModifier *= NOOB_PLAYER_PROMOTION_EXPERIENCE_RATE_SCALAR;
+		_expRateModifier *= (Real)NOOB_PLAYER_PROMOTION_EXPERIENCE_RATE_SCALAR;
 		return _expRateModifier;
 	}
 	#endif

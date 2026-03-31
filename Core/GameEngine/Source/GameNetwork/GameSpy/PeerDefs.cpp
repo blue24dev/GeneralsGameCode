@@ -446,12 +446,16 @@ void GameSpyInfo::clearStagingRoomList()
 	StagingRoomMap::iterator it = m_stagingRooms.begin();
 	while (it != m_stagingRooms.end())
 	{
+		//MODDD - incrementing 'it' in advance, replacing existing references to 'it' with 'itCurrent'
+		StagingRoomMap::iterator itCurrent = it;
+		++it;
+
 		++numRoomsRemoved;
 
-		delete it->second;
+		delete itCurrent->second;
 		//MODDD - why not use what 'erase' returns?
-		// 'it =' prepended
-		it = m_stagingRooms.erase(it);
+		// There is an answer: in VC6, std::map::erase had 'void' return type.
+		m_stagingRooms.erase(itCurrent);
 		//MODDD - disabled
 		//it = m_stagingRooms.begin();
 	}

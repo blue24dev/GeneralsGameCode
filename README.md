@@ -18,7 +18,7 @@ The steps to set up this repo and build any executables/libraries are the same a
 		- Several things when loading a game per object, such as sweeping through all other player-owned objects to see where a previously purchased upgrade applies, and affecting the current player's power, no longer uselessly run under the temporarily assigned neutral player before the correct team is assigned by the load process.
 		- Low power events can no longer occur while loading objects from a saved game - this check is done after all objects are finished being loaded (cause of low-power/power-restored sounds playing when loading some games, as well as somewhat common crashes loading games under the Firestorm mod).
 	- Several smaller examples
-- Add additional features/compatability
+- Add additional features/compatibility
 	- Generals Challenge maps in Zero Hour - multiplayer compatibility
 	- Real-time time-of-day change
 	- Better logic for shroud jammers (mechanic not seen in retail generals - think the gap generator in the Red Alert series, or see stealth general radar vans with upgrade in ProGen)

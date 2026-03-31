@@ -112,9 +112,17 @@ typedef std::hash_map< AsciiString, OpenAudioFile, rts::hash<AsciiString>, rts::
 typedef OpenFilesHash::iterator OpenFilesHashIt;
 
 //MODDD
-struct AILCallbackCall {
-	UnsignedInt audioCompleted;
-	UnsignedInt flags;
+struct AILCallbackCall
+{
+	// Note that in VC6, there aren't automatic constructors out of all the member fields - this has to be defined to be used
+	AILCallbackCall(UnsignedInt audioCompleted, UnsignedInt flags)
+	{
+		m_audioCompleted = audioCompleted;
+		m_flags = flags;
+	}
+
+	UnsignedInt m_audioCompleted;
+	UnsignedInt m_flags;
 };
 
 class AudioFileCache

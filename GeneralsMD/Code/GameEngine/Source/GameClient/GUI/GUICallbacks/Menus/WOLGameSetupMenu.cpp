@@ -1030,7 +1030,8 @@ void WOLDisplayGameOptions()
 	*/
   DecideStartingCashComboBoxSelectedPos(comboBoxStartingCash, theGame);
 
-  DEBUG_ASSERTCRASH( index < itemCount, ("Could not find new starting cash amount %d in list", theGame->getStartingCash().countMoney() ) );
+  //MODDD - since condensing above, 'index' nor 'itemCount' is available
+  //DEBUG_ASSERTCRASH( index < itemCount, ("Could not find new starting cash amount %d in list", theGame->getStartingCash().countMoney() ) );
 }
 
 

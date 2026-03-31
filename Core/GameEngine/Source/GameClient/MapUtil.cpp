@@ -820,7 +820,9 @@ typedef std::set<UnicodeString, rts::less_than_nocase<UnicodeString> > MapNameLi
 
 //MODDD - replacing this
 //typedef std::map<UnicodeString, AsciiString> MapDisplayToFileNameList;
-typedef std::map<UnicodeString, std::pair<AsciiString, MapMetaData>, rts::less_than_nocase<UnicodeString>> MapDisplayToMapInfoList;
+typedef std::pair<AsciiString, MapMetaData> AsciiString_MapMetaData_pair;
+typedef rts::less_than_nocase<UnicodeString> less_than_nocase_UnicodeString_comparator;
+typedef std::map<UnicodeString, AsciiString_MapMetaData_pair, less_than_nocase_UnicodeString_comparator> MapDisplayToMapInfoList;
 typedef MapDisplayToMapInfoList::const_iterator MapDisplayToMapInfoListIter;
 
 //MODDD - changed params
@@ -871,7 +873,10 @@ static void buildMapListForNumPlayers(MapDisplayToMapInfoList& nameToMapList, In
 		// display name in-game. Up to you to know which is which.
 		UnicodeString finalDisplayName = mapData.m_displayName;
 		int uniqueAddOn = 2;
-		while (nameToMapList.contains(finalDisplayName)) {
+		// 'std::map::contains' isn't available for VC6 builds
+		//while (nameToMapList.contains(finalDisplayName))
+		while (nameToMapList.find(finalDisplayName) != nameToMapList.end())
+		{
 			// Each time this loop runs, try a different display name from 'mapData.m_displayName'
 			finalDisplayName.format(L"%s (%d)", mapData.m_displayName.str(), uniqueAddOn);
 			++uniqueAddOn;
