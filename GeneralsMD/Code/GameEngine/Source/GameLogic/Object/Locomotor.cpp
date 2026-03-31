@@ -1607,10 +1607,10 @@ Real Locomotor::calcMinTurnRadius(BodyDamageType condition, Real* timeToTravelTh
 //MODDD - helper to avoid a divde-by-0 issue that makes 'm_brakingFactor' NaN
 Real Locomotor::determineBrakingFactor(Real onPathDistToGoal, Real slowDownDist) {
 	Real brakingFactorDivisor;
-	if (onPathDistToGoal > 0.0001) {
+	if (onPathDistToGoal > 0.0001f) {
 		brakingFactorDivisor = onPathDistToGoal;
-	} else if (slowDownDist < 0.05) {
-		brakingFactorDivisor = 0.0001;
+	} else if (slowDownDist < 0.05f) {
+		brakingFactorDivisor = 0.0001f;
 	} else {
 		return MAX_BRAKING_FACTOR;
 	}

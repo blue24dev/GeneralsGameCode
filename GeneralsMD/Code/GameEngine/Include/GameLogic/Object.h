@@ -186,7 +186,7 @@ public:
 	void callModuleOnObjectCreated();
 	void runCreateModules();
 	void initHookup();
-	void earlyConstructor(const ThingTemplate* tt);
+	void initConstructor(const ThingTemplate* tt);
 	void loadInit();
 	void initObject();
 	void constructorEnd();
