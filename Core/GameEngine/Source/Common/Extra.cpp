@@ -455,7 +455,7 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 	#if NOOB_MODE
 	if (player->getPlayerType() == PLAYER_HUMAN && player->slotIndex == 1)
 	{
-		_expRateModifier *= NOOB_PLAYER_PROMOTION_EXPERIENCE_RATE_SCALAR;
+		_expRateModifier *= (Real)NOOB_PLAYER_PROMOTION_EXPERIENCE_RATE_SCALAR;
 		return _expRateModifier;
 	}
 	#endif
