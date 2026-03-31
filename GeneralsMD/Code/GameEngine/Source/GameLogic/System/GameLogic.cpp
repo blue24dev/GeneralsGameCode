@@ -1214,7 +1214,8 @@ SidesInfo* getMultiplayerLocalSide()
 	}
 
 	UnsignedInt humanSidesEncountered = 0;
-	for (int i = 0; i < TheSidesList->getNumSides(); ++i)
+	int i;
+	for (i = 0; i < TheSidesList->getNumSides(); ++i)
 	{
 		SidesInfo* sideInfo = TheSidesList->getSideInfo(i);
 		Dict* sideDict = sideInfo->getDict();
@@ -1235,7 +1236,8 @@ SidesInfo* getMultiplayerLocalSide()
 	if (TheGameLogic->getGameMode() == GAME_SHELL)
 	{
 		// Shell map: use the first human-marked side as before
-		for (int i = 0; i < TheSidesList->getNumSides(); ++i)
+		int i;
+		for (i = 0; i < TheSidesList->getNumSides(); ++i)
 		{
 			SidesInfo* sideInfo = TheSidesList->getSideInfo(i);
 			Dict* sideDict = sideInfo->getDict();
@@ -1275,8 +1277,9 @@ SidesInfo* getMultiplayerLocalSide()
 			"PlyrPLAYER",
 			"player0"
 		};
+		int i;
 
-		for (int i = 0; i < sizeof(commonPlayerNames) / sizeof(commonPlayerNames[0]); ++i)
+		for (i = 0; i < sizeof(commonPlayerNames) / sizeof(commonPlayerNames[0]); ++i)
 		{
 			targetPlayerName.set(commonPlayerNames[i]);
 			sideInfo = TheSidesList->findSideInfo(targetPlayerName);
@@ -1289,7 +1292,7 @@ SidesInfo* getMultiplayerLocalSide()
 
 		// None of the guesses worked?
 		// Fallback: use the first human(non-computer)-marked side like the original logic would have.
-		for (int i = 0; i < TheSidesList->getNumSides(); ++i)
+		for (i = 0; i < TheSidesList->getNumSides(); ++i)
 		{
 			sideInfo = TheSidesList->getSideInfo(i);
 			Dict* sideDict = sideInfo->getDict();
@@ -2073,7 +2076,8 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	//MODDD - replaced 'TheGame' condition with this
 	if (doAutomaticPostGamePlayerSetup)
 	{
-		for (int i=0; i<MAX_SLOTS; ++i)
+		int i;
+		for (i=0; i<MAX_SLOTS; ++i)
 		{
 			GameSlot *slot = TheGameInfo->getSlot(i);
 
@@ -2099,7 +2103,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 
 #if REMOVE_FOG_OF_WAR
 		//MODDD - new loop, for all players, slot-or-not (though slot-only should suffice too?)
-		for (int i = 0; i < ThePlayerList->getPlayerCount(); ++i) {
+		for (i = 0; i < ThePlayerList->getPlayerCount(); ++i) {
 			Player* player = ThePlayerList->getNthPlayer(i);
 			//MODDD - CHANGE. Reveal the map for all players for now
 			//if (player && player->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(player->getPlayerNameKey()).getLength() != 0) {
@@ -2502,7 +2506,8 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 				localPlayer->setPlayerRelationship(thePlayerEnemy, ENEMIES);
 				*/
 				///////////////////////////////////////////////////////////////
-				for (int i=0; i<ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
+				int i;
+				for (i=0; i<ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 				{
 					GameSlot *slot = TheGameInfo->getSlot(i);
 					if (!slot->isOccupied())
@@ -2549,7 +2554,8 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			// each other), and make all slot players enemies with players not assigned by a slot (ex: AI enemy
 			// general player baked into the map).
 			Player* civilianPlayer = ThePlayerList->findPlayerWithNameKey(NAMEKEY("PlyrCivilian"));
-			for (int i=0; i<ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
+			int i;
+			for (i=0; i<ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 			{
 				GameSlot *slot = TheGameInfo->getSlot(i);
 				if (!slot->isOccupied())

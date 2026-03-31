@@ -436,10 +436,10 @@
 // ----------------------------------------------------------------------------------------------------------
 // Some post-setting convenience features
 #if CUSTOM_ATTRIBUTES_CHANGES
-	#define HEALTH_ADJUSTMENT_FILTER(_health) _health = healthAdjustmentFilter(this, _health);
+	#define HEALTH_ADJUSTMENT_FILTER(_obj, _health) _health = healthAdjustmentFilter(_obj, _health);
 #else
 	// nothing - no effect
-	#define HEALTH_ADJUSTMENT_FILTER(_health)
+	#define HEALTH_ADJUSTMENT_FILTER(_obj, _health)
 #endif
 
 #if RUN_EXTRA_MONEY_CHEATS

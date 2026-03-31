@@ -155,12 +155,13 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 	// though that's very unlikely (even having the maximum number of players is unlikely to begin with).
 	Player* availablePlayerList[MAX_PLAYER_COUNT];
 	int availablePlayerListSoftCount = 0;
+	int i;
 
 	// Go through every slot player to see which ones I am 'enemies' with by relationship, and which one are valid
 	// choices (not defeated, not associated with a slot that was never used by a connected player -> brain-dead AI default).
 	// Note that checking for the dummy "ThePlayer" in Generals Challenge maps isn't needed here - that's never a slot player
 	// so it's gracefully left out of this run-through.
-	for (int i=0; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
+	for (i=0; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 	{
 		Player* player = ThePlayerList->m_slotPlayerRefs[i];
 
@@ -251,7 +252,7 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 
 	if (isCampaignMap)
 	{
-		for (int i = 0; i < ThePlayerList->getPlayerCount(); ++i)
+		for (i = 0; i < ThePlayerList->getPlayerCount(); ++i)
 		{
 			Player* player = ThePlayerList->getNthPlayer(i);
 			if (player == currentPlayer) continue; // again, not enemies with 'me' ('currentPlayer' may not be a slot player themselves)
@@ -288,7 +289,8 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 // multiplayer per machine  (mismatch candy).
 Player* getFirstSlotPlayer()
 {
-	for (int i=0; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
+	int i;
+	for (i=0; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 	{
 		Player* player = ThePlayerList->m_slotPlayerRefs[i];
 		if (!player->isPlayerActive())

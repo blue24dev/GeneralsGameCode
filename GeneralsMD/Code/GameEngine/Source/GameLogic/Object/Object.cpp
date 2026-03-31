@@ -267,6 +267,7 @@ AsciiString DebugDescribeObject(const Object *obj)
 // related script for the neutral player's team once regardless of whether the object actually belongs to that.
 Object::Object( const ThingTemplate *tt ) :
   Thing(tt),
+	// IMPORTANT - keep the initializer list in-sync with changes to that of the constructor below
 	m_indicatorColor(0),
 	m_ai(nullptr),
 	m_physics(nullptr),
@@ -327,8 +328,57 @@ Object::Object( const ThingTemplate *tt ) :
 Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& objectStatusMask, Bool objectInitLockLocalTemp) :
 	//MODDD - chaining this to the simpler constructor above should work, also moving all the 0-initted stuff
 	// to there
-	//Thing(tt),
-	Object(tt)
+	//Object(tt)
+	// UPDATE - chaining constructors (calling ones of the same class) won't work for VC6 builds (older C++ standard).
+	// Great! Thanks microsoft from 199x!!! Whole initializer list has to be copied between any Object constructors.
+	// Judging from the rest of the codebase, the original devs had to bite this bullet too, at least.
+	Thing(tt),
+	// IMPORTANT - keep the initializer list in-sync with changes to that of the constructor above
+	m_indicatorColor(0),
+	m_ai(nullptr),
+	m_physics(nullptr),
+	m_geometryInfo(tt->getTemplateGeometryInfo()),
+	m_containedBy(nullptr),
+	m_xferContainedByID(INVALID_ID),
+	m_containedByFrame(0),
+	m_behaviors(nullptr),
+	m_body(nullptr),
+	m_contain(nullptr),
+	m_stealth(nullptr),
+	//MODDD
+	m_stealthDetector(nullptr),
+	m_partitionData(nullptr),
+	m_radarData(nullptr),
+	m_drawable(nullptr),
+	m_next(nullptr),
+	m_prev(nullptr),
+	m_team(nullptr),
+	m_experienceTracker(nullptr),
+	m_firingTracker(nullptr),
+	m_repulsorHelper(nullptr),
+	m_statusDamageHelper(nullptr),
+	m_tempWeaponBonusHelper(nullptr),
+	m_subdualDamageHelper(nullptr),
+	m_smcHelper(nullptr),
+	m_wsHelper(nullptr),
+	m_defectionHelper(nullptr),
+	m_partitionLastLook(nullptr),
+#if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
+	m_partitionLastLookJammable(nullptr),
+#endif
+	m_partitionRevealAllLastLook(nullptr),
+	m_partitionLastShroud(nullptr),
+	m_partitionLastThreat(nullptr),
+	m_partitionLastValue(nullptr),
+	m_smcUntil(NEVER),
+	m_privateStatus(0),
+	m_formationID(NO_FORMATION_ID),
+	m_isReceivingDifficultyBonus(FALSE),
+	m_singleUseCommandUsed(FALSE),
+	m_scriptStatus(0),
+	m_enteredOrExitedFrame(0),
+	m_visionSpiedMask (PLAYERMASK_NONE),
+	m_numTriggerAreasActive(0)
 {
 	// sanity
 	if( TheGameLogic == nullptr || tt == nullptr )
