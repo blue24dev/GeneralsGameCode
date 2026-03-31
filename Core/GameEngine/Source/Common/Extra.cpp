@@ -428,8 +428,8 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 	// AI players can build faster over the course of a long game.
 	const UnsignedInt startMin = 15;
 	const UnsignedInt endMin = 60;
-	const float startModifier = 1.00f;
-	const float endModifier = 0.78f;
+	const Real startModifier = 1.00f;
+	const Real endModifier = 0.78f;
 
 	Int _buildTime = buildTime;
 	if (player->getPlayerType() == PLAYER_COMPUTER)
