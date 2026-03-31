@@ -2997,8 +2997,8 @@ void AIGroup::groupDoCommandButtonAtPosition( const CommandButton *commandButton
 	// spawned objects being killed in the same frame (ex: rebel ambush on impassable terrain) doesn't cause
 	// some garbage memory issues with the iterator, presumably after 'source->doCommandButtonAtPosition'.
 	// Sometimes '++i' causes a crash in debugging mode or with memory-0'ing on deletion, i.e. '0xdeadbeef' fills.
-	// ...and of course TheSuperHackers have already run into this issue elsewhere (see 'groupDoSpecialPowerAtLocation').
-	// ...wait, no, that was Westwood??? WTF why was that fix not applied everywhere the issue could possibly happen at the time then!
+	// Looks like TheSuperHackers have already run into this issue elsewhere (see 'groupDoSpecialPowerAtLocation').
+	// Wait, no, that was Westwood, so they fixed it in one place. That fix should have been applied everywhere else too.
 	for( i = m_memberList.begin(); i != m_memberList.end(); /*empty*/ )
 	{
 
