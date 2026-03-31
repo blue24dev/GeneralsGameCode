@@ -820,7 +820,9 @@ typedef std::set<UnicodeString, rts::less_than_nocase<UnicodeString> > MapNameLi
 
 //MODDD - replacing this
 //typedef std::map<UnicodeString, AsciiString> MapDisplayToFileNameList;
-typedef std::map<UnicodeString, std::pair<AsciiString, MapMetaData>, rts::less_than_nocase<UnicodeString>> MapDisplayToMapInfoList;
+typedef std::pair<AsciiString, MapMetaData> AsciiString_MapMetaData_pair;
+typedef rts::less_than_nocase<UnicodeString> less_than_nocase_UnicodeString_comparator;
+typedef std::map<UnicodeString, AsciiString_MapMetaData_pair, less_than_nocase_UnicodeString_comparator> MapDisplayToMapInfoList;
 typedef MapDisplayToMapInfoList::const_iterator MapDisplayToMapInfoListIter;
 
 //MODDD - changed params
