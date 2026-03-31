@@ -567,8 +567,7 @@ void LocomotorStore::reset()
 	LocomotorTemplateMap::iterator it;
 	for (it = m_locomotorTemplates.begin(); it != m_locomotorTemplates.end(); ) {
 		//MODDD - incrementing 'it' in advance, see further below
-		LocomotorTemplateMap::iterator itCurrent;
-		itCurrent = it;
+		LocomotorTemplateMap::iterator itCurrent = it;
 		++it;
 
 		Overridable *locoTemp = itCurrent->second->deleteOverrides();
