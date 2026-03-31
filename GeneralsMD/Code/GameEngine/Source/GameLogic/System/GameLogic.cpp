@@ -5841,9 +5841,12 @@ void GameLogic::loadPostProcess()
 // with non-shared special powers (ex: strategy center, battle plans & CIA intelligence) starting with
 // endless cooldowns on RETAIL_COMPATIBLE_CRC=0.
 #include "GameLogic/Module/SpecialPowerModule.h"
-void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCreateCalls) {
+void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCreateCalls)
+{
+	BehaviorModule** m;
+
 	// This for-loop is as-is behavior
-	for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
+	for (m = obj->getBehaviorModules(); *m; ++m)
 	{
 		CreateModuleInterface* create = (*m)->getCreate();
 		if (!create)
@@ -5854,7 +5857,8 @@ void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCrea
 
 	// The rest of below is new
 	// ---------------------------
-	if(!checkForSpecialPowerModuleCreateCalls) {
+	if(!checkForSpecialPowerModuleCreateCalls)
+	{
 		// skip further down - ex: made by a warfactory. The SpecialPowerModule constructor already calls 'onSpecialPowerCreation' if it
 		// isn't under construction at the time (structures block this since they start at in-construction / 0%-progress technically).
 		// So for vehicles, etc., as-is behavior already works.
@@ -5866,17 +5870,19 @@ void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCrea
 	// (no need to do so manually further down).
 	Bool foundSpecialPowerCreateModule = FALSE;
 	static NameKeyType key_SpecialPowerCreate = NAMEKEY("SpecialPowerCreate");
-	for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
+	for (m = obj->getBehaviorModules(); *m; ++m)
 	{
-		if ((*m)->getModuleNameKey() == key_SpecialPowerCreate) {
+		if ((*m)->getModuleNameKey() == key_SpecialPowerCreate)
+		{
 			foundSpecialPowerCreateModule = TRUE;
 			break;
 		}
 	}
 
-	if (!foundSpecialPowerCreateModule) {
+	if (!foundSpecialPowerCreateModule)
+	{
 		// Didn't find any 'SpecialPowerCreate' modules - call 'notifyBuildComplete'
-		for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
+		for (m = obj->getBehaviorModules(); *m; ++m)
 		{
 			SpecialPowerModuleInterface* sp = (*m)->getSpecialPower();
 			if (!sp)
