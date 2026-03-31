@@ -1779,7 +1779,7 @@ Bool AIUpdateInterface::computePath( PathfindServicesInterface *pathServices, Co
 		setLocomotorGoalPositionOnPath();
  		if( !getObject()->isKindOf(KINDOF_NO_COLLIDE))// If I don't collide with things, I don't need to tell them to get out of the way
 		{
-			//MODDD - send a reference to the handle instead
+			//MODDD - PathHandle - send a reference to the handle instead
 			//TheAI->pathfinder()->moveAllies(getObject(), theNewPath);
 			TheAI->pathfinder()->moveAllies(getObject(), &m_pathHandle);
 		}
@@ -2031,7 +2031,7 @@ Bool AIUpdateInterface::computeAttackPath( PathfindServicesInterface *pathServic
 				if (goal.length()<3*PATHFIND_CELL_SIZE_F) {
 					destroyPath();
 					TheAI->pathfinder()->adjustDestination(getObject(), m_locomotorSet, &objPos);
-					//MODDD - assign path
+					//MODDD - PathHandle - assign path
 					path = pathServices->findClosestPath(getObject(), m_locomotorSet, getObject()->getPosition(),
 								&objPos, false, 0.2f, true );
 					assignPath(path);

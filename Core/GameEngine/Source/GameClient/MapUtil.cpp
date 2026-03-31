@@ -873,7 +873,10 @@ static void buildMapListForNumPlayers(MapDisplayToMapInfoList& nameToMapList, In
 		// display name in-game. Up to you to know which is which.
 		UnicodeString finalDisplayName = mapData.m_displayName;
 		int uniqueAddOn = 2;
-		while (nameToMapList.contains(finalDisplayName)) {
+		// 'std::map::contains' isn't available for VC6 builds
+		//while (nameToMapList.contains(finalDisplayName))
+		while (nameToMapList.find(finalDisplayName) != nameToMapList.end())
+		{
 			// Each time this loop runs, try a different display name from 'mapData.m_displayName'
 			finalDisplayName.format(L"%s (%d)", mapData.m_displayName.str(), uniqueAddOn);
 			++uniqueAddOn;
