@@ -1223,7 +1223,7 @@ void WaterRenderObjClass::update()
 	if (TheFramePacer) {
 		timeScale = TheFramePacer->getActualLogicTimeScaleOverFpsRatio();
 	} else {
-		timeScale = (0.0125 * 33 / 5000);
+		timeScale = (0.0125f * 33 / 5000);
 	}
 	// ---
 
