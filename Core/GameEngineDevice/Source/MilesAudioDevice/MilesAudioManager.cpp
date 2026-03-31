@@ -2539,7 +2539,7 @@ void MilesAudioManager::processAILCallbackList()
 	std::list<AILCallbackCall>::iterator it;
 	for (it = AILCallbackListCopy.begin(); it != AILCallbackListCopy.end(); ++it) {
 		AILCallbackCall thisCallback = *it;
-		TheAudio->notifyOfAudioCompletion(thisCallback.audioCompleted, thisCallback.flags);
+		TheAudio->notifyOfAudioCompletion(thisCallback.m_audioCompleted, thisCallback.m_flags);
 		// No need to erase/remove this item from 'AILCallbackListCopy' - the original list has already been
 		// cleared and the copy will be cleaned up on falling out of scope.
 		// Items added to 'AILCallbackList' at the exact time of this method (after the mutex-locked block above)
