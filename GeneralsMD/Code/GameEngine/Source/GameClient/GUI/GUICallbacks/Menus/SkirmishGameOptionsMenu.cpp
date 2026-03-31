@@ -1303,8 +1303,9 @@ void updateSkirmishGameOptions()
   }
   */
   DecideStartingCashComboBoxSelectedPos(comboBoxStartingCash, TheSkirmishGameInfo);
-
-  DEBUG_ASSERTCRASH( index < itemCount, ("Could not find new starting cash amount %d in list", TheSkirmishGameInfo->getStartingCash().countMoney() ) );
+	
+  //MODDD - since condensing above, 'index' nor 'itemCount' is available
+  //DEBUG_ASSERTCRASH( index < itemCount, ("Could not find new starting cash amount %d in list", TheSkirmishGameInfo->getStartingCash().countMoney() ) );
 }
 
 //-------------------------------------------------------------------------------------------------
