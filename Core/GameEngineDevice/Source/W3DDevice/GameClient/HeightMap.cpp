@@ -484,23 +484,35 @@ Int HeightMapRenderObjClass::updateVB(DX8VertexBufferClass	*pVB, VERTEX_FORMAT *
 				if (m_showImpassableAreas) {
 					// Color impassable cells "red"
 					DEBUG_ASSERTCRASH(PATHFIND_CELL_SIZE_F == MAP_XY_FACTOR, ("Pathfind must be terrain cell size, or this code needs reworking.  John A."));
+					//MODDD - removing tiles being 'border' spaces overriding impassable marking
+					// Borders are already drawn on top of impassable-marked tiles, so why exclude the marking from tiles the border is on?
+					/*
 					Real borderHiX = (pMap->getXExtent()-2*pMap->getBorderSizeInline())*MAP_XY_FACTOR;
 					Real borderHiY = (pMap->getYExtent()-2*pMap->getBorderSizeInline())*MAP_XY_FACTOR;
 					Bool border = pCurVertices[0].x == -MAP_XY_FACTOR || pCurVertices[0].y == -MAP_XY_FACTOR;
+					*/
 					Bool cliffMapped = pMap->isCliffMappedTexture(mapX, mapY);
+					//MODDD - removing tiles being 'border' spaces overriding impassable marking
+					/*
 					if (pCurVertices[0].x == borderHiX) {
 						border = true;
 					}
 					if (pCurVertices[0].y == borderHiY) {
 						border = true;
 					}
+					*/
 					Bool isCliff = pMap->getCliffState(xCoord, yCoord) || showAsVisibleCliff(xCoord, yCoord);
 
-					if ( isCliff || border || cliffMapped) {
+					//MODDD - removing tiles being 'border' spaces overriding impassable marking
+					//if ( isCliff || border || cliffMapped) {
+					if ( isCliff || cliffMapped) {
 						Int cellX, cellY;
 						for (cellX=0; cellX<2; cellX++) {
 							for (cellY=0; cellY<2; cellY++) {
 								Int vertex = cellX+2*cellY;
+
+								//MODDD - removing tiles being 'border' spaces overriding impassable marking
+								/*
 								if (border) {
 									Bool doBorder = false;
 									if (pCurVertices[vertex].y >= 0 && pCurVertices[vertex].y <= borderHiY) {
@@ -516,7 +528,9 @@ Int HeightMapRenderObjClass::updateVB(DX8VertexBufferClass	*pVB, VERTEX_FORMAT *
 									if (doBorder) {
 										pCurVertices[vertex].diffuse &= 0xFF0000ff; // blue with alpha.
 									}
-								} else if (isCliff) {
+								} else
+								*/
+								if (isCliff) {
 									pCurVertices[vertex].diffuse &= 0xFFFF0000; // red with alpha.
 								}
 								if (cliffMapped && vertex==0) {

@@ -426,6 +426,9 @@ void CWorldBuilderDoc::Serialize(CArchive& ar)
 				p3View->setDefaultCamera();
 			}
 
+			//MODDD
+			CMainFrame::GetMainFrame()->onLoadMapEnd();
+
 		} catch(...) {
 			m_heightMap = pOldHeightMap;
 		}
@@ -1337,6 +1340,10 @@ BOOL CWorldBuilderDoc::OnNewDocument()
 	if (p3View) {
 		p3View->setDefaultCamera();
 	}
+
+	//MODDD
+	CMainFrame::GetMainFrame()->onNewMapEnd();
+
 	return TRUE;
 }
 

@@ -125,6 +125,11 @@ StealthUpdate::StealthUpdate( Thing *thing, const ModuleData* moduleData ) : Upd
 {
 	const StealthUpdateModuleData *data = getStealthUpdateModuleData();
 
+	//MODDD
+	m_stealthLevel = data->m_stealthLevel;
+	m_requiredStatus = data->m_requiredStatus;
+	m_forbiddenStatus = data->m_forbiddenStatus;
+
 	m_stealthAllowedFrame = TheGameLogic->getFrame() + data->m_stealthDelay;
 
 	//Must be enabled manually if using disguise system (bomb truck uses)
@@ -213,6 +218,19 @@ void StealthUpdate::receiveGrant( Bool active, UnsignedInt frames )
 		m_stealthAllowedFrame = TheGameLogic->getFrame();
 	  setWakeFrame( obj, UPDATE_SLEEP_NONE );
 		m_framesGranted = frames;
+
+		//MODDD - Just in case an object already has its own 'StealthUpdate' - improve the existing conditions.
+		// As of the retail game (and most, if not all mods preserve this), every object actually has a 'StealthUpdate' implied
+		// by being in '<instsall>/Data/INI/Default/object.ini', which is then enabled by the GPS scramble ability.
+		// If an object already has a 'StealthUpdate', it is most likely already on by default & unaffected by GPS scramble
+		// 'granting it' to enable it.
+		// As-is, it would seem like the GPS scramble was ignored when used on units that are already stealthed.
+		// Now: if something is normally cloaked while firing but not while moving, using a GPS scramble on it -> cloaked while moving too.
+		// No effect on things that already cloak while moving is acceptable.
+		//MODDD - TODO - maybe let disguisable units no longer need a disguise if the GPS scramble is used on them instead of ignoring it?  (see a 'return' further above)
+		m_stealthLevel &= ~(STEALTH_NOT_WHILE_MOVING);
+		m_requiredStatus.set(OBJECT_STATUS_DEPLOYED, 0);
+		m_forbiddenStatus.clear();
 	}
 	else
 	{
@@ -225,6 +243,11 @@ void StealthUpdate::receiveGrant( Bool active, UnsignedInt frames )
 		{
 			draw->setEffectiveOpacity( 1.0f );
 		}
+
+		//MODDD - a very lazy reversion (if this is even possible)
+		m_stealthLevel = getStealthUpdateModuleData()->m_stealthLevel;
+		m_requiredStatus = getStealthUpdateModuleData()->m_requiredStatus;
+		m_forbiddenStatus = getStealthUpdateModuleData()->m_forbiddenStatus;
 	}
 
   const ContainModuleInterface *contain = obj->getContain();
@@ -262,7 +285,9 @@ Bool StealthUpdate::allowedToStealth( Object *stealthOwner ) const
 	const StealthUpdateModuleData *data = getStealthUpdateModuleData();
 	UnsignedInt now = TheGameLogic->getFrame();
 
-	UnsignedInt flags = data->m_stealthLevel;
+	//MODDD - use the member field instead
+	//UnsignedInt flags = data->m_stealthLevel;
+	UnsignedInt flags = m_stealthLevel;
 	if( self != stealthOwner )
 	{
 		//Extract the rules from the rider's stealthupdate module data instead
@@ -344,11 +369,15 @@ Bool StealthUpdate::allowedToStealth( Object *stealthOwner ) const
 	}
 
 	//We need all required status or else we fail
-	if( !self->getStatusBits().testForAll( data->m_requiredStatus ) )
+	//MODDD - use member fields instead
+	//if( !self->getStatusBits().testForAll( data->m_requiredStatus ) )
+	if( !self->getStatusBits().testForAll( m_requiredStatus ) )
 		return FALSE;
 
 	//If we have any forbidden statii, then fail
-	if( self->getStatusBits().testForAny( data->m_forbiddenStatus ) )
+	//MODDD - use member fields instead
+	//if( self->getStatusBits().testForAny( data->m_forbiddenStatus ) )
+	if( self->getStatusBits().testForAny( m_forbiddenStatus ) )
 		return FALSE;
 
 
@@ -585,6 +614,45 @@ Object* StealthUpdate::calcStealthOwner()
 	}
 	//Not applicable, return ourself.
 	return getObject();
+}
+
+//MODDD - convenience feature like above to get the 'StealthUpdate' of the stealth owner (ex: an attack bike will return the one for its rider).
+StealthUpdate* StealthUpdate::getStealthOwnerStealthUpdate()
+{
+	// A much shorter approach would be
+	//  Object* obj = calcStealthOwner();
+	//  return obj->getStealth();
+	// But it feels cheezy to get a reference to 'this' through 'getObject()->getStealth()' most of the time.
+
+	const StealthUpdateModuleData *data = getStealthUpdateModuleData();
+	//If we are going to use the rider for stealth rules, then we need to separate the
+	//rider and the container. The rider will determine if the container is stealthed or
+	//not.
+	if( data->m_useRiderStealth )
+	{
+		//We're actually going to logically check the rider as the stealth owner, but the
+		//stealth effects will go on the container.
+		ContainModuleInterface *contain = getObject()->getContain();
+		if( contain )
+		{
+			const ContainedItemsList *riderList = contain->getContainedItemsList();
+			ContainedItemsList::const_iterator riderIterator;
+			riderIterator = riderList->begin();
+			if( riderIterator != riderList->end() )
+			{
+				//Return this rider! (if a stealth module for it exists - fall-through to my own otherwise)
+				// Actually, I've decided against the null-check here. If we're supposed to use the rider's stealth
+				// and they truly lack it, be honest about it.
+				StealthUpdate* stealthTest = (*riderIterator)->getStealth();
+				//if (stealthTest != nullptr)
+				{
+					return stealthTest;
+				}
+			}
+		}
+	}
+	//Not applicable, return ourself.
+	return this;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1248,6 +1316,12 @@ void StealthUpdate::xfer( Xfer *xfer )
 
 	// disguised
 	xfer->xferBool( &m_disguised );
+
+	//MODDD
+	xfer->xferUnsignedInt( &m_stealthLevel );
+	m_requiredStatus.xfer( xfer );
+	m_forbiddenStatus.xfer( xfer );
+	
 
 	if( version >= 2 )
 	{

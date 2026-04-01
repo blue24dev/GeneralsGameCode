@@ -186,7 +186,9 @@ void GrantStealthBehavior::grantStealthToObject( Object *obj )
   if ( ! obj->isAnyKindOf( d->m_kindOf ) )
     return;
 
-  StealthUpdate* stealth = obj->getStealth();
+	//MODDD - change to the new 'getStealthOwnerStealth' to apply the grant to the rider instead, if applicable.
+	//StealthUpdate* stealth = obj->getStealth();
+  StealthUpdate* stealth = obj->getStealthOwnerStealth();
 	if( stealth )
 	{
 		stealth->receiveGrant();

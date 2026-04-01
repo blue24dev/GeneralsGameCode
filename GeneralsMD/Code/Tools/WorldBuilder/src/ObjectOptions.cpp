@@ -874,9 +874,22 @@ Int ObjectOptions::getObjectNamedIndex(const AsciiString& name)
 }
 
 //MODDD
-void ObjectOptions::onMapChange()
+void ObjectOptions::onMapChangeStart()
 {
 	m_prevObjectTreeViewSelectedRootItem = nullptr;
+
+	CComboBox *list = (CComboBox*)GetDlgItem(IDC_OWNINGTEAM);
+	list->ResetContent();
+
+}
+
+//MODDD
+void ObjectOptions::onMapChangeEnd()
+{
+	// Populate the owner dropdown now that sides have been loaded.
+	// If no object item is selected (ex: very first new map), the dropbox will still be empty - this is ok since clicking
+	// any object item will populate the dropdown anyway.
+	update();
 }
 
 //MODDD
