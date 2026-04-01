@@ -312,7 +312,14 @@ BaseHeightMapRenderObjClass::BaseHeightMapRenderObjClass()
 	DX8Wrapper::SetCleanupHook(this);
 }
 
-//MODDD
+//MODDD - allows the inner 'm_map' to be manually assigned. Good to do this as soon as possible instead of relying
+// on some inner call to do it so things aren't so dependent on happening in an oddly specific order.
+// The most significant places for existing 'm_map' assignments, as called from 'WbView3d::updateHeightMapInView', appear to be
+//   BaseHeightMapRenderObjClass::initHeightData
+//     directly called on whole / non-partial updates
+//   HeightMapRenderObjClass::updateVB
+//     indirectly called on partial updates by 'HeightMapRenderObjClass::doPartialUpdate' -> 'HeightMapRenderObjClass::updateBlock'
+// Do a search for "REF_PTR_SET(m_map," to see all as-is assignments
 void BaseHeightMapRenderObjClass::assignMap(WorldHeightMap* pMap)
 {
 	//m_map = pMap;
@@ -1285,7 +1292,8 @@ Bool BaseHeightMapRenderObjClass::showAsVisibleCliff(Int xIndex, Int yIndex) con
 
 //=============================================================================
 //=============================================================================
-Bool BaseHeightMapRenderObjClass::evaluateAsVisibleCliff(Int xIndex, Int yIndex, Real valuesGreaterThanRad)
+//MODDD - added param 'WorldHeightMap *pMap'
+Bool BaseHeightMapRenderObjClass::evaluateAsVisibleCliff(Int xIndex, Int yIndex, Real valuesGreaterThanRad, WorldHeightMap *pMap)
 {
 	// This one never changes, so don't bother recomputing it.
 	static const Real distance[4] =
@@ -1300,10 +1308,13 @@ Bool BaseHeightMapRenderObjClass::evaluateAsVisibleCliff(Int xIndex, Int yIndex,
 	// a value outside of its bounds.
 	UnsignedByte bytes[4] =
 	{
-		m_map->getHeight(xIndex + 0, yIndex + 0),
-		m_map->getHeight(xIndex + 1, yIndex + 0),
-		m_map->getHeight(xIndex + 1, yIndex + 1),
-		m_map->getHeight(xIndex + 0, yIndex + 1),
+		//MODDD - replacing reference to member var 'm_map' with param 'pMap'.
+		// This fixes the small bug of a refresh being needed to see an up-to-date impassable terrain status, apparent on
+		// modifying the height of a large area of terrain in a single click (ex: huge flatten with the 'height brush' tool).
+		pMap->getHeight(xIndex + 0, yIndex + 0),
+		pMap->getHeight(xIndex + 1, yIndex + 0),
+		pMap->getHeight(xIndex + 1, yIndex + 1),
+		pMap->getHeight(xIndex + 0, yIndex + 1),
 	};
 
 	Real heights[4] =
@@ -1703,10 +1714,13 @@ void BaseHeightMapRenderObjClass::updateShorelineTiles(Int minX, Int minY, Int m
 }
 
 /** Generate a lookup table for arbitrary angled impassable area viewing. */
-void BaseHeightMapRenderObjClass::updateViewImpassableAreas(Bool partial, Int minX, Int maxX, Int minY, Int maxY)
+//MODDD - added param 'WorldHeightMap *pMap'
+void BaseHeightMapRenderObjClass::updateViewImpassableAreas(Bool partial, Int minX, Int maxX, Int minY, Int maxY, WorldHeightMap *pMap)
 {
-	Int xSize = m_map->getXExtent();
-	Int ySize = m_map->getYExtent();
+	//MODDD - replaced references to member var 'm_map' with param 'pMap'
+	Int xSize = pMap->getXExtent();
+	Int ySize = pMap->getYExtent();
+
 	if (m_showAsVisibleCliff.size() != xSize * ySize) {
 		m_showAsVisibleCliff.resize(xSize * ySize);
 	}
@@ -1722,7 +1736,8 @@ void BaseHeightMapRenderObjClass::updateViewImpassableAreas(Bool partial, Int mi
 	Real tanImpassableRad = tan(m_curImpassableSlope / 360.f * 2 * PI);
 	for (Int j = minY; j < maxY; ++j) {
 		for (Int i = minX; i < maxX; ++i) {
-			m_showAsVisibleCliff[i + j * xSize] = evaluateAsVisibleCliff(i, j, tanImpassableRad);
+			//MODDD - added arg 'pMap'
+			m_showAsVisibleCliff[i + j * xSize] = evaluateAsVisibleCliff(i, j, tanImpassableRad, pMap);
 		}
 	}
 }

@@ -887,6 +887,10 @@ void HeightMapRenderObjClass::doPartialUpdate(const IRegion2D &partialRange, Wor
 	if (maxY > m_y-1) maxY = m_y-1;
 	if (maxX < minX) return;
 	if (maxY < minY) return;
+
+	//MODDD - moved from below. Also, added arg 'htMap'
+	updateViewImpassableAreas(TRUE, minX, maxX, minY, maxY, htMap);
+
 	if (m_originX == 0 && m_originY == 0) {
 		// simple case.
 		updateBlock(minX, minY, maxX, maxY,
@@ -957,7 +961,9 @@ void HeightMapRenderObjClass::doPartialUpdate(const IRegion2D &partialRange, Wor
 		}
 	updateShorelineTiles(partialRange.lo.x,partialRange.lo.y,partialRange.hi.x,partialRange.hi.y,htMap);
 
-	updateViewImpassableAreas(TRUE, minX, maxX, minY, maxY);
+	//MODDD - moved above so rendering is 1-1 with the actual state of the map.
+	// That is, 'updateViewImpassableAreas' should be done first so 'updateBlock' calls respond to the correct state.
+	//updateViewImpassableAreas(TRUE, minX, maxX, minY, maxY);
 }
 
 //=============================================================================
