@@ -1586,6 +1586,13 @@ void WbView3d::updateHeightMapInView(WorldHeightMap *htMap, Bool partial, const 
 		Int curTicks = ::GetTickCount();
 
 		RefRenderObjListIterator lightListIt(&m_lightList);
+
+		//MODDD - added. I can't find any benefit to having an inner 'm_map' that's ever out-of-sync with this 'htMap' param
+		// that ends up being assigned there the private way ('REF_PTR_SET(m_map...') in either route below soon enough anyway.
+		// This may mean passing the 'htMap' param to 'updateViewImpassableAreas' is no longer necessary (inner 'm_map' is
+		// up-to-date with the param by becoming that sooner).
+		m_heightMapRenderObj->assignMap(htMap);
+
 		if (partial) {
 			m_heightMapRenderObj->doPartialUpdate(partialRange, htMap, &lightListIt);
 		} else {
@@ -1597,8 +1604,12 @@ void WbView3d::updateHeightMapInView(WorldHeightMap *htMap, Bool partial, const 
 			// Also, the data structure ma (htMap) must be assigned earlier since this is usually done in 'initHeightData'
 			// so that the earlier called 'updateViewImpassableAreas' has context.
 			// -----------------------
-			m_heightMapRenderObj->assignMap(htMap);
-			m_heightMapRenderObj->updateViewImpassableAreas();
+			// also, added default args so arg 'htMap' could be added
+			//MODDD - TODO - there has been a similar change in the 'doPartialUpdate' route above ('updateViewImpassableAreas'
+			// call is made earlier). I have to wonder if it would make sense to include the 'assignMap' on the provided 'htMap'
+			// and 'updateViewImpassableAreas' call here at the start of 'BaseHeightMapRenderObjClass::initHeightData' to work
+			// the same way in other methods besides just this one.
+			m_heightMapRenderObj->updateViewImpassableAreas(FALSE, 0, 0, 0, 0, htMap);
 			// -----------------------
 			if (m_showEntireMap) {
 				htMap->setDrawOrg(0, 0);

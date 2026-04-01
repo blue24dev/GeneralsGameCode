@@ -196,7 +196,8 @@ public:
 	void updateShorelineTiles(Int minX, Int minY, Int maxX, Int maxY, WorldHeightMap *pMap);	///<figure out which tiles on this map cross water plane
 	void updateShorelineTile(Int X, Int Y, Int Border, WorldHeightMap *pMap);	///<figure out which tiles on this map cross water plane
 	void recordShoreLineSortInfos();
-	void updateViewImpassableAreas(Bool partial = FALSE, Int minX = 0, Int maxX = 0, Int minY = 0, Int maxY = 0);
+	//MODDD - added param 'WorldHeightMap *pMap'
+	void updateViewImpassableAreas(Bool partial = FALSE, Int minX = 0, Int maxX = 0, Int minY = 0, Int maxY = 0, WorldHeightMap *pMap = nullptr);
 	void clearAllScorches();
 	void setTimeOfDay( TimeOfDay tod );
 	void loadRoadsAndBridges(W3DTerrainLogic *pTerrainLogic, Bool saveGame); ///< Load the roads from the map objects.
@@ -220,7 +221,8 @@ public:
 
 	Bool showAsVisibleCliff(Int xIndex, Int yIndex) const;
 
-	Bool evaluateAsVisibleCliff(Int xIndex, Int yIndex, Real valuesGreaterThanRad);
+	//MODDD - added param 'WorldHeightMap *pMap'
+	Bool evaluateAsVisibleCliff(Int xIndex, Int yIndex, Real valuesGreaterThanRad, WorldHeightMap *pMap);
 
 	Real getViewImpassableAreaSlope() const { return m_curImpassableSlope; }
 	void setViewImpassableAreaSlope(Real viewSlope) { m_curImpassableSlope = viewSlope; }
