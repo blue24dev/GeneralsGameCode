@@ -426,6 +426,7 @@
 
 #define NOOB_MODE 1
 #define NOOB_START_MONEY_SCALAR 1.25
+#define NOOB_INCOME_MONEY_SCALAR 1.10
 #define NOOB_PLAYER_PROMOTION_EXPERIENCE_RATE_SCALAR 1.15
 
 #define RUN_EXTRA_MONEY_CHEATS 1
@@ -442,7 +443,7 @@
 	#define HEALTH_ADJUSTMENT_FILTER(_obj, _health)
 #endif
 
-#if RUN_EXTRA_MONEY_CHEATS
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 	// run through the filter to see if this player benefits from cheats
 	#define APPLY_MONEY_CHEAT(_player, _moneyAmount) _moneyAmount = getCheatAdjustedMoneyAmount(_player, _moneyAmount);
 #else

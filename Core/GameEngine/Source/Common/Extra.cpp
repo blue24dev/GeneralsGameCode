@@ -338,7 +338,7 @@ Real healthAdjustmentFilter(Object* obj, Real healthVal)
 #endif // CUSTOM_ATTRIBUTE_CHANGES
 
 
-#if RUN_EXTRA_MONEY_CHEATS
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 Real moneyScalarAdjustmentFilter(const Player* player)
 {
 	// The income bonus for AI players can increase over the course of a long game.
@@ -348,6 +348,8 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 	const Real endModifier = 3.3f;
 
 	Real scalar = 1.0f;
+
+	#if RUN_EXTRA_MONEY_CHEATS
 	if (player->getPlayerType() == PLAYER_COMPUTER)
 	{
 		UnsignedInt frame = TheGameLogic->getFrame();
@@ -368,6 +370,16 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 		}
 		return scalar;
 	}
+	#endif
+
+	#if NOOB_MODE
+	if (player->getPlayerType() == PLAYER_HUMAN && player->slotIndex == 1)
+	{
+		scalar *= (Real)NOOB_INCOME_MONEY_SCALAR;
+		return scalar;
+	}
+	#endif
+
 	return scalar;
 }
 
@@ -462,4 +474,4 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 
 	return _expRateModifier;
 }
-#endif
+#endif // RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS

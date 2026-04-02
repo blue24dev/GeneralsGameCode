@@ -24,7 +24,7 @@ Real getHealthMulti(const ThingTemplate* _this);
 Real healthAdjustmentFilter(Object* obj, Real healthVal);
 #endif
 
-#if RUN_EXTRA_MONEY_CHEATS
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 Real moneyScalarAdjustmentFilter(const Player* player);
 UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit);
 #endif
