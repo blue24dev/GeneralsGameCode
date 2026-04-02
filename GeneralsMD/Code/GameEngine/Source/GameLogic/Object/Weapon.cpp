@@ -1982,6 +1982,9 @@ Weapon::~Weapon()
 {
 }
 
+//MODDD - please
+#pragma warning(disable: 4189)
+
 //-------------------------------------------------------------------------------------------------
 void Weapon::computeBonus(const Object *source, WeaponBonusConditionFlags extraBonusFlags, WeaponBonus& bonus) const
 {
@@ -1992,10 +1995,44 @@ void Weapon::computeBonus(const Object *source, WeaponBonusConditionFlags extraB
 
 	if( source->getContainedBy() )
 	{
+
+		//MODDD - DEBUG - trying to figure something out
+		Bool emergencyStop = FALSE;
+		if (source->getTemplate()->getName() == "AmericaDefenseNodeUpgradeDummy")
+		{
+			// what is this
+			const AsciiString& name = source->getName();
+			const AsciiString& teamName = source->getTeam()->getName();
+			const AsciiString& templateName = source->getTemplate()->getName();
+
+			const Object* containedBy = source->getContainedBy();
+			if ((uint32)containedBy->getID() == 0xdeadbeef)
+			{
+				int x;
+				x = 4;
+				emergencyStop = TRUE;
+			}
+			else
+			{
+				// what is this normally?
+				const AsciiString& cb_name = containedBy->getName();
+				const AsciiString& cb_teamName = containedBy->getTeam()->getName();
+				const AsciiString& cb_templateName = containedBy->getTemplate()->getName();
+				int x;
+				x = 4;
+			}
+		}
+
+		//MODDD - see above
+		if (!emergencyStop)
+		{
+
 		// We may be able to add in our container's flags
 		const ContainModuleInterface *theirContain = source->getContainedBy()->getContain();
 		if( theirContain && theirContain->isWeaponBonusPassedToPassengers() )
 			flags |= theirContain->getWeaponBonusPassedToPassengers();
+
+		}
 	}
 
 	if (TheGlobalData->m_weaponBonusSet)
