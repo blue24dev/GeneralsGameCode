@@ -132,11 +132,22 @@ public:
 	void disguiseAsObject( const Object *target ); //wrapper function for ease.
 	Real getFriendlyOpacity() const;
 	UnsignedInt getStealthDelay() const { return getStealthUpdateModuleData()->m_stealthDelay; }
-	UnsignedInt getStealthLevel() const { return getStealthUpdateModuleData()->m_stealthLevel; }
+
+	//MODDD - use a field of this instead for more flexibility
+	//UnsignedInt getStealthLevel() const { return getStealthUpdateModuleData()->m_stealthLevel; }
+	UnsignedInt getStealthLevel() const { return m_stealthLevel; }
+
   EvaMessage getEnemyDetectionEvaEvent() const { return getStealthUpdateModuleData()->m_enemyDetectionEvaEvent; }
   EvaMessage getOwnDetectionEvaEvent() const { return getStealthUpdateModuleData()->m_ownDetectionEvaEvent; }
 	Bool getOrderIdleEnemiesToAttackMeUponReveal() const { return getStealthUpdateModuleData()->m_orderIdleEnemiesToAttackMeUponReveal; }
+
+	//MODDD - getter
+	Bool getUseRiderStealth() const { return getStealthUpdateModuleData()->m_useRiderStealth; }
+
 	Object* calcStealthOwner(); //Is it me that can stealth or is it my rider?
+	//MODDD
+	StealthUpdate* getStealthOwnerStealthUpdate();
+
 	Bool allowedToStealth( Object *stealthOwner ) const;
   void receiveGrant( Bool active = TRUE, UnsignedInt frames = 0 );
 	//MODDD
@@ -177,5 +188,11 @@ private:
 	// runtime xfer members (does not need saving)
 	Bool									m_xferRestoreDisguise;			//Tells us we need to restore our disguise
 	WeaponSetType					m_requiresWeaponSetType;
+
+	//MODDD - member fields so that these can be changed beyond the INI data on a case-by-case basis.
+	// Ex: using the GPS scrambler to improve stealth conditions for units that already have stealth.
+	UnsignedInt m_stealthLevel;
+	ObjectStatusMaskType m_requiredStatus;
+	ObjectStatusMaskType m_forbiddenStatus;
 
 };

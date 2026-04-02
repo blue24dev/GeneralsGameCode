@@ -442,7 +442,8 @@ void CMainFrame::onEditScripts()
 // Called at the start of creating a new map (File -> New, clicking 'OK' in that prompt).
 void CMainFrame::onNewMapStart()
 {
-	onMapChange();
+	onMapChangeStart();
+
 	// Also, may as well reset these so the existing map's settings don't persist.
 	// Doing raw assignment instead of setters to avoid extra logic that doesn't need to run, and probably
 	// depends on the existing map being unloaded/replaced anyway.
@@ -451,20 +452,41 @@ void CMainFrame::onNewMapStart()
 }
 
 //MODDD - new event
+// End of creating a new map - the minimum is done being set up
+void CMainFrame::onNewMapEnd()
+{
+	onMapChangeEnd();
+}
+
+//MODDD - new event
 // Called at the start of opening an existing map, after going through any possible prompts and actually finding something to load from a path.
 // Note that it's still possible for a failure to revert to the existing map, though I don't know how much it's worth
 // thinking about that case. May want to do some UI resets before attempting to load a map regardless.
-// Also consider an event 'onLoadMapSuccess' for the very end (at 'REF_PTR_RELEASE(pOldHeightMap);') since
-// the newly loaded map is done being loaded / set-up and can't possibly be reverted at that point.
 void CMainFrame::onLoadMapStart()
 {
-	onMapChange();
+	onMapChangeStart();
 }
 
-//MODDD - new event (on new-map or load-map start)
-void CMainFrame::onMapChange()
+//MODDD - new event
+// End of loading a map - done loading everything about the map such as sides info, scripts, etc.
+// This event implies the load was successful for now.
+void CMainFrame::onLoadMapEnd()
 {
-	getObjectOptionsPanel()->onMapChange();
+	onMapChangeEnd();
+}
+
+//MODDD - new event
+// Broader event for the start of changing to a different map, new or loaded
+void CMainFrame::onMapChangeStart()
+{
+	getObjectOptionsPanel()->onMapChangeStart();
+}
+
+//MODDD - new event
+// Broader event for the end of changing to a different map, new or loaded
+void CMainFrame::onMapChangeEnd()
+{
+	getObjectOptionsPanel()->onMapChangeEnd();
 }
 
 /////////////////////////////////////////////////////////////////////////////

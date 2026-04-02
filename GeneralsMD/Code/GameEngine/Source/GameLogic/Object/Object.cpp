@@ -667,8 +667,9 @@ void Object::setStartVeterancy()
 	//   2: part of 'Object::initObject' already calls 'updateUpgradeModules();'
 	// By this logic you could argue this wouldn't even need to go through 'setVeterancyLevel', just set the
 	// veterancy stat in 'm_experienceTracker' directly like 'ExperienceTracker::xfer' does.
+	//MODDD - also, adding a param 'provideFeedback' arg of 'FALSE' to avoid the veterancy effect - no need for something granted on startup
 	const Player* controller = getControllingPlayer();
-	m_experienceTracker->setVeterancyLevel( controller->getProductionVeterancyLevel( getTemplate()->getName() ) );
+	m_experienceTracker->setVeterancyLevel( controller->getProductionVeterancyLevel( getTemplate()->getName() ), FALSE );
 
 }
 
@@ -2481,7 +2482,7 @@ void Object::attemptDamage( DamageInfo *damageInfo )
 			getControllingPlayer() &&
 			!BitIsSet(damageInfo->in.m_sourcePlayerMask, getControllingPlayer()->getPlayerMask()) &&
 			m_radarData != nullptr &&
-			getControllingPlayer() == ThePlayerList->getLocalPlayer() )
+			isLocallyControlled() )
 		TheRadar->tryUnderAttackEvent( this );
 
 }
@@ -4340,7 +4341,8 @@ void Object::updateObjValuesFromMapProperties(Dict* properties)
 	if (exists) {
 		if (m_experienceTracker && m_experienceTracker->isTrainable())
 		{
-			m_experienceTracker->setVeterancyLevel((VeterancyLevel)valInt);
+			//MODDD - adding a param 'provideFeedback' arg of 'FALSE' to avoid the veterancy effect
+			m_experienceTracker->setVeterancyLevel((VeterancyLevel)valInt, FALSE);
 		}
 	}
 
@@ -7377,6 +7379,18 @@ ProjectileUpdateInterface* Object::getProjectileUpdateInterface() const
 	}
 	return nullptr;
 }
+
+//MODDD - convenience feature
+StealthUpdate* Object::getStealthOwnerStealth() const
+{
+	StealthUpdate* stealth = getStealth();
+	if (stealth != nullptr)
+	{
+		return stealth->getStealthOwnerStealthUpdate();
+	}
+	return nullptr;
+}
+
 
 // ------------------------------------------------------------------------------------------------
 // Simply find the special power module that is currently allowing plotting of positions to target.

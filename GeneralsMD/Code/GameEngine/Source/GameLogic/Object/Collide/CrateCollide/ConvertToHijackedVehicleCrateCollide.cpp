@@ -190,12 +190,41 @@ Bool ConvertToHijackedVehicleCrateCollide::executeCrateBehavior( Object *other )
 	ExperienceTracker *jackerExp = obj->getExperienceTracker();
 	if ( targetExp && jackerExp )
 	{
+		//MODDD - as-is, a hijacked vehicle uses the highest veterancy level between the hijacker and victim unit.
+		// Changing to replace the victim's veterancy with the hijacker's instead.
+		// Also, require the target to be trainable for a veterancy transfer.
+		/*
 		VeterancyLevel highestLevel = MAX(targetExp->getVeterancyLevel(),jackerExp->getVeterancyLevel());
 		jackerExp->setVeterancyLevel( highestLevel, FALSE );
 		targetExp->setVeterancyLevel( highestLevel, FALSE );
+		*/
+		// Note that it doesn't matter if the hijacker is trainable or not - if the hijacker has 0 veterancy and the victim
+		// is trainable, the victim takes veterancy #0.
+		if ( targetExp->isTrainable() )
+		{
+			targetExp->setVeterancyLevel( jackerExp->getVeterancyLevel(), FALSE );
+		}
 	}
 
-
+	//MODDD - moving this from below so we can terminate early if this object is missing a 'HijackerUpdate' module.
+	// Without this, being 'stored' in a vehicle (invisible / uncollidable, keep in-sync with its position) won't be able
+	// to work. Some odd behavior such as enemies attacking the invisible hijacker forever at the same location he was
+	// at when a vehicle was hijacked has been observed in this case, though it could just be the 'obj->setStatus' call
+	// in the original 'if( hijackerUpdate )' block further down not running.
+	// The point is, I doubt preserving the unit should go any further if 'HijackerUpdate' is missing.
+	//MODDD - TODO - If a mod wants to support a unit that can hijack but uses a different unit for ejection systems
+	// (ex: a biker or flying hijacker from Contra hijacks something -> it dies -> spawns infantry hijacker), an additional
+	// field for what the hijacker should spawn in some hijacker-related module should suffice.
+	// ---
+	static NameKeyType key_HijackerUpdate = NAMEKEY( "HijackerUpdate" );
+	HijackerUpdate *hijackerUpdate = (HijackerUpdate*)obj->findUpdateModule( key_HijackerUpdate );
+	if ( !hijackerUpdate )
+	{
+		TheGameLogic->destroyObject( obj );
+		return TRUE;
+	}
+	// ---
+	
 	Bool targetCanEject = FALSE;
 	BehaviorModule **dmi = nullptr;
 	for( dmi = other->getBehaviorModules(); *dmi; ++dmi )
@@ -213,11 +242,14 @@ Bool ConvertToHijackedVehicleCrateCollide::executeCrateBehavior( Object *other )
 		return TRUE;
 	}
 
+	//MODDD - moved to above, condition no longer needed here either
+	/*
 	// I we have made it this far, we are going to ride in this vehicle for a while
 	// get the name of the hijackerupdate
 	static NameKeyType key_HijackerUpdate = NAMEKEY( "HijackerUpdate" );
 	HijackerUpdate *hijackerUpdate = (HijackerUpdate*)obj->findUpdateModule( key_HijackerUpdate );
 	if( hijackerUpdate )
+	*/
 	{
 		hijackerUpdate->setTargetObject( other );
 		hijackerUpdate->setIsInVehicle( TRUE );
@@ -238,8 +270,11 @@ Bool ConvertToHijackedVehicleCrateCollide::executeCrateBehavior( Object *other )
 	}
 
 	//This is kinda special... we will endow our new ride with our vision and shroud range, since we are driving
+	//MODDD - disagree with this. Keep the victim unit's own stats or else its enemy acquisition behavior may be affected - is that really necessary?
+	/*
 	other->setVisionRange(getObject()->getVisionRange());
 	other->setShroudClearingRange(getObject()->getShroudClearingRange());
+	*/
 
 	// remove rider from partition manager
 	ThePartitionManager->unRegisterObject( obj );

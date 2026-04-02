@@ -327,6 +327,9 @@ public:
 	SpawnBehaviorInterface* getSpawnBehaviorInterface() const;
 	ProjectileUpdateInterface* getProjectileUpdateInterface() const;
 
+	//MODDD
+	StealthUpdate*          getStealthOwnerStealth() const;
+
 
 	// special case for the AIUpdateInterface, since it will be referred to a great deal
 	inline AIUpdateInterface *getAIUpdateInterface() { return m_ai; }

@@ -96,9 +96,21 @@ UpdateSleepTime HijackerUpdate::update()
 			ExperienceTracker *jackerExp = obj->getExperienceTracker();
 			if ( targetExp && jackerExp )
 			{
+				//MODDD - per a similar change in ConvertToHijackedVehicleCrateCollide.cpp (copy hijacker veterancy to victim),
+				// adding a is-trainable check and only transferring a higher level in the target to the hijacker
+				/*
 				VeterancyLevel highestLevel = MAX(targetExp->getVeterancyLevel(),jackerExp->getVeterancyLevel());
 				jackerExp->setVeterancyLevel( highestLevel );
 				targetExp->setVeterancyLevel( highestLevel );
+				*/
+				if ( targetExp->isTrainable() && jackerExp->isTrainable() )
+				{
+					VeterancyLevel targetVetLevel = targetExp->getVeterancyLevel();
+					if ( targetVetLevel > jackerExp->getVeterancyLevel() )
+					{
+						jackerExp->setVeterancyLevel( targetVetLevel, FALSE );
+					}
+				}
 			}
 
 		}

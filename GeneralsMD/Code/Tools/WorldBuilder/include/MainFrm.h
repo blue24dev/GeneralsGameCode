@@ -95,8 +95,11 @@ public:
 
 	//MODDD - new events
 	void onNewMapStart();
+	void onNewMapEnd();
 	void onLoadMapStart();
-	void onMapChange();
+	void onLoadMapEnd();
+	void onMapChangeStart();
+	void onMapChangeEnd();
 
 protected:  // control bar embedded members
 	CStatusBar					m_wndStatusBar;
