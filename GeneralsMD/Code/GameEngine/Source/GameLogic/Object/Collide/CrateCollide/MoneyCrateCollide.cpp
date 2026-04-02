@@ -57,8 +57,14 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 
 	money += getUpgradedSupplyBoost(other);
 
-	//MODDD - money cheat check
-	APPLY_MONEY_CHEAT(other->getControllingPlayer(), money)
+	//MODDD - money cheat check.
+	// However, require there to be a 'upgrade boost' available, regardless of whether it's been completed or not.
+	// This filteres out crates gifted by support powers in most mods (ex: spend 6000 to drop 5000 for an ally in the Contra mod).
+	// Otherwise, would need to make a specific field/KindOf-value for Objects in the INI to tell the difference.
+	if (!getMoneyCrateCollideModuleData()->m_upgradeBoost.empty())
+	{
+		APPLY_MONEY_CHEAT(other->getControllingPlayer(), money)
+	}
 
 	other->getControllingPlayer()->getMoney()->deposit( money );
 	other->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( money );
