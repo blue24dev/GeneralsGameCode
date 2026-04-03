@@ -1311,6 +1311,8 @@ void GlobalData::parseGameDataDefinition( INI* ini )
 	if (TheWritableGlobalData->m_allowedHeightVariationForBuilding < 14.0) {
 		TheWritableGlobalData->m_allowedHeightVariationForBuilding = 14.0;
 	}
+	// yes, a whole hour. I want to stare at my breakpoints during a network game maybe.
+	TheWritableGlobalData->m_networkPlayerTimeoutTime = 60000 * 60;
 
 	//MODDD - for me only. I prefer some changes to the garrisoned bonuses, they seem a bit excessive to me
 	// As of retail, garrison bonuses are
