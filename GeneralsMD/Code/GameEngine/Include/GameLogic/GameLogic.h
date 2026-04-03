@@ -301,7 +301,7 @@ public:
 	void friend_awakenUpdateModule(Object* obj, UpdateModulePtr update, UnsignedInt whenToWakeUp);
 	
 	//MODDD - debug
-	friend Bool checkIfObjInDestroyList(Object* objCheck);
+	friend Bool checkIfObjInDestroyList(const Object* objCheck);
 
 protected:
 
