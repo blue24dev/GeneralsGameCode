@@ -34,3 +34,13 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime);
 #if RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS || NOOB_MODE
 Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModifier);
 #endif
+
+//MODDD - DEBUG
+Bool checkIfObjInDestroyList(const Object* objCheck);
+void printTimeStamp(std::ofstream& outputStream);
+void printObjectIdentifyingInfo(std::ofstream& outputStream, const Object* objToPrint);
+AsciiString getObjectIdentifyingInfoString(Object* objToPrint);
+void printDeletionCriticalInfo(std::ofstream& outputStream, const Object* objToPrint);
+void printDeletionCriticalInfo(std::ofstream& outputStream, const Object* objToPrint, const char* extraHeading);
+void printItemsInContainedList(std::ofstream& outputStream, const Object* objContainer);
+void printItemsInContainedList(std::ofstream& outputStream, const Object* objContainer, const Object* objToLookFor);
