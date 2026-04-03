@@ -513,3 +513,171 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 	return _expRateModifier;
 }
 #endif // RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS
+
+
+//MODDD - debugging
+#include <fstream>
+#include <iomanip>
+#include "GameLogic/Module/ContainModule.h"
+
+//MODDD - DEBUG
+Bool checkIfObjInDestroyList(const Object* objCheck)
+{
+	for( ObjectPointerListIterator iterator = TheGameLogic->m_objectsToDestroy.begin(); iterator != TheGameLogic->m_objectsToDestroy.end(); iterator++ )
+	{
+		Object* currentObject = (*iterator);
+		if (currentObject == objCheck)
+		{
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+// Note that this doesn't end in a newline character.
+void printTimeStamp(std::ofstream& outputStream)
+{
+	SYSTEMTIME lt;
+	GetLocalTime(&lt);
+	outputStream << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << "." << std::setw(3) << std::setfill('0') << lt.wMilliseconds;
+}
+
+// Print the most basic info to tell what this object is at a glance. That is, template name (americaVehicle-whatever)
+// with ID to tell if other places are referring to the exact same object.
+// Note that this doesn't end in a newline character.
+void printObjectIdentifyingInfo(std::ofstream& outputStream, const Object* objToPrint)
+{
+	outputStream << objToPrint->getTemplate()->getName().str() << ":" << objToPrint->getID();
+}
+
+// really, may as well turn that into a utility that gives the string directly
+AsciiString getObjectIdentifyingInfoString(const Object* objToPrint)
+{
+	AsciiString identifier;
+	identifier.format("%s:%d", objToPrint->getTemplate()->getName().str(), objToPrint->getID());
+	return identifier;
+}
+
+void printDeletionCriticalInfo(std::ofstream& outputStream, const Object* objToPrint)
+{
+	Bool isDestroyed = objToPrint->testStatus(OBJECT_STATUS_DESTROYED);
+	Bool isEffectivelyDead = objToPrint->isEffectivelyDead();
+	Bool isObjThruInDestroyedList = checkIfObjInDestroyList(objToPrint);
+
+	outputStream << "printDeletionCriticalInfo - ";
+	printObjectIdentifyingInfo(outputStream, objToPrint);
+	outputStream << " isDestroyed: " << isDestroyed;
+	outputStream << " isEffectivelyDead: " << isEffectivelyDead;
+	outputStream << " isObjThruInDestroyedList: " << isObjThruInDestroyedList;
+	if (objToPrint->getBodyModule())
+	{
+		outputStream << " health: " << objToPrint->getBodyModule()->getHealth();
+	}
+	else
+	{
+		outputStream << " health: N/A (no body module)";
+	}
+	outputStream << std::endl;
+}
+
+void printDeletionCriticalInfo(std::ofstream& outputStream, const Object* objToPrint, const char* extraHeading)
+{
+	Bool isDestroyed = objToPrint->testStatus(OBJECT_STATUS_DESTROYED);
+	Bool isEffectivelyDead = objToPrint->isEffectivelyDead();
+	Bool isObjThruInDestroyedList = checkIfObjInDestroyList(objToPrint);
+
+	outputStream << "printDeletionCriticalInfo - ";
+	outputStream << extraHeading << ":";
+	printObjectIdentifyingInfo(outputStream, objToPrint);
+	outputStream << " isDestroyed: " << isDestroyed;
+	outputStream << " isEffectivelyDead: " << isEffectivelyDead;
+	outputStream << " isObjThruInDestroyedList: " << isObjThruInDestroyedList;
+	if (objToPrint->getBodyModule())
+	{
+		outputStream << " health: " << objToPrint->getBodyModule()->getHealth();
+	}
+	else
+	{
+		outputStream << " health: N/A (no body module)";
+	}
+	outputStream << std::endl;
+}
+
+void printItemsInContainedList(std::ofstream& outputStream, const Object* objContainer)
+{
+	const ContainedItemsList* conList = nullptr;
+	ContainModuleInterface* contain = objContainer->getContain();
+	if (contain == nullptr)
+	{
+		outputStream << "printItemsInContainedList - ERROR - 'objContainer' ";
+		printObjectIdentifyingInfo(outputStream, objContainer);
+		outputStream << " has no 'contain' module" << std::endl;
+		return;
+	}
+
+	outputStream << "printItemsInContainedList - ";
+	printObjectIdentifyingInfo(outputStream, objContainer);
+	outputStream << std::endl;
+	outputStream << "------------" << std::endl;
+
+	conList = objContainer->getContain()->getContainedItemsList();
+	if (conList->empty())
+	{
+		// just say that?
+		outputStream << " (empty)" << std::endl;
+	}
+	else
+	{
+		for(ContainedItemsList::const_iterator it = conList->begin(); it != conList->end(); ++it)
+		{
+			Object* containedObj = *it;
+			printDeletionCriticalInfo(outputStream, containedObj);
+		}
+	}
+	outputStream << "------------" << std::endl;
+}
+
+void printItemsInContainedList(std::ofstream& outputStream, const Object* objContainer, const Object* objToLookFor)
+{
+	const ContainedItemsList* conList = nullptr;
+	ContainModuleInterface* contain = objContainer->getContain();
+	if (contain == nullptr)
+	{
+		outputStream << "printItemsInContainedList - ERROR - 'objContainer' ";
+		printObjectIdentifyingInfo(outputStream, objContainer);
+		outputStream << " has no 'contain' module" << std::endl;
+		return;
+	}
+	
+	outputStream << "printItemsInContainedList - ";
+	printObjectIdentifyingInfo(outputStream, objContainer);
+	outputStream << std::endl;
+	outputStream << "------------" << std::endl;
+	
+	Bool objToLookForFound = FALSE;
+	conList = objContainer->getContain()->getContainedItemsList();
+	if (conList->empty())
+	{
+		// just say that?
+		outputStream << " (empty)" << std::endl;
+	}
+	else
+	{
+		for(ContainedItemsList::const_iterator it = conList->begin(); it != conList->end(); ++it)
+		{
+			Object* containedObj = *it;
+			printDeletionCriticalInfo(outputStream, containedObj);
+			if (containedObj->getID() == objToLookFor->getID())
+			{
+				outputStream << "^^^ piicl_OBJTOLOOKFOR ^^^";
+			}
+		}
+	}
+	if (!objToLookForFound)
+	{
+		outputStream << "--- WARNING - 'objToLookFor' ";
+		printObjectIdentifyingInfo(outputStream, objToLookFor);
+		outputStream << " provided but not found" << std::endl;
+	}
+	outputStream << "------------" << std::endl;
+}
