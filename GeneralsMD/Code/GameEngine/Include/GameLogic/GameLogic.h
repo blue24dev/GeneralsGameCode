@@ -299,6 +299,9 @@ public:
 
 	// this should be called only by UpdateModule, thanks.
 	void friend_awakenUpdateModule(Object* obj, UpdateModulePtr update, UnsignedInt whenToWakeUp);
+	
+	//MODDD - debug
+	friend Bool checkIfObjInDestroyList(Object* objCheck);
 
 protected:
 
