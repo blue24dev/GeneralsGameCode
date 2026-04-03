@@ -1982,9 +1982,6 @@ Weapon::~Weapon()
 {
 }
 
-//MODDD - please
-#pragma warning(disable: 4189)
-
 //-------------------------------------------------------------------------------------------------
 void Weapon::computeBonus(const Object *source, WeaponBonusConditionFlags extraBonusFlags, WeaponBonus& bonus) const
 {
@@ -1995,32 +1992,32 @@ void Weapon::computeBonus(const Object *source, WeaponBonusConditionFlags extraB
 
 	if( source->getContainedBy() )
 	{
-
 		//MODDD - DEBUG - trying to figure something out
 		Bool emergencyStop = FALSE;
-		if (source->getTemplate()->getName() == "AmericaDefenseNodeUpgradeDummy")
+		//if (source->getTemplate()->getName() == "AmericaDefenseNodeUpgradeDummy")
 		{
-			// what is this
-			const AsciiString& name = source->getName();
-			const AsciiString& teamName = source->getTeam()->getName();
-			const AsciiString& templateName = source->getTemplate()->getName();
-
 			const Object* containedBy = source->getContainedBy();
 			if ((uint32)containedBy->getID() == 0xdeadbeef)
 			{
-				int x;
-				x = 4;
 				emergencyStop = TRUE;
+
+				std::ofstream outputFile;
+				outputFile.open("test_crash_containedByBadMemoryBug.txt", std::ios::out | std::ios::app);
+				printTimeStamp(outputFile);
+				outputFile << " - " << "Weapon::computeBonus - CRASH AVOIDED - 'source->getContainedBy()' is 0xDEADBEEF" << std::endl;
+
+				printDeletionCriticalInfo(outputFile, source, "source obj");
+				outputFile.close();
 			}
+			/*
 			else
 			{
 				// what is this normally?
 				const AsciiString& cb_name = containedBy->getName();
 				const AsciiString& cb_teamName = containedBy->getTeam()->getName();
 				const AsciiString& cb_templateName = containedBy->getTemplate()->getName();
-				int x;
-				x = 4;
 			}
+			*/
 		}
 
 		//MODDD - see above
