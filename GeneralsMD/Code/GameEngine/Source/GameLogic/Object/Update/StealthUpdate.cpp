@@ -130,7 +130,16 @@ StealthUpdate::StealthUpdate( Thing *thing, const ModuleData* moduleData ) : Upd
 	m_requiredStatus = data->m_requiredStatus;
 	m_forbiddenStatus = data->m_forbiddenStatus;
 
-	m_stealthAllowedFrame = TheGameLogic->getFrame() + data->m_stealthDelay;
+	//MODDD - require the game to be 'in-game' to start with the stealth delay applied.
+	// Otherwise (placed during map startup), may as well begin stealthed .
+	if (gameStatus == GAMESTATUS_INGAME)
+	{
+		m_stealthAllowedFrame = TheGameLogic->getFrame() + data->m_stealthDelay;
+	}
+	else
+	{
+		m_stealthAllowedFrame = TheGameLogic->getFrame();
+	}
 
 	//Must be enabled manually if using disguise system (bomb truck uses)
 	m_enabled = !data->m_teamDisguised;
@@ -278,13 +287,31 @@ void StealthUpdate::receiveUpgrade( Bool active )
 }
 
 
+//MODDD - no-param overload for below
+Bool StealthUpdate::allowedToStealth() const
+{
+	// Since this is called externally, make sure the outcome of this isn't null
+	const StealthUpdate* ownerStealthUpdate = getStealthOwnerStealthUpdateStrict();
+	if (ownerStealthUpdate == nullptr)
+	{
+		return FALSE;
+	}
+	return allowedToStealth(ownerStealthUpdate);
+}
+
 //-------------------------------------------------------------------------------------------------
-Bool StealthUpdate::allowedToStealth( Object *stealthOwner ) const
+//MODDD - changed param
+// Also note that 'ownerStealthUpdate' is never null - the only route leading to here is stopped if that's the case.
+//Bool StealthUpdate::allowedToStealth( Object *stealthOwner ) const
+Bool StealthUpdate::allowedToStealth( const StealthUpdate* ownerStealthUpdate ) const
 {
 	const Object *self = getObject();
 	const StealthUpdateModuleData *data = getStealthUpdateModuleData();
 	UnsignedInt now = TheGameLogic->getFrame();
 
+	//MODDD - simpler entirely with the param change
+	// ---
+	/*
 	//MODDD - use the member field instead
 	//UnsignedInt flags = data->m_stealthLevel;
 	UnsignedInt flags = m_stealthLevel;
@@ -299,6 +326,16 @@ Bool StealthUpdate::allowedToStealth( Object *stealthOwner ) const
 			flags = stealthUpdate->getStealthLevel();
 		}
 	}
+	*/
+	// ---
+	UnsignedInt flags = ownerStealthUpdate->getStealthLevel();
+	//MODDD - also, from below
+	const Object* stealthOwner = ownerStealthUpdate->getObject();
+	if( !stealthOwner->getStatusBits().test( OBJECT_STATUS_CAN_STEALTH ) )
+	{
+		return FALSE;
+	}
+	// ---
 
 	//With regards to slaves that stealth with us, we need to all be stealthed or not at all. If
 	//any of the slaves can't stealth, then reveal everyone!
@@ -347,10 +384,13 @@ Bool StealthUpdate::allowedToStealth( Object *stealthOwner ) const
 		}
 	}
 
+	//MODDD - moving this above with a small change
+	/*
 	if( !stealthOwner->getStatusBits().test( OBJECT_STATUS_CAN_STEALTH ) )
 	{
 		return FALSE;
 	}
+	*/
 
 	if( flags & STEALTH_NOT_WHILE_TAKING_DAMAGE && self->getBodyModule()->getLastDamageTimestamp() >= now - 1 )
 	{
@@ -589,7 +629,8 @@ StealthLookType StealthUpdate::calcStealthedStatusForPlayer(const Object* obj, c
 }
 
 //-------------------------------------------------------------------------------------------------
-Object* StealthUpdate::calcStealthOwner()
+//MODDD - added right-hand 'const'
+Object* StealthUpdate::calcStealthOwner() const
 {
 	const StealthUpdateModuleData *data = getStealthUpdateModuleData();
 	//If we are going to use the rider for stealth rules, then we need to separate the
@@ -613,11 +654,21 @@ Object* StealthUpdate::calcStealthOwner()
 		}
 	}
 	//Not applicable, return ourself.
-	return getObject();
+	//MODDD - cast, since the 'const' restriction doesn't apply to what's returned
+	return (Object*)getObject();
 }
 
-//MODDD - convenience feature like above to get the 'StealthUpdate' of the stealth owner (ex: an attack bike will return the one for its rider).
-StealthUpdate* StealthUpdate::getStealthOwnerStealthUpdate()
+//MODDD - convenience feature like 'calcStealthOwner' to get the 'StealthUpdate' of the stealth owner
+// (ex: an attack cycle will return the one for its rider).
+// This version will always return something non-null, even if 'useRiderStealth' is on and the current rider lacks a
+// stealth module ('this' stealth module will always be a fallback). This seems to fit the intent of this file as-is.
+// However, note that the default object (<install>/data/INI/default/object.ini) includes an inactive 'StealthUpdate'
+// module as of the retail game - it would normally be impossible to run into an object that technically has no stealth
+// module. This allows the GPS scrambler to apply to any unit without having to specify the inactive 'StealthUpdate' on
+// every single object.
+// And, note that this isn't quite the same as 'calcStealthOwner()->getStealth()'.
+// That would return null if there is a rider and it lacks a stealth module. This method always uses 'this' module as a fallback.
+StealthUpdate* StealthUpdate::getStealthOwnerStealthUpdate() const
 {
 	// A much shorter approach would be
 	//  Object* obj = calcStealthOwner();
@@ -625,13 +676,8 @@ StealthUpdate* StealthUpdate::getStealthOwnerStealthUpdate()
 	// But it feels cheezy to get a reference to 'this' through 'getObject()->getStealth()' most of the time.
 
 	const StealthUpdateModuleData *data = getStealthUpdateModuleData();
-	//If we are going to use the rider for stealth rules, then we need to separate the
-	//rider and the container. The rider will determine if the container is stealthed or
-	//not.
 	if( data->m_useRiderStealth )
 	{
-		//We're actually going to logically check the rider as the stealth owner, but the
-		//stealth effects will go on the container.
 		ContainModuleInterface *contain = getObject()->getContain();
 		if( contain )
 		{
@@ -640,19 +686,44 @@ StealthUpdate* StealthUpdate::getStealthOwnerStealthUpdate()
 			riderIterator = riderList->begin();
 			if( riderIterator != riderList->end() )
 			{
-				//Return this rider! (if a stealth module for it exists - fall-through to my own otherwise)
-				// Actually, I've decided against the null-check here. If we're supposed to use the rider's stealth
-				// and they truly lack it, be honest about it.
 				StealthUpdate* stealthTest = (*riderIterator)->getStealth();
-				//if (stealthTest != nullptr)
+				if ( stealthTest )
 				{
 					return stealthTest;
 				}
 			}
 		}
 	}
-	//Not applicable, return ourself.
-	return this;
+	return (StealthUpdate*)this;
+}
+
+//MODDD - Similar to above but requires the rider's stealth module to be used if 'useRiderStealth' is on.
+// That is, if there isn't a rider or the rider lacks a stealth module, 'null' can be returned.
+// This is mainly a way for the GPS scrambler to be redirected to the rider to apply the effect to instead of the
+// containing object (bike). Don't apply to the bike just because the rider didn't have a stealth module.
+// This also isn't the same as 'calcStealthOwner()->getStealth()'. That would return 'this' module if there isn't a rider to check for.
+StealthUpdate* StealthUpdate::getStealthOwnerStealthUpdateStrict() const
+{
+	const StealthUpdateModuleData *data = getStealthUpdateModuleData();
+	if( data->m_useRiderStealth )
+	{
+		ContainModuleInterface *contain = getObject()->getContain();
+		if( contain )
+		{
+			const ContainedItemsList *riderList = contain->getContainedItemsList();
+			ContainedItemsList::const_iterator riderIterator;
+			riderIterator = riderList->begin();
+			if( riderIterator != riderList->end() )
+			{
+				// up to whether the rider has a stealth module or not
+				return (*riderIterator)->getStealth();
+			}
+		}
+		// If there is no rider (or no contain module?), return null.
+		return nullptr;
+	}
+	// If 'useRiderStealth' isn't the case, or it is and there isn't a contain module, use this stealth module
+	return (StealthUpdate*)this;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -689,8 +760,11 @@ UpdateSleepTime StealthUpdate::update()
 	}
 
 	Object *self = getObject();
+	
+	//MODDD - handling the odd case of not finding a 'StealthUpdate' from the rider (would be using uninitialized memory).
+	// ---
+	/*
 	Object *stealthOwner = calcStealthOwner();
-
 	UnsignedInt stealthDelay;
 
 	if( self == stealthOwner )
@@ -708,13 +782,18 @@ UpdateSleepTime StealthUpdate::update()
 			stealthDelay = stealthUpdate->getStealthDelay();
 		}
 	}
+	*/
+	// ---
+	StealthUpdate* stealthUpdateRef = getStealthOwnerStealthUpdateStrict();
+	// ---
 
 	UnsignedInt now = TheGameLogic->getFrame();
 
 /// @todo srj -- improve sleeping behavior. we currently just sleep when not enabled,
 // and demand every-frame attention when enabled. this could probably be smartened.
-
-	if( !m_enabled )
+	//MODDD - also require the rider to be there and have a stealth module if 'useRiderStealth' is on
+	//if( !m_enabled )
+	if( !m_enabled || stealthUpdateRef == nullptr )
 	{
 		return calcSleepTime();
 	}
@@ -818,8 +897,18 @@ UpdateSleepTime StealthUpdate::update()
 		}
 	}
 
-	if( allowedToStealth( stealthOwner ) )
+	//MODDD - sending 'stealthUpdateRef' instead
+	//if( allowedToStealth( stealthOwner ) )
+	if( allowedToStealth( stealthUpdateRef ) )
 	{
+		//MODDD - moved from below, see notes there
+		// This will set 'stealthAllowedFrame' with the proper stealth module's delay the first time
+		// 'allowedToStealth' passes since failing the previous frame.
+		if( m_stealthAllowedFrame == FOREVER )
+		{
+			m_stealthAllowedFrame = now + stealthUpdateRef->getStealthDelay();
+		}
+
 		// If I can stealth, don't attempt to Stealth until the timer is zero.
 		if( m_stealthAllowedFrame > now )
 		{
@@ -840,7 +929,16 @@ UpdateSleepTime StealthUpdate::update()
 	}
 	else
 	{
-		m_stealthAllowedFrame = now + stealthDelay;
+		//MODDD - I disagree with this being here.
+		// The intent is for this to be set every single frame something isn't stealthed, so if something changes
+		// to allow stealth (ex: an upgrade is required -> gets it), this code route is no longer reached so the
+		// existing 'stealthAllowedFrame' can be reached soon.
+		// However, this is using the 'stealthDelay' from something that might not even be the stealth owner when
+		// we're finally stealthed - ex: an attack cycle using the 'stealthDelay' from a previous rider (or somehow, none at all).
+		// Moving to the above '!OBJECT_STATUS_STEALTHED' check.
+		//m_stealthAllowedFrame = now + stealthDelay;
+		// Set to 'FOREVER' to let above know to start with the delay
+		m_stealthAllowedFrame = FOREVER;
 
 		// if you are destealthing on your own free will, play sound for all to hear
 		if( self->getStatusBits().test( OBJECT_STATUS_STEALTHED ) )
@@ -956,12 +1054,12 @@ void setWakeupIfInRange( Object *obj, void *userData)
 void StealthUpdate::markAsDetected(UnsignedInt numFrames)
 {
 	Object *self = getObject();
-	Object *stealthOwner = calcStealthOwner();
 
-	//MODDD - cleaning this block up a bit, handling the odd case of not finding a 'StealthUpdate' from a
-	// non-self 'stealthOwner' (would be using uninitialized memory).
+	//MODDD - handling the odd case of not finding a 'StealthUpdate' from the rider (would be using uninitialized memory).
 	// ---
 	/*
+	Object *stealthOwner = calcStealthOwner();
+
 	UnsignedInt stealthDelay, orderIdlesToAttack;
 	if( self == stealthOwner )
 	{
@@ -983,27 +1081,7 @@ void StealthUpdate::markAsDetected(UnsignedInt numFrames)
 	}
 	*/
 	// ---
-	// Which 'StealthUpdate' to use: mine by default, or the one for a separate 'stealthOwner'
-	// (ex: a bike preferring to use stealth behavior from its rider). 
-	StealthUpdate* stealthUpdateRef;
-
-	if( self == stealthOwner )
-	{
-		stealthUpdateRef = this;
-	}
-	else
-	{
-		//Extract the rules from the rider's stealthupdate module data instead
-		//of our own, because the rider determines if the container can stealth or not.
-		stealthUpdateRef = stealthOwner->getStealth();
-		//MODDD - logically, this is new: handles the case of having a 'stealthOwner' w/o a 'StealthUpdate' to get info from.
-		// Not that this should happen to begin with, a non-stealthed rider should mean this 'bike' isn't stealthed.
-		if ( stealthUpdateRef == nullptr )
-		{
-			DEBUG_CRASH(("StealthUpdate::markAsDetected - My object: \"%s\".\nstealthOwner \"%s\" doesn't have a StealthUpdate module!", self->getTemplate()->getName().str(), stealthOwner->getTemplate()->getName().str()));
-			stealthUpdateRef = this;
-		}
-	}
+	StealthUpdate* stealthUpdateRef = getStealthOwnerStealthUpdateStrict();
 	// ---
 
 	Player *thisPlayer = self->getControllingPlayer();
@@ -1012,6 +1090,13 @@ void StealthUpdate::markAsDetected(UnsignedInt numFrames)
 	if( isDisguised() )
 	{
 		disguiseAsObject( nullptr );
+	}
+
+	//MODDD - a null check so expecting a rider that isn't there / lacks stealth behavior doesn't allow anything
+	// else to happen. May as well allow killing a disguise above anyway as a failsafe.
+	if (stealthUpdateRef == nullptr)
+	{
+		return;
 	}
 
 	UnsignedInt now = TheGameLogic->getFrame();

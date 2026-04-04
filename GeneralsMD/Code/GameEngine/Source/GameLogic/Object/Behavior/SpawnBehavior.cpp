@@ -1032,7 +1032,9 @@ Bool SpawnBehavior::areAllSlavesStealthed() const
 		if( currentSpawn )
 		{
       const StealthUpdate *stealthUpdate = currentSpawn->getStealth();
-			if( !stealthUpdate || !stealthUpdate->allowedToStealth( currentSpawn ) )
+			//MODDD - 'allowedToStealth': param removed
+			//if( !stealthUpdate || !stealthUpdate->allowedToStealth( currentSpawn ) )
+			if( !stealthUpdate || !stealthUpdate->allowedToStealth() )
 			{
 				return FALSE;
 			}

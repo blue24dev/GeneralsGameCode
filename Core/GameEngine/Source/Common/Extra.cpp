@@ -7,6 +7,7 @@
 #include "Common/KindOf.h"
 #include "Common/ThingTemplate.h"
 #include "Common/Upgrade.h"
+#include "GameLogic/Weapon.h"
 #include "GameLogic/Object.h"
 #include "GameNetwork/GameInfo.h"
 #include "GameLogic/GameLogic.h"
@@ -264,6 +265,11 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		}
   }
 	*/
+}
+
+void automaticWeaponTemplateChanges(WeaponTemplate* _this)
+{
+	
 }
 
 void automaticUpgradeTemplateChanges(UpgradeTemplate* _this)

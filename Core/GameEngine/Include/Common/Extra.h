@@ -13,12 +13,14 @@
 #include "Common/STLTypedefs.h"
 
 class ThingTemplate;
+class WeaponTemplate;
 class UpgradeTemplate;
 class Object;
 class Player;
 
 #if CUSTOM_ATTRIBUTE_CHANGES
 void automaticThingTemplateChanges(ThingTemplate* _this);
+void automaticWeaponTemplateChanges(WeaponTemplate* _this);
 void automaticUpgradeTemplateChanges(UpgradeTemplate* _this);
 Real getHealthMulti(const ThingTemplate* _this);
 Real healthAdjustmentFilter(Object* obj, Real healthVal);
