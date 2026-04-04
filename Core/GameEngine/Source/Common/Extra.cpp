@@ -11,6 +11,7 @@
 #include "GameLogic/Object.h"
 #include "GameNetwork/GameInfo.h"
 #include "GameLogic/GameLogic.h"
+#include "GameLogic/module/BodyModule.h"
 
 // It would make sense to consider the majority of this file "MODDD - for me only".
 
