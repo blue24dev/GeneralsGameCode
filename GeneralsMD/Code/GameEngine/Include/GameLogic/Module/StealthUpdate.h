@@ -144,11 +144,17 @@ public:
 	//MODDD - getter
 	Bool getUseRiderStealth() const { return getStealthUpdateModuleData()->m_useRiderStealth; }
 
-	Object* calcStealthOwner(); //Is it me that can stealth or is it my rider?
+	//MODDD - added right-hand 'const'
+	Object* calcStealthOwner() const; //Is it me that can stealth or is it my rider?
 	//MODDD
-	StealthUpdate* getStealthOwnerStealthUpdate();
+	StealthUpdate* getStealthOwnerStealthUpdate() const;
+	StealthUpdate* getStealthOwnerStealthUpdateStrict() const;
 
-	Bool allowedToStealth( Object *stealthOwner ) const;
+	//MODDD - added no-param overload, changed param in existing(was only) overload
+	//Bool allowedToStealth( Object *stealthOwner ) const;
+	Bool allowedToStealth( ) const;
+	Bool allowedToStealth( const StealthUpdate* ownerStealthUpdate ) const;
+
   void receiveGrant( Bool active = TRUE, UnsignedInt frames = 0 );
 	//MODDD
 	void receiveUpgrade( Bool active = TRUE );
