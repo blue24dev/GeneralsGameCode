@@ -188,7 +188,7 @@ void GrantStealthBehavior::grantStealthToObject( Object *obj )
 
 	//MODDD - change to the new 'getStealthOwnerStealth' to apply the grant to the rider instead, if applicable.
 	//StealthUpdate* stealth = obj->getStealth();
-  StealthUpdate* stealth = obj->getStealthOwnerStealth();
+  StealthUpdate* stealth = obj->getStealthOwnerStealthStrict();
 	if( stealth )
 	{
 		stealth->receiveGrant();

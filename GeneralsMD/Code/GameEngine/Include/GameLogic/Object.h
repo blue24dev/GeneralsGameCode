@@ -328,7 +328,7 @@ public:
 	ProjectileUpdateInterface* getProjectileUpdateInterface() const;
 
 	//MODDD
-	StealthUpdate*          getStealthOwnerStealth() const;
+	StealthUpdate*          getStealthOwnerStealthStrict() const;
 
 
 	// special case for the AIUpdateInterface, since it will be referred to a great deal

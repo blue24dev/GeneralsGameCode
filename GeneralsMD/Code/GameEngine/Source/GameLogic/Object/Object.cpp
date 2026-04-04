@@ -7380,13 +7380,15 @@ ProjectileUpdateInterface* Object::getProjectileUpdateInterface() const
 	return nullptr;
 }
 
-//MODDD - convenience feature
-StealthUpdate* Object::getStealthOwnerStealth() const
+//MODDD - convenience feature.
+// See notes in 'getStealthOwnerStealthUpdateStrict' - this can return 'null' in bikes that use the rider for stealth
+// but the rider lacks a stealth module.
+StealthUpdate* Object::getStealthOwnerStealthStrict() const
 {
 	StealthUpdate* stealth = getStealth();
 	if (stealth != nullptr)
 	{
-		return stealth->getStealthOwnerStealthUpdate();
+		return stealth->getStealthOwnerStealthUpdateStrict();
 	}
 	return nullptr;
 }

@@ -333,7 +333,11 @@ WeaponTemplate::WeaponTemplate() : m_nextTemplate(nullptr)
 	m_continuousFireOneShotsNeeded	= INT_MAX;
 	m_continuousFireTwoShotsNeeded	= INT_MAX;
 	m_continuousFireCoastFrames			= 0;
- 	m_autoReloadWhenIdleFrames			= 0;
+
+	//MODDD - instead of 0, the max int value so this can be easily recognized as unset.
+	//m_autoReloadWhenIdleFrames			= 0;
+ 	m_autoReloadWhenIdleFrames			= 0xFFFFFFFF;
+
 	m_clipReloadTime								= 0;
 	m_minDelayBetweenShots					= 0;
 	m_maxDelayBetweenShots					= 0;
@@ -1649,6 +1653,35 @@ void WeaponTemplate::dealDamageInternal(ObjectID sourceID, ObjectID victimID, co
 	}
 }
 
+//MODDD - new
+void WeaponTemplate::extraWeaponTemplateChanges()
+{
+	if (getAutoReloadsClip())
+	{
+		if (m_autoReloadWhenIdleFrames == 0xFFFFFFFF)
+		{
+			// Set a new value from the weapon's reload time.
+			// For reference, sevearl things in retail use the 'clipReloadTime' plus 100 milliseconds.
+			if (m_clipReloadTime > 0)
+			{
+				m_autoReloadWhenIdleFrames = m_clipReloadTime + 100;
+			}
+			else
+			{
+				m_autoReloadWhenIdleFrames = 0;
+			}
+		}
+	}
+	else
+	{
+		// otherwise, if the value was never found, just use '0' like retail and be done with it
+		if (m_autoReloadWhenIdleFrames == 0xFFFFFFFF)
+		{
+			m_autoReloadWhenIdleFrames = 0;
+		}
+	}
+}
+
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -1895,6 +1928,14 @@ void WeaponStore::postProcessLoad()
 
 	if (weapon->m_projectileName.isNone())
 		weapon->m_projectileName.clear();
+	
+	//MODDD - since there isn't a 'validate' method to call like 'thingTemplate->validate()' in ThingFactory.cpp,
+	// handle post-processing here
+#if CUSTOM_ATTRIBUTE_CHANGES
+	automaticWeaponTemplateChanges(weapon);
+#endif
+	// ones that aren't really hacks
+	weapon->extraWeaponTemplateChanges();
 
 #if defined(RTS_DEBUG)
 	if (!weapon->getFireSound().getEventName().isEmpty() && weapon->getFireSound().getEventName().compareNoCase("NoSound") != 0)

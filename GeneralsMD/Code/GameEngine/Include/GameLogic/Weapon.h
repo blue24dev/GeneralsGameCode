@@ -489,6 +489,9 @@ public:
 
 	void postProcessLoad();
 
+	//MODDD
+	friend void automaticWeaponTemplateChanges(WeaponTemplate* _this);
+
 protected:
 
 	// actually deal out the damage.
@@ -497,6 +500,9 @@ protected:
 	void trimTriggeredHistoricDamage() const;
 	//MODDD - removed 'const' from 'source'
 	void processHistoricDamage(Object* source, const Coord3D* pos) const;
+
+	//MODDD - new
+	void extraWeaponTemplateChanges();
 
 private:
 
