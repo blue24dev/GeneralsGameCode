@@ -1654,29 +1654,31 @@ void WeaponTemplate::dealDamageInternal(ObjectID sourceID, ObjectID victimID, co
 }
 
 //MODDD - new
-void WeaponTemplate::extraWeaponTemplateChanges()
+// See if 'm_autoReloadWhenIdleFrames' needs to be handled - that is, if it's still the now-bogus-default of 0xFFFFFFFF.
+// As of retail, the default was 0 - never auto-reloads.
+// It makes more sense for something that hasn't fired in a while to start with a full clip the next time it fires.
+void WeaponTemplate::validateAutoReloadWhenIdleFrames()
 {
-	if (getAutoReloadsClip())
+	if (m_autoReloadWhenIdleFrames == 0xFFFFFFFF)
 	{
-		if (m_autoReloadWhenIdleFrames == 0xFFFFFFFF)
+		// Check 'reloadType', require it to be 'YES' as opposed to jets that must return somewhere to reload
+		if (getAutoReloadsClip())
 		{
 			// Set a new value from the weapon's reload time.
-			// For reference, sevearl things in retail use the 'clipReloadTime' plus 100 milliseconds.
+			// For reference, several weapons in retail (Weapon.ini) use 'clipReloadTime' plus 100 milliseconds for this.
 			if (m_clipReloadTime > 0)
 			{
 				m_autoReloadWhenIdleFrames = m_clipReloadTime + 100;
 			}
 			else
 			{
+				// Unexpected reload time - just use retail's default
 				m_autoReloadWhenIdleFrames = 0;
 			}
 		}
-	}
-	else
-	{
-		// otherwise, if the value was never found, just use '0' like retail and be done with it
-		if (m_autoReloadWhenIdleFrames == 0xFFFFFFFF)
+		else
 		{
+			// Doesn't automatically reload - use retail's default
 			m_autoReloadWhenIdleFrames = 0;
 		}
 	}
@@ -1934,8 +1936,8 @@ void WeaponStore::postProcessLoad()
 #if CUSTOM_ATTRIBUTE_CHANGES
 	automaticWeaponTemplateChanges(weapon);
 #endif
-	// ones that aren't really hacks
-	weapon->extraWeaponTemplateChanges();
+	//MODDD
+	weapon->validateAutoReloadWhenIdleFrames();
 
 #if defined(RTS_DEBUG)
 	if (!weapon->getFireSound().getEventName().isEmpty() && weapon->getFireSound().getEventName().compareNoCase("NoSound") != 0)
@@ -2045,26 +2047,10 @@ void Weapon::computeBonus(const Object *source, WeaponBonusConditionFlags extraB
 	if (extra)
 		extra->appendBonuses(flags, bonus);
 
-	/*
-	//MODDD - for me only, boost the range of base defense weapons
-	if (source->isKindOf(KINDOF_FS_BASE_DEFENSE)) {
-		Real current = bonus.getField(WeaponBonus::RANGE);
-		bonus.setField(WeaponBonus::RANGE, current + 0.25f);
-	}
-	// Go ahead and give infantry some constant bonuses since their garrisoned bonus has been toned down.
-	else if (source->isKindOf(KINDOF_INFANTRY)) {
-		Real current = bonus.getField(WeaponBonus::RANGE);
-		bonus.setField(WeaponBonus::RANGE, current + 0.20f);
-		current = bonus.getField(WeaponBonus::DAMAGE);
-		bonus.setField(WeaponBonus::DAMAGE, current + 0.10f);
-	}
-	// Everything else can get a little more range anyway
-	else {
-		Real current = bonus.getField(WeaponBonus::RANGE);
-		bonus.setField(WeaponBonus::RANGE, current + 0.10f);
-	}
-	*/
-	
+	//MODDD
+	#if CUSTOM_ATTRIBUTE_CHANGES
+	addCustomWeaponBonuses(this, source, bonus);
+	#endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -2090,6 +2076,21 @@ Int Weapon::getClipReloadTime(const Object *source) const
 	WeaponBonus bonus;
 	computeBonus(source, 0, bonus);
 	return m_template->getClipReloadTime(bonus);
+}
+
+//MODDD - implementation moved
+UnsignedInt Weapon::getAutoReloadWhenIdleFrames() const
+{
+	//MODDD - TODO - could change this to check for weapon bonuses (ex: upgrade that affects reload time) like
+	// 'getClipReloadTime', but this would be re-run every single time a shot is fired just in case the object stops firing
+	// for a while -> lots of wasted effort, especially for things that fire very quickly/often.
+	// Caching the bonus-adjusted time from the most recent 'getClipReloadTime' call per weapon might work (when an upgade
+	// affects that, the effect will be carried over to here next reload).
+	// It may even make sense to have a bonus-adjusted value cached for all 'getClipReloadTime' calls, set once initially
+	// and only adjusted when a chance in weapon bonuses is noticed (upgrade granted, strategy center battle plan changed,
+	// any temporary buffs applied/removed).
+	// There is the event 'Weapon::onWeaponBonusChange' that's worth looking into if you choose to pursue this.
+	return m_template->getAutoReloadWhenIdleFrames();
 }
 
 //-------------------------------------------------------------------------------------------------

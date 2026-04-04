@@ -502,7 +502,7 @@ protected:
 	void processHistoricDamage(Object* source, const Coord3D* pos) const;
 
 	//MODDD - new
-	void extraWeaponTemplateChanges();
+	void validateAutoReloadWhenIdleFrames();
 
 private:
 
@@ -728,7 +728,8 @@ public:
 	Int getContinuousFireOneShotsNeeded() const { return m_template->getContinuousFireOneShotsNeeded(); }
 	Int getContinuousFireTwoShotsNeeded() const { return m_template->getContinuousFireTwoShotsNeeded(); }
 	UnsignedInt getContinuousFireCoastFrames() const { return m_template->getContinuousFireCoastFrames(); }
- 	UnsignedInt getAutoReloadWhenIdleFrames() const { return m_template->getAutoReloadWhenIdleFrames(); }
+	//MODDD - implementation moved to .cpp
+ 	UnsignedInt getAutoReloadWhenIdleFrames() const;
 	const AudioEventRTS& getFireSound() const { return m_template->getFireSound(); }
 	UnsignedInt getFireSoundLoopTime() const { return m_template->getFireSoundLoopTime(); }
 	DamageType getDamageType() const { return m_template->getDamageType(); }
