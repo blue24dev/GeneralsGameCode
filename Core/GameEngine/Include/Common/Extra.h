@@ -12,18 +12,26 @@
 // This is one cool include!
 #include "Common/STLTypedefs.h"
 
+class Player;
 class ThingTemplate;
 class WeaponTemplate;
 class UpgradeTemplate;
 class Object;
-class Player;
+class Weapon;
+class WeaponBonus;
 
 #if CUSTOM_ATTRIBUTE_CHANGES
 void automaticThingTemplateChanges(ThingTemplate* _this);
 void automaticWeaponTemplateChanges(WeaponTemplate* _this);
 void automaticUpgradeTemplateChanges(UpgradeTemplate* _this);
+void automaticGlobalDataWeaponBonusChanges();
+void addCustomWeaponBonuses(Weapon* _this, Object* source, WeaponBonus& bonus);
 Real getHealthMulti(const ThingTemplate* _this);
 Real healthAdjustmentFilter(Object* obj, Real healthVal);
+#endif
+
+#if CUSTOM_GAME_DATA_CHANGES
+void automaticGlobalDataChanges();
 #endif
 
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE

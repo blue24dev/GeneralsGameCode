@@ -1303,23 +1303,13 @@ void GlobalData::parseGameDataDefinition( INI* ini )
 	// parse the ini weapon definition
 	ini->initFromINI( TheWritableGlobalData, s_GlobalDataFieldParseTable );
 
-	//MODDD - for me only. Always have a greater MaxCameraHeight
-	if (TheWritableGlobalData->m_maxCameraHeight < 900) {
-		TheWritableGlobalData->m_maxCameraHeight = 900;
-	}
-	// Be easier to build in general
-	if (TheWritableGlobalData->m_allowedHeightVariationForBuilding < 14.0) {
-		TheWritableGlobalData->m_allowedHeightVariationForBuilding = 14.0;
-	}
-	// yes, a whole hour. I want to stare at my breakpoints during a network game maybe.
-	TheWritableGlobalData->m_networkPlayerTimeoutTime = 60000 * 60;
-
-	//MODDD - for me only. I prefer some changes to the garrisoned bonuses, they seem a bit excessive to me
-	// As of retail, garrison bonuses are
-	// * Damage: +25%
-	// * Range: +33%
-	TheWritableGlobalData->m_weaponBonusSet->getWeaponBonus()[WEAPONBONUSCONDITION_GARRISONED].setField(WeaponBonus::DAMAGE, 1.00f);
-	TheWritableGlobalData->m_weaponBonusSet->getWeaponBonus()[WEAPONBONUSCONDITION_GARRISONED].setField(WeaponBonus::RANGE, 1.20f);
+	//MODDD
+#if CUSTOM_GAME_DATA_CHANGES
+	automaticGlobalDataChanges();
+#endif
+#if CUSTOM_ATTRIBUTE_CHANGES
+	automaticGlobalDataWeaponBonusChanges();
+#endif
 	
 	// override INI values with user preferences
 	OptionPreferences optionPref;
