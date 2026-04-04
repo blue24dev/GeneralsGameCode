@@ -433,6 +433,7 @@
 #define RUN_BUILD_TIME_CHEATS 1
 #define RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS 1
 #define CUSTOM_ATTRIBUTE_CHANGES 1
+#define CUSTOM_GAME_DATA_CHANGES 1
 
 // ----------------------------------------------------------------------------------------------------------
 // Some post-setting convenience features

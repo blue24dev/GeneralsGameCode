@@ -11,6 +11,8 @@
 #include "GameLogic/Object.h"
 #include "GameNetwork/GameInfo.h"
 #include "GameLogic/GameLogic.h"
+#include "GameLogic/module/BodyModule.h"
+
 
 // It would make sense to consider the majority of this file "MODDD - for me only".
 
@@ -301,6 +303,43 @@ void automaticUpgradeTemplateChanges(UpgradeTemplate* _this)
 	_this->m_buildTime *= 1.1f * 1.4f;
 }
 
+// Override the weapon bonuses from the 'GameData.ini' file.
+// These better fit other far-reaching stat changes such as health and weapon range.
+// See 'automaticGlobalDataChanges' for other 'GameData.ini' overrides.
+void automaticGlobalDataWeaponBonusChanges()
+{
+	// I prefer some changes to the garrisoned bonuses, they seem a bit excessive to me
+	// As of retail, garrison bonuses are
+	// * Damage: +25%
+	// * Range: +33%
+	TheWritableGlobalData->m_weaponBonusSet->getWeaponBonus()[WEAPONBONUSCONDITION_GARRISONED].setField(WeaponBonus::DAMAGE, 1.00f);
+	TheWritableGlobalData->m_weaponBonusSet->getWeaponBonus()[WEAPONBONUSCONDITION_GARRISONED].setField(WeaponBonus::RANGE, 1.20f);
+}
+
+void addCustomWeaponBonuses(Weapon* _this, Object* source, WeaponBonus& bonus)
+{
+	if (source->isKindOf(KINDOF_FS_BASE_DEFENSE))
+	{
+		// boost the range of base defense weapons
+		Real current = bonus.getField(WeaponBonus::RANGE);
+		bonus.setField(WeaponBonus::RANGE, current + 0.25f);
+	}
+	else if (source->isKindOf(KINDOF_INFANTRY))
+	{
+		// Go ahead and give infantry some constant bonuses since their garrisoned bonus has been toned down.
+		Real current = bonus.getField(WeaponBonus::RANGE);
+		bonus.setField(WeaponBonus::RANGE, current + 0.20f);
+		current = bonus.getField(WeaponBonus::DAMAGE);
+		bonus.setField(WeaponBonus::DAMAGE, current + 0.10f);
+	}
+	else
+	{
+		// Everything else can get a little more range anyway
+		Real current = bonus.getField(WeaponBonus::RANGE);
+		bonus.setField(WeaponBonus::RANGE, current + 0.10f);
+	}
+}
+
 Real getHealthMulti(const ThingTemplate* _this)
 {
 	if (_this->isKindOf(KINDOF_STRUCTURE))
@@ -380,6 +419,25 @@ Real healthAdjustmentFilter(Object* obj, Real healthVal)
 	return _healthVal;
 }
 #endif // CUSTOM_ATTRIBUTE_CHANGES
+
+
+#if CUSTOM_GAME_DATA_CHANGES
+void automaticGlobalDataChanges()
+{
+	// Always have a greater MaxCameraHeight
+	if (TheWritableGlobalData->m_maxCameraHeight < 900)
+	{
+		TheWritableGlobalData->m_maxCameraHeight = 900;
+	}
+	// Be easier to build in general
+	if (TheWritableGlobalData->m_allowedHeightVariationForBuilding < 14.0)
+	{
+		TheWritableGlobalData->m_allowedHeightVariationForBuilding = 14.0;
+	}
+	// yes, a whole hour. I want to stare at my breakpoints during a network game maybe.
+	TheWritableGlobalData->m_networkPlayerTimeoutTime = 60000 * 60;
+}
+#endif // CUSTOM_GAME_DATA_CHANGES
 
 
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
