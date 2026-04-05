@@ -92,7 +92,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	}
 
 	// EXTRA SLOW-DOWN FOR EVERYTHING
-	_this->m_buildTime *= 1.4f;
+	_this->m_buildTime *= 1.28f;
 
 	// Make things that are exclusively dozers cheaper.
 	// This that are dozers and harvesters at the same time (GLA workers) don't need as much of a reduction.
@@ -300,7 +300,7 @@ void automaticWeaponTemplateChanges(WeaponTemplate* _this)
 
 void automaticUpgradeTemplateChanges(UpgradeTemplate* _this)
 {
-	_this->m_buildTime *= 1.1f * 1.4f;
+	_this->m_buildTime *= 1.1f * 1.28f;
 }
 
 // Override the weapon bonuses from the 'GameData.ini' file.
@@ -322,13 +322,13 @@ void addCustomWeaponBonuses(Weapon* _this, Object* source, WeaponBonus& bonus)
 	{
 		// boost the range of base defense weapons
 		Real current = bonus.getField(WeaponBonus::RANGE);
-		bonus.setField(WeaponBonus::RANGE, current + 0.25f);
+		bonus.setField(WeaponBonus::RANGE, current + 0.30f);
 	}
 	else if (source->isKindOf(KINDOF_INFANTRY))
 	{
 		// Go ahead and give infantry some constant bonuses since their garrisoned bonus has been toned down.
 		Real current = bonus.getField(WeaponBonus::RANGE);
-		bonus.setField(WeaponBonus::RANGE, current + 0.20f);
+		bonus.setField(WeaponBonus::RANGE, current + 0.25f);
 		current = bonus.getField(WeaponBonus::DAMAGE);
 		bonus.setField(WeaponBonus::DAMAGE, current + 0.10f);
 	}
@@ -336,7 +336,7 @@ void addCustomWeaponBonuses(Weapon* _this, Object* source, WeaponBonus& bonus)
 	{
 		// Everything else can get a little more range anyway
 		Real current = bonus.getField(WeaponBonus::RANGE);
-		bonus.setField(WeaponBonus::RANGE, current + 0.10f);
+		bonus.setField(WeaponBonus::RANGE, current + 0.15f);
 	}
 }
 
@@ -360,7 +360,7 @@ Real getHealthMulti(const ThingTemplate* _this)
 		else
 		{
 			// buildings otherwise
-			return 1.85f;
+			return 1.90f;
 		}
 	}
 	else
