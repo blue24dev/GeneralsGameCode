@@ -25,7 +25,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this);
 void automaticWeaponTemplateChanges(WeaponTemplate* _this);
 void automaticUpgradeTemplateChanges(UpgradeTemplate* _this);
 void automaticGlobalDataWeaponBonusChanges();
-void addCustomWeaponBonuses(Weapon* _this, Object* source, WeaponBonus& bonus);
+void addCustomWeaponBonuses(const Weapon* _this, const Object* source, WeaponBonus& bonus);
 Real getHealthMulti(const ThingTemplate* _this);
 Real healthAdjustmentFilter(Object* obj, Real healthVal);
 #endif
