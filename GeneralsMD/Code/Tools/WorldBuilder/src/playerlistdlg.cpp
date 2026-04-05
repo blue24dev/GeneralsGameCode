@@ -510,6 +510,12 @@ void PlayerListDlg::updateTheUI(void)
 			if (pt) {
 				rgb = *pt->getPreferredColor();
 			}
+			else
+			{
+				//MODDD - 'rgb' remains garbage memory if it's never set (ex: neutral player, no player template 'pt').
+				// Use a default of white instead. This is more accurate to what would be seen for a truly neutral-controlled unit.
+				rgb.setFromInt(0xFFFFFFFF);
+			}
 		}
 		m_colorButton.setColor(rgb);
 		SelectColor(rgb);
@@ -615,8 +621,12 @@ BOOL PlayerListDlg::OnInitDialog()
 		item->DestroyWindow();
 	}
 
-	updateTheUI();
+	//MODDD
 	PopulateColorComboBox();
+
+	updateTheUI();
+	//MODDD - moved above, fixes slight issue of the selected color choice not being 1-1 with the UI on opening the window (combobox options weren't in yet)
+	//PopulateColorComboBox();
 
 	return TRUE;  // return TRUE unless you set the focus to a control
 	              // EXCEPTION: OCX Property Pages should return FALSE

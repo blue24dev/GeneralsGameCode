@@ -290,12 +290,7 @@ void StealthUpdate::receiveUpgrade( Bool active )
 //MODDD - no-param overload for below
 Bool StealthUpdate::allowedToStealth() const
 {
-	// Since this is called externally, make sure the outcome of this isn't null
 	const StealthUpdate* ownerStealthUpdate = getStealthOwnerStealthUpdateStrict();
-	if (ownerStealthUpdate == nullptr)
-	{
-		return FALSE;
-	}
 	return allowedToStealth(ownerStealthUpdate);
 }
 
@@ -305,11 +300,19 @@ Bool StealthUpdate::allowedToStealth() const
 //Bool StealthUpdate::allowedToStealth( Object *stealthOwner ) const
 Bool StealthUpdate::allowedToStealth( const StealthUpdate* ownerStealthUpdate ) const
 {
+	//MODDD - NOTE - it should also be possible to only do a null-check in the no-param overload of 'allowedToStealth' (above),
+	// since this overload is always directly called with a known non-null 'ownerStealthUpdate' param. Going to err on the side
+	// of being future proof with a broader check anyway.
+	if (ownerStealthUpdate == nullptr)
+	{
+		return FALSE;
+	}
+
 	const Object *self = getObject();
 	const StealthUpdateModuleData *data = getStealthUpdateModuleData();
 	UnsignedInt now = TheGameLogic->getFrame();
 
-	//MODDD - simpler entirely with the param change
+	//MODDD - replaced
 	// ---
 	/*
 	//MODDD - use the member field instead
@@ -329,13 +332,14 @@ Bool StealthUpdate::allowedToStealth( const StealthUpdate* ownerStealthUpdate ) 
 	*/
 	// ---
 	UnsignedInt flags = ownerStealthUpdate->getStealthLevel();
-	//MODDD - also, from below
+	// ---
+
+	//MODDD - from below. 'stealthOwner' comes from the changed param 'ownerStealthUpdate'
 	const Object* stealthOwner = ownerStealthUpdate->getObject();
 	if( !stealthOwner->getStatusBits().test( OBJECT_STATUS_CAN_STEALTH ) )
 	{
 		return FALSE;
 	}
-	// ---
 
 	//With regards to slaves that stealth with us, we need to all be stealthed or not at all. If
 	//any of the slaves can't stealth, then reveal everyone!
