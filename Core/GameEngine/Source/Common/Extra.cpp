@@ -316,7 +316,7 @@ void automaticGlobalDataWeaponBonusChanges()
 	TheWritableGlobalData->m_weaponBonusSet->getWeaponBonus()[WEAPONBONUSCONDITION_GARRISONED].setField(WeaponBonus::RANGE, 1.20f);
 }
 
-void addCustomWeaponBonuses(Weapon* _this, Object* source, WeaponBonus& bonus)
+void addCustomWeaponBonuses(const Weapon* _this, const Object* source, WeaponBonus& bonus)
 {
 	if (source->isKindOf(KINDOF_FS_BASE_DEFENSE))
 	{
