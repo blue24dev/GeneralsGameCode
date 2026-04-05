@@ -189,7 +189,9 @@ void BrushOptions::GetPopSliderInfo(const long sliderID, long *pMin, long *pMax,
 
 		case IDC_SIZE_POPUP:
 			*pMin = 1;
-			*pMax = 30;
+			//MODDD - no
+			//*pMax = 30;
+			*pMax = 200;
 			*pInitial = m_currentWidth;
 			*pLineSize = 1;
 			break;
