@@ -304,6 +304,10 @@
 // Retail's way was to depend on the game being windowed or not, this setting applies regardless of that.
 #define CONFIRMATION_PROMPT_TO_EXIT_PROGRAM 0
 
+// If on, intro movies (EA logo & follow-up trailor-like one) don't play regardless of Video.ini.
+// There is a special place in hell for whoever required the EA logo to be unskippable >:(
+#define SKIP_INTRO_MOVIES 1
+
 // Value to force 'MaxCameraHeight' in GameData.ini to during cinematic cutscenes, often in campaign maps.
 // They were made with a specific max camera height in mind, and changing it can affect what's shown significantly.
 // This is the number to change the setting to, not a bool.

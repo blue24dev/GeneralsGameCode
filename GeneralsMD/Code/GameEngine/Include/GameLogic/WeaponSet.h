@@ -40,6 +40,9 @@ class Object;
 class Weapon;
 class WeaponTemplate;
 
+//MODDD - typedef from AI.h
+typedef UnsignedInt CommandSourceMask;
+
 enum CommandSourceType CPP_11(: Int);
 enum DamageType CPP_11(: Int);
 
@@ -126,7 +129,8 @@ private:
 	const ThingTemplate*		m_thingTemplate;	// needed for save/load
 	WeaponSetFlags					m_types;
 	const WeaponTemplate*		m_template[WEAPONSLOT_COUNT];
-	UnsignedInt							m_autoChooseMask[WEAPONSLOT_COUNT];
+	//MODDD - changed type to 'CommandSourceMask' for clarity
+	CommandSourceMask							m_autoChooseMask[WEAPONSLOT_COUNT];
 	KindOfMaskType					m_preferredAgainst[WEAPONSLOT_COUNT];
 	Bool										m_isReloadTimeShared;
 	Bool										m_isWeaponLockSharedAcrossSets; ///< A weapon set so similar that it is safe to hold locks across
@@ -152,13 +156,20 @@ public:
 
 	Bool hasAnyWeapons() const;
 	inline const WeaponTemplate* getNth(WeaponSlotType n) const { return m_template[n]; }
-	inline UnsignedInt getNthCommandSourceMask(WeaponSlotType n) const { return m_autoChooseMask[n]; }
+	//MODDD - changing return type to 'CommandSourceMask'
+	inline CommandSourceMask getNthCommandSourceMask(WeaponSlotType n) const { return m_autoChooseMask[n]; }
 	inline const KindOfMaskType& getNthPreferredAgainstMask(WeaponSlotType n) const { return m_preferredAgainst[n]; }
 
 	inline Int getConditionsYesCount() const { return 1; }
 	inline const WeaponSetFlags& getNthConditionsYes(Int i) const { return m_types; }
+
+	//MODDD
+	void validateAutoChooseSources();
+
 #if defined(RTS_DEBUG)
-	inline AsciiString getDescription() const { return "ArmorTemplateSet"; }
+	//MODDD - whoops?
+	//inline AsciiString getDescription() const { return "ArmorTemplateSet"; }
+	inline AsciiString getDescription() const { return "WeaponTemplateSet"; }
 #endif
 };
 
@@ -225,6 +236,10 @@ public:
 	Bool hasWeaponToDealDamageType(DamageType typeToDeal) const { return m_totalDamageTypeMask.test(typeToDeal); }
 	Bool hasSingleDamageType(DamageType typeToDeal) const { return (m_totalDamageTypeMask.test(typeToDeal) && (m_totalDamageTypeMask.count() == 1) ); }
 	Bool isCurWeaponLocked() const { return m_curWeaponLockedStatus != NOT_LOCKED; }
+
+	//MODDD - getter for the specific lock type
+	WeaponLockType getCurWeaponLockType() const { return m_curWeaponLockedStatus; }
+
 	Weapon* getCurWeapon() { return m_weapons[m_curWeapon]; }
 	const Weapon* getCurWeapon() const { return m_weapons[m_curWeapon]; }
 	WeaponSlotType getCurWeaponSlot() const { return m_curWeapon; }
@@ -232,7 +247,8 @@ public:
 	const Weapon* findAmmoPipShowingWeapon() const;
 	void weaponSetOnWeaponBonusChange(const Object *source);
 	UnsignedInt getMostPercentReadyToFireAnyWeapon() const;
-	inline UnsignedInt getNthCommandSourceMask( WeaponSlotType n ) const { return m_curWeaponTemplateSet ? m_curWeaponTemplateSet->getNthCommandSourceMask( n ) : 0; }
+	//MODDD - changing return type to 'CommandSourceMask'
+	inline CommandSourceMask getNthCommandSourceMask( WeaponSlotType n ) const { return m_curWeaponTemplateSet ? m_curWeaponTemplateSet->getNthCommandSourceMask( n ) : 0; }
 
 	Bool setWeaponLock( WeaponSlotType weaponSlot, WeaponLockType lockType );
 	void releaseWeaponLock(WeaponLockType lockType);

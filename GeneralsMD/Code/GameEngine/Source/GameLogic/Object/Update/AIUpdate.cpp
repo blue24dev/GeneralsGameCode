@@ -4732,21 +4732,27 @@ Object* AIUpdateInterface::getNextMoodTarget( Bool calledByAI, Bool calledDuring
 	// apply this to all its contained members instead. And see that this works through recursion (below won't let
 	// infantry in a humvee in a chinook with fireports for vehicles go all the way to the chinook for attack priority,
 	// at least not in one call).
-	if (newVictim == nullptr) {
+	if (newVictim == nullptr)
+	{
 		Object* objContainedBy = obj->getContainedBy();
-		if (objContainedBy != nullptr && objContainedBy->getAI() != nullptr) {
+		if (objContainedBy != nullptr && objContainedBy->getAI() != nullptr)
+		{
 			ContainModuleInterface* containInterface = objContainedBy->getContain();
-			if (containInterface != nullptr && containInterface->isPassengerAllowedToFire()) {
+			if (containInterface != nullptr && containInterface->isPassengerAllowedToFire(obj->getID()))
+			{
 				AIStateMachine* containerStateMachine = objContainedBy->getAI()->getStateMachine();
 				// Idea is that the state was set by something like 'getStateMachine()->setState( AI_ATTACK_OBJECT )'.
 				// And 'containerStateMachine->getCurrentState()->isAttackingObject()' is tempting, but several states
 				// like 'AIGuardState' don't override it (always false even if that's clearly what's happening).
-				if (containerStateMachine->isInAttackState()) {
+				if (containerStateMachine->isInAttackState())
+				{
 					Object* containerVictim = containerStateMachine->getEnemyObject();
-					if (containerVictim != nullptr) {
+					if (containerVictim != nullptr)
+					{
 						Bool forced = containerStateMachine->getCurrentState()->isForceAttacking();
 						CanAttackResult result = obj->getAbleToAttackSpecificObject( forced ? ATTACK_NEW_TARGET_FORCED : ATTACK_NEW_TARGET, containerVictim, CMD_FROM_AI );
-						if( result == ATTACKRESULT_POSSIBLE || result == ATTACKRESULT_POSSIBLE_AFTER_MOVING ) {
+						if( result == ATTACKRESULT_POSSIBLE || result == ATTACKRESULT_POSSIBLE_AFTER_MOVING )
+						{
 							// Gentlemen, we have our directive
 							newVictim = containerVictim;
 						}

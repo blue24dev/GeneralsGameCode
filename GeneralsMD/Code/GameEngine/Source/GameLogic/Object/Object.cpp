@@ -111,6 +111,7 @@
 //MODDD
 #include "GameLogic/ObjectCreationList.h"
 #include "GameLogic/Module/StealthDetectorUpdate.h"
+#include "GameLogic/Module/LockWeaponCreate.h"
 
 #include "Common/CRCDebug.h"
 #include "Common/MiscAudio.h"
@@ -279,8 +280,11 @@ Object::Object( const ThingTemplate *tt ) :
 	m_body(nullptr),
 	m_contain(nullptr),
 	m_stealth(nullptr),
+
 	//MODDD
 	m_stealthDetector(nullptr),
+	m_lockWeaponCreate(nullptr),
+
 	m_partitionData(nullptr),
 	m_radarData(nullptr),
 	m_drawable(nullptr),
@@ -341,8 +345,11 @@ Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& 
 	m_body(nullptr),
 	m_contain(nullptr),
 	m_stealth(nullptr),
+
 	//MODDD
 	m_stealthDetector(nullptr),
+	m_lockWeaponCreate(nullptr),
+
 	m_partitionData(nullptr),
 	m_radarData(nullptr),
 	m_drawable(nullptr),
@@ -590,6 +597,14 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 		{
 			DEBUG_ASSERTCRASH( m_stealthDetector == nullptr, ("Duplicate StealthDetectorUpdates!") );
 			m_stealthDetector = stealthDetector;
+		}
+
+		//MODDD
+		LockWeaponCreate* lockWeaponCreate = newMod->getLockWeaponCreate();
+		if ( lockWeaponCreate )
+		{
+			DEBUG_ASSERTCRASH( m_lockWeaponCreate == nullptr, ("Duplicate LockWeaponCreate!") );
+			m_lockWeaponCreate = lockWeaponCreate;
 		}
 
 		AIUpdateInterface* ai = newMod->getAIUpdateInterface();

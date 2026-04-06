@@ -100,6 +100,10 @@ class UpgradeModule;
 class UpgradeModuleInterface;
 class UpgradeTemplate;
 
+//MODDD
+class StealthDetectorUpdate;
+class LockWeaponCreate;
+
 class ObjectHeldHelper;
 class ObjectDisabledHelper;
 class ObjectSMCHelper;
@@ -322,8 +326,11 @@ public:
 	BodyModuleInterface* getBodyModule() const { return m_body; }
 	ContainModuleInterface* getContain() const { return m_contain; }
   StealthUpdate*          getStealth() const { return m_stealth; }
+
 	//MODDD
 	StealthDetectorUpdate*          getStealthDetector() const { return m_stealthDetector; }
+	LockWeaponCreate*          getLockWeaponCreate() const { return m_lockWeaponCreate; }
+
 	SpawnBehaviorInterface* getSpawnBehaviorInterface() const;
 	ProjectileUpdateInterface* getProjectileUpdateInterface() const;
 
@@ -833,8 +840,10 @@ private:
 	ContainModuleInterface*				m_contain;
 	BodyModuleInterface*					m_body;
   StealthUpdate*                m_stealth;
+
 	//MODDD
 	StealthDetectorUpdate*        m_stealthDetector;
+	LockWeaponCreate*             m_lockWeaponCreate;
 
 	AIUpdateInterface*						m_ai;	///< ai interface (if any), cached for handy access. (duplicate of entry in the module array!)
 	PhysicsBehavior*							m_physics;	///< physics interface (if any), cached for handy access. (duplicate of entry in the module array!)

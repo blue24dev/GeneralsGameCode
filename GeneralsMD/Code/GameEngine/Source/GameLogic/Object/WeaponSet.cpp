@@ -50,6 +50,9 @@
 #include "GameLogic/Module/StealthUpdate.h"
 #include "GameLogic/Module/SpawnBehavior.h"
 
+//MODDD
+#include "GameLogic/Module/LockWeaponCreate.h"
+
 #include "GameLogic/Weapon.h"
 
 
@@ -160,12 +163,61 @@ void WeaponTemplateSet::parseWeaponTemplateSet( INI* ini, const ThingTemplate* t
 
 	ini->initFromINI(this, myFieldParse);
 	this->m_thingTemplate = tt;
+	
+	//MODDD - since there isn't a 'validate' method to call like 'thingTemplate->validate()' in ThingFactory.cpp,
+	// handle post-processing here
+	validateAutoChooseSources();
 }
 
 //-------------------------------------------------------------------------------------------------
 Bool WeaponTemplateSet::testWeaponSetFlag( WeaponSetType wst ) const
 {
 	return m_types.test( wst );
+}
+
+//MODDD - check for a small issue in INI setup I noticed across some mods where no weapon allows the player to use it
+// for attacking by clicking on something, even though that's clearly the intent.
+// If several checks are passed, the PLAYER source is added to the auto-choose sources.
+// Note that a weapon lacking an 'AutoChooseSources' specification in the INI implies everything (no need for this change).
+void WeaponTemplateSet::validateAutoChooseSources()
+{
+	int i;
+	if (m_template[PRIMARY_WEAPON] == nullptr)
+	{
+		// If no primary weapon is specified, not attacking on left-click is most likely intentional - stop here
+		return;
+	}
+
+	// the primary auto-choose mask must have at least the AI bit
+	if (!(m_autoChooseMask[PRIMARY_WEAPON] & (1 << CMD_FROM_AI)))
+	{
+		return;
+	}
+
+	CommandSourceMask forbiddenChooseMask = (
+		(1 << CMD_FROM_PLAYER) |
+		(1 << CMD_DEFAULT_SWITCH_WEAPON)
+	);
+
+	// If any weapon has PLAYER or DEFAULT auto-choose sources, no need for this check to continue
+	for (i = 0; i < WEAPONSLOT_COUNT; ++i)
+	{
+		if (m_template[i] == nullptr)
+		{
+			// No weapon for this slot. Exclude from the check since the default 'm_autoChooseMask' of all-bits (includes
+			// forbidden bits) wouldn't be meaningful.
+			continue;
+		}
+
+		CommandSourceMask thisWeapAutoChooseMask = m_autoChooseMask[i];
+		if (thisWeapAutoChooseMask & forbiddenChooseMask)
+		{
+			return;
+		}
+	}
+
+	// Passed - add
+	m_autoChooseMask[PRIMARY_WEAPON] |= (1 << CMD_FROM_PLAYER);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -321,9 +373,31 @@ void WeaponSet::updateWeaponSet(const Object* obj)
 	{
 		if( ! set->isWeaponLockSharedAcrossSets() )
 		{
-			DEBUG_ASSERTLOG(!isCurWeaponLocked(), ("changing WeaponSet while Weapon is Locked... implicit unlock occurring!"));
-			releaseWeaponLock(LOCKED_PERMANENTLY);	// release all locks. sorry!
-			m_curWeapon = PRIMARY_WEAPON;
+			//MODDD - check 'obj->getLockWeaponCreate()'.
+			// If the object has that module, maintain the current locked weapon instead of releasing it and changing the
+			// current weapon to primary.
+			LockWeaponCreate* lockWeaponCreate = obj->getLockWeaponCreate();
+			if ( lockWeaponCreate )
+			{
+				if (getCurWeaponLockType() != LOCKED_PERMANENTLY)
+				{
+					// Set the current weapon back to what it was during init if it's not locked.
+					// Doubt this realistically ever happens since the user doesn't typically have a way to set weapons from the
+					// starting PERMANENT state (given having 'LockWeaponCreate') down to TEMPORARY or NOT.
+					// Also, the condition above goes through TEMPORARY locks. Not sure if that's ever an issue if this point is
+					// ever reached anyway.
+					setWeaponLock(lockWeaponCreate->getWeaponSlotToLock(), LOCKED_PERMANENTLY);
+				}
+				// Otherwise (locked), nothing happens, as if 'WeaponLockSharedAcrossSets' were true:
+				// preserve lock status, keep the weapon unchanged.
+			}
+			else
+			{
+				// as-is block (including assert statement)
+				DEBUG_ASSERTLOG(!isCurWeaponLocked(), ("changing WeaponSet while Weapon is Locked... implicit unlock occurring!"));
+				releaseWeaponLock(LOCKED_PERMANENTLY);	// release all locks. sorry!
+				m_curWeapon = PRIMARY_WEAPON;
+			}
 		}
 		m_filledWeaponSlotMask = 0;
 		m_totalAntiMask = 0;
@@ -618,7 +692,8 @@ CanAttackResult WeaponSet::getAbleToAttackSpecificObject( AbleToAttackType attac
 //supports both victim or position.
 CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType attackType, const Object *source, const Object *victim, const Coord3D *pos, CommandSourceType commandSource, WeaponSlotType specificSlot ) const
 {
-
+	//MODDD - NOTE - weapon selection point of interest
+	
 	//First determine if we are attacking an object or the ground and get the
 	//appropriate weapon anti mask.
 	WeaponAntiMaskType targetAntiMask;
@@ -693,10 +768,10 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 				CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
 				if( ( okSrcs & (1 << commandSource) ) == 0 )
 				{
-						if( !( okSrcs & (1 << CMD_DEFAULT_SWITCH_WEAPON) ) )
-						{
-							continue;
-						}
+					if( !( okSrcs & (1 << CMD_DEFAULT_SWITCH_WEAPON) ) )
+					{
+						continue;
+					}
 				}
 			}
 			// ---
@@ -756,15 +831,32 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 			return ATTACKRESULT_INVALID_SHOT;
 
 		Int first, last;
-		if( isCurWeaponLocked() )
+
+		//MODDD - idea: if this call comes from the player, allow overriding a temporary lock and check all weapons.
+		Bool extraPlayerCmdOverride = (commandSource == CMD_FROM_PLAYER && m_curWeaponLockedStatus != LOCKED_PERMANENTLY);
+		// new setting to make the intent clear
+		Bool checkCmdSource = TRUE;
+		Bool skipCmdSourceCheckForCurrentWeapon = FALSE;
+
+		//MODDD
+		if (extraPlayerCmdOverride)
+		{
+			first = WEAPONSLOT_COUNT - 1;
+			last = PRIMARY_WEAPON;
+			// if the weapon is locked at all, skip the CMD check to work as usual for locked weapons
+			skipCmdSourceCheckForCurrentWeapon = isCurWeaponLocked();
+		}
+		else if( isCurWeaponLocked() )
 		{
 			first = m_curWeapon;
 			last = m_curWeapon;
+			checkCmdSource = FALSE;
 		}
 		else if( specificSlot != (WeaponSlotType)-1 )
 		{
 			first = specificSlot;
 			last = specificSlot;
+			checkCmdSource = FALSE;
 		}
 		else
 		{
@@ -791,15 +883,16 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 			// snipe refuses to be ordered on anything).
 			// UPDATE - added back with new check, yadda yadda
 			// ---
-			if (specificSlot == ANY_WEAPON && m_curWeaponLockedStatus != LOCKED_PERMANENTLY)
+			//if (specificSlot == ANY_WEAPON && m_curWeaponLockedStatus != LOCKED_PERMANENTLY)
+			if (checkCmdSource && !(skipCmdSourceCheckForCurrentWeapon && i == m_curWeapon))
 			{
 				CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
 				if( ( okSrcs & (1 << commandSource) ) == 0 )
 				{
-						if( !( okSrcs & (1 << CMD_DEFAULT_SWITCH_WEAPON) ) )
-						{
-							continue;
-						}
+					if( !( okSrcs & (1 << CMD_DEFAULT_SWITCH_WEAPON) ) )
+					{
+						continue;
+					}
 				}
 			}
 			// ---
@@ -870,6 +963,8 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 //-------------------------------------------------------------------------------------------------
 Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victim, WeaponChoiceCriteria criteria, CommandSourceType cmdSource)
 {
+	//MODDD - NOTE - weapon selection point of interest
+
 	/*
 		1) The first criteria is weapon fitness.  If the object has two weapons that can fire concurrently,
 			find the set of weapons that can hit the given target.  If two weapons can hit the given target,
