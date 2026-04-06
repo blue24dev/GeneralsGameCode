@@ -640,6 +640,13 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			// issue command for either single object or for selected group
 			if( currentlySelectedGroup )
 			{
+				//MODDD - this is a band-aid fix for button -> abilities not working if a weapon is selected by permanent lock,
+				// such as a unit having both swappable weapon buttons (scud launcher, ranger) and single-click abilities (click
+				// the button & something in-game to use it, not persistent - burton knife, the ProGen mod's red guard bayonet).
+				//MODDD - TODO - being able to bypass a permanent lock to do the ability but restore the permanent lock & weapon
+				// at the time  when the ability is finished should work.
+				currentlySelectedGroup->releaseWeaponLockForGroup(LOCKED_PERMANENTLY);	
+
 					// lock it just till the weapon is empty or the attack is "done"
 				if (currentlySelectedGroup->setWeaponLockForGroup( weaponSlot, LOCKED_TEMPORARILY ))
 					currentlySelectedGroup->groupAttackObject( targetObject, maxShotsToFire, CMD_FROM_PLAYER );
@@ -941,6 +948,9 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			GuardMode gm = (GuardMode)msg->getArgument( 1 )->integer;
 			if (currentlySelectedGroup)
 			{
+				//MODDD - break temporary locks on player commands
+				currentlySelectedGroup->releaseWeaponLockForGroup(LOCKED_TEMPORARILY);
+
 				currentlySelectedGroup->groupGuardPosition(&loc, gm, CMD_FROM_PLAYER);
 			}
 
@@ -957,6 +967,10 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			GuardMode gm = (GuardMode)msg->getArgument( 1 )->integer;
 			if (currentlySelectedGroup)
 			{
+				//MODDD - break temporary locks on player commands
+				// (not sure how this command is ever triggered though, all I know is guard button -> clicking in-game registers on the ground always)
+				currentlySelectedGroup->releaseWeaponLockForGroup(LOCKED_TEMPORARILY);
+
 				currentlySelectedGroup->groupGuardObject(obj, gm, CMD_FROM_PLAYER);
 			}
 
@@ -968,6 +982,9 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 		{
 			if (currentlySelectedGroup)
 			{
+				//MODDD - break temporary locks on player commands
+				currentlySelectedGroup->releaseWeaponLockForGroup(LOCKED_TEMPORARILY);
+
 				currentlySelectedGroup->groupIdle(CMD_FROM_PLAYER);
 			}
 
@@ -979,6 +996,9 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 		{
 			if (currentlySelectedGroup)
 			{
+				//MODDD - break temporary locks on player commands
+				currentlySelectedGroup->releaseWeaponLockForGroup(LOCKED_TEMPORARILY);
+
 				currentlySelectedGroup->groupScatter(CMD_FROM_PLAYER);
 			}
 
@@ -1390,6 +1410,8 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 				//      the new lock. In this case, the temp lock attempt will fail whenever
 				//      a permanent lock is in effect, thus fixing the ranger and scud and
 				//      allowing the tox tractor to work as well.
+				//MODDD - it appears the fix mentioned below isn't needed since other changes mostly in WeaponSet.cpp
+				/*
 				Bool forceAttackRequiresPrimaryWeapon = !currentlySelectedGroup->isIdle();
 				if ( forceAttackRequiresPrimaryWeapon )
 				{
@@ -1403,7 +1425,11 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 					currentlySelectedGroup->releaseWeaponLockForGroup(LOCKED_TEMPORARILY);
 					currentlySelectedGroup->groupAttackPosition( pos, NO_MAX_SHOTS_LIMIT, CMD_FROM_PLAYER );
 				}
-
+				*/
+				// ---
+				currentlySelectedGroup->releaseWeaponLockForGroup(LOCKED_TEMPORARILY);
+				currentlySelectedGroup->groupAttackPosition( pos, NO_MAX_SHOTS_LIMIT, CMD_FROM_PLAYER );
+				// ---
 
 			}
 
