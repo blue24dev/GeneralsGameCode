@@ -61,9 +61,15 @@ public:
 	LockWeaponCreate( Thing *thing, const ModuleData* moduleData );
 	// virtual destructor prototype provided by memory pool declaration
 
+	//MODDD
+	virtual LockWeaponCreate* getLockWeaponCreate() override { return this; }
+
 	/// the create method
 	virtual void onCreate() override;
 	virtual void onBuildComplete() override;	///< This is called when you are a finished game object
+
+	//MODDD
+	WeaponSlotType getWeaponSlotToLock() const;
 
 protected:
 

@@ -1245,6 +1245,7 @@ static Bool cannotPossiblyAttackObject( State *thisState, void* userData )
 			return TRUE;
 		}
 
+		//MODDD - NOTE - weapon selection point of interest
 		//MODDD - new block. If the weapon is locked, only the current one should be tested.
 		// If 'specificSlot' is more specific than 'ANY_WEAPON', the since-added cmd-source check in'
 		// 'WeaponSet::getAbleToUseWeaponAgainstTarget' is skipped.

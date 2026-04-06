@@ -93,6 +93,12 @@ void LockWeaponCreate::onBuildComplete()
 	me->setWeaponLock( slot, LOCKED_PERMANENTLY );
 }
 
+//MODDD
+WeaponSlotType LockWeaponCreate::getWeaponSlotToLock() const
+{
+	return getLockWeaponCreateModuleData()->m_slotToLock;
+}
+
 // ------------------------------------------------------------------------------------------------
 /** CRC */
 // ------------------------------------------------------------------------------------------------

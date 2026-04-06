@@ -321,6 +321,13 @@ public:
 	*/
 	const char* reverseFind(char c) const;
 
+	//MODDD - overload for finding a string - strstr().
+	// Could do overloads that take 'AsciiString' instead, but this is mainly for lazy debugging checks on a whim.
+	// And note that there isn't a such thing as 'strrstr' for reverse-search in the C library, not that I need that.
+	const char* find(const char* p) const;
+	//MODDD - Also, 'contains' for a yes/no answer, and this is a name I'm likely to expect
+	Bool contains(const char* p) const;
+
 	/**
 		return true iff self starts with the given string.
 	*/
@@ -521,6 +528,17 @@ inline const char* AsciiString::find(char c) const
 inline const char* AsciiString::reverseFind(char c) const
 {
 	return strrchr(this->str(), c);
+}
+
+//MODDD
+inline const char* AsciiString::find(const char* p) const
+{
+	return strstr(this->str(), p);
+}
+//MODDD
+inline Bool AsciiString::contains(const char* p) const
+{
+	return (strstr(this->str(), p) != nullptr);
 }
 
 // -----------------------------------------------------
