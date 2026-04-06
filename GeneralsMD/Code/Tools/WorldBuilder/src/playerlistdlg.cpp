@@ -621,7 +621,7 @@ BOOL PlayerListDlg::OnInitDialog()
 		item->DestroyWindow();
 	}
 
-	//MODDD
+	//MODDD - new location
 	PopulateColorComboBox();
 
 	updateTheUI();
@@ -640,7 +640,10 @@ void PlayerListDlg::OnDblclkPlayers()
 void PlayerListDlg::OnColorPress()
 {
 	Dict *playerDict = m_sides.getSideInfo(m_curPlayerIdx)->getDict();
-	CColorDialog dlg;
+
+	//MODDD - start with the color dialog set to the current color
+	//CColorDialog dlg;
+	CColorDialog dlg(CButtonShowColor::RGBtoBGR(m_colorButton.getColor().getAsInt()));
 	if (dlg.DoModal() == IDOK) {
 		m_colorButton.setColor(CButtonShowColor::BGRtoRGB(dlg.GetColor()));
 		RGBColor color = m_colorButton.getColor();
