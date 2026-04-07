@@ -1669,8 +1669,12 @@ void ThingTemplate::makeNonCivilianGarrisonableStructureCapturableHack()
 	{
 		return;
 	}
-	
-	if (this->isKindOf(KINDOF_GARRISONABLE_UNTIL_DESTROYED) && this->isKindOf(KINDOF_IMMUNE_TO_CAPTURE))
+
+	// The palace has 'GARRISONABLE_UNTIL_DESTROYED', but the internet center doesn't - can't depend on that flag.
+	// Fine to only check for 'IMMUNE_TO_CAPTURE'. Civilian buildings are uncapturable through a different way, see
+	// 'ActionManager::canCaptureBuilding': having a garrison contain module with an original team (including its default
+	// state at the start of the game) that isn't enemies with the player makes it uncapturable.
+	if (this->isKindOf(KINDOF_IMMUNE_TO_CAPTURE))
 	{
 		m_kindof.set(KINDOF_IMMUNE_TO_CAPTURE, 0);
 		// While we're at it, add the CAPTURABLE flag if it's missing.

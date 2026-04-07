@@ -590,11 +590,44 @@ Bool TransportContain::isSpecificRiderFreeToExit(Object* specificObject)
 		return FALSE;
 
 #if !RETAIL_COMPATIBLE_CRC
+	//MODDD - I disagree with this change, I think it should be handled differently.
+	// I think the intent is to disallow evacuating something if it's already contained by something else
+	// Ex: a humvee in a chinook shouldn't be able to evacuate infantry -> require the humvee to be outside the chinook first.
+	// However, this breaks retail overlord bunker evacuation. Buttons to evacuate are ignored because the infantry's container,
+	// the overlord bunker, is considered 'DISABLED_HELD' - visually, it's more of an extension of the overlord instead of
+	// something garrisoned inside.
+	// And, there is a crash on other changes to make internet centers capturable with hackers inside (kicks them out on capture).
+	// In short, it's because the AI command to evacuate is deferred by the hacker's 'HackInternetAIUpdate'' deferring the
+	// command to evacuate to one frame later, but the capture forces evacuation to happen immediately separately -> AI
+	// command to evacuate is run when the hacker has already left.
+	// Detailed version:
+	// Internet center's 'Object::defect' is called
+	// 	 'Object::setOrRestoreTeam'
+	//   'Object::onCapture'
+	// 'TransportContain::onCapture' is called for each garrisoned hacker -> calls 'orderAllPassengersToExit' (use AI commands to signal for each unit to leave)
+	//   'HackInternetAIUpdate::aiDoCommand' is reached -> m_pendingCommand.store(*parms) (as opposed to immediately applying the 'AIExitState' (evacuate) like most things would)
+	// Back in the rest of 'Object::defect' for the internet center:
+	//   The internet center's 'OpenContain::removeAllContained' is called (immediate evacuation skipping the AI command way of 'orderAllPassengersToExit')
+	//   Reaches the hacker's 'Object::onRemovedFrom' which makes 'm_containedBy' null (evacuated immediately)
+	// Then the next frame, the hacker's 'HackInternetAIUpdate::update()' runs -> aiDoCommand(&parms) ('parms' is made from 'm_pendingCommand' set previously)
+	//   Runs the deferred 'AIExitState' (evacuate)
+	//   'AIExitState::update' -> calls 'goalExitInterface->reserveDoorForExit'
+	//   'TransportContain::reserveDoorForExit'
+	//   'TransportContain::isSpecificRiderFreeToExit' 
+	//   'm_containedBy' is null because the hacker was already immediately evacuated the previous frame.
+	// ------------
+	//MODDD - TODO - would some additional checks on the 'getContainedBy()->getContainedBy()' be a good idea?
+	// Also consider either checking for 'getContainedBy()' being null, or replacing it with 'getObject()' (obj for this
+	// module) in case of the scenario above, though I added a sanity check to 'AIExitState::onEnter' (stop if the hacker
+	// doesn't have a 'contained-by').
+	// It would be helpful to know where the original fix made an (intentional) difference.
+	/*
 	// TheSuperHackers @bugfix Stubbjax 02/03/2026 If our parent container is held, then we
 	// are not free to exit.
 	DEBUG_ASSERTCRASH(specificObject->getContainedBy(), ("rider must be contained"));
 	if (specificObject->getContainedBy()->isDisabledByType(DISABLED_HELD))
 		return FALSE;
+	*/
 #endif
 
   // I can always kick people out if I am in the air, I know what I'm doing

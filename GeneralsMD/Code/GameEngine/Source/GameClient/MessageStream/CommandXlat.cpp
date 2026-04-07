@@ -325,7 +325,8 @@ static CanAttackResult canObjectForceAttack( Object *obj, const Object *victim, 
 
 	if (victim)
 	{
-		result = obj->getAbleToAttackSpecificObject(ATTACK_NEW_TARGET_FORCED, victim, CMD_FROM_PLAYER );
+		//MODDD - added 2 args
+		result = obj->getAbleToAttackSpecificObject(ATTACK_NEW_TARGET_FORCED, victim, CMD_FROM_PLAYER, ANY_WEAPON, TRUE );
 
 		//Special case -- objects with spawn weapons have to do different checks. Stinger site with stinger soldiers is
 		//the catalyst example.
@@ -340,7 +341,8 @@ static CanAttackResult canObjectForceAttack( Object *obj, const Object *victim, 
 				  Object *slave = spawnInterface->getClosestSlave( victim->getPosition() );
 				  if( slave )
 				  {
-					  result = slave->getAbleToAttackSpecificObject( ATTACK_NEW_TARGET_FORCED, victim, CMD_FROM_PLAYER );
+						//MODDD - added 2 args
+					  result = slave->getAbleToAttackSpecificObject( ATTACK_NEW_TARGET_FORCED, victim, CMD_FROM_PLAYER, ANY_WEAPON, TRUE );
 				  }
 			  }
 		  }
@@ -352,7 +354,8 @@ static CanAttackResult canObjectForceAttack( Object *obj, const Object *victim, 
           Object *rider = contain->getClosestRider( victim->getPosition() );
           if ( rider )
           {
-            result = rider->getAbleToAttackSpecificObject( ATTACK_NEW_TARGET_FORCED, victim, CMD_FROM_PLAYER );
+						//MODDD - added 2 args
+            result = rider->getAbleToAttackSpecificObject( ATTACK_NEW_TARGET_FORCED, victim, CMD_FROM_PLAYER, ANY_WEAPON, TRUE );
             if( result != ATTACKRESULT_NOT_POSSIBLE )
               return result;
           }
@@ -387,7 +390,8 @@ static CanAttackResult canObjectForceAttack( Object *obj, const Object *victim, 
 				}
         else
         {
-    			result = obj->getAbleToUseWeaponAgainstTarget( ATTACK_NEW_TARGET, nullptr, pos, CMD_FROM_PLAYER );
+					//MODDD - added 2 args
+    			result = obj->getAbleToUseWeaponAgainstTarget( ATTACK_NEW_TARGET, nullptr, pos, CMD_FROM_PLAYER, ANY_WEAPON, TRUE );
           if( result != ATTACKRESULT_POSSIBLE ) // oh dear me. The weird case of a garrisoncontainer being a KINDOF_SPAWNS_ARE_THE_WEAPONS... the AmericaBuildingFirebase
           {
             ContainModuleInterface *contain = obj->getContain();
@@ -401,7 +405,8 @@ static CanAttackResult canObjectForceAttack( Object *obj, const Object *victim, 
         }
 			}
 			//Now evaluate the testObj again to see if it is capable of force attacking the pos.
-			result = testObj->getAbleToUseWeaponAgainstTarget( ATTACK_NEW_TARGET, nullptr, pos, CMD_FROM_PLAYER );
+			//MODDD - added 2 args
+			result = testObj->getAbleToUseWeaponAgainstTarget( ATTACK_NEW_TARGET, nullptr, pos, CMD_FROM_PLAYER, ANY_WEAPON, TRUE );
 			return result;
 		}
 	}

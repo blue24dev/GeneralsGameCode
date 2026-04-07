@@ -548,7 +548,8 @@ Bool WeaponSet::isAnyWithinTargetPitch(const Object* obj, const Object* victim) 
 }
 
 //-------------------------------------------------------------------------------------------------
-CanAttackResult WeaponSet::getAbleToAttackSpecificObject( AbleToAttackType attackType, const Object* source, const Object* victim, CommandSourceType commandSource, WeaponSlotType specificSlot ) const
+//MODDD - new param 'broadCheck'
+CanAttackResult WeaponSet::getAbleToAttackSpecificObject( AbleToAttackType attackType, const Object* source, const Object* victim, CommandSourceType commandSource, WeaponSlotType specificSlot, Bool broadCheck ) const
 {
 
 	// basic sanity checks.
@@ -699,17 +700,26 @@ CanAttackResult WeaponSet::getAbleToAttackSpecificObject( AbleToAttackType attac
 	}
 
 	//Check if the shot itself is valid!
-	return getAbleToUseWeaponAgainstTarget( attackType, source, victim, victim->getPosition(), commandSource, specificSlot );
+	//MODDD - pass arg 'broadCheck'
+	return getAbleToUseWeaponAgainstTarget( attackType, source, victim, victim->getPosition(), commandSource, specificSlot, broadCheck );
 }
 
 //-------------------------------------------------------------------------------------------------
 //This is formerly the 2nd half of getAbleToAttackSpecificObject
 //This function is responsible for determining if our object is physically capable of attacking the target and it
 //supports both victim or position.
-CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType attackType, const Object *source, const Object *victim, const Coord3D *pos, CommandSourceType commandSource, WeaponSlotType specificSlot ) const
+//MODDD - new param 'broadCheck' to ignore locks and check all weapons anyway. This can be set to 'true' for on-hover
+// events checking whether a general left-click on an enemy unit should work since some weapon is available, not just
+// give up because some other ability is in progress (ex: toxin tractor's toxin sprayer is being used -> wouldn't bother
+// to check if the primary toxin attack would work because of the temporary lock).
+// Checking for a 'commandSource' of 'FROM_PLAYER' would be nice, but it can come from other automatic places that are just
+// re-sending the initial cmd-source value (not for on-hover hints or player commands that should be the only things
+// overriding lock restrictions on wepaon checks).
+// Note that on-hover events for clicking to fire a specific weapon somewhere shouldn't use 'broadCheck' - some other weapon
+// that the one provided passing wouldn't be relevant.
+CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType attackType, const Object *source, const Object *victim, const Coord3D *pos, CommandSourceType commandSource, WeaponSlotType specificSlot, Bool broadCheck ) const
 {
 	//MODDD - NOTE - weapon selection point of interest
-	
 	//First determine if we are attacking an object or the ground and get the
 	//appropriate weapon anti mask.
 	WeaponAntiMaskType targetAntiMask;
@@ -733,6 +743,7 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 	Int first, last;
 
 	//MODDD
+	/*
 	// Still require 'specificSlot == ANY_WEAPON' because allowing other weapons to pass / require a cmd-source check when
 	// the the player is testing if a weapon works from a 'use weapon on target' button isn't good.
 	Bool normalCmdOverride = (specificSlot == ANY_WEAPON && m_curWeaponLockedStatus != LOCKED_PERMANENTLY);
@@ -741,38 +752,58 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 	// it can change to the normal weapon to do that.
 	Bool extraPlayerCmdOverride = (normalCmdOverride && commandSource == CMD_FROM_PLAYER);
 	// new setting to make the intent clear
+	*/
 	Bool checkCmdSource = TRUE;
 	//Bool skipCmdSourceCheckForCurrentWeapon = FALSE;
+	// 'ANY_WEAPON' means none, here
+	WeaponSlotType weaponToSkipCmdSourceCheck = ANY_WEAPON;
 
+	/*
 	if (normalCmdOverride)
 	{
 		checkCmdSource = FALSE;
 	}
+	*/
 
 	//MODDD
-	if (extraPlayerCmdOverride)
+	if (broadCheck)
 	{
 		first = WEAPONSLOT_COUNT - 1;
 		last = PRIMARY_WEAPON;
-		// if the weapon is locked at all, skip the CMD check to work as usual for locked weapons
-		//skipCmdSourceCheckForCurrentWeapon = isCurWeaponLocked();
-	}
-	else if( isCurWeaponLocked() )
-	{
-		first = m_curWeapon;
-		last = m_curWeapon;
-		checkCmdSource = FALSE;
-	}
-	else if( specificSlot != (WeaponSlotType)-1 )
-	{
-		first = specificSlot;
-		last = specificSlot;
-		checkCmdSource = FALSE;
+		if( specificSlot != (WeaponSlotType)-1 )
+		{
+			// exclude checks for the given specific slot
+			weaponToSkipCmdSourceCheck = specificSlot;
+		}
+		else if (isCurWeaponLocked())
+		{
+			// if the weapon is locked at all, skip the CMD check to work as usual for locked weapons
+			weaponToSkipCmdSourceCheck = m_curWeapon;
+		}
 	}
 	else
 	{
-		first = WEAPONSLOT_COUNT - 1;
-		last = PRIMARY_WEAPON;
+		//MODDD - swapped the 'isCurWeaponLocked' and 'specificSlot' condition-block pairs so that specifying a non-any
+		// 'specificSlot' takes precedence over being locked. 'specificSlot' tends to be provided by places checking to see
+		// if a weapon is possible like on-hover events, so using the locked weapon anyway won't work.
+
+		if( specificSlot != (WeaponSlotType)-1 )
+		{
+			first = specificSlot;
+			last = specificSlot;
+			checkCmdSource = FALSE;
+		}
+		else if( isCurWeaponLocked() )
+		{
+			first = m_curWeapon;
+			last = m_curWeapon;
+			checkCmdSource = FALSE;
+		}
+		else
+		{
+			first = WEAPONSLOT_COUNT - 1;
+			last = PRIMARY_WEAPON;
+		}
 	}
 	// ---
 
@@ -830,7 +861,7 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 			// See a related change in AIStates.cpp, 'cannotPossiblyAttackObject', so that only the intended weapon is tested
 			// here if the weapon is any kind of locked.
 			// ---
-			if (checkCmdSource)
+			if (checkCmdSource && !(weaponToSkipCmdSourceCheck == i))
 			{
 				CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
 				if( ( okSrcs & (1 << commandSource) ) == 0 )
@@ -919,7 +950,7 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 			// UPDATE - added back with new check, yadda yadda
 			// ---
 			//if (specificSlot == ANY_WEAPON && m_curWeaponLockedStatus != LOCKED_PERMANENTLY)
-			if (checkCmdSource /*&& !(skipCmdSourceCheckForCurrentWeapon && i == m_curWeapon)*/)
+			if (checkCmdSource && !(weaponToSkipCmdSourceCheck == i))
 			{
 				CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
 				if( ( okSrcs & (1 << commandSource) ) == 0 )
@@ -962,7 +993,8 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 				Object* garrisonedMember = *it;
 				if( garrisonedMember->isAbleToAttack() )
 				{
-					CanAttackResult result = garrisonedMember->getAbleToUseWeaponAgainstTarget( attackType, victim, pos, commandSource );
+					//MODDD - passing 'specificSlot' and 'broadCheck'
+					CanAttackResult result = garrisonedMember->getAbleToUseWeaponAgainstTarget( attackType, victim, pos, commandSource, specificSlot, broadCheck );
 					if( result == ATTACKRESULT_POSSIBLE || result == ATTACKRESULT_POSSIBLE_AFTER_MOVING )
 					{
 						return result;
@@ -999,7 +1031,6 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victim, WeaponChoiceCriteria criteria, CommandSourceType cmdSource)
 {
 	//MODDD - NOTE - weapon selection point of interest
-
 	/*
 		1) The first criteria is weapon fitness.  If the object has two weapons that can fire concurrently,
 			find the set of weapons that can hit the given target.  If two weapons can hit the given target,
