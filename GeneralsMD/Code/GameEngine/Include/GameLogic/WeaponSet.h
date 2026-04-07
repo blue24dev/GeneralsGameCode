@@ -215,6 +215,9 @@ private:
 	Bool											m_hasPitchLimit;
 	Bool											m_hasDamageWeapon;
 
+	//MODDD
+	WeaponSlotType m_weaponDuringPermanentLock;
+
 	Bool isAnyWithinTargetPitch(const Object* obj, const Object* victim) const;
 
 protected:
@@ -246,9 +249,16 @@ public:
 	Weapon* findWaypointFollowingCapableWeapon();
 	const Weapon* findAmmoPipShowingWeapon() const;
 	void weaponSetOnWeaponBonusChange(const Object *source);
+
+	//MODDD
+	void onDoWeaponCommand(const Object *source);
+
 	UnsignedInt getMostPercentReadyToFireAnyWeapon() const;
 	//MODDD - changing return type to 'CommandSourceMask'
 	inline CommandSourceMask getNthCommandSourceMask( WeaponSlotType n ) const { return m_curWeaponTemplateSet ? m_curWeaponTemplateSet->getNthCommandSourceMask( n ) : 0; }
+
+	//MODDD - new
+	Bool canSetWeaponLock( WeaponSlotType weaponSlot, WeaponLockType lockType );
 
 	Bool setWeaponLock( WeaponSlotType weaponSlot, WeaponLockType lockType );
 	void releaseWeaponLock(WeaponLockType lockType);

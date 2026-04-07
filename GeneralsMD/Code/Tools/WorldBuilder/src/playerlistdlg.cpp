@@ -729,7 +729,10 @@ void PlayerListDlg::OnSelectPlayerColor()
 	updateTheUI();
 }
 
-void PlayerListDlg::OnSelchangeAllieslist()
+//MODDD - turned 'OnSelchangeAllieslist' into a utility for both 'OnSelchangeAllieslist' and 'OnSelchangeEnemieslist' to call.
+// This allows clicking a side/player in the 'enemy' list to de-select that side in the 'ally' list if it was selected there.
+// As-is, that click would appear to be ignored.
+void PlayerListDlg::OnSelChangeRelationshipList(RelationshipListType relationshipListUpdated)
 {
 	Dict *playerDict = m_sides.getSideInfo(m_curPlayerIdx)->getDict();
 	AsciiString pname = playerDict->getAsciiString(TheKey_playerName);
@@ -743,7 +746,18 @@ void PlayerListDlg::OnSelchangeAllieslist()
 	CListBox *enemieslist = (CListBox*)GetDlgItem(IDC_ENEMIESLIST);
 	AsciiString enemies = extractFromAlliesList(enemieslist, m_sides);
 
-	enemies = removeDupsFromEnemies(allies, enemies);
+	//MODDD - check for the new param
+	if (relationshipListUpdated == ALLIES_RELATIONSHIP_LIST)
+	{
+		// remove enemies that are now in the allies list
+		// or, making a player an ally that's in the enemies list removes it from the enemies list
+		enemies = removeDupsFromEnemies(allies, enemies);
+	}
+	else
+	{
+		// vice versa
+		allies = removeDupsFromEnemies(enemies, allies);
+	}
 
 	m_sides.getSideInfo(m_curPlayerIdx)->getDict()->setAsciiString(TheKey_playerAllies, allies);
 	m_sides.getSideInfo(m_curPlayerIdx)->getDict()->setAsciiString(TheKey_playerEnemies, enemies);
@@ -751,9 +765,18 @@ void PlayerListDlg::OnSelchangeAllieslist()
 	updateTheUI();
 }
 
+void PlayerListDlg::OnSelchangeAllieslist()
+{
+	//MODDD
+	// <contents used as the basis for 'OnSelChangeRelationshipList'>
+	OnSelChangeRelationshipList(ALLIES_RELATIONSHIP_LIST);
+}
+
 void PlayerListDlg::OnSelchangeEnemieslist()
 {
-	OnSelchangeAllieslist();
+	//MODDD
+	//OnSelchangeAllieslist();
+	OnSelChangeRelationshipList(ENEMIES_RELATIONSHIP_LIST);
 }
 
 void PlayerListDlg::OnOK()

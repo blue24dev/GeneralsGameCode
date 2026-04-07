@@ -237,6 +237,9 @@ WeaponSet::WeaponSet()
 	m_hasDamageWeapon = false;
 	for (Int i = 0; i < WEAPONSLOT_COUNT; ++i)
 		m_weapons[i] = nullptr;
+
+	//MODDD - also, 'ANY_WEAPON' will be treated as the 'empty' choice
+	m_weaponDuringPermanentLock = ANY_WEAPON;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -514,6 +517,19 @@ void WeaponSet::weaponSetOnWeaponBonusChange(const Object *source)
 	}
 }
 
+//MODDD - event when the user issues a command that makes a unit fire a particular weapon, usually about to set a
+// temporary lock. This can clash with permanently locked weapons (ex: manually switchable by button such as scud
+// launchers in retail). An idea is to remember the permanently locked weapon at the time, release that lock,
+// do the intended weapon under the new temporary lock, and restore the permanently lock & weapon at that time when done.
+void WeaponSet::onDoWeaponCommand(const Object *source)
+{
+	if (m_curWeaponLockedStatus == LOCKED_PERMANENTLY)
+	{
+		releaseWeaponLock(LOCKED_PERMANENTLY);	
+		m_weaponDuringPermanentLock = m_curWeapon;
+	}
+}
+
 //-------------------------------------------------------------------------------------------------
 Bool WeaponSet::isAnyWithinTargetPitch(const Object* obj, const Object* victim) const
 {
@@ -712,6 +728,55 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 	}
 
 
+	//MODDD - block moved from below so this is available earlier. Other changes since too.
+	// ---
+	Int first, last;
+
+	//MODDD
+	// Still require 'specificSlot == ANY_WEAPON' because allowing other weapons to pass / require a cmd-source check when
+	// the the player is testing if a weapon works from a 'use weapon on target' button isn't good.
+	Bool normalCmdOverride = (specificSlot == ANY_WEAPON && m_curWeaponLockedStatus != LOCKED_PERMANENTLY);
+	// Idea: if this call comes from the player, allow overriding a temporary lock and check all weapons.
+	// This is mainly to allow overriding a toxin trackor usings its toxin spray ability with left-clicking an enemy, since
+	// it can change to the normal weapon to do that.
+	Bool extraPlayerCmdOverride = (normalCmdOverride && commandSource == CMD_FROM_PLAYER);
+	// new setting to make the intent clear
+	Bool checkCmdSource = TRUE;
+	//Bool skipCmdSourceCheckForCurrentWeapon = FALSE;
+
+	if (normalCmdOverride)
+	{
+		checkCmdSource = FALSE;
+	}
+
+	//MODDD
+	if (extraPlayerCmdOverride)
+	{
+		first = WEAPONSLOT_COUNT - 1;
+		last = PRIMARY_WEAPON;
+		// if the weapon is locked at all, skip the CMD check to work as usual for locked weapons
+		//skipCmdSourceCheckForCurrentWeapon = isCurWeaponLocked();
+	}
+	else if( isCurWeaponLocked() )
+	{
+		first = m_curWeapon;
+		last = m_curWeapon;
+		checkCmdSource = FALSE;
+	}
+	else if( specificSlot != (WeaponSlotType)-1 )
+	{
+		first = specificSlot;
+		last = specificSlot;
+		checkCmdSource = FALSE;
+	}
+	else
+	{
+		first = WEAPONSLOT_COUNT - 1;
+		last = PRIMARY_WEAPON;
+	}
+	// ---
+
+
 	// Special Case test for turreted weapons on buildings... since they cannot move, they must be within range of target
 	//Kris: Actually -- let's just do this for all immobile objects. If we can give it orders to attack, then we must check
 	// the range anyways. This will also fix stinger soldiers.
@@ -732,7 +797,9 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 	Bool hasAWeaponInRange = FALSE;
 	Bool hasAWeapon				 = FALSE;
 	//MODDD - renamed 'slot' to 'i', just be consistent.
-	for (Int i = 0; i < WEAPONSLOT_COUNT - 1; ++i)
+	//MODDD - involving the range from above now that that's available
+	//for (Int i = 0; i < WEAPONSLOT_COUNT - 1; ++i)
+	for( Int i = first; i >= last ; --i )
 	{
 		//MODDD - DANGIT WESTWOOD!     YA DUN GOOFED
 		// You checked the same 'curWeapon' 3 times instead of each available weapon!
@@ -830,39 +897,7 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 		if (!isAnyWithinTargetPitch(source, victim))
 			return ATTACKRESULT_INVALID_SHOT;
 
-		Int first, last;
-
-		//MODDD - idea: if this call comes from the player, allow overriding a temporary lock and check all weapons.
-		Bool extraPlayerCmdOverride = (commandSource == CMD_FROM_PLAYER && m_curWeaponLockedStatus != LOCKED_PERMANENTLY);
-		// new setting to make the intent clear
-		Bool checkCmdSource = TRUE;
-		Bool skipCmdSourceCheckForCurrentWeapon = FALSE;
-
-		//MODDD
-		if (extraPlayerCmdOverride)
-		{
-			first = WEAPONSLOT_COUNT - 1;
-			last = PRIMARY_WEAPON;
-			// if the weapon is locked at all, skip the CMD check to work as usual for locked weapons
-			skipCmdSourceCheckForCurrentWeapon = isCurWeaponLocked();
-		}
-		else if( isCurWeaponLocked() )
-		{
-			first = m_curWeapon;
-			last = m_curWeapon;
-			checkCmdSource = FALSE;
-		}
-		else if( specificSlot != (WeaponSlotType)-1 )
-		{
-			first = specificSlot;
-			last = specificSlot;
-			checkCmdSource = FALSE;
-		}
-		else
-		{
-			first = WEAPONSLOT_COUNT - 1;
-			last = PRIMARY_WEAPON;
-		}
+		//MODDD - index 'first'/'last' and some setup moved to earlier
 
 		//Check each weapon, until we find one that can do damage (or fail)
 		for( Int i = first; i >= last ; --i )
@@ -884,7 +919,7 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 			// UPDATE - added back with new check, yadda yadda
 			// ---
 			//if (specificSlot == ANY_WEAPON && m_curWeaponLockedStatus != LOCKED_PERMANENTLY)
-			if (checkCmdSource && !(skipCmdSourceCheckForCurrentWeapon && i == m_curWeapon))
+			if (checkCmdSource /*&& !(skipCmdSourceCheckForCurrentWeapon && i == m_curWeapon)*/)
 			{
 				CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
 				if( ( okSrcs & (1 << commandSource) ) == 0 )
@@ -1328,6 +1363,38 @@ UnsignedInt WeaponSet::getMostPercentReadyToFireAnyWeapon() const
 	return mostReady;
 }
 
+//MODDD - check if 'setWeaponLock' would pass without doing the lock.
+// I have to wonder (same for the original 'setWeaponLock'), on the lock request being overridden by a higher priority
+// lock, like trying to set a temporary lock while permanently locked, if it's better to return 'false'.
+// As-is, a lock request being ignored for that reason still returns 'true'.
+// Trying the new idea for now.
+Bool WeaponSet::canSetWeaponLock( WeaponSlotType weaponSlot, WeaponLockType lockType )
+{
+	if (lockType == NOT_LOCKED)
+	{
+		DEBUG_CRASH(("calling setWeaponLock with NOT_LOCKED, so I am doing nothing... did you mean to use releaseWeaponLock()?"));
+		return false;
+	}
+
+	if (m_weapons[weaponSlot] != nullptr)
+	{
+		if( lockType == LOCKED_PERMANENTLY )
+		{
+			return true;
+		}
+		else if( lockType == LOCKED_TEMPORARILY && m_curWeaponLockedStatus != LOCKED_PERMANENTLY )
+		{
+			return true;
+		}
+
+		// blocked by there already being a higher-priority lock
+		return false;
+	}
+
+	DEBUG_CRASH(("setWeaponLock: weapon %d not found (missing an upgrade?)", (Int)weaponSlot));
+	return false;
+}
+
 //-------------------------------------------------------------------------------------------------
 // A special type of command demands that you use this (normally unchooseable) weapon
 // until told otherwise.
@@ -1348,15 +1415,21 @@ Bool WeaponSet::setWeaponLock( WeaponSlotType weaponSlot, WeaponLockType lockTyp
 			m_curWeapon = weaponSlot;
 			m_curWeaponLockedStatus = lockType;
 			//DEBUG_LOG(("WeaponSet::setWeaponLock permanently -- changed curweapon to %s",getCurWeapon()->getName().str()));
+			//MODDD - added
+			return true;
 		}
 		else if( lockType == LOCKED_TEMPORARILY && m_curWeaponLockedStatus != LOCKED_PERMANENTLY )
 		{
 			m_curWeapon = weaponSlot;
 			m_curWeaponLockedStatus = lockType;
 			//DEBUG_LOG(("WeaponSet::setWeaponLock temporarily -- changed curweapon to %s",getCurWeapon()->getName().str()));
+			//MODDD - added
+			return true;
 		}
 
-		return true;
+		//MODDD - see notes in 'canSetWeaponLock'
+		//return true;
+		return false;
 	}
 
 	DEBUG_CRASH(("setWeaponLock: weapon %d not found (missing an upgrade?)", (Int)weaponSlot));
@@ -1375,12 +1448,26 @@ void WeaponSet::releaseWeaponLock(WeaponLockType lockType)
 	{
 		// all locks released.
 		m_curWeaponLockedStatus = NOT_LOCKED;
+
+		//MODDD - any permanent-lock-release will forget the cached weapon
+		m_weaponDuringPermanentLock = ANY_WEAPON;
 	}
 	else if (lockType == LOCKED_TEMPORARILY)
 	{
 		// only unlocked if the current lock is temporary.
 		if (m_curWeaponLockedStatus == LOCKED_TEMPORARILY)
 			m_curWeaponLockedStatus = NOT_LOCKED;
+
+		//MODDD - releasing a temporary lock will change back to the cached weapon.
+		// Should this check for the lock status being 'LOCKED_TEMPORARILY'?
+		// Right now this is any intent to release a lock with 'temporary' status.
+		if (m_weaponDuringPermanentLock != ANY_WEAPON)
+		{
+			m_curWeapon = m_weaponDuringPermanentLock;
+			m_curWeaponLockedStatus = LOCKED_PERMANENTLY;
+			// reset the cached weapon - don't re-apply next time without a reason
+			m_weaponDuringPermanentLock = ANY_WEAPON;
+		}
 	}
 	else
 	{

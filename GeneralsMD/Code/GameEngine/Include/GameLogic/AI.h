@@ -1010,9 +1010,16 @@ public:
 	void recomputeGroupSpeed() { m_dirty = true; }
 
 	void setMineClearingDetail( Bool set );
+
+	//MODDD - new
+	Bool canSetWeaponLockForGroup( WeaponSlotType weaponSlot, WeaponLockType lockType );
+
 	Bool setWeaponLockForGroup( WeaponSlotType weaponSlot, WeaponLockType lockType ); ///< Set the groups' weapon choice.
 	void releaseWeaponLockForGroup(WeaponLockType lockType);///< Clear each guys weapon choice
 	void setWeaponSetFlag( WeaponSetType wst );
+
+	//MODDD
+	void onDoWeaponCommand();
 
 protected:
 	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE( AIGroup, "AIGroupPool" );		///< @todo Set real numbers for mem alloc

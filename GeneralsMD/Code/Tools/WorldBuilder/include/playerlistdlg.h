@@ -27,6 +27,15 @@
 /////////////////////////////////////////////////////////////////////////////
 // PlayerListDlg dialog
 
+
+//MODDD - new enum
+enum RelationshipListType CPP_11(: Int)
+{
+	ALLIES_RELATIONSHIP_LIST,
+	ENEMIES_RELATIONSHIP_LIST
+};
+
+
 class PlayerListDlg : public CDialog
 {
 // Construction
@@ -67,6 +76,10 @@ protected:
 	afx_msg void OnSelchangePlayers();
 	virtual BOOL OnInitDialog();
 	afx_msg void OnDblclkPlayers();
+
+	//MODDD
+	void OnSelChangeRelationshipList(RelationshipListType relationshipListUpdated);
+
 	afx_msg void OnSelchangeAllieslist();
 	afx_msg void OnSelchangeEnemieslist();
 	virtual void OnOK();
