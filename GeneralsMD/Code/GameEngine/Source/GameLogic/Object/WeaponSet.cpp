@@ -830,7 +830,7 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 			// See a related change in AIStates.cpp, 'cannotPossiblyAttackObject', so that only the intended weapon is tested
 			// here if the weapon is any kind of locked.
 			// ---
-			if (specificSlot == ANY_WEAPON && m_curWeaponLockedStatus != LOCKED_PERMANENTLY)
+			if (checkCmdSource)
 			{
 				CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
 				if( ( okSrcs & (1 << commandSource) ) == 0 )
