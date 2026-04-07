@@ -166,7 +166,8 @@ public:
 
 	virtual void forceRedraw() override;
 
-	virtual Bool isDoingScriptedCamera();
+	//MODDD - added right-hand-side 'const'
+	virtual Bool isDoingScriptedCamera() const;
 	virtual void stopDoingScriptedCamera();
 
 	virtual void setAngle( Real radians ) override;									///< Rotate the view around the vertical axis to the given angle (yaw)

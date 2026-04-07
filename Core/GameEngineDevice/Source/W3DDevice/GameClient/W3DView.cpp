@@ -681,11 +681,11 @@ Real W3DView::getMaxHeight(Real x, Real y) const
 #if PRESERVE_RETAIL_SCRIPTED_CAMERA
 	if (!m_isUserControlled)
 	{
-		return getHeightAroundPos(x, y) + m_maxHeightAboveGround;
+		return getHeightAroundPos(x, y) + getMaxHeightAboveGround();
 	}
 #endif
 
-	return m_groundLevel + m_maxHeightAboveGround;
+	return m_groundLevel + getMaxHeightAboveGround();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -2096,7 +2096,7 @@ void W3DView::setDefaultView(Real pitch, Real angle, Real maxHeight)
 	if (m_minHeightAboveGround > m_maxHeightAboveGround)
 		m_maxHeightAboveGround = m_minHeightAboveGround;
 
-	//MODDD - this too
+	//MODDD - set 'm_maxHeightAboveGroundCinematic' too
 #if defined(FORCE_CINEMATIC_MAX_CAMERA_HEIGHT) && FORCE_CINEMATIC_MAX_CAMERA_HEIGHT != 0
 	m_maxHeightAboveGroundCinematic = FORCE_CINEMATIC_MAX_CAMERA_HEIGHT*maxHeight;
 	if (m_minHeightAboveGround > m_maxHeightAboveGroundCinematic)
@@ -3251,7 +3251,8 @@ void W3DView::setUserControlled(Bool value)
 }
 
 // ------------------------------------------------------------------------------------------------
-Bool W3DView::isDoingScriptedCamera()
+//MODDD - added right-hand-side 'const'
+Bool W3DView::isDoingScriptedCamera() const
 {
 	return m_scriptedState != 0;
 }
