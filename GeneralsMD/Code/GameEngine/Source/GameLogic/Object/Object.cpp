@@ -5764,6 +5764,12 @@ void Object::weaponSetOnWeaponBonusChange()
 	m_weaponSet.weaponSetOnWeaponBonusChange(this);
 }
 
+//MODDD
+void Object::onDoWeaponCommand()
+{
+	m_weaponSet.onDoWeaponCommand(this);
+}
+
 //-------------------------------------------------------------------------------------------------
 /**
 	A weapon cannot be in charge of maintaining condition flags as it is all event driven.

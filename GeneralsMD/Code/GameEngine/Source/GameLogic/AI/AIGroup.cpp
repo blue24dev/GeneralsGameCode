@@ -3089,6 +3089,19 @@ void AIGroup::setMineClearingDetail( Bool set )
 	}
 }
 
+//MODDD - check if 'setWeaponLock' would pass without doing the lock
+Bool AIGroup::canSetWeaponLockForGroup( WeaponSlotType weaponSlot, WeaponLockType lockType )
+{
+	Bool any = false;
+	std::list<Object *>::iterator i;
+	for( i = m_memberList.begin(); i != m_memberList.end(); ++i )
+	{
+		if ((*i)->canSetWeaponLock( weaponSlot, lockType ))
+			any = true;
+	}
+	return any;
+}
+
 Bool AIGroup::setWeaponLockForGroup( WeaponSlotType weaponSlot, WeaponLockType lockType )
 {
 	Bool any = false;
@@ -3129,6 +3142,16 @@ void AIGroup::setWeaponSetFlag( WeaponSetType wst )
 		{
 			obj->setWeaponSetFlag( wst );
 		}
+	}
+}
+
+//MODDD
+void AIGroup::onDoWeaponCommand()
+{
+	std::list<Object *>::iterator i;
+	for( i = m_memberList.begin(); i != m_memberList.end(); ++i )
+	{
+		(*i)->onDoWeaponCommand();
 	}
 }
 
