@@ -92,7 +92,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	}
 
 	// EXTRA SLOW-DOWN FOR EVERYTHING
-	_this->m_buildTime *= 1.28f;
+	_this->m_buildTime *= 1.35f;
 
 	// Make things that are exclusively dozers cheaper.
 	// This that are dozers and harvesters at the same time (GLA workers) don't need as much of a reduction.
@@ -300,7 +300,7 @@ void automaticWeaponTemplateChanges(WeaponTemplate* _this)
 
 void automaticUpgradeTemplateChanges(UpgradeTemplate* _this)
 {
-	_this->m_buildTime *= 1.1f * 1.28f;
+	_this->m_buildTime *= 1.1f * 1.35f;
 }
 
 // Override the weapon bonuses from the 'GameData.ini' file.
@@ -456,7 +456,7 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 	const UnsignedInt startMin = 10;
 	const UnsignedInt endMin = 65;
 	const Real startModifier = 1.0f;
-	const Real endModifier = 3.3f;
+	const Real endModifier = 3.0f;
 
 	Real scalar = 1.0f;
 
@@ -514,7 +514,7 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 	const UnsignedInt startMin = 10;
 	const UnsignedInt endMin = 80;
 	const Real startModifier = 1.00f;
-	const Real endModifier = 0.75f;
+	const Real endModifier = 0.82f;
 
 	Int _buildTime = buildTime;
 	if (player->getPlayerType() == PLAYER_COMPUTER)
@@ -548,7 +548,7 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 	const UnsignedInt startMin = 10;
 	const UnsignedInt endMin = 50;
 	const Real startModifier = 1.00f;
-	const Real endModifier = 1.50f;
+	const Real endModifier = 1.60f;
 
 	Real _expRateModifier = expRateModifier;
 
