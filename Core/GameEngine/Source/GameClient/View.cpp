@@ -209,12 +209,14 @@ void View::setHeightAboveGround(Real z)
 Real View::getMaxHeightAboveGround() const
 {
 #if defined(FORCE_CINEMATIC_MAX_CAMERA_HEIGHT) && FORCE_CINEMATIC_MAX_CAMERA_HEIGHT != 0
-	if (TheInGameUI->getInputEnabled()) {
+	// Found a better way to tell if the camera is being controlled by the map (use retail max-camera-height to look accurate).
+	// My first guess was checking 'TheInGameUI->getInputEnabled()'.
+	if (!isDoingScriptedCamera())
+	{
 		return m_maxHeightAboveGround;
 	}
 	else
 	{
-		// cinematic mode, presumably.
 		return m_maxHeightAboveGroundCinematic;
 	}
 #else

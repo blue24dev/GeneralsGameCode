@@ -290,7 +290,7 @@ void StealthUpdate::receiveUpgrade( Bool active )
 //MODDD - no-param overload for below
 Bool StealthUpdate::allowedToStealth() const
 {
-	const StealthUpdate* ownerStealthUpdate = getStealthOwnerStealthUpdateStrict();
+	const StealthUpdate* ownerStealthUpdate = getStealthOwnerStealthUpdate();
 	return allowedToStealth(ownerStealthUpdate);
 }
 
@@ -706,6 +706,12 @@ StealthUpdate* StealthUpdate::getStealthOwnerStealthUpdate() const
 // This is mainly a way for the GPS scrambler to be redirected to the rider to apply the effect to instead of the
 // containing object (bike). Don't apply to the bike just because the rider didn't have a stealth module.
 // This also isn't the same as 'calcStealthOwner()->getStealth()'. That would return 'this' module if there isn't a rider to check for.
+// NOTE - I was tempted to use this everywhere, but it turns out some mods break on doing this.
+// Ex: in the Contra mod, stealth general rebels use 'RiderChangeContain' to let an upgrade add a dummy rider that allows
+// the unit to stay stealthed while moving. Before the upgrade, it's supposed to be stealthed when not moving nor firing.
+// There isn't a dummy rider before the upgrade. With the 'strict' getter, not having a rider means no stealth instead
+// of using the stealth behavior from the base rebel unit.
+// To best work with the existing mod ecosystem, keep to the non-strict version.
 StealthUpdate* StealthUpdate::getStealthOwnerStealthUpdateStrict() const
 {
 	const StealthUpdateModuleData *data = getStealthUpdateModuleData();
@@ -788,7 +794,7 @@ UpdateSleepTime StealthUpdate::update()
 	}
 	*/
 	// ---
-	StealthUpdate* stealthUpdateRef = getStealthOwnerStealthUpdateStrict();
+	StealthUpdate* stealthUpdateRef = getStealthOwnerStealthUpdate();
 	// ---
 
 	UnsignedInt now = TheGameLogic->getFrame();
@@ -1085,7 +1091,7 @@ void StealthUpdate::markAsDetected(UnsignedInt numFrames)
 	}
 	*/
 	// ---
-	StealthUpdate* stealthUpdateRef = getStealthOwnerStealthUpdateStrict();
+	StealthUpdate* stealthUpdateRef = getStealthOwnerStealthUpdate();
 	// ---
 
 	Player *thisPlayer = self->getControllingPlayer();
