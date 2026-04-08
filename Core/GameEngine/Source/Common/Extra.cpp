@@ -318,6 +318,15 @@ void automaticGlobalDataWeaponBonusChanges()
 
 void addCustomWeaponBonuses(const Weapon* _this, const Object* source, WeaponBonus& bonus)
 {
+#if RTS_ZEROHOUR
+	if (source->getTemplate()->isMaxSimultaneousDeterminedBySuperweaponRestriction() || source->getTemplate()->getMaxSimultaneousOfType() == 1)
+	{
+		// For Contra: super units won't be affected by the health buff.
+		// Nor commandos (burtons, etc.)
+		// (this is buildings too then)
+	}
+	else
+#endif
 	if (source->isKindOf(KINDOF_FS_BASE_DEFENSE))
 	{
 		// boost the range of base defense weapons
