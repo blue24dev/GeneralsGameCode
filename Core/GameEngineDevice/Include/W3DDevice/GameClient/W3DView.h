@@ -166,7 +166,7 @@ public:
 
 	virtual void forceRedraw() override;
 
-	//MODDD - added right-hand-side 'const'
+	//MODDD - added right-hand 'const'
 	virtual Bool isDoingScriptedCamera() const;
 	virtual void stopDoingScriptedCamera();
 
@@ -222,6 +222,9 @@ public:
 	CameraClass *get3DCamera() const { return m_3DCamera; }
 
 	virtual const Coord3D& get3DCameraPosition() const override;
+
+	//MODDD
+	virtual Real getZoomOld() const override;
 
 	virtual void setCameraLock(ObjectID id) override;
 	virtual void setSnapMode( CameraLockType lockType, Real lockDist ) override;
