@@ -723,7 +723,10 @@ void W3DView::setCameraTransform()
 	}
 	else
 	{
-		if ((TheGlobalData->m_drawEntireTerrain) || (m_FXPitch<0.95f || m_zoom>1.05))
+		//MODDD - follow-up for the "Introduce PRESERVE_RETAIL_SCRIPTED_CAMERA" TheSuperHackers commit.
+		// Do this unconditionally for now, somehow the math changed and this not happening seems to mean larger map zooms start blanking the map.
+		// Does this make health bars seem really long before that commit too?
+		//if ((TheGlobalData->m_drawEntireTerrain) || (m_FXPitch<0.95f || m_zoom>1.05))
 		{	//need to extend far clip plane so entire terrain can be visible
 			farZ *= MAP_XY_FACTOR;
 		}
