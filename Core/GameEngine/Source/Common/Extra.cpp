@@ -92,7 +92,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	}
 
 	// EXTRA SLOW-DOWN FOR EVERYTHING
-	_this->m_buildTime *= 1.28f;
+	_this->m_buildTime *= 1.35f;
 
 	// Make things that are exclusively dozers cheaper.
 	// This that are dozers and harvesters at the same time (GLA workers) don't need as much of a reduction.
@@ -300,7 +300,7 @@ void automaticWeaponTemplateChanges(WeaponTemplate* _this)
 
 void automaticUpgradeTemplateChanges(UpgradeTemplate* _this)
 {
-	_this->m_buildTime *= 1.1f * 1.28f;
+	_this->m_buildTime *= 1.1f * 1.35f;
 }
 
 // Override the weapon bonuses from the 'GameData.ini' file.
