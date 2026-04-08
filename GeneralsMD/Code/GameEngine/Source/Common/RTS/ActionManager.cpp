@@ -742,7 +742,8 @@ CanAttackResult ActionManager::getCanAttackObject( const Object *obj, const Obje
 
 	//has any weapons that are capable of inflicting damage. Special damage types are rejected
 	//such as hack weapons... others can be added.
-	CanAttackResult result = obj->getAbleToAttackSpecificObject( attackType, objectToAttack, commandSource );
+	//MODDD - added 2 args
+	CanAttackResult result = obj->getAbleToAttackSpecificObject( attackType, objectToAttack, commandSource, ANY_WEAPON, TRUE );
 	if( result != ATTACKRESULT_NOT_POSSIBLE  )
 	{
 		//Kris: August 5, 2003
@@ -794,7 +795,8 @@ CanAttackResult ActionManager::getCanAttackObject( const Object *obj, const Obje
 
 			if( slave )
 			{
-				result = slave->getAbleToAttackSpecificObject( attackType, objectToAttack, commandSource );
+        //MODDD - added 2 args
+				result = slave->getAbleToAttackSpecificObject( attackType, objectToAttack, commandSource, ANY_WEAPON, TRUE );
 				if( result != ATTACKRESULT_NOT_POSSIBLE )
 				{
 					return result;
@@ -809,7 +811,8 @@ CanAttackResult ActionManager::getCanAttackObject( const Object *obj, const Obje
         Object *rider = contain->getClosestRider( objectToAttack->getPosition() );
         if ( rider )
         {
-          result = rider->getAbleToAttackSpecificObject( attackType, objectToAttack, commandSource );
+          //MODDD - added 2 args
+          result = rider->getAbleToAttackSpecificObject( attackType, objectToAttack, commandSource, ANY_WEAPON, TRUE );
           if( result != ATTACKRESULT_NOT_POSSIBLE )
             return result;
         }
@@ -2062,7 +2065,7 @@ Bool ActionManager::canFireWeaponAtObject( const Object *obj, const Object *targ
 	CanAttackResult result;
 	//MODDD - why is the 'specificSlot' param ('slot' as an arg) avoided for everything that isn't the pilot sniper ability (DAMAGE_KLLPILOT above)?
 	// This causes a command with a particular slot in mind to be inspecific (default of 'WEAPON_ANY' for the param) and try every slot.
-	// This might have made more sense to work with some other unkowingly made mistakes that have since been caught.
+	// This might have made more sense to work with some other bugs/mistakes that have since been fixed.
 	// ---
 	/*
 	if( sniper )

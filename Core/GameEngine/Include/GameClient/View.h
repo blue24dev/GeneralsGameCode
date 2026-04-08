@@ -172,7 +172,8 @@ public:
 	virtual void zoomCamera( Real finalZoom, Int milliseconds, Real easeIn=0.0f, Real easeOut=0.0f ) {};
 	virtual void pitchCamera( Real finalPitch, Int milliseconds, Real easeIn=0.0f, Real easeOut=0.0f ) {};
 
-	virtual Bool isDoingScriptedCamera() = 0;
+	//MODDD - added right-hand-side 'const'
+	virtual Bool isDoingScriptedCamera() const = 0;
 	virtual void stopDoingScriptedCamera() = 0;
 
 	virtual void setAngle( Real radians );															///< Rotate the view around the vertical axis to the given angle (yaw)
@@ -415,7 +416,8 @@ public:
 	virtual void updateView(void) override {}
 	virtual void stepView() override {}
 	virtual void setGuardBandBias( const Coord2D *gb ) override {}
-	virtual Bool isDoingScriptedCamera() override { return false; }
+	//MODDD - added right-hand-side 'const'
+	virtual Bool isDoingScriptedCamera() const override { return false; }
 	virtual void stopDoingScriptedCamera() override {}
 
 	// Do not override View::xfer(). The base implementation must run to serialize valid view state for save file compatibility.

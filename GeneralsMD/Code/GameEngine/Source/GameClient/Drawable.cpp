@@ -2686,9 +2686,16 @@ static Bool computeHealthRegion( const Drawable *draw, IRegion2D& region )
 
 	// scale the health bars according to the zoom
 	Real zoom = TheTacticalView->getZoom();
+
+	//MODDD - follow-up for the "Introduce PRESERVE_RETAIL_SCRIPTED_CAMERA" TheSuperHackers commit.
+	// Cutting in half per recent changes (leaving the whole block so my changes are easier to see)
+	/*
 	//Real widthScale = 1.3f / zoom;
 	Real widthScale = 1.0f / zoom;
 	//Real heightScale = 0.8f / zoom;
+	Real heightScale = 1.0f;
+	*/
+	Real widthScale = 1.0f / zoom * 0.5;
 	Real heightScale = 1.0f;
 
 	healthBoxWidth *= widthScale;
