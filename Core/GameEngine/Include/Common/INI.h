@@ -41,6 +41,9 @@ class Xfer;
 class File;
 enum ScienceType CPP_11(: Int);
 
+//MODDD
+class BlockParse;
+
 //-------------------------------------------------------------------------------------------------
 /** These control the behavior of loading the INI data into items */
 //-------------------------------------------------------------------------------------------------
@@ -155,6 +158,13 @@ public:
 typedef void (*INIBlockParse)( INI *ini );
 typedef void (*BuildMultiIniFieldProc)(MultiIniFieldParse& p);
 
+//MODDD - moved from .cpp
+struct BlockParse
+{
+	const char *token;
+	INIBlockParse parse;
+};
+
 //-------------------------------------------------------------------------------------------------
 /** INI Reader interface */
 //-------------------------------------------------------------------------------------------------
@@ -172,15 +182,18 @@ public:
 	// Load a specific INI file by name and/or INI files from a directory (and its subdirectories).
 	// For example "Data\INI\Armor" loads "Data\INI\Armor.ini" and all *.ini files in "Data\INI\Armor".
 	// Throws if not a single INI file is found or one is not read correctly.
-	UnsignedInt loadFileDirectory( AsciiString fileDirName, INILoadType loadType, Xfer *pXfer, Bool subdirs = TRUE );
+	//MODDD - new optional param 'myTypeTable'
+	UnsignedInt loadFileDirectory( AsciiString fileDirName, INILoadType loadType, Xfer *pXfer, Bool subdirs = TRUE, const BlockParse* myTypeTable = nullptr );
 
 	// Load INI files from a directory (and its subdirectories).
 	// Throws if one INI file is not read correctly.
-	UnsignedInt loadDirectory( AsciiString dirName, INILoadType loadType, Xfer *pXfer, Bool subdirs = TRUE );
+	//MODDD - new optional param 'myTypeTable'
+	UnsignedInt loadDirectory( AsciiString dirName, INILoadType loadType, Xfer *pXfer, Bool subdirs = TRUE, const BlockParse* myTypeTable = nullptr );
 
 	// Load one specific INI file by name.
 	// Throws if the INI file is not found or is not read correctly.
-	UnsignedInt load( AsciiString filename, INILoadType loadType, Xfer *pXfer );
+	//MODDD - new optional param 'theTypeTable'
+	UnsignedInt load( AsciiString filename, INILoadType loadType, Xfer *pXfer, const BlockParse* myTypeTable = nullptr );
 
 	static Bool isDeclarationOfType( AsciiString blockType, AsciiString blockName, char *bufferToCheck );
 	static Bool isEndOfBlock( char *bufferToCheck );
@@ -260,6 +273,11 @@ public:
 	void initFromINI( void *what, const FieldParse* parseTable );
 	void initFromINIMulti( void *what, const MultiIniFieldParse& parseTableList );
 	void initFromINIMultiProc( void *what, BuildMultiIniFieldProc proc );
+
+	//MODDD - copies of above
+	void initFromINI_allowUnknown( void *what, const FieldParse* parseTable );
+	void initFromINIMulti_allowUnknown( void *what, const MultiIniFieldParse& parseTableList );
+	void initFromINIMultiProc_allowUnknown( void *what, BuildMultiIniFieldProc proc );
 
 	static void parseUnsignedByte( INI *ini, void *instance, void *store, const void* userData );
 	static void parseShort( INI *ini, void *instance, void *store, const void* userData );

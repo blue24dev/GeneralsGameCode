@@ -166,9 +166,9 @@ public:
 
 	virtual void forceRedraw() override;
 
-	//MODDD - added right-hand-side 'const'
-	virtual Bool isDoingScriptedCamera() const;
-	virtual void stopDoingScriptedCamera();
+	//MODDD - added right-hand 'const'
+	virtual Bool isDoingScriptedCamera() const override;
+	virtual void stopDoingScriptedCamera() override;
 
 	virtual void setAngle( Real radians ) override;									///< Rotate the view around the vertical axis to the given angle (yaw)
 	virtual void setPitch( Real radians ) override;									///< Rotate the view around the horizontal axis to the given angle (pitch)
@@ -222,6 +222,9 @@ public:
 	CameraClass *get3DCamera() const { return m_3DCamera; }
 
 	virtual const Coord3D& get3DCameraPosition() const override;
+
+	//MODDD
+	virtual Real getZoomOld() const override;
 
 	virtual void setCameraLock(ObjectID id) override;
 	virtual void setSnapMode( CameraLockType lockType, Real lockDist ) override;

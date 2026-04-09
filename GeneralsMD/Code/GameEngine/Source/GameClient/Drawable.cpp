@@ -2685,17 +2685,11 @@ static Bool computeHealthRegion( const Drawable *draw, IRegion2D& region )
 		return FALSE;
 
 	// scale the health bars according to the zoom
-	Real zoom = TheTacticalView->getZoom();
-
-	//MODDD - follow-up for the "Introduce PRESERVE_RETAIL_SCRIPTED_CAMERA" TheSuperHackers commit.
-	// Cutting in half per recent changes (leaving the whole block so my changes are easier to see)
-	/*
+	//MODDD  - 'getZoom' -> 'getZoomOld'
+	Real zoom = TheTacticalView->getZoomOld();
 	//Real widthScale = 1.3f / zoom;
 	Real widthScale = 1.0f / zoom;
 	//Real heightScale = 0.8f / zoom;
-	Real heightScale = 1.0f;
-	*/
-	Real widthScale = 1.0f / zoom * 0.5;
 	Real heightScale = 1.0f;
 
 	healthBoxWidth *= widthScale;
@@ -2888,7 +2882,8 @@ void Drawable::drawAmmo( const IRegion2D *healthBarRegion )
 
 
 #ifdef SCALE_ICONS_WITH_ZOOM_ML
-	Real scale = TheGlobalData->m_ammoPipScaleFactor / CLAMP_ICON_ZOOM_FACTOR( TheTacticalView->getZoom() );
+	//MODDD  - 'getZoom' -> 'getZoomOld'
+	Real scale = TheGlobalData->m_ammoPipScaleFactor / CLAMP_ICON_ZOOM_FACTOR( TheTacticalView->getZoomOld() );
 #else
 	Real scale = 1.0f;
 #endif
@@ -2956,7 +2951,8 @@ void Drawable::drawContained( const IRegion2D *healthBarRegion )
 	}
 
 #ifdef SCALE_ICONS_WITH_ZOOM_ML
-	Real scale = TheGlobalData->m_ammoPipScaleFactor / CLAMP_ICON_ZOOM_FACTOR( TheTacticalView->getZoom() );
+	//MODDD  - 'getZoom' -> 'getZoomOld'
+	Real scale = TheGlobalData->m_ammoPipScaleFactor / CLAMP_ICON_ZOOM_FACTOR( TheTacticalView->getZoomOld() );
 #else
 	Real scale = 1.0f;
 #endif
@@ -3158,7 +3154,8 @@ void Drawable::drawUIText()
 		if ( ! obj->getHealthBoxDimensions(healthBoxHeight, healthBoxWidth))
 			return;
 
-		Real scale = 1.3f/CLAMP_ICON_ZOOM_FACTOR( TheTacticalView->getZoom() );
+		//MODDD  - 'getZoom' -> 'getZoomOld'
+		Real scale = 1.3f/CLAMP_ICON_ZOOM_FACTOR( TheTacticalView->getZoomOld() );
 		screenCenter.x += (healthBoxWidth * scale * 0.5f) + 10 ;
 
 
@@ -3752,7 +3749,8 @@ void Drawable::drawVeterancy( const IRegion2D *healthBarRegion )
 	if (!image)
 		return;
 
-	Real scale = 1.3f/CLAMP_ICON_ZOOM_FACTOR( TheTacticalView->getZoom() );
+	//MODDD  - 'getZoom' -> 'getZoomOld'
+	Real scale = 1.3f/CLAMP_ICON_ZOOM_FACTOR( TheTacticalView->getZoomOld() );
 #ifdef SCALE_ICONS_WITH_ZOOM_ML
 	Real objScale = scale * 1.55f;
 #else

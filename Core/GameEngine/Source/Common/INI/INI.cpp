@@ -82,11 +82,15 @@ static Xfer *s_xfer = nullptr;
 	* block make a new entry in this table and add an appropriate parsing function */
 //-------------------------------------------------------------------------------------------------
 extern void parseReallyLowMHz( INI* ini);		// yeah, so sue me (srj)
+
+//MODDD - moving this to the .h file
+/*
 struct BlockParse
 {
 	const char *token;
 	INIBlockParse parse;
 };
+*/
 static const BlockParse theTypeTable[] =
 {
 	{ "AIData",                         INI::parseAIDataDefinition },
@@ -151,6 +155,8 @@ static const BlockParse theTypeTable[] =
 	{ "Weather",                        INI::parseWeatherDefinition },
 	{ "WebpageURL",                     INI::parseWebpageURLDefinition },
 	{ "WindowTransition",               INI::parseWindowTransitions },
+	//MODDD - an empty end member so the null-check for passed-in arrays works
+	{ nullptr,                          nullptr },
 };
 
 
@@ -201,7 +207,8 @@ INI::~INI()
 }
 
 //-------------------------------------------------------------------------------------------------
-UnsignedInt INI::loadFileDirectory( AsciiString fileDirName, INILoadType loadType, Xfer *pXfer, Bool subdirs )
+//MODDD - new optional param 'myTypeTable'
+UnsignedInt INI::loadFileDirectory( AsciiString fileDirName, INILoadType loadType, Xfer *pXfer, Bool subdirs, const BlockParse* myTypeTable )
 {
 	UnsignedInt filesRead = 0;
 
@@ -222,11 +229,13 @@ UnsignedInt INI::loadFileDirectory( AsciiString fileDirName, INILoadType loadTyp
 
 	if (TheFileSystem->doesFileExist(iniFile.str()))
 	{
-		filesRead += load(iniFile, loadType, pXfer);
+		//MODDD - pass arg 'myTypeTable'
+		filesRead += load(iniFile, loadType, pXfer, myTypeTable);
 	}
 
 	// Load any additional ini files from a "filename" directory and its subdirectories.
-	filesRead += loadDirectory(iniDir, loadType, pXfer, subdirs);
+	//MODDD - pass arg 'myTypeTable'
+	filesRead += loadDirectory(iniDir, loadType, pXfer, subdirs, myTypeTable);
 
 	// Expect to open and load at least one file.
 	if (filesRead == 0)
@@ -242,7 +251,8 @@ UnsignedInt INI::loadFileDirectory( AsciiString fileDirName, INILoadType loadTyp
 	* If we are to load subdirectories, we will load them *after* we load all the
 	* files in the current directory */
 //-------------------------------------------------------------------------------------------------
-UnsignedInt INI::loadDirectory( AsciiString dirName, INILoadType loadType, Xfer *pXfer, Bool subdirs )
+//MODDD - new optional param 'myTypeTable'
+UnsignedInt INI::loadDirectory( AsciiString dirName, INILoadType loadType, Xfer *pXfer, Bool subdirs, const BlockParse* myTypeTable )
 {
 	UnsignedInt filesRead = 0;
 
@@ -263,7 +273,8 @@ UnsignedInt INI::loadDirectory( AsciiString dirName, INILoadType loadType, Xfer 
 
 		if ((tempname.find('\\') == nullptr) && (tempname.find('/') == nullptr)) {
 			// this file doesn't reside in a subdirectory, load it first.
-			filesRead += load( *it, loadType, pXfer );
+			//MODDD - pass arg 'myTypeTable'
+			filesRead += load( *it, loadType, pXfer, myTypeTable );
 		}
 		++it;
 	}
@@ -275,7 +286,8 @@ UnsignedInt INI::loadDirectory( AsciiString dirName, INILoadType loadType, Xfer 
 		tempname = (*it).str() + dirName.getLength();
 
 		if ((tempname.find('\\') != nullptr) || (tempname.find('/') != nullptr)) {
-			filesRead += load( *it, loadType, pXfer );
+			//MODDD - pass arg 'myTypeTable'
+			filesRead += load( *it, loadType, pXfer, myTypeTable );
 		}
 		++it;
 	}
@@ -335,13 +347,18 @@ void INI::unPrepFile()
 }
 
 //-------------------------------------------------------------------------------------------------
-static INIBlockParse findBlockParse(const char* token)
+//MODDD - new optional param 'myTypeTable'
+static INIBlockParse findBlockParse(const char* token, const BlockParse* myTypeTable)
 {
-	for (size_t i = 0; i < ARRAY_SIZE(theTypeTable); ++i)
+	//MODDD - using param 'myTypeTable' instead of a hard-coded 'theTypeTable' reference
+	// MODDD - can't use 'ARRAY_SIZE' for a reference to an array vs. one to a known hardcoded one.
+	// Thanks C.
+	//for (size_t i = 0; i < ARRAY_SIZE(myTypeTable); ++i)
+	for (size_t i = 0; myTypeTable[i].token != nullptr; ++i)
 	{
-		if (strcmp(theTypeTable[i].token, token) == 0)
+		if (strcmp(myTypeTable[i].token, token) == 0)
 		{
-			return theTypeTable[i].parse;
+			return myTypeTable[i].parse;
 		}
 	}
 
@@ -377,8 +394,14 @@ static INIFieldParseProc findFieldParse(const FieldParse* parseTable, const char
 //-------------------------------------------------------------------------------------------------
 /** Load and parse an INI file */
 //-------------------------------------------------------------------------------------------------
-UnsignedInt INI::load( AsciiString filename, INILoadType loadType, Xfer *pXfer )
+//MODDD - new optional param 'theTypeTable'
+UnsignedInt INI::load( AsciiString filename, INILoadType loadType, Xfer *pXfer, const BlockParse* myTypeTable )
 {
+	if (myTypeTable == nullptr)
+	{
+		myTypeTable = theTypeTable;
+	}
+
 	setFPMode(); // so we have consistent Real values for GameLogic -MDC
 
 	s_xfer = pXfer;
@@ -400,7 +423,8 @@ UnsignedInt INI::load( AsciiString filename, INILoadType loadType, Xfer *pXfer )
 			const char *token = strtok( m_buffer, m_seps );
 			if( token )
 			{
-				INIBlockParse parse = findBlockParse(token);
+				//MODDD - send arg 'myTypeTable'
+				INIBlockParse parse = findBlockParse(token, myTypeTable);
 				if (parse)
 				{
 					#ifdef DEBUG_CRASHING
@@ -1588,6 +1612,113 @@ void INI::initFromINIMulti( void *what, const MultiIniFieldParse& parseTableList
 	}
 
 }
+
+//MODDD - copies of above that allow not knowing what to do for a field.
+// Ex: WorldBuilder loading GlobalData.ini again just for terrain lighting values and nothing else
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+void INI::initFromINI_allowUnknown( void *what, const FieldParse* parseTable )
+{
+	MultiIniFieldParse p;
+	p.add(parseTable);
+	initFromINIMulti_allowUnknown(what, p);
+}
+
+void INI::initFromINIMultiProc_allowUnknown( void *what, BuildMultiIniFieldProc proc )
+{
+	MultiIniFieldParse p;
+	(*proc)(p);
+	initFromINIMulti_allowUnknown(what, p);
+}
+
+void INI::initFromINIMulti_allowUnknown( void *what, const MultiIniFieldParse& parseTableList )
+{
+	Bool done = FALSE;
+
+	if( what == nullptr )
+	{
+		DEBUG_CRASH( ("INI::initFromINI - Invalid parameters supplied!") );
+		throw INI_INVALID_PARAMS;
+	}
+
+	// read each of the data fields
+	while( !done )
+	{
+
+		// read next line
+		readLine();
+
+		// check for end token
+		const char* field = strtok( m_buffer, INI::getSeps() );
+		if( field )
+		{
+
+			if( stricmp( field, m_blockEndToken ) == 0 )
+			{
+				done = TRUE;
+			}
+			else
+			{
+				Bool found = false;
+				for (int ptIdx = 0; ptIdx < parseTableList.getCount(); ++ptIdx)
+				{
+					int offset = 0;
+					const void* userData = nullptr;
+					INIFieldParseProc parse = findFieldParse(parseTableList.getNthFieldParse(ptIdx), field, offset, userData);
+					if (parse)
+					{
+						// parse this block and check for parse errors
+						try {
+
+						(*parse)( this, what, (char *)what + offset + parseTableList.getNthExtraOffset(ptIdx), userData );
+
+						} catch (...) {
+							DEBUG_CRASH( ("[LINE: %d - FILE: '%s'] Error reading field '%s' of block '%s'",
+																 INI::getLineNum(), INI::getFilename().str(), field, m_curBlockStart) );
+
+
+							char buff[1024];
+							snprintf(buff, ARRAY_SIZE(buff), "[LINE: %d - FILE: '%s'] Error reading field '%s'\n",
+								INI::getLineNum(), INI::getFilename().str(), field);
+							throw INIException(buff);
+						}
+
+						found = true;
+						break;
+
+					}
+				}
+
+				/*
+				if (!found)
+				{
+					DEBUG_CRASH( ("[LINE: %d - FILE: '%s'] Unknown field '%s' in block '%s'",
+														 INI::getLineNum(), INI::getFilename().str(), field, m_curBlockStart) );
+				}
+				*/
+
+			}
+
+		}
+
+		// sanity check for reaching end of file with no closing end token
+		if( done == FALSE && INI::isEOF() == TRUE )
+		{
+
+			done = TRUE;
+			DEBUG_CRASH( ("Error parsing block '%s', in INI file '%s'.  Missing '%s' token",
+												 m_curBlockStart, getFilename().str(), m_blockEndToken) );
+			throw INI_MISSING_END_TOKEN;
+
+		}
+
+	}
+
+}
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 /*static*/ const char* INI::getNextToken(const char* seps)

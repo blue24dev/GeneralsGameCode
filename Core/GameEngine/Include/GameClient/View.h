@@ -172,7 +172,7 @@ public:
 	virtual void zoomCamera( Real finalZoom, Int milliseconds, Real easeIn=0.0f, Real easeOut=0.0f ) {};
 	virtual void pitchCamera( Real finalPitch, Int milliseconds, Real easeIn=0.0f, Real easeOut=0.0f ) {};
 
-	//MODDD - added right-hand-side 'const'
+	//MODDD - added right-hand 'const'
 	virtual Bool isDoingScriptedCamera() const = 0;
 	virtual void stopDoingScriptedCamera() = 0;
 
@@ -188,6 +188,10 @@ public:
 	virtual const Coord3D& get3DCameraPosition() const = 0;							///< Returns the actual camera position
 
 	virtual Real getZoom() { return m_zoom; }
+
+	//MODDD
+	virtual Real getZoomOld() const = 0;
+
 	virtual void setZoom(Real z) { m_zoom = z; }
 	virtual Real getHeightAboveGround() { return m_heightAboveGround; }
 	virtual void setHeightAboveGround(Real z);
@@ -221,7 +225,8 @@ public:
 
 	// for debugging
 	virtual Real getTerrainHeightAtPivot() { return m_terrainHeightAtPivot; }
-	virtual Real getCurrentHeightAboveGround() { return m_currentHeightAboveGround; }
+	//MODDD - added right-hand 'const'
+	virtual Real getCurrentHeightAboveGround() const { return m_currentHeightAboveGround; }
 
 	virtual void setFieldOfView( Real angle ) { m_FOV = angle; }				///< Set the horizontal field of view angle
 	virtual Real getFieldOfView() { return m_FOV; }								///< Get the horizontal field of view angle
@@ -406,6 +411,10 @@ public:
 		static Coord3D zero = {0,0,0};
 		return zero;
 	}
+
+	//MODDD
+	virtual Real getZoomOld() const { return 0; }
+
 	virtual WorldToScreenReturn worldToScreenTriReturn(const Coord3D *w, ICoord2D *s ) override
 	{
 		return WTS_INVALID;
@@ -416,10 +425,10 @@ public:
 	virtual void updateView(void) override {}
 	virtual void stepView() override {}
 	virtual void setGuardBandBias( const Coord2D *gb ) override {}
-	//MODDD - added right-hand-side 'const'
+	//MODDD - added right-hand 'const'
 	virtual Bool isDoingScriptedCamera() const override { return false; }
 	virtual void stopDoingScriptedCamera() override {}
-
+	
 	// Do not override View::xfer(). The base implementation must run to serialize valid view state for save file compatibility.
 };
 

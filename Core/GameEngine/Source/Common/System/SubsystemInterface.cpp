@@ -165,6 +165,16 @@ void SubsystemInterfaceList::initSubsystem(SubsystemInterface* sys, const char* 
 	m_subsystems.push_back(sys);
 }
 
+//MODDD - slimmed down version of 'initSubsystem' that mainly loads a file to restore defaults, such as the 'restore' button for the global lighting panel
+void SubsystemInterfaceList::loadSubsystemAgain(SubsystemInterface* sys, const char* path1, const char* path2, Xfer *pXfer, const BlockParse* myTypeTable)
+{
+	INI ini;
+	if (path1)
+		ini.loadFileDirectory(path1, INI_LOAD_OVERWRITE, pXfer, true, myTypeTable );
+	if (path2)
+		ini.loadFileDirectory(path2, INI_LOAD_OVERWRITE, pXfer, true, myTypeTable );
+}
+
 //-----------------------------------------------------------------------------
 void SubsystemInterfaceList::postProcessLoadAll()
 {
