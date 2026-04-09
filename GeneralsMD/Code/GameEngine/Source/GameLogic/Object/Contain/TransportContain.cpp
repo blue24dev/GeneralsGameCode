@@ -638,12 +638,12 @@ Bool TransportContain::isSpecificRiderFreeToExit(Object* specificObject)
  	if (!specificObject->getAIUpdateInterface())
 		return FALSE;
 
-	const Locomotor *hisLocomotor = specificObject->getAIUpdateInterface()->getCurLocomotor();
-	if( hisLocomotor == FALSE )
+	const Locomotor *hasLocomotor = specificObject->getAIUpdateInterface()->getCurLocomotor();
+	if( hasLocomotor == nullptr )
    	return FALSE;
 
   // He can't get to this spot naturally, so I can't force him there.  (amphib transport)
-  if (!TheAI->pathfinder()->validMovementTerrain(me->getLayer(), hisLocomotor, myPosition))
+  if (!TheAI->pathfinder()->validMovementTerrain(me->getLayer(), hasLocomotor, myPosition))
    	return FALSE;
 
   return TRUE;

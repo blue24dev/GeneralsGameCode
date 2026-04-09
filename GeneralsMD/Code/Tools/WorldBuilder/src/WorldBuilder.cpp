@@ -82,7 +82,9 @@
 #include "Win32Device/Common/Win32BIGFileSystem.h"
 
 
-static SubsystemInterfaceList TheSubsystemListRecord;
+//MODDD - why so static
+//static SubsystemInterfaceList TheSubsystemListRecord;
+SubsystemInterfaceList TheSubsystemListRecord;
 
 template<class SUBSYSTEM>
 void initSubsystem(SUBSYSTEM*& sysref, SUBSYSTEM* sys, const char* path1 = nullptr, const char* path2 = nullptr)
@@ -273,6 +275,11 @@ static LONG WINAPI UnHandledExceptionFilter(struct _EXCEPTION_POINTERS* e_info)
 
 BOOL CWorldBuilderApp::InitInstance()
 {
+	//MODDD - for me only
+	// A forced pause so the debugger can be attached to work during startup stuff like INI parsing.
+	// Because starting a program in another folder with the debugger attached & able to find files around itself is too hard for visual studio to do.
+  //SleepEx(5000, FALSE);
+
 	ApplicationHWnd = GetDesktopWindow();
 
 	// initialization

@@ -723,10 +723,12 @@ void W3DView::setCameraTransform()
 	}
 	else
 	{
-		//MODDD - follow-up for the "Introduce PRESERVE_RETAIL_SCRIPTED_CAMERA" TheSuperHackers commit.
-		// Do this unconditionally for now, somehow the math changed and this not happening seems to mean larger map zooms start blanking the map.
-		// Does this make health bars seem really long before that commit too?
+		//MODDD
+		// Use the old zoom that isn't relative to 'MaxCameraHeight' to preserve old behavior.
+		// This stops rendering from appearing to be consumed by black because the clipping pane wasn't getting the boost it
+		// needs for higher camera distance by settings edits.
 		//if ((TheGlobalData->m_drawEntireTerrain) || (m_FXPitch<0.95f || m_zoom>1.05))
+		if ((TheGlobalData->m_drawEntireTerrain) || (m_FXPitch<0.95f || getZoomOld()>1.05))
 		{	//need to extend far clip plane so entire terrain can be visible
 			farZ *= MAP_XY_FACTOR;
 		}
@@ -802,6 +804,17 @@ const Coord3D& W3DView::get3DCameraPosition() const
 	static Coord3D pos;
 	pos.set( camera.X, camera.Y, camera.Z );
 	return pos;
+}
+
+//MODDD - follow-up for the "Introduce PRESERVE_RETAIL_SCRIPTED_CAMERA" TheSuperHackers commit.
+// This should return the zoom value seen before that commit to better preserve some existing behavior.
+// Ex: With GameData.ini settings of CameraHeight=232 and MaxCameraHeight=900, 'm_zoom' was '3.76' before that commit.
+// (for the math to make sense, add 'm_groundLevel=10' to each before dividing MaxCameraHeight by CameraHeight)
+// After the commit, 'm_zoom' was 1.0 (appears relative to 'm_maxCameraHeight' instead of 'm_cameraHeight').
+// Several places like health bars need the old zoom or they will be affected in unintentional ways.
+Real W3DView::getZoomOld() const
+{
+	return getCurrentHeightAboveGround() / (m_groundLevel + TheGlobalData->m_cameraHeight);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -3254,7 +3267,7 @@ void W3DView::setUserControlled(Bool value)
 }
 
 // ------------------------------------------------------------------------------------------------
-//MODDD - added right-hand-side 'const'
+//MODDD - added right-hand 'const'
 Bool W3DView::isDoingScriptedCamera() const
 {
 	return m_scriptedState != 0;
