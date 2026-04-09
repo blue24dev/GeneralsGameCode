@@ -27,6 +27,21 @@
 #include "Common/GlobalData.h"
 #include "wbview3d.h"
 
+//MODDD
+#include "Common/SubsystemInterface.h"
+
+//MODDD
+extern SubsystemInterfaceList TheSubsystemListRecord;
+
+//MODDD
+static const BlockParse GlobalData_Lighting_TypeTable[] =
+{
+	// TODO - use a custom parser that doesn't care about non-lighting fields (and doesn't crash on seeing unrelated fields)
+	{ "GameData",                       INI::parseGameDataDefinition },
+	{ nullptr,                          nullptr },
+};
+
+
 /////////////////////////////////////////////////////////////////////////////
 /// GlobalLightOptions dialog trivial constructor - Create does the real work.
 
@@ -238,9 +253,11 @@ static void SpitLights()
 
 void GlobalLightOptions::OnResetLights()
 {
-	//MODDD - TODO.
-	// Why are these values hardcoded instead of coming from the GameData.ini file?
-	// Shouldn't the user be able to set what these defaults are that way so they can be applied anytime?
+	//MODDD
+	// Re-load 'GameData.ini' for these instead of setting things back from these hardcoded values.
+	// This is based off the 'initSubsystem' call in WorldBuilder.cpp (app startup).
+	//initSubsystem(TheWritableGlobalData, new GlobalData(), "Data\\INI\\Default\\GameData", "Data\\INI\\GameData");
+	TheSubsystemListRecord.loadSubsystemAgain(TheWritableGlobalData, "Data\\INI\\Default\\GameData", "Data\\INI\\GameData", nullptr, GlobalData_Lighting_TypeTable);
 
 	TheWritableGlobalData->m_terrainLighting[1][0].ambient.red = 0.50f;
 	TheWritableGlobalData->m_terrainLighting[1][0].ambient.green = 0.39f;

@@ -148,6 +148,10 @@ public:
 	~SubsystemInterfaceList();
 
 	void initSubsystem(SubsystemInterface* sys, const char* path1, const char* path2, Xfer *pXfer, AsciiString name="");
+
+	//MODDD - new
+	void loadSubsystemAgain(SubsystemInterface* sys, const char* path1, const char* path2, Xfer *pXfer, const BlockParse* myTypeTable);
+
 	void addSubsystem(SubsystemInterface* sys);
 	void removeSubsystem(SubsystemInterface* sys);
 	void postProcessLoadAll();

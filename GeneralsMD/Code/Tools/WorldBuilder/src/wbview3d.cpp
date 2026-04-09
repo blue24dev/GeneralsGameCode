@@ -196,9 +196,10 @@ public:
 	virtual void getOrigin( Int *x, Int *y) { *x=m_originX; *y=m_originY;}			///< Return location of top-left view corner on display
 
 	virtual void forceRedraw() { }
-
-	virtual Bool isDoingScriptedCamera() { return false; }
-	virtual void stopDoingScriptedCamera() {}
+	
+	//MODDD - added right-hand-side 'const'
+	virtual Bool isDoingScriptedCamera() const override { return false; }
+	virtual void stopDoingScriptedCamera() override {}
 
 	virtual void lookAt( const Coord3D *o ){};														///< Center the view on the given coordinate
 	virtual void initHeightForMap( void ) {};														///<  Init the camera height for the map at the current position.
