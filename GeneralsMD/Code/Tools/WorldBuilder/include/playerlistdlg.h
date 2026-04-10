@@ -53,7 +53,7 @@ public:
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(PlayerListDlg)
 	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	virtual void DoDataExchange(CDataExchange* pDX) override;    // DDX/DDV support
 	//}}AFX_VIRTUAL
 
 // Implementation
@@ -74,7 +74,7 @@ protected:
 	afx_msg void OnEditplayer();
 	afx_msg void OnRemoveplayer();
 	afx_msg void OnSelchangePlayers();
-	virtual BOOL OnInitDialog();
+	virtual BOOL OnInitDialog() override;
 	afx_msg void OnDblclkPlayers();
 
 	//MODDD
@@ -82,8 +82,8 @@ protected:
 
 	afx_msg void OnSelchangeAllieslist();
 	afx_msg void OnSelchangeEnemieslist();
-	virtual void OnOK();
-	virtual void OnCancel();
+	virtual void OnOK() override;
+	virtual void OnCancel() override;
 	afx_msg void OnPlayeriscomputer();
 	afx_msg void OnEditchangePlayerfaction();
 	afx_msg void OnChangePlayername();

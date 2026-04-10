@@ -28,7 +28,7 @@ class CButtonShowColor : public CButton
 		const RGBColor& getColor(void) const;
 		void setColor(Int color);
 		void setColor(const RGBColor& color);
-		~CButtonShowColor();
+		virtual ~CButtonShowColor() override;
 
 		//MODDD - new
 		virtual BOOL Create(LPCTSTR lpszCaption, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID) override;
