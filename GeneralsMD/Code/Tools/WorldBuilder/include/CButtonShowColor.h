@@ -30,6 +30,9 @@ class CButtonShowColor : public CButton
 		void setColor(const RGBColor& color);
 		~CButtonShowColor();
 
+		//MODDD - new
+		virtual BOOL Create(LPCTSTR lpszCaption, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID) override;
+		virtual void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct) override;
 
 		static COLORREF RGBtoBGR(Int color);
 		static Int BGRtoRGB(COLORREF color);
