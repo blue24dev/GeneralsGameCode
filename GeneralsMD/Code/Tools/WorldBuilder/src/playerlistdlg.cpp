@@ -643,7 +643,7 @@ void PlayerListDlg::OnColorPress()
 
 	//MODDD - start with the color dialog set to the current color
 	//CColorDialog dlg;
-	CColorDialog dlg(CButtonShowColor::RGBtoBGR(m_colorButton.getColor().getAsInt()));
+	CColorDialog dlg(CButtonShowColor::RGBtoBGR(m_colorButton.getColor().getAsInt()), CC_ANYCOLOR|CC_FULLOPEN|CC_RGBINIT|CC_SOLIDCOLOR);
 	if (dlg.DoModal() == IDOK) {
 		m_colorButton.setColor(CButtonShowColor::BGRtoRGB(dlg.GetColor()));
 		RGBColor color = m_colorButton.getColor();

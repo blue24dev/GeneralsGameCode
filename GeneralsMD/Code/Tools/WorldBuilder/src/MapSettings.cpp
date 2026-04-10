@@ -29,6 +29,9 @@
 #include "Common/WellKnownKeys.h"
 #include "Compression.h"
 
+//MODDD
+#include "MainFrm.h"
+
 /////////////////////////////////////////////////////////////////////////////
 // MapSettings dialog
 
@@ -144,6 +147,9 @@ void MapSettings::OnOK()
 	CComboBox *compressionComboBox = (CComboBox*)GetDlgItem(IDC_MAP_COMPRESSION);
 	CompressionType compType = (CompressionType) (compressionComboBox->GetCurSel()+COMPRESSION_MIN);
 	worldDict->setInt(TheKey_compression, compType);
+
+	//MODDD - let the global light options dialog know
+	CMainFrame::GetMainFrame()->getGlobalLightOptionsPanel()->onTimeOfDayChanged();
 
 	CDialog::OnOK();
 }

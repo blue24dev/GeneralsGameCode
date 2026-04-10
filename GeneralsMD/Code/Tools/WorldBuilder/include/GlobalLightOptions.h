@@ -41,6 +41,18 @@ public:
 	CButtonShowColor m_colorButton;
 
 	GlobalLightOptions(CWnd* pParent = nullptr);   // standard constructor
+	
+	//MODDD
+	// ---------------
+	void onMapChangeStart();
+	void onMapChangeEnd();
+
+	void updateFields();
+	void onTimeOfDayChanged();
+	void updateColorButton();
+
+	void _OnResetLights();
+	// ---------------
 
 // Dialog Data
 	//{{AFX_DATA(GlobalLightOptions)
@@ -64,9 +76,21 @@ protected:
 	virtual BOOL OnInitDialog();
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	afx_msg void OnMove(int x, int y);
-	afx_msg void OnChangeFrontBackEdit();
-	afx_msg void OnChangeLeftRightEdit();
-	afx_msg void OnChangeColorEdit();
+	afx_msg void OnChangeSunFrontBackEdit();
+	afx_msg void OnChangeAccent1FrontBackEdit();
+	afx_msg void OnChangeAccent2FrontBackEdit();
+	afx_msg void OnChangeSunLeftRightEdit();
+	afx_msg void OnChangeAccent1LeftRightEdit();
+	afx_msg void OnChangeAccent2LeftRightEdit();
+	//MODDD
+	// ---
+	//afx_msg void OnChangeColorEdit();
+	// ---
+	afx_msg void OnChangeAmbientColorEdit();
+	afx_msg void OnChangeSunColorEdit();
+	afx_msg void OnChangeAccent1ColorEdit();
+	afx_msg void OnChangeAccent2ColorEdit();
+	// ---
 	afx_msg void OnRadioEverything();
 	afx_msg void OnRadioObjects();
 	afx_msg void OnRadioTerrain();
@@ -123,7 +147,17 @@ protected:
 	void applyAngle(Int lightIndex=0);
 	void showLightFeedback(Int lightIndex=0);
 	void applyColor(Int lightIndex=0);
-	void updateEditFields(void);
+	//MODDD
+	void updateColorFields(Int lightIndex);
+	//MODDD - renamed from 'updateEditFields' to 'updateHorizontalCoordFields' for clarity
+	// Also, param 'lightIndex'
+	void updateHorizontalCoordFields(Int lightIndex);
+	//MODDD
+	void determineHorizontalCoords(Int lightIndex);
+	//MODDD
+	void updateTimeOfDayDisplay();
+	void updateLightPositionDisplay(Int lightIndex);
+
 	void stuffValuesIntoFields(Int lightIndex = 0);
 public:
 

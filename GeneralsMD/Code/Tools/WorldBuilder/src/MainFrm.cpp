@@ -479,14 +479,16 @@ void CMainFrame::onLoadMapEnd()
 // Broader event for the start of changing to a different map, new or loaded
 void CMainFrame::onMapChangeStart()
 {
-	getObjectOptionsPanel()->onMapChangeStart();
+	m_objectOptions.onMapChangeStart();
+	m_globalLightOptions.onMapChangeStart();
 }
 
 //MODDD - new event
 // Broader event for the end of changing to a different map, new or loaded
 void CMainFrame::onMapChangeEnd()
 {
-	getObjectOptionsPanel()->onMapChangeEnd();
+	m_objectOptions.onMapChangeEnd();
+	m_globalLightOptions.onMapChangeEnd();
 }
 
 /////////////////////////////////////////////////////////////////////////////

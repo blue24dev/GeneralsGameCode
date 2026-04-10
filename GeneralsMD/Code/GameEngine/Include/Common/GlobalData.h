@@ -86,6 +86,9 @@ public:
 	virtual void init() override;
 	virtual void reset() override;
 	virtual void update() override { }
+
+	//MODDD
+	void resetLightingFields();
 	
 	//MODDD - Real-time time-of-day change
 #if REAL_TIME_TOD_CHANGE

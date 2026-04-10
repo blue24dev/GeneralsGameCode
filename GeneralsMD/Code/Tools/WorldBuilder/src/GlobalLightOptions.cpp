@@ -31,15 +31,112 @@
 #include "Common/SubsystemInterface.h"
 
 //MODDD
+// ---------------
 extern SubsystemInterfaceList TheSubsystemListRecord;
 
-//MODDD
+//MODDD - copy of GlobalData.cpp's 'GlobalData::s_GlobalDataFieldParseTable' with only relevant fields for this WorldBuilder panel
+const FieldParse s_GlobalData_Lighting_FieldParseTable[] =
+{
+	{ "TerrainLightingMorningAmbient",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_MORNING ][0].ambient ) },
+	{ "TerrainLightingMorningDiffuse",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_MORNING ][0].diffuse ) },
+	{ "TerrainLightingMorningLightPos",		INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_MORNING ][0].lightPos ) },
+	{ "TerrainLightingAfternoonAmbient",		INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_AFTERNOON ][0].ambient ) },
+	{ "TerrainLightingAfternoonDiffuse",		INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_AFTERNOON ][0].diffuse ) },
+	{ "TerrainLightingAfternoonLightPos",	INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_AFTERNOON ][0].lightPos ) },
+	{ "TerrainLightingEveningAmbient",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_EVENING ][0].ambient ) },
+	{ "TerrainLightingEveningDiffuse",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_EVENING ][0].diffuse ) },
+	{ "TerrainLightingEveningLightPos",		INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_EVENING ][0].lightPos ) },
+	{ "TerrainLightingNightAmbient",				INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_NIGHT ][0].ambient ) },
+	{ "TerrainLightingNightDiffuse",				INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_NIGHT ][0].diffuse ) },
+	{ "TerrainLightingNightLightPos",			INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_NIGHT ][0].lightPos ) },
+
+	{ "TerrainObjectsLightingMorningAmbient",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_MORNING ][0].ambient ) },
+	{ "TerrainObjectsLightingMorningDiffuse",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_MORNING ][0].diffuse ) },
+	{ "TerrainObjectsLightingMorningLightPos",		INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_MORNING ][0].lightPos ) },
+	{ "TerrainObjectsLightingAfternoonAmbient",		INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_AFTERNOON ][0].ambient ) },
+	{ "TerrainObjectsLightingAfternoonDiffuse",		INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_AFTERNOON ][0].diffuse ) },
+	{ "TerrainObjectsLightingAfternoonLightPos",	INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_AFTERNOON ][0].lightPos ) },
+	{ "TerrainObjectsLightingEveningAmbient",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_EVENING ][0].ambient ) },
+	{ "TerrainObjectsLightingEveningDiffuse",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_EVENING ][0].diffuse ) },
+	{ "TerrainObjectsLightingEveningLightPos",		INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_EVENING ][0].lightPos ) },
+	{ "TerrainObjectsLightingNightAmbient",				INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_NIGHT ][0].ambient ) },
+	{ "TerrainObjectsLightingNightDiffuse",				INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_NIGHT ][0].diffuse ) },
+	{ "TerrainObjectsLightingNightLightPos",			INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_NIGHT ][0].lightPos ) },
+
+	//Secondary global light
+	{ "TerrainLightingMorningAmbient2",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_MORNING ][1].ambient ) },
+	{ "TerrainLightingMorningDiffuse2",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_MORNING ][1].diffuse ) },
+	{ "TerrainLightingMorningLightPos2",		INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_MORNING ][1].lightPos ) },
+	{ "TerrainLightingAfternoonAmbient2",		INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_AFTERNOON ][1].ambient ) },
+	{ "TerrainLightingAfternoonDiffuse2",		INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_AFTERNOON ][1].diffuse ) },
+	{ "TerrainLightingAfternoonLightPos2",	INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_AFTERNOON ][1].lightPos ) },
+	{ "TerrainLightingEveningAmbient2",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_EVENING ][1].ambient ) },
+	{ "TerrainLightingEveningDiffuse2",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_EVENING ][1].diffuse ) },
+	{ "TerrainLightingEveningLightPos2",		INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_EVENING ][1].lightPos ) },
+	{ "TerrainLightingNightAmbient2",				INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_NIGHT ][1].ambient ) },
+	{ "TerrainLightingNightDiffuse2",				INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_NIGHT ][1].diffuse ) },
+	{ "TerrainLightingNightLightPos2",			INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_NIGHT ][1].lightPos ) },
+
+	{ "TerrainObjectsLightingMorningAmbient2",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_MORNING ][1].ambient ) },
+	{ "TerrainObjectsLightingMorningDiffuse2",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_MORNING ][1].diffuse ) },
+	{ "TerrainObjectsLightingMorningLightPos2",		INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_MORNING ][1].lightPos ) },
+	{ "TerrainObjectsLightingAfternoonAmbient2",		INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_AFTERNOON ][1].ambient ) },
+	{ "TerrainObjectsLightingAfternoonDiffuse2",		INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_AFTERNOON ][1].diffuse ) },
+	{ "TerrainObjectsLightingAfternoonLightPos2",	INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_AFTERNOON ][1].lightPos ) },
+	{ "TerrainObjectsLightingEveningAmbient2",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_EVENING ][1].ambient ) },
+	{ "TerrainObjectsLightingEveningDiffuse2",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_EVENING ][1].diffuse ) },
+	{ "TerrainObjectsLightingEveningLightPos2",		INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_EVENING ][1].lightPos ) },
+	{ "TerrainObjectsLightingNightAmbient2",				INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_NIGHT ][1].ambient ) },
+	{ "TerrainObjectsLightingNightDiffuse2",				INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_NIGHT ][1].diffuse ) },
+	{ "TerrainObjectsLightingNightLightPos2",			INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_NIGHT ][1].lightPos ) },
+
+	//Third global light
+	{ "TerrainLightingMorningAmbient3",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_MORNING ][2].ambient ) },
+	{ "TerrainLightingMorningDiffuse3",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_MORNING ][2].diffuse ) },
+	{ "TerrainLightingMorningLightPos3",		INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_MORNING ][2].lightPos ) },
+	{ "TerrainLightingAfternoonAmbient3",		INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_AFTERNOON ][2].ambient ) },
+	{ "TerrainLightingAfternoonDiffuse3",		INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_AFTERNOON ][2].diffuse ) },
+	{ "TerrainLightingAfternoonLightPos3",	INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_AFTERNOON ][2].lightPos ) },
+	{ "TerrainLightingEveningAmbient3",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_EVENING ][2].ambient ) },
+	{ "TerrainLightingEveningDiffuse3",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_EVENING ][2].diffuse ) },
+	{ "TerrainLightingEveningLightPos3",		INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_EVENING ][2].lightPos ) },
+	{ "TerrainLightingNightAmbient3",				INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_NIGHT ][2].ambient ) },
+	{ "TerrainLightingNightDiffuse3",				INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_NIGHT ][2].diffuse ) },
+	{ "TerrainLightingNightLightPos3",			INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainLighting[ TIME_OF_DAY_NIGHT ][2].lightPos ) },
+
+	{ "TerrainObjectsLightingMorningAmbient3",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_MORNING ][2].ambient ) },
+	{ "TerrainObjectsLightingMorningDiffuse3",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_MORNING ][2].diffuse ) },
+	{ "TerrainObjectsLightingMorningLightPos3",		INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_MORNING ][2].lightPos ) },
+	{ "TerrainObjectsLightingAfternoonAmbient3",		INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_AFTERNOON ][2].ambient ) },
+	{ "TerrainObjectsLightingAfternoonDiffuse3",		INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_AFTERNOON ][2].diffuse ) },
+	{ "TerrainObjectsLightingAfternoonLightPos3",	INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_AFTERNOON ][2].lightPos ) },
+	{ "TerrainObjectsLightingEveningAmbient3",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_EVENING ][2].ambient ) },
+	{ "TerrainObjectsLightingEveningDiffuse3",			INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_EVENING ][2].diffuse ) },
+	{ "TerrainObjectsLightingEveningLightPos3",		INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_EVENING ][2].lightPos ) },
+	{ "TerrainObjectsLightingNightAmbient3",				INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_NIGHT ][2].ambient ) },
+	{ "TerrainObjectsLightingNightDiffuse3",				INI::parseRGBColor,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_NIGHT ][2].diffuse ) },
+	{ "TerrainObjectsLightingNightLightPos3",			INI::parseCoord3D,			nullptr,			offsetof( GlobalData, m_terrainObjectsLighting[ TIME_OF_DAY_NIGHT ][2].lightPos ) },
+/* These are internal use only, they do not need file definitions
+	{ "TerrainAmbientRGB",				INI::parseRGBColor,		nullptr,			offsetof( GlobalData, m_terrainAmbient ) },
+	{ "TerrainDiffuseRGB",				INI::parseRGBColor,		nullptr,			offsetof( GlobalData, m_terrainDiffuse ) },
+	{ "TerrainLightPos",					INI::parseCoord3D,		nullptr,			offsetof( GlobalData, m_terrainLightPos ) },
+*/
+	{ nullptr,					nullptr,						nullptr,						0 }
+};
+
+
+static void parseGameData_Lighting_Definition( INI* ini )
+{
+	// parse the ini weapon definition
+	ini->initFromINI_allowUnknown( TheWritableGlobalData, s_GlobalData_Lighting_FieldParseTable );
+}
+
 static const BlockParse GlobalData_Lighting_TypeTable[] =
 {
-	// TODO - use a custom parser that doesn't care about non-lighting fields (and doesn't crash on seeing unrelated fields)
-	{ "GameData",                       INI::parseGameDataDefinition },
+	{ "GameData",                       parseGameData_Lighting_Definition },
 	{ nullptr,                          nullptr },
 };
+// ---------------
 
 
 /////////////////////////////////////////////////////////////////////////////
@@ -52,6 +149,67 @@ GlobalLightOptions::GlobalLightOptions(CWnd* pParent /*=nullptr*/)
 	//{{AFX_DATA_INIT(GlobalLightOptions)
 		// NOTE: the ClassWizard will add member initialization here
 	//}}AFX_DATA_INIT
+}
+
+void GlobalLightOptions::onMapChangeStart()
+{
+	// Reset any light settings specific to the previously open map.
+	// Could argue this is only needed for 'onNewMapStart', as opposed to loading an existing map, since an existing
+	// map will overwrite this with its saved lighting values anyway.
+	_OnResetLights();
+}
+
+void GlobalLightOptions::onMapChangeEnd()
+{
+	if (this->IsWindowVisible())
+	{
+		// Keep the existing dialog in-sync with the new/loaded map
+		updateFields();
+	}
+}
+
+void GlobalLightOptions::onTimeOfDayChanged()
+{
+	if (this->IsWindowVisible())
+	{
+		updateFields();
+	}
+}
+
+//MODDD - helper to keep all fields in-sync with some important external change such as changing the time of day while
+// the dialog is open. Also, any occurrences of the first 3 calls will use this helper instead.
+void GlobalLightOptions::updateFields()
+{
+	determineHorizontalCoords(K_SUN);
+	determineHorizontalCoords(K_ACCENT1);
+	determineHorizontalCoords(K_ACCENT2);
+	
+	m_updating = true;
+
+	stuffValuesIntoFields(K_SUN);
+	stuffValuesIntoFields(K_ACCENT1);
+	stuffValuesIntoFields(K_ACCENT2);
+
+	m_updating = false;
+
+	updateTimeOfDayDisplay();
+
+	showLightFeedback(K_SUN);
+	showLightFeedback(K_ACCENT1);
+	showLightFeedback(K_ACCENT2);
+}
+
+//MODDD - helper to keep the ambient color button up-to-date with smaller changes such as editing any of the ambient color's R/G/B fields
+void GlobalLightOptions::updateColorButton()
+{
+	Int lightIndex = K_SUN;
+	const GlobalData::TerrainLighting *tl;
+	if (m_lighting == K_OBJECTS || m_lighting == K_BOTH) {
+		tl = &TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay][lightIndex];
+	} else {
+		tl = &TheGlobalData->m_terrainLighting[TheGlobalData->m_timeOfDay][lightIndex];
+	}
+	m_colorButton.setColor(tl->ambient);
 }
 
 /// Windows default stuff.
@@ -76,34 +234,83 @@ static void calcNewLight(Int lr, Int fb, Vector3 *newLight)
 	newLight->Rotate_Z(zAngle);
 }
 
-void GlobalLightOptions::updateEditFields(void)
+//MODDD
+void GlobalLightOptions::updateColorFields(Int lightIndex)
 {
-	m_updating = true;
+	const GlobalData::TerrainLighting *tl;
+	if (m_lighting == K_OBJECTS || m_lighting == K_BOTH) {
+		tl = &TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay][lightIndex];
+	} else {
+		tl = &TheGlobalData->m_terrainLighting[TheGlobalData->m_timeOfDay][lightIndex];
+	}
+
+	switch (lightIndex)
+	{
+		case K_SUN:
+		default:
+			PutInt(IDC_RA_EDIT, PercentToComponent(tl->ambient.red));
+			PutInt(IDC_GA_EDIT, PercentToComponent(tl->ambient.green));
+			PutInt(IDC_BA_EDIT, PercentToComponent(tl->ambient.blue));
+
+			PutInt(IDC_RD_EDIT, PercentToComponent(tl->diffuse.red));
+			PutInt(IDC_GD_EDIT, PercentToComponent(tl->diffuse.green));
+			PutInt(IDC_BD_EDIT, PercentToComponent(tl->diffuse.blue));
+			m_colorButton.setColor(tl->ambient);
+			break;
+
+		case K_ACCENT1:
+			PutInt(IDC_RD_EDIT1, PercentToComponent(tl->diffuse.red));
+			PutInt(IDC_GD_EDIT1, PercentToComponent(tl->diffuse.green));
+			PutInt(IDC_BD_EDIT1, PercentToComponent(tl->diffuse.blue));
+			break;
+
+		case K_ACCENT2:
+			PutInt(IDC_RD_EDIT2, PercentToComponent(tl->diffuse.red));
+			PutInt(IDC_GD_EDIT2, PercentToComponent(tl->diffuse.green));
+			PutInt(IDC_BD_EDIT2, PercentToComponent(tl->diffuse.blue));
+			break;
+	}
+}
+
+//MODDD - renamed from 'updateEditFields' to 'updateHorizontalCoordFields' for clarity
+// Also, param 'lightIndex'
+void GlobalLightOptions::updateHorizontalCoordFields(Int lightIndex)
+{
+	//m_updating = true;
 	CString str;
 	CWnd *pEdit;
 
-	str.Format("%d",m_angleAzimuth[K_SUN]);
-	pEdit = GetDlgItem(IDC_FB_EDIT);
-	if (pEdit) pEdit->SetWindowText(str);
-	str.Format("%d",m_angleElevation[K_SUN]);
-	pEdit = GetDlgItem(IDC_LR_EDIT);
-	if (pEdit) pEdit->SetWindowText(str);
+	if (lightIndex == K_SUN)
+	{
+		str.Format("%d",m_angleAzimuth[K_SUN]);
+		pEdit = GetDlgItem(IDC_FB_EDIT);
+		if (pEdit) pEdit->SetWindowText(str);
+		str.Format("%d",m_angleElevation[K_SUN]);
+		pEdit = GetDlgItem(IDC_LR_EDIT);
+		if (pEdit) pEdit->SetWindowText(str);
+	}
 
-	str.Format("%d",m_angleAzimuth[K_ACCENT1]);
-	pEdit = GetDlgItem(IDC_FB_EDIT1);
-	if (pEdit) pEdit->SetWindowText(str);
-	str.Format("%d",m_angleElevation[K_ACCENT1]);
-	pEdit = GetDlgItem(IDC_LR_EDIT1);
-	if (pEdit) pEdit->SetWindowText(str);
+	if (lightIndex == K_ACCENT1)
+	{
+		str.Format("%d",m_angleAzimuth[K_ACCENT1]);
+		pEdit = GetDlgItem(IDC_FB_EDIT1);
+		if (pEdit) pEdit->SetWindowText(str);
+		str.Format("%d",m_angleElevation[K_ACCENT1]);
+		pEdit = GetDlgItem(IDC_LR_EDIT1);
+		if (pEdit) pEdit->SetWindowText(str);
+	}
 
-	str.Format("%d",m_angleAzimuth[K_ACCENT2]);
-	pEdit = GetDlgItem(IDC_FB_EDIT2);
-	if (pEdit) pEdit->SetWindowText(str);
-	str.Format("%d",m_angleElevation[K_ACCENT2]);
-	pEdit = GetDlgItem(IDC_LR_EDIT2);
-	if (pEdit) pEdit->SetWindowText(str);
+	if (lightIndex == K_ACCENT2)
+	{
+		str.Format("%d",m_angleAzimuth[K_ACCENT2]);
+		pEdit = GetDlgItem(IDC_FB_EDIT2);
+		if (pEdit) pEdit->SetWindowText(str);
+		str.Format("%d",m_angleElevation[K_ACCENT2]);
+		pEdit = GetDlgItem(IDC_LR_EDIT2);
+		if (pEdit) pEdit->SetWindowText(str);
+	}
 
-	m_updating = false;
+	//m_updating = false;
 }
 
 void GlobalLightOptions::showLightFeedback(Int lightIndex)
@@ -251,244 +458,16 @@ static void SpitLights()
 #endif
 }
 
-void GlobalLightOptions::OnResetLights()
+//MODDD - separate version to hold everything from the original 'OnResetLights' except the UI update.
+void GlobalLightOptions::_OnResetLights()
 {
 	//MODDD
 	// Re-load 'GameData.ini' for these instead of setting things back from these hardcoded values.
 	// This is based off the 'initSubsystem' call in WorldBuilder.cpp (app startup).
 	//initSubsystem(TheWritableGlobalData, new GlobalData(), "Data\\INI\\Default\\GameData", "Data\\INI\\GameData");
+	// First, call this in case of any fields not specified by GameData.ini (this is the case as of retail)
+	TheWritableGlobalData->resetLightingFields();
 	TheSubsystemListRecord.loadSubsystemAgain(TheWritableGlobalData, "Data\\INI\\Default\\GameData", "Data\\INI\\GameData", nullptr, GlobalData_Lighting_TypeTable);
-
-	TheWritableGlobalData->m_terrainLighting[1][0].ambient.red = 0.50f;
-	TheWritableGlobalData->m_terrainLighting[1][0].ambient.green = 0.39f;
-	TheWritableGlobalData->m_terrainLighting[1][0].ambient.blue = 0.30f;
-	TheWritableGlobalData->m_terrainLighting[1][0].diffuse.red = 0.90f;
-	TheWritableGlobalData->m_terrainLighting[1][0].diffuse.green = 0.71f;
-	TheWritableGlobalData->m_terrainLighting[1][0].diffuse.blue = 0.60f;
-	TheWritableGlobalData->m_terrainLighting[1][0].lightPos.x = -0.96f;
-	TheWritableGlobalData->m_terrainLighting[1][0].lightPos.y = 0.05f;
-	TheWritableGlobalData->m_terrainLighting[1][0].lightPos.z = -0.29f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][0].ambient.red = 0.50f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][0].ambient.green = 0.40f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][0].ambient.blue = 0.30f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][0].diffuse.red = 0.90f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][0].diffuse.green = 0.70f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][0].diffuse.blue = 0.60f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][0].lightPos.x = -0.96f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][0].lightPos.y = 0.05f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][0].lightPos.z = -0.29f;
-
-	TheWritableGlobalData->m_terrainLighting[1][1].ambient.red = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][1].ambient.green = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][1].ambient.blue = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][1].diffuse.red = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][1].diffuse.green = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][1].diffuse.blue = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][1].lightPos.x = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][1].lightPos.y = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][1].lightPos.z = -1.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][1].ambient.red = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][1].ambient.green = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][1].ambient.blue = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][1].diffuse.red = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][1].diffuse.green = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][1].diffuse.blue = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][1].lightPos.x = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][1].lightPos.y = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][1].lightPos.z = -1.00f;
-
-	TheWritableGlobalData->m_terrainLighting[1][2].ambient.red = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][2].ambient.green = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][2].ambient.blue = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][2].diffuse.red = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][2].diffuse.green = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][2].diffuse.blue = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][2].lightPos.x = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][2].lightPos.y = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[1][2].lightPos.z = -1.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][2].ambient.red = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][2].ambient.green = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][2].ambient.blue = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][2].diffuse.red = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][2].diffuse.green = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][2].diffuse.blue = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][2].lightPos.x = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][2].lightPos.y = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[1][2].lightPos.z = -1.00f;
-
-
-	TheWritableGlobalData->m_terrainLighting[2][0].ambient.red = 0.2196f;
-	TheWritableGlobalData->m_terrainLighting[2][0].ambient.green = 0.2039f;
-	TheWritableGlobalData->m_terrainLighting[2][0].ambient.blue = 0.1725f;
-	TheWritableGlobalData->m_terrainLighting[2][0].diffuse.red = 1.0000f;
-	TheWritableGlobalData->m_terrainLighting[2][0].diffuse.green = 1.0000f;
-	TheWritableGlobalData->m_terrainLighting[2][0].diffuse.blue = 1.0000f;
-	TheWritableGlobalData->m_terrainLighting[2][0].lightPos.x = -0.8100f;
-	TheWritableGlobalData->m_terrainLighting[2][0].lightPos.y = 0.3800f;
-	TheWritableGlobalData->m_terrainLighting[2][0].lightPos.z = -0.4500f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][0].ambient.red = 0.2196f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][0].ambient.green = 0.2039f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][0].ambient.blue = 0.1725f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][0].diffuse.red = 1.0000f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][0].diffuse.green = 1.0000f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][0].diffuse.blue = 1.0000f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][0].lightPos.x = -0.8100f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][0].lightPos.y = 0.3800f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][0].lightPos.z = -0.4500f;
-
-	TheWritableGlobalData->m_terrainLighting[2][1].ambient.red = 0.0000f;
-	TheWritableGlobalData->m_terrainLighting[2][1].ambient.green = 0.0000f;
-	TheWritableGlobalData->m_terrainLighting[2][1].ambient.blue = 0.0000f;
-	TheWritableGlobalData->m_terrainLighting[2][1].diffuse.red = 0.2353f;
-	TheWritableGlobalData->m_terrainLighting[2][1].diffuse.green = 0.2353f;
-	TheWritableGlobalData->m_terrainLighting[2][1].diffuse.blue = 0.4706f;
-	TheWritableGlobalData->m_terrainLighting[2][1].lightPos.x = 0.7900f;
-	TheWritableGlobalData->m_terrainLighting[2][1].lightPos.y = 0.6200f;
-	TheWritableGlobalData->m_terrainLighting[2][1].lightPos.z = 0.0000f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][1].ambient.red = 0.0000f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][1].ambient.green = 0.0000f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][1].ambient.blue = 0.0000f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][1].diffuse.red = 0.2353f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][1].diffuse.green = 0.2353f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][1].diffuse.blue = 0.3137f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][1].lightPos.x = 0.7900f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][1].lightPos.y = 0.6200f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][1].lightPos.z = 0.0000f;
-
-	TheWritableGlobalData->m_terrainLighting[2][2].ambient.red = 0.0000f;
-	TheWritableGlobalData->m_terrainLighting[2][2].ambient.green = 0.0000f;
-	TheWritableGlobalData->m_terrainLighting[2][2].ambient.blue = 0.0000f;
-	TheWritableGlobalData->m_terrainLighting[2][2].diffuse.red = 0.1176f;
-	TheWritableGlobalData->m_terrainLighting[2][2].diffuse.green = 0.1176f;
-	TheWritableGlobalData->m_terrainLighting[2][2].diffuse.blue = 0.0784f;
-	TheWritableGlobalData->m_terrainLighting[2][2].lightPos.x = 0.8100f;
-	TheWritableGlobalData->m_terrainLighting[2][2].lightPos.y = -0.4800f;
-	TheWritableGlobalData->m_terrainLighting[2][2].lightPos.z = -0.3400f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][2].ambient.red = 0.0000f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][2].ambient.green = 0.0000f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][2].ambient.blue = 0.0000f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][2].diffuse.red = 0.1176f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][2].diffuse.green = 0.1176f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][2].diffuse.blue = 0.0784f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][2].lightPos.x = 0.8100f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][2].lightPos.y = -0.4800f;
-	TheWritableGlobalData->m_terrainObjectsLighting[2][2].lightPos.z = -0.3400f;
-
-
-	TheWritableGlobalData->m_terrainLighting[3][0].ambient.red = 0.25f;
-	TheWritableGlobalData->m_terrainLighting[3][0].ambient.green = 0.23f;
-	TheWritableGlobalData->m_terrainLighting[3][0].ambient.blue = 0.20f;
-	TheWritableGlobalData->m_terrainLighting[3][0].diffuse.red = 0.60f;
-	TheWritableGlobalData->m_terrainLighting[3][0].diffuse.green = 0.50f;
-	TheWritableGlobalData->m_terrainLighting[3][0].diffuse.blue = 0.40f;
-	TheWritableGlobalData->m_terrainLighting[3][0].lightPos.x = -1.00f;
-	TheWritableGlobalData->m_terrainLighting[3][0].lightPos.y = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][0].lightPos.z = -0.20f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][0].ambient.red = 0.25f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][0].ambient.green = 0.23f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][0].ambient.blue = 0.20f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][0].diffuse.red = 0.60f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][0].diffuse.green = 0.50f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][0].diffuse.blue = 0.40f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][0].lightPos.x = -1.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][0].lightPos.y = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][0].lightPos.z = -0.20f;
-
-	TheWritableGlobalData->m_terrainLighting[3][1].ambient.red = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][1].ambient.green = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][1].ambient.blue = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][1].diffuse.red = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][1].diffuse.green = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][1].diffuse.blue = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][1].lightPos.x = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][1].lightPos.y = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][1].lightPos.z = -1.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][1].ambient.red = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][1].ambient.green = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][1].ambient.blue = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][1].diffuse.red = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][1].diffuse.green = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][1].diffuse.blue = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][1].lightPos.x = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][1].lightPos.y = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][1].lightPos.z = -1.00f;
-
-	TheWritableGlobalData->m_terrainLighting[3][2].ambient.red = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][2].ambient.green = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][2].ambient.blue = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][2].diffuse.red = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][2].diffuse.green = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][2].diffuse.blue = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][2].lightPos.x = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][2].lightPos.y = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[3][2].lightPos.z = -1.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][2].ambient.red = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][2].ambient.green = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][2].ambient.blue = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][2].diffuse.red = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][2].diffuse.green = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][2].diffuse.blue = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][2].lightPos.x = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][2].lightPos.y = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[3][2].lightPos.z = -1.00f;
-
-
-	TheWritableGlobalData->m_terrainLighting[4][0].ambient.red = 0.10f;
-	TheWritableGlobalData->m_terrainLighting[4][0].ambient.green = 0.10f;
-	TheWritableGlobalData->m_terrainLighting[4][0].ambient.blue = 0.15f;
-	TheWritableGlobalData->m_terrainLighting[4][0].diffuse.red = 0.20f;
-	TheWritableGlobalData->m_terrainLighting[4][0].diffuse.green = 0.20f;
-	TheWritableGlobalData->m_terrainLighting[4][0].diffuse.blue = 0.30f;
-	TheWritableGlobalData->m_terrainLighting[4][0].lightPos.x = -1.00f;
-	TheWritableGlobalData->m_terrainLighting[4][0].lightPos.y = 1.00f;
-	TheWritableGlobalData->m_terrainLighting[4][0].lightPos.z = -2.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][0].ambient.red = 0.10f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][0].ambient.green = 0.10f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][0].ambient.blue = 0.15f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][0].diffuse.red = 0.20f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][0].diffuse.green = 0.20f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][0].diffuse.blue = 0.30f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][0].lightPos.x = -1.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][0].lightPos.y = 1.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][0].lightPos.z = -2.00f;
-
-	TheWritableGlobalData->m_terrainLighting[4][1].ambient.red = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][1].ambient.green = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][1].ambient.blue = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][1].diffuse.red = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][1].diffuse.green = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][1].diffuse.blue = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][1].lightPos.x = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][1].lightPos.y = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][1].lightPos.z = -1.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][1].ambient.red = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][1].ambient.green = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][1].ambient.blue = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][1].diffuse.red = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][1].diffuse.green = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][1].diffuse.blue = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][1].lightPos.x = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][1].lightPos.y = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][1].lightPos.z = -1.00f;
-
-	TheWritableGlobalData->m_terrainLighting[4][2].ambient.red = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][2].ambient.green = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][2].ambient.blue = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][2].diffuse.red = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][2].diffuse.green = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][2].diffuse.blue = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][2].lightPos.x = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][2].lightPos.y = 0.00f;
-	TheWritableGlobalData->m_terrainLighting[4][2].lightPos.z = -1.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][2].ambient.red = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][2].ambient.green = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][2].ambient.blue = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][2].diffuse.red = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][2].diffuse.green = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][2].diffuse.blue = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][2].lightPos.x = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][2].lightPos.y = 0.00f;
-	TheWritableGlobalData->m_terrainObjectsLighting[4][2].lightPos.z = -1.00f;
 
 	WbView3d * pView = CWorldBuilderDoc::GetActive3DView();
 	if (pView) {
@@ -500,9 +479,14 @@ void GlobalLightOptions::OnResetLights()
 		pView->setLighting(&TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay][K_ACCENT1], K_OBJECTS, K_ACCENT1);
 		pView->setLighting(&TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay][K_ACCENT2], K_OBJECTS, K_ACCENT2);
 	}
-	stuffValuesIntoFields(K_SUN);
-	stuffValuesIntoFields(K_ACCENT1);
-	stuffValuesIntoFields(K_ACCENT2);
+}
+
+void GlobalLightOptions::OnResetLights()
+{
+	//MODDD - most of the existing content moved to the underscore version
+	_OnResetLights();
+
+	updateFields();
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -514,6 +498,10 @@ width and feather in the ui controls. */
 BOOL GlobalLightOptions::OnInitDialog()
 {
 	CDialog::OnInitDialog();
+
+	//MODDD
+	m_updating = false;
+
 	kUIRedIDs[0] = IDC_RD_EDIT;
 	kUIRedIDs[1] = IDC_RD_EDIT1;
 	kUIRedIDs[2] = IDC_RD_EDIT2;
@@ -539,9 +527,10 @@ BOOL GlobalLightOptions::OnInitDialog()
 	pButton->SetCheck(1);
 	m_lighting = K_BOTH;
 
-	stuffValuesIntoFields(K_SUN);
-	stuffValuesIntoFields(K_ACCENT1);
-	stuffValuesIntoFields(K_ACCENT2);
+	//MODDD - not needed this early. Showing the dialog will invoke this anyway.
+	/*
+	updateFields();
+	*/
 
 	CRect rect;
 	CWnd *item = GetDlgItem(IDC_PSEd_Color1);
@@ -557,10 +546,7 @@ BOOL GlobalLightOptions::OnInitDialog()
 	              // EXCEPTION: OCX Property Pages should return FALSE
 }
 
-
-
-/** Displays the current values in the fields. */
-void GlobalLightOptions::stuffValuesIntoFields(Int lightIndex)
+void GlobalLightOptions::determineHorizontalCoords(Int lightIndex)
 {
 	const GlobalData::TerrainLighting *tl;
 	if (m_lighting == K_OBJECTS || m_lighting == K_BOTH) {
@@ -568,62 +554,29 @@ void GlobalLightOptions::stuffValuesIntoFields(Int lightIndex)
 	} else {
 		tl = &TheGlobalData->m_terrainLighting[TheGlobalData->m_timeOfDay][lightIndex];
 	}
+
 	Real azimuth = 90;
 	Real elevation = 90;
 
 	Vector3 light(tl->lightPos.x, tl->lightPos.y, tl->lightPos.z);
 	light.Normalize();
 
-
 	Real angleAzimuth = atan2(light.Y,light.X);//WWMath::Asin(light.Y);
 	azimuth = angleAzimuth*180.0f/PI;//90-(angleFB/PI)*180;
 	if (azimuth < 0) {
 		azimuth += 360;
 	}
- 	Real angleElevation = acos(light.Z);//WWMath::Asin(light.X);
+	Real angleElevation = acos(light.Z);//WWMath::Asin(light.X);
 	elevation = (angleElevation-PI/2.0f)*180.0f/PI;//90-(angleLR/PI)*180;
 
 	m_angleElevation[lightIndex] = elevation;
 	m_angleAzimuth[lightIndex] = azimuth;
+}
 
-	updateEditFields();
-
-	m_updating = true;
-	CString str;
- 	str.Format("XYZ: %.2f, %.2f, %.2f", light.X, light.Y, light.Z);
-	CWnd *pWnd = this->GetDlgItem(IDC_XYZ_STATIC);
-	if (pWnd && lightIndex==0) {
-		pWnd->SetWindowText(str);
-	}
-
-	switch (lightIndex)
-	{
-		case K_SUN:
-		default:
-			PutInt(IDC_RA_EDIT, PercentToComponent(tl->ambient.red));
-			PutInt(IDC_GA_EDIT, PercentToComponent(tl->ambient.green));
-			PutInt(IDC_BA_EDIT, PercentToComponent(tl->ambient.blue));
-
-			PutInt(IDC_RD_EDIT, PercentToComponent(tl->diffuse.red));
-			PutInt(IDC_GD_EDIT, PercentToComponent(tl->diffuse.green));
-			PutInt(IDC_BD_EDIT, PercentToComponent(tl->diffuse.blue));
-			m_colorButton.setColor(tl->ambient);
-			break;
-
-		case K_ACCENT1:
-			PutInt(IDC_RD_EDIT1, PercentToComponent(tl->diffuse.red));
-			PutInt(IDC_GD_EDIT1, PercentToComponent(tl->diffuse.green));
-			PutInt(IDC_BD_EDIT1, PercentToComponent(tl->diffuse.blue));
-			break;
-
-		case K_ACCENT2:
-			PutInt(IDC_RD_EDIT2, PercentToComponent(tl->diffuse.red));
-			PutInt(IDC_GD_EDIT2, PercentToComponent(tl->diffuse.green));
-			PutInt(IDC_BD_EDIT2, PercentToComponent(tl->diffuse.blue));
-			break;
-	}
-
-	m_updating = false;
+//MODDD
+void GlobalLightOptions::updateTimeOfDayDisplay()
+{
+	CWnd *pWnd;
 	pWnd = GetDlgItem(IDC_TIME_OF_DAY_CAPTION);
 	if (pWnd) {
 		switch (TheGlobalData->m_timeOfDay) {
@@ -634,7 +587,56 @@ void GlobalLightOptions::stuffValuesIntoFields(Int lightIndex)
 			case TIME_OF_DAY_NIGHT: pWnd->SetWindowText("Time of day: Night."); break;
 		}
 	}
-	showLightFeedback(lightIndex);
+}
+
+//MODDD
+void GlobalLightOptions::updateLightPositionDisplay(Int lightIndex)
+{
+	const GlobalData::TerrainLighting *tl;
+	if (m_lighting == K_OBJECTS || m_lighting == K_BOTH) {
+		tl = &TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay][lightIndex];
+	} else {
+		tl = &TheGlobalData->m_terrainLighting[TheGlobalData->m_timeOfDay][lightIndex];
+	}
+
+	CWnd *pWnd = this->GetDlgItem(IDC_XYZ_STATIC);
+	if (pWnd)
+	{
+		Vector3 light(tl->lightPos.x, tl->lightPos.y, tl->lightPos.z);
+		light.Normalize();
+
+		CString str;
+		str.Format("XYZ: %.2f, %.2f, %.2f", light.X, light.Y, light.Z);
+		pWnd->SetWindowText(str);
+	}
+}
+
+/** Displays the current values in the fields. */
+void GlobalLightOptions::stuffValuesIntoFields(Int lightIndex)
+{
+	//MODDD - script moved to a new method 'determineHorizontalCoords', called elsewhere
+
+	//MODDD - adding arg 'lightIndex'
+	updateHorizontalCoordFields(lightIndex);
+	//MODDD - existing script moved to here
+	updateColorFields(lightIndex);
+
+	//m_updating = true;
+
+	//MODDD - script condensed
+	if (lightIndex==K_SUN)
+	{
+		updateLightPositionDisplay(lightIndex);
+	}
+
+	//MODDD - script moved to new method 'updateColorFields', called above
+
+	//m_updating = false;
+	
+	//MODDD - script moved to a new method 'updateTimeOfDayDisplay'
+
+	//MODDD - call moved elsewhere
+	//showLightFeedback(lightIndex);
 }
 
 
@@ -666,6 +668,9 @@ void GlobalLightOptions::PutInt(Int ctrlID, Int val)
 	}
 }
 
+//MODDD - split
+// ---
+/*
 void GlobalLightOptions::OnChangeFrontBackEdit()
 {
 	if (m_updating) return;
@@ -678,13 +683,44 @@ void GlobalLightOptions::OnChangeFrontBackEdit()
 	applyAngle(K_ACCENT2);
 	m_updating = false;
 }
+*/
+void GlobalLightOptions::OnChangeSunFrontBackEdit()
+{
+	if (m_updating) return;
+	GetInt(IDC_FB_EDIT, &m_angleAzimuth[K_SUN]);
+	m_updating = true;
+	applyAngle(K_SUN);
+	m_updating = false;
+}
+void GlobalLightOptions::OnChangeAccent1FrontBackEdit()
+{
+	if (m_updating) return;
+	GetInt(IDC_FB_EDIT1, &m_angleAzimuth[K_ACCENT1]);
+	m_updating = true;
+	applyAngle(K_ACCENT1);
+	m_updating = false;
+}
+void GlobalLightOptions::OnChangeAccent2FrontBackEdit()
+{
+	if (m_updating) return;
+	GetInt(IDC_FB_EDIT2, &m_angleAzimuth[K_ACCENT2]);
+	m_updating = true;
+	applyAngle(K_ACCENT2);
+	m_updating = false;
+}
+// ---
 
 /// Handles width edit ui messages.
 /** Gets the new edit control text, converts it to an int, then updates
 		the angles. */
+//MODDD - split
+// ---
+/*
 void GlobalLightOptions::OnChangeLeftRightEdit()
 {
-	if (m_updating) return;
+	if (m_updating){
+		return;
+	}
 	GetInt(IDC_LR_EDIT, &m_angleElevation[K_SUN]);
 	GetInt(IDC_LR_EDIT1, &m_angleElevation[K_ACCENT1]);
 	GetInt(IDC_LR_EDIT2, &m_angleElevation[K_ACCENT2]);
@@ -694,6 +730,39 @@ void GlobalLightOptions::OnChangeLeftRightEdit()
 	applyAngle(K_ACCENT2);
 	m_updating = false;
 }
+*/
+// ---
+void GlobalLightOptions::OnChangeSunLeftRightEdit()
+{
+	if (m_updating){
+		return;
+	}
+	GetInt(IDC_LR_EDIT, &m_angleElevation[K_SUN]);
+	m_updating = true;
+	applyAngle(K_SUN);
+	m_updating = false;
+}
+void GlobalLightOptions::OnChangeAccent1LeftRightEdit()
+{
+	if (m_updating){
+		return;
+	}
+	GetInt(IDC_LR_EDIT1, &m_angleElevation[K_ACCENT1]);
+	m_updating = true;
+	applyAngle(K_ACCENT1);
+	m_updating = false;
+}
+void GlobalLightOptions::OnChangeAccent2LeftRightEdit()
+{
+	if (m_updating){
+		return;
+	}
+	GetInt(IDC_LR_EDIT2, &m_angleElevation[K_ACCENT2]);
+	m_updating = true;
+	applyAngle(K_ACCENT2);
+	m_updating = false;
+}
+// ---
 
 /// Handles width edit ui messages.
 /** Gets the new edit control text, converts it to an int, then updates
@@ -740,15 +809,43 @@ void GlobalLightOptions::applyColor(Int lightIndex)
 	}
 }
 
+//MODDD - split
+// ---
+/*
 void GlobalLightOptions::OnChangeColorEdit()
 {
 	if (m_updating) return;
 	applyColor(K_SUN);
 	applyColor(K_ACCENT1);
 	applyColor(K_ACCENT2);
-
+}
+*/
+// ---
+void GlobalLightOptions::OnChangeAmbientColorEdit()
+{
+	if (m_updating) return;
+	applyColor(K_SUN);
+	updateColorButton();
 }
 
+void GlobalLightOptions::OnChangeSunColorEdit()
+{
+	if (m_updating) return;
+	applyColor(K_SUN);
+}
+
+void GlobalLightOptions::OnChangeAccent1ColorEdit()
+{
+	if (m_updating) return;
+	applyColor(K_ACCENT1);
+}
+
+void GlobalLightOptions::OnChangeAccent2ColorEdit()
+{
+	if (m_updating) return;
+	applyColor(K_ACCENT2);
+}
+// ---
 
 void GlobalLightOptions::GetPopSliderInfo(const long sliderID, long *pMin, long *pMax, long *pLineSize, long *pInitial)
 {
@@ -801,6 +898,10 @@ void GlobalLightOptions::GetPopSliderInfo(const long sliderID, long *pMin, long 
 
 void GlobalLightOptions::PopSliderChanged(const long sliderID, long theVal)
 {
+	//MODDD - replacement
+	// Changing the editable text field values already triggers the field edit event (ex: 'OnChangeSunFrontBackEdit'),
+	// so no need to do anything else here
+	/*
 	switch (sliderID) {
 
 		case IDC_FB_POPUP:
@@ -844,6 +945,38 @@ void GlobalLightOptions::PopSliderChanged(const long sliderID, long theVal)
 			DEBUG_CRASH(("Slider message from unknown control"));
 			break;
 	}
+	*/
+	switch (sliderID) {
+
+		case IDC_FB_POPUP:
+			PutInt(IDC_FB_EDIT, theVal);
+			break;
+
+		case IDC_FB_POPUP1:
+			PutInt(IDC_FB_EDIT1, theVal);
+			break;
+
+		case IDC_FB_POPUP2:
+			PutInt(IDC_FB_EDIT2, theVal);
+			break;
+
+		case IDC_LR_POPUP:
+			PutInt(IDC_LR_EDIT, theVal);
+			break;
+
+		case IDC_LR_POPUP1:
+			PutInt(IDC_LR_EDIT1, theVal);
+			break;
+
+		case IDC_LR_POPUP2:
+			PutInt(IDC_LR_EDIT2, theVal);
+			break;
+
+		default:
+			// uh-oh!
+			DEBUG_CRASH(("Slider message from unknown control"));
+			break;
+	}
 }
 
 void GlobalLightOptions::PopSliderFinished(const long sliderID, long theVal)
@@ -876,24 +1009,25 @@ BEGIN_MESSAGE_MAP(GlobalLightOptions, CDialog)
 	ON_WM_MOVE()
 	ON_WM_SHOWWINDOW()
 	ON_WM_CLOSE()
-	ON_EN_CHANGE(IDC_RA_EDIT, OnChangeColorEdit)
-	ON_EN_CHANGE(IDC_BA_EDIT, OnChangeColorEdit)
-	ON_EN_CHANGE(IDC_GA_EDIT, OnChangeColorEdit)
-	ON_EN_CHANGE(IDC_FB_EDIT, OnChangeFrontBackEdit)
-	ON_EN_CHANGE(IDC_FB_EDIT1, OnChangeFrontBackEdit)
-	ON_EN_CHANGE(IDC_FB_EDIT2, OnChangeFrontBackEdit)
-	ON_EN_CHANGE(IDC_LR_EDIT, OnChangeLeftRightEdit)
-	ON_EN_CHANGE(IDC_LR_EDIT1, OnChangeLeftRightEdit)
-	ON_EN_CHANGE(IDC_LR_EDIT2, OnChangeLeftRightEdit)
-	ON_EN_CHANGE(IDC_RD_EDIT, OnChangeColorEdit)
-	ON_EN_CHANGE(IDC_GD_EDIT, OnChangeColorEdit)
-	ON_EN_CHANGE(IDC_BD_EDIT, OnChangeColorEdit)
-	ON_EN_CHANGE(IDC_RD_EDIT1, OnChangeColorEdit)
-	ON_EN_CHANGE(IDC_GD_EDIT1, OnChangeColorEdit)
-	ON_EN_CHANGE(IDC_BD_EDIT1, OnChangeColorEdit)
-	ON_EN_CHANGE(IDC_RD_EDIT2, OnChangeColorEdit)
-	ON_EN_CHANGE(IDC_GD_EDIT2, OnChangeColorEdit)
-	ON_EN_CHANGE(IDC_BD_EDIT2, OnChangeColorEdit)
+	//MODDD - split the 'OnChangeColorEdit' event into more specific ones
+	ON_EN_CHANGE(IDC_RA_EDIT, OnChangeAmbientColorEdit)
+	ON_EN_CHANGE(IDC_BA_EDIT, OnChangeAmbientColorEdit)
+	ON_EN_CHANGE(IDC_GA_EDIT, OnChangeAmbientColorEdit)
+	ON_EN_CHANGE(IDC_FB_EDIT, OnChangeSunFrontBackEdit)
+	ON_EN_CHANGE(IDC_FB_EDIT1, OnChangeAccent1FrontBackEdit)
+	ON_EN_CHANGE(IDC_FB_EDIT2, OnChangeAccent2FrontBackEdit)
+	ON_EN_CHANGE(IDC_LR_EDIT, OnChangeSunLeftRightEdit)
+	ON_EN_CHANGE(IDC_LR_EDIT1, OnChangeAccent1LeftRightEdit)
+	ON_EN_CHANGE(IDC_LR_EDIT2, OnChangeAccent2LeftRightEdit)
+	ON_EN_CHANGE(IDC_RD_EDIT, OnChangeSunColorEdit)
+	ON_EN_CHANGE(IDC_GD_EDIT, OnChangeSunColorEdit)
+	ON_EN_CHANGE(IDC_BD_EDIT, OnChangeSunColorEdit)
+	ON_EN_CHANGE(IDC_RD_EDIT1, OnChangeAccent1ColorEdit)
+	ON_EN_CHANGE(IDC_GD_EDIT1, OnChangeAccent1ColorEdit)
+	ON_EN_CHANGE(IDC_BD_EDIT1, OnChangeAccent1ColorEdit)
+	ON_EN_CHANGE(IDC_RD_EDIT2, OnChangeAccent2ColorEdit)
+	ON_EN_CHANGE(IDC_GD_EDIT2, OnChangeAccent2ColorEdit)
+	ON_EN_CHANGE(IDC_BD_EDIT2, OnChangeAccent2ColorEdit)
 	ON_BN_CLICKED(IDC_RADIO_EVERYTHING, OnRadioEverything)
 	ON_BN_CLICKED(IDC_RADIO_OBJECTS, OnRadioObjects)
 	ON_BN_CLICKED(IDC_RADIO_TERRAIN, OnRadioTerrain)
@@ -907,30 +1041,26 @@ END_MESSAGE_MAP()
 void GlobalLightOptions::OnRadioEverything()
 {
 	m_lighting = K_BOTH;
-	stuffValuesIntoFields(K_SUN);
-	stuffValuesIntoFields(K_ACCENT1);
-	stuffValuesIntoFields(K_ACCENT2);
+	updateFields();
 }
 
 void GlobalLightOptions::OnRadioObjects()
 {
 	m_lighting = K_OBJECTS;
-	stuffValuesIntoFields(K_SUN);
-	stuffValuesIntoFields(K_ACCENT1);
-	stuffValuesIntoFields(K_ACCENT2);
+	updateFields();
 }
 
 void GlobalLightOptions::OnRadioTerrain()
 {
 	m_lighting = K_TERRAIN;
-	stuffValuesIntoFields(K_SUN);
-	stuffValuesIntoFields(K_ACCENT1);
-	stuffValuesIntoFields(K_ACCENT2);
+	updateFields();
 }
 
 void GlobalLightOptions::OnColorPress()
 {
-	CColorDialog dlg;
+	//MODDD - start with the color dialog set to the current color
+	//CColorDialog dlg;
+	CColorDialog dlg(CButtonShowColor::RGBtoBGR(m_colorButton.getColor().getAsInt()), CC_ANYCOLOR|CC_FULLOPEN|CC_RGBINIT|CC_SOLIDCOLOR);
 	if (dlg.DoModal() == IDOK) {
 		m_colorButton.setColor(CButtonShowColor::BGRtoRGB(dlg.GetColor()));
 		RGBColor color = m_colorButton.getColor();
@@ -957,9 +1087,13 @@ void GlobalLightOptions::OnShowWindow(BOOL bShow, UINT nStatus)
 {
 	CDialog::OnShowWindow(bShow, nStatus);
 
-	stuffValuesIntoFields(K_SUN);
-	stuffValuesIntoFields(K_ACCENT1);
-	stuffValuesIntoFields(K_ACCENT2);
+	//MODDD - surrounding this with a 'bShow' condition. Why keep the fields up to date on being closed?
+	// I think doing it on both open & close is a mistake.
+	if (bShow)
+	{
+		updateFields();
+	}
+
 	if (!bShow) {
 		WbView3d * pView = CWorldBuilderDoc::GetActive3DView();
 		if (pView) {

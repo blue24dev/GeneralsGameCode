@@ -732,40 +732,8 @@ GlobalData::GlobalData()
 	m_ammoPipScreenOffset.x = m_ammoPipScreenOffset.y = 0;
 	m_containerPipScreenOffset.x = m_containerPipScreenOffset.y = 0;
 
-	for (i=0; i<MAX_GLOBAL_LIGHTS; i++)
-	{
-		m_terrainAmbient[i].red = 0.0f;
-		m_terrainAmbient[i].green = 0.0f;
-		m_terrainAmbient[i].blue = 0.0f;
-		m_terrainDiffuse[i].red = 0.0f;
-		m_terrainDiffuse[i].green = 0.0f;
-		m_terrainDiffuse[i].blue = 0.0f;
-		m_terrainLightPos[i].x = 0.0f;
-		m_terrainLightPos[i].y = 0.0f;
-		m_terrainLightPos[i].z = -1.0f;
-
-		for (j=0; j<TIME_OF_DAY_COUNT; j++)
-		{	m_terrainLighting[ j ][i].ambient.red=0;
-			m_terrainLighting[ j ][i].ambient.green=0;
-			m_terrainLighting[ j ][i].ambient.blue=0;
-			m_terrainLighting[ j ][i].diffuse.red=0;
-			m_terrainLighting[ j ][i].diffuse.green=0;
-			m_terrainLighting[ j ][i].diffuse.blue=0;
-			m_terrainLighting[ j ][i].lightPos.x=0;
-			m_terrainLighting[ j ][i].lightPos.y=0;
-			m_terrainLighting[ j ][i].lightPos.z=-1.0f;
-
-			m_terrainObjectsLighting[ j ][i].ambient.red=0;
-			m_terrainObjectsLighting[ j ][i].ambient.green=0;
-			m_terrainObjectsLighting[ j ][i].ambient.blue=0;
-			m_terrainObjectsLighting[ j ][i].diffuse.red=0;
-			m_terrainObjectsLighting[ j ][i].diffuse.green=0;
-			m_terrainObjectsLighting[ j ][i].diffuse.blue=0;
-			m_terrainObjectsLighting[ j ][i].lightPos.x=0;
-			m_terrainObjectsLighting[ j ][i].lightPos.y=0;
-			m_terrainObjectsLighting[ j ][i].lightPos.z=-1.0f;
-		}
-	}
+	//MODDD - script moved to a helper
+	resetLightingFields();
 
 	for (j=TIME_OF_DAY_FIRST; j<TIME_OF_DAY_COUNT; j++)
 		m_infantryLightScale[j] = 1.5f;
@@ -1062,7 +1030,6 @@ GlobalData::GlobalData()
 
 }
 
-
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 GlobalData::~GlobalData()
@@ -1076,6 +1043,47 @@ GlobalData::~GlobalData()
 		TheWritableGlobalData = nullptr;
 	}
 
+}
+
+//MODDD
+void GlobalData::resetLightingFields()
+{
+	int i;
+	int j;
+	for (i=0; i<MAX_GLOBAL_LIGHTS; i++)
+	{
+		m_terrainAmbient[i].red = 0.0f;
+		m_terrainAmbient[i].green = 0.0f;
+		m_terrainAmbient[i].blue = 0.0f;
+		m_terrainDiffuse[i].red = 0.0f;
+		m_terrainDiffuse[i].green = 0.0f;
+		m_terrainDiffuse[i].blue = 0.0f;
+		m_terrainLightPos[i].x = 0.0f;
+		m_terrainLightPos[i].y = 0.0f;
+		m_terrainLightPos[i].z = -1.0f;
+
+		for (j=0; j<TIME_OF_DAY_COUNT; j++)
+		{	m_terrainLighting[ j ][i].ambient.red=0;
+			m_terrainLighting[ j ][i].ambient.green=0;
+			m_terrainLighting[ j ][i].ambient.blue=0;
+			m_terrainLighting[ j ][i].diffuse.red=0;
+			m_terrainLighting[ j ][i].diffuse.green=0;
+			m_terrainLighting[ j ][i].diffuse.blue=0;
+			m_terrainLighting[ j ][i].lightPos.x=0;
+			m_terrainLighting[ j ][i].lightPos.y=0;
+			m_terrainLighting[ j ][i].lightPos.z=-1.0f;
+
+			m_terrainObjectsLighting[ j ][i].ambient.red=0;
+			m_terrainObjectsLighting[ j ][i].ambient.green=0;
+			m_terrainObjectsLighting[ j ][i].ambient.blue=0;
+			m_terrainObjectsLighting[ j ][i].diffuse.red=0;
+			m_terrainObjectsLighting[ j ][i].diffuse.green=0;
+			m_terrainObjectsLighting[ j ][i].diffuse.blue=0;
+			m_terrainObjectsLighting[ j ][i].lightPos.x=0;
+			m_terrainObjectsLighting[ j ][i].lightPos.y=0;
+			m_terrainObjectsLighting[ j ][i].lightPos.z=-1.0f;
+		}
+	}
 }
 
 #if REAL_TIME_TOD_CHANGE

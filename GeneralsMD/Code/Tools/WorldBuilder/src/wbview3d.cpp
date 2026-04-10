@@ -153,6 +153,10 @@ static void WWAssert_Callback(const char * message)
 
 // The W3DShadowManager accesses TheTacticalView, so we have to create
 // a stub class & object in Worldbuilder for it to access.
+//MODDD - TODO - compare to the 'ViewDummy' class now in View.h.
+// Could that be used instead of this, or should this be used for both instead?
+// There are some differences, looks like ViewDummy is the bare minimum (implements abstract methods) while
+// 'PlaceholderView' here covers several other methods to explicitly dummy them anyway.
 class PlaceholderView : public View
 {
 protected:
@@ -246,8 +250,9 @@ public:
 	virtual Real getMaxZoom( void ) { return 0.0f; }
 	virtual void setOkToAdjustHeight( Bool val ) { }						///< Set this to adjust camera height
 
-	virtual Real getTerrainHeightAtPivot() { return 0.0f; }
-	virtual Real getCurrentHeightAboveGround() { return 0.0f; }
+	virtual Real getTerrainHeightAtPivot() override { return 0.0f; }
+	//MODDD - added right-hand 'const'
+	virtual Real getCurrentHeightAboveGround() const override { return 0.0f; }
 
 	virtual void getLocation ( ViewLocation *location ) {};								///< write the view's current location in to the view location object
 	virtual void setLocation ( const ViewLocation *location ){};								///< set the view's current location from to the view location object
@@ -281,6 +286,9 @@ public:
 	virtual void rotateCameraTowardPosition(const Coord3D *pLoc, Int milliseconds, Real easeIn, Real easeOut, Bool reverseRotation) {};	///< Rotate camera to face an object, and hold on it
 
 	virtual const Coord3D& get3DCameraPosition() const { static Coord3D dummy; return dummy; }							///< Returns the actual camera position
+
+	//MODDD
+	virtual Real getZoomOld() const override { return 0.0f; };
 
 	virtual void setGuardBandBias( const Coord2D *gb ) {};
 
@@ -862,6 +870,10 @@ void WbView3d::stepTimeOfDay()
 	if (TheGlobalData->m_timeOfDay >= TIME_OF_DAY_COUNT) {
 		TheWritableGlobalData->m_timeOfDay = TIME_OF_DAY_FIRST;
 	}
+
+	//MODDD - let the global light options dialog know
+	CMainFrame::GetMainFrame()->getGlobalLightOptionsPanel()->onTimeOfDayChanged();
+
 	resetRenderObjects();
 	invalObjectInView(nullptr);
 }

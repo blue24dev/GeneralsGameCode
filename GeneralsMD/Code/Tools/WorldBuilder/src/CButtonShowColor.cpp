@@ -57,6 +57,29 @@ CButtonShowColor::~CButtonShowColor()
 	DestroyWindow();
 }
 
+//MODDD - implementations moved from .h (getColor and all setColor overloads)
+const RGBColor& CButtonShowColor::getColor(void) const
+{
+	return m_color;
+}
+
+void CButtonShowColor::setColor(Int color)
+{
+	m_color.setFromInt(color);
+	//MODDD - apply the edit immediately (more notes below)
+	this->Invalidate();
+}
+
+void CButtonShowColor::setColor(const RGBColor& color)
+{
+	m_color = color;
+
+	//MODDD - apply the edit immediately, needed in some cases where the button color is set without changes to
+	// other UI to trigger a repaint naturally
+	this->Invalidate();
+	// 'this->UpdateWindow()' doesn't appear to be needed (nor did it work without 'Invalidate()' in several cases)
+}
+
 // Convert from 0x00RRGGBB to 0x00BBGGRR
 COLORREF CButtonShowColor::RGBtoBGR(Int color)
 {
