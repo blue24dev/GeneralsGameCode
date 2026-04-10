@@ -1613,7 +1613,7 @@ void INI::initFromINIMulti( void *what, const MultiIniFieldParse& parseTableList
 
 }
 
-//MODDD - copies of above that allow not knowing what to do for a field.
+//MODDD - copies of above that allows not knowing what to do for a field.
 // Ex: WorldBuilder loading GlobalData.ini again just for terrain lighting values and nothing else
 // -------------------------------------------------------------------------------------------------
 // -------------------------------------------------------------------------------------------------
