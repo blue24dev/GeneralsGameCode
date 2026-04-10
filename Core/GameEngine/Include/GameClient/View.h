@@ -413,7 +413,7 @@ public:
 	}
 
 	//MODDD
-	virtual Real getZoomOld() const { return 0; }
+	virtual Real getZoomOld() const override { return 0.0f; }
 
 	virtual WorldToScreenReturn worldToScreenTriReturn(const Coord3D *w, ICoord2D *s ) override
 	{

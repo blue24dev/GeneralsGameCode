@@ -90,8 +90,9 @@ public:
 	void handleCameraChange(void);
 	void onEditScripts();
 
-	//MODDD - getter
+	//MODDD - getters
 	ObjectOptions* getObjectOptionsPanel() { return &m_objectOptions; };
+	GlobalLightOptions* getGlobalLightOptionsPanel() { return &m_globalLightOptions; };
 
 	//MODDD - new events
 	void onNewMapStart();
