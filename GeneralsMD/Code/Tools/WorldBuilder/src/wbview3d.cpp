@@ -111,7 +111,9 @@ class SkeletonSceneClass;
 #define UPDATE_TIME					100  /* 10 frames a second */
 #define MOUSE_WHEEL_FACTOR	32
 
-#define SAMPLE_DYNAMIC_LIGHT	1
+//MODDD - at long last, you're why there's always been a yellow spot that won't go away.
+// (mirroring what 'GameEngineDevice/..../W3DDisplay.cpp' did and prepending 'no_')
+#define no_SAMPLE_DYNAMIC_LIGHT	1
 #ifdef SAMPLE_DYNAMIC_LIGHT
 static W3DDynamicLight * theDynamicLight = nullptr;
 static Real theLightXOffset = 0.1f;
