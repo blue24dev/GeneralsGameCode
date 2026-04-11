@@ -21,6 +21,23 @@
 #include "GameClient/ParticleSys.h"
 #include "CButtonShowColor.h"
 
+
+//MODDD - new, override of a MFC event to conveniently add the 'BS_OWNERDRAW' style
+BOOL CButtonShowColor::Create(LPCTSTR lpszCaption, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
+{
+	//MODDD - style added to avoid the pressed-in button appearance
+	dwStyle |= BS_OWNERDRAW;
+	return CButton::Create(lpszCaption, dwStyle, rect, pParentWnd, nID);
+}
+
+//MODDD - new
+// Without overriding this method, clicking the button with this style causes a crash.
+// The as-is 'OnPaint' still works as usual.
+void CButtonShowColor::DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct)
+{
+	// empty
+}
+
 // CButtonShowColor ///////////////////////////////////////////////////////////////////////////////
 void CButtonShowColor::OnPaint()
 {

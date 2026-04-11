@@ -24,6 +24,12 @@
 #include "WBPopupSlider.h"
 #include "resource.h"
 #include "CButtonShowColor.h"
+//MODDD
+#include "Common/GlobalData.h"
+
+//MODDD
+class Vector3;
+
 /////////////////////////////////////////////////////////////////////////////
 /// GlobalLightOptions modeless (floating) dialog - allows entry and display of brush width and feather.
 
@@ -41,18 +47,13 @@ public:
 	CButtonShowColor m_colorButton;
 
 	GlobalLightOptions(CWnd* pParent = nullptr);   // standard constructor
-	
-	//MODDD
-	// ---------------
+
+	//MODDD - several new methods
+	// ---
 	void onMapChangeStart();
 	void onMapChangeEnd();
-
-	void updateFields();
 	void onTimeOfDayChanged();
-	void updateColorButton();
-
-	void _OnResetLights();
-	// ---------------
+	// ---
 
 // Dialog Data
 	//{{AFX_DATA(GlobalLightOptions)
@@ -65,7 +66,7 @@ public:
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(GlobalLightOptions)
 	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
+	virtual void DoDataExchange(CDataExchange* pDX) override;    // DDX/DDV support
 	//}}AFX_VIRTUAL
 
 // Implementation
@@ -73,7 +74,7 @@ protected:
 
 	// Generated message map functions
 	//{{AFX_MSG(GlobalLightOptions)
-	virtual BOOL OnInitDialog();
+	virtual BOOL OnInitDialog() override;
 	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	afx_msg void OnMove(int x, int y);
 	afx_msg void OnChangeSunFrontBackEdit();
@@ -97,36 +98,15 @@ protected:
 	afx_msg void OnColorPress();
 	afx_msg void OnResetLights();
 	afx_msg void OnClose();
-	virtual void OnOK(){return;};  //!< Modeless dialogs don't OK, so eat this for modeless.
-	virtual void OnCancel(){return;}; //!< Modeless dialogs don't close on ESC, so eat this for modeless.
+	virtual void OnOK() override {return;};  //!< Modeless dialogs don't OK, so eat this for modeless.
+	virtual void OnCancel() override {return;}; //!< Modeless dialogs don't close on ESC, so eat this for modeless.
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
 private:
-	Real	ComponentToPercent(Int component)
-	{
-			Real percent;
-			if (component >= 255) {
-				return 1.0;
-			}
-			if (component <= 0) {
-				return 0.0;
-			}
-			percent = (Real)component/255.0;
-			return percent;
-	}
-	Int		PercentToComponent(Real percent)
-	{
-			Int component;
-			if (percent >= 1.0) {
-				return 255;
-			}
-			if (percent <= 0.0) {
-				return 0;
-			}
-			component = (percent * 255.0);
-			return component;
-	};
+	//MODDD - implementations moved to .cpp
+	Real	ComponentToPercent(Int component);
+	Int		PercentToComponent(Real percent);
 	BOOL	GetInt(Int ctrlID, Int *rVal);
 	void	PutInt(Int ctrlID, Int val);
 
@@ -147,23 +127,30 @@ protected:
 	void applyAngle(Int lightIndex=0);
 	void showLightFeedback(Int lightIndex=0);
 	void applyColor(Int lightIndex=0);
-	//MODDD
+	void stuffValuesIntoFields(Int lightIndex = 0);
+
+	//MODDD - several new methods (except 'updateEditFields', renamed)
+	// ---
+	void updateFields();
+	const GlobalData::TerrainLighting* getTerrainLighting(Int lightIndex);
+	GlobalData::TerrainLighting getTerrainLightingCopy(Int lightIndex);
+	void horizontalCoordsToPosition(Vector3* out_lightPos, Int lightIndex);
+	void updateColorButton();
 	void updateColorFields(Int lightIndex);
-	//MODDD - renamed from 'updateEditFields' to 'updateHorizontalCoordFields' for clarity
+	// renamed from 'updateEditFields' to 'updateHorizontalCoordFields' for clarity
 	// Also, param 'lightIndex'
 	void updateHorizontalCoordFields(Int lightIndex);
-	//MODDD
 	void determineHorizontalCoords(Int lightIndex);
-	//MODDD
 	void updateTimeOfDayDisplay();
-	void updateLightPositionDisplay(Int lightIndex);
+	void updateLightPositionDisplay(Vector3* lightPos);
+	void _OnResetLights();
+	// ---
 
-	void stuffValuesIntoFields(Int lightIndex = 0);
 public:
 
-	virtual void GetPopSliderInfo(const long sliderID, long *pMin, long *pMax, long *pLineSize, long *pInitial);
-	virtual void PopSliderChanged(const long sliderID, long theVal);
-	virtual void PopSliderFinished(const long sliderID, long theVal);
+	virtual void GetPopSliderInfo(const long sliderID, long *pMin, long *pMax, long *pLineSize, long *pInitial) override;
+	virtual void PopSliderChanged(const long sliderID, long theVal) override;
+	virtual void PopSliderFinished(const long sliderID, long theVal) override;
 
 };
 
