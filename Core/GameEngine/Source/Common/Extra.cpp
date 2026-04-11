@@ -453,10 +453,10 @@ void automaticGlobalDataChanges()
 Real moneyScalarAdjustmentFilter(const Player* player)
 {
 	// The income bonus for AI players can increase over the course of a long game.
-	const UnsignedInt startMin = 10;
-	const UnsignedInt endMin = 65;
-	const Real startModifier = 1.0f;
-	const Real endModifier = 3.0f;
+	const UnsignedInt startMin = 8;
+	const UnsignedInt endMin = 80;
+	const Real startModifier = 1.1f;
+	const Real endModifier = 4.0f;
 
 	Real scalar = 1.0f;
 
@@ -511,10 +511,10 @@ UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDepo
 Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 {
 	// AI players can build faster over the course of a long game.
-	const UnsignedInt startMin = 10;
+	const UnsignedInt startMin = 8;
 	const UnsignedInt endMin = 80;
 	const Real startModifier = 1.00f;
-	const Real endModifier = 0.82f;
+	const Real endModifier = 0.76f;
 
 	Int _buildTime = buildTime;
 	if (player->getPlayerType() == PLAYER_COMPUTER)
@@ -547,8 +547,8 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 	// AI players receive more experience toward promotions (not individual unit veterancy) per kill over the course of a long game.
 	const UnsignedInt startMin = 10;
 	const UnsignedInt endMin = 50;
-	const Real startModifier = 1.00f;
-	const Real endModifier = 1.60f;
+	const Real startModifier = 1.10f;
+	const Real endModifier = 1.80f;
 
 	Real _expRateModifier = expRateModifier;
 
