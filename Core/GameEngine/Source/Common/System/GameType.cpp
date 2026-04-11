@@ -26,9 +26,10 @@
 
 #include "PreRTS.h"	// This must go first in EVERY cpp file in the GameEngine
 
+//MODDD - kept in-sync with 'enum TimeOfDay' in 'GameType.h' - see a small change there
 const char *const TimeOfDayNames[] =
 {
-	"NONE",
+	//"NONE",
 	"MORNING",
 	"AFTERNOON",
 	"EVENING",

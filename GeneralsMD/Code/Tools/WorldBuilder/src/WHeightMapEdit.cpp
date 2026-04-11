@@ -722,7 +722,8 @@ void WorldHeightMapEdit::saveToFile(DataChunkOutput &chunkWriter)
 
 	/***************GLOBAL LIGHTING DATA ***************/
 	chunkWriter.openDataChunk("GlobalLighting", 	K_LIGHTING_VERSION_3);
-		chunkWriter.writeInt(TheGlobalData->m_timeOfDay);
+		//MODDD - add 1 to account for my edit to the 'TimeOfDay' enum
+		chunkWriter.writeInt((Int)TheGlobalData->m_timeOfDay + 1);
 		for (i=0; i<4; i++) {
 			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].ambient.red);
 			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].ambient.green);

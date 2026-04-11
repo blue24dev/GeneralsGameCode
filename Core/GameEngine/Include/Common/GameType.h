@@ -62,11 +62,15 @@ class INI;
 //-------------------------------------------------------------------------------------------------
 /** The time of day enumeration, keep in sync with TimeOfDayNames[] */
 //-------------------------------------------------------------------------------------------------
+//MODDD - I would think it would make sense for 'TIME_OF_DAY_INVALID' to be set to -1 so it's excluded from most
+// loop-throughs involving all time-of-day choices. That is, starting at i=0 -> #0 = 'MORNING' instead of #0 = 'INVALID',
+// skipping that one entirely. Ex: filling out things like GlobalData.cpp's 'm_terrainLighting'.
+// Make sure several references to 'TimeOfDayNames' still work as expected (don't have place #0 for 'INVALID').
 enum TimeOfDay CPP_11(: Int)
 {
-	TIME_OF_DAY_INVALID,
+	TIME_OF_DAY_INVALID = -1,
 
-	TIME_OF_DAY_MORNING,
+	TIME_OF_DAY_MORNING = 0,
 	TIME_OF_DAY_AFTERNOON,
 	TIME_OF_DAY_EVENING,
 	TIME_OF_DAY_NIGHT,

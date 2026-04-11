@@ -24,7 +24,8 @@
 #include "Lib/BaseType.h"
 #include "GlobalLightOptions.h"
 #include "WorldBuilderDoc.h"
-#include "Common/GlobalData.h"
+//MODDD - 'include' moved to .h
+//#include "Common/GlobalData.h"
 #include "wbview3d.h"
 
 //MODDD
@@ -124,7 +125,6 @@ const FieldParse s_GlobalData_Lighting_FieldParseTable[] =
 	{ nullptr,					nullptr,						nullptr,						0 }
 };
 
-
 static void parseGameData_Lighting_Definition( INI* ini )
 {
 	// parse the ini weapon definition
@@ -133,8 +133,8 @@ static void parseGameData_Lighting_Definition( INI* ini )
 
 static const BlockParse GlobalData_Lighting_TypeTable[] =
 {
-	{ "GameData",                       parseGameData_Lighting_Definition },
-	{ nullptr,                          nullptr },
+	{ "GameData",												parseGameData_Lighting_Definition },
+	{ nullptr,													nullptr },
 };
 // ---------------
 
@@ -176,6 +176,31 @@ void GlobalLightOptions::onTimeOfDayChanged()
 	}
 }
 
+/// Windows default stuff.
+void GlobalLightOptions::DoDataExchange(CDataExchange* pDX)
+{
+	CDialog::DoDataExchange(pDX);
+	//{{AFX_DATA_MAP(GlobalLightOptions)
+		// NOTE: the ClassWizard will add DDX and DDV calls here
+	//}}AFX_DATA_MAP
+}
+
+
+//MODDD - never used from as-is
+/*
+static void calcNewLight(Int lr, Int fb, Vector3 *newLight)
+{
+	newLight->Set(0,0,-1);
+	Real yAngle = PI*(lr-90)/180;
+	Real xAngle = PI*(fb-90)/180;
+	Real zAngle = xAngle * WWMath::Sin(yAngle);
+	xAngle *= WWMath::Cos(yAngle);
+	newLight->Rotate_Y(yAngle);
+	newLight->Rotate_X(xAngle);
+	newLight->Rotate_Z(zAngle);
+}
+*/
+
 //MODDD - helper to keep all fields in-sync with some important external change such as changing the time of day while
 // the dialog is open. Also, any occurrences of the first 3 calls will use this helper instead.
 void GlobalLightOptions::updateFields()
@@ -199,50 +224,55 @@ void GlobalLightOptions::updateFields()
 	showLightFeedback(K_ACCENT2);
 }
 
+//MODDD - commonly used script
+const GlobalData::TerrainLighting* GlobalLightOptions::getTerrainLighting(Int lightIndex)
+{
+	if (m_lighting == K_OBJECTS || m_lighting == K_BOTH)
+	{
+		return &TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay][lightIndex];
+	}
+	else
+	{
+		return &TheGlobalData->m_terrainLighting[TheGlobalData->m_timeOfDay][lightIndex];
+	}
+}
+
+//MODDD - same logic as above but returns a copy by value of the 'TerrainLighting' instead of a pointer to it.
+// That is, changes to what's returned do not affect the original.
+// However, anywhere that referred to this as-is happened to call 'pView->setLighting(&tl...' which then applies the copy
+// back to the current lighting info in 'TheWritableGlobalData->m_terrain...'.
+GlobalData::TerrainLighting GlobalLightOptions::getTerrainLightingCopy(Int lightIndex)
+{
+	if (m_lighting == K_OBJECTS || m_lighting == K_BOTH)
+	{
+		return TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay][lightIndex];
+	}
+	else
+	{
+		return TheGlobalData->m_terrainLighting[TheGlobalData->m_timeOfDay][lightIndex];
+	}
+}
+
+//MODDD
+void GlobalLightOptions::horizontalCoordsToPosition(Vector3* out_lightPos, Int lightIndex)
+{
+	out_lightPos->X = sin(PI/2.0f+m_angleElevation[lightIndex]/180.0f*PI)*cos(m_angleAzimuth[lightIndex]/180.0f*PI);// -WWMath::Sin(PI*(m_angleLR[lightIndex]-90)/180);
+	out_lightPos->Y = sin(PI/2.0f+m_angleElevation[lightIndex]/180.0f*PI)*sin(m_angleAzimuth[lightIndex]/180.0f*PI);//-WWMath::Sin(PI*(m_angleFB[lightIndex]-90)/180);
+	out_lightPos->Z = cos (PI/2.0f+m_angleElevation[lightIndex]/180.0f*PI);
+}
+
 //MODDD - helper to keep the ambient color button up-to-date with smaller changes such as editing any of the ambient color's R/G/B fields
 void GlobalLightOptions::updateColorButton()
 {
 	Int lightIndex = K_SUN;
-	const GlobalData::TerrainLighting *tl;
-	if (m_lighting == K_OBJECTS || m_lighting == K_BOTH) {
-		tl = &TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay][lightIndex];
-	} else {
-		tl = &TheGlobalData->m_terrainLighting[TheGlobalData->m_timeOfDay][lightIndex];
-	}
+	const GlobalData::TerrainLighting *tl = getTerrainLighting(lightIndex);
 	m_colorButton.setColor(tl->ambient);
-}
-
-/// Windows default stuff.
-void GlobalLightOptions::DoDataExchange(CDataExchange* pDX)
-{
-	CDialog::DoDataExchange(pDX);
-	//{{AFX_DATA_MAP(GlobalLightOptions)
-		// NOTE: the ClassWizard will add DDX and DDV calls here
-	//}}AFX_DATA_MAP
-}
-
-
-static void calcNewLight(Int lr, Int fb, Vector3 *newLight)
-{
-	newLight->Set(0,0,-1);
-	Real yAngle = PI*(lr-90)/180;
-	Real xAngle = PI*(fb-90)/180;
-	Real zAngle = xAngle * WWMath::Sin(yAngle);
-	xAngle *= WWMath::Cos(yAngle);
-	newLight->Rotate_Y(yAngle);
-	newLight->Rotate_X(xAngle);
-	newLight->Rotate_Z(zAngle);
 }
 
 //MODDD
 void GlobalLightOptions::updateColorFields(Int lightIndex)
 {
-	const GlobalData::TerrainLighting *tl;
-	if (m_lighting == K_OBJECTS || m_lighting == K_BOTH) {
-		tl = &TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay][lightIndex];
-	} else {
-		tl = &TheGlobalData->m_terrainLighting[TheGlobalData->m_timeOfDay][lightIndex];
-	}
+	const GlobalData::TerrainLighting *tl = getTerrainLighting(lightIndex);
 
 	switch (lightIndex)
 	{
@@ -313,12 +343,60 @@ void GlobalLightOptions::updateHorizontalCoordFields(Int lightIndex)
 	//m_updating = false;
 }
 
+
+//MODDD
+void GlobalLightOptions::determineHorizontalCoords(Int lightIndex)
+{
+	const GlobalData::TerrainLighting *tl = getTerrainLighting(lightIndex);
+
+	Vector3 light(tl->lightPos.x, tl->lightPos.y, tl->lightPos.z);
+	light.Normalize();
+
+	Real angleAzimuth = atan2(light.Y,light.X);//WWMath::Asin(light.Y);
+	Real azimuth = angleAzimuth*180.0f/PI;//90-(angleFB/PI)*180;
+	if (azimuth < 0) {
+		azimuth += 360;
+	}
+	Real angleElevation = acos(light.Z);//WWMath::Asin(light.X);
+	Real elevation = (angleElevation-PI/2.0f)*180.0f/PI;//90-(angleLR/PI)*180;
+
+	m_angleElevation[lightIndex] = elevation;
+	m_angleAzimuth[lightIndex] = azimuth;
+}
+
+//MODDD
+void GlobalLightOptions::updateTimeOfDayDisplay()
+{
+	CWnd *pWnd;
+	pWnd = GetDlgItem(IDC_TIME_OF_DAY_CAPTION);
+	if (pWnd) {
+		switch (TheGlobalData->m_timeOfDay) {
+			default:
+			case TIME_OF_DAY_MORNING: pWnd->SetWindowText("Time of day: Morning."); break;
+			case TIME_OF_DAY_AFTERNOON: pWnd->SetWindowText("Time of day: Afternoon."); break;
+			case TIME_OF_DAY_EVENING: pWnd->SetWindowText("Time of day: Evening."); break;
+			case TIME_OF_DAY_NIGHT: pWnd->SetWindowText("Time of day: Night."); break;
+		}
+	}
+}
+
+//MODDD
+void GlobalLightOptions::updateLightPositionDisplay(Vector3* lightPos)
+{
+	CWnd *pWnd = this->GetDlgItem(IDC_XYZ_STATIC);
+	if (pWnd)
+	{
+		CString str;
+		str.Format("XYZ: %.2f, %.2f, %.2f", lightPos->X, lightPos->Y, lightPos->Z);
+		pWnd->SetWindowText(str);
+	}
+}
+
 void GlobalLightOptions::showLightFeedback(Int lightIndex)
 {
-	Vector3 light(0,0,0);
-	light.X = sin(PI/2.0f+m_angleElevation[lightIndex]/180.0f*PI)*cos(m_angleAzimuth[lightIndex]/180.0f*PI);// -WWMath::Sin(PI*(m_angleLR[lightIndex]-90)/180);
-	light.Y = sin(PI/2.0f+m_angleElevation[lightIndex]/180.0f*PI)*sin(m_angleAzimuth[lightIndex]/180.0f*PI);//-WWMath::Sin(PI*(m_angleFB[lightIndex]-90)/180);
-	light.Z = cos (PI/2.0f+m_angleElevation[lightIndex]/180.0f*PI);
+	//MODDD - condensed script into a helper
+	Vector3 light;
+	horizontalCoordsToPosition(&light, lightIndex);
 
 	WbView3d * pView = CWorldBuilderDoc::GetActive3DView();
 	if (pView) {
@@ -330,23 +408,14 @@ void GlobalLightOptions::showLightFeedback(Int lightIndex)
 
 void GlobalLightOptions::applyAngle(Int lightIndex)
 {
-	Vector3 light(0,0,0);
-	light.X = sin(PI/2.0f+m_angleElevation[lightIndex]/180.0f*PI)*cos(m_angleAzimuth[lightIndex]/180.0f*PI);// -WWMath::Sin(PI*(m_angleLR[lightIndex]-90)/180);
-	light.Y = sin(PI/2.0f+m_angleElevation[lightIndex]/180.0f*PI)*sin(m_angleAzimuth[lightIndex]/180.0f*PI);//-WWMath::Sin(PI*(m_angleFB[lightIndex]-90)/180);
-	light.Z = cos (PI/2.0f+m_angleElevation[lightIndex]/180.0f*PI);
+	//MODDD - condensed script into a helper
+	Vector3 light;
+	horizontalCoordsToPosition(&light, lightIndex);
 
-	CString str;
-	str.Format("XYZ: %.2f, %.2f, %.2f", light.X, light.Y, light.Z);
-	CWnd *pWnd = this->GetDlgItem(IDC_XYZ_STATIC);
-	if (pWnd) {
-		pWnd->SetWindowText(str);
-	}
-	GlobalData::TerrainLighting tl;
-	if (m_lighting == K_OBJECTS || m_lighting == K_BOTH) {
-		tl = TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay][lightIndex];
-	} else {
-		tl = TheGlobalData->m_terrainLighting[TheGlobalData->m_timeOfDay][lightIndex];
-	}
+	//MODDD - script condensed
+	updateLightPositionDisplay(&light);
+
+	GlobalData::TerrainLighting tl = getTerrainLightingCopy(lightIndex);
 	tl.lightPos.x = light.X;
 	tl.lightPos.y = light.Y;
 	tl.lightPos.z = light.Z;
@@ -542,78 +611,15 @@ BOOL GlobalLightOptions::OnInitDialog()
 		item->DestroyWindow();
 	}
 
-	return TRUE;  // return TRUE unless you set the focus to a control
-	              // EXCEPTION: OCX Property Pages should return FALSE
-}
-
-void GlobalLightOptions::determineHorizontalCoords(Int lightIndex)
-{
-	const GlobalData::TerrainLighting *tl;
-	if (m_lighting == K_OBJECTS || m_lighting == K_BOTH) {
-		tl = &TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay][lightIndex];
-	} else {
-		tl = &TheGlobalData->m_terrainLighting[TheGlobalData->m_timeOfDay][lightIndex];
-	}
-
-	Real azimuth = 90;
-	Real elevation = 90;
-
-	Vector3 light(tl->lightPos.x, tl->lightPos.y, tl->lightPos.z);
-	light.Normalize();
-
-	Real angleAzimuth = atan2(light.Y,light.X);//WWMath::Asin(light.Y);
-	azimuth = angleAzimuth*180.0f/PI;//90-(angleFB/PI)*180;
-	if (azimuth < 0) {
-		azimuth += 360;
-	}
-	Real angleElevation = acos(light.Z);//WWMath::Asin(light.X);
-	elevation = (angleElevation-PI/2.0f)*180.0f/PI;//90-(angleLR/PI)*180;
-
-	m_angleElevation[lightIndex] = elevation;
-	m_angleAzimuth[lightIndex] = azimuth;
-}
-
-//MODDD
-void GlobalLightOptions::updateTimeOfDayDisplay()
-{
-	CWnd *pWnd;
-	pWnd = GetDlgItem(IDC_TIME_OF_DAY_CAPTION);
-	if (pWnd) {
-		switch (TheGlobalData->m_timeOfDay) {
-			default:
-			case TIME_OF_DAY_MORNING: pWnd->SetWindowText("Time of day: Morning."); break;
-			case TIME_OF_DAY_AFTERNOON: pWnd->SetWindowText("Time of day: Afternoon."); break;
-			case TIME_OF_DAY_EVENING: pWnd->SetWindowText("Time of day: Evening."); break;
-			case TIME_OF_DAY_NIGHT: pWnd->SetWindowText("Time of day: Night."); break;
-		}
-	}
-}
-
-//MODDD
-void GlobalLightOptions::updateLightPositionDisplay(Int lightIndex)
-{
-	const GlobalData::TerrainLighting *tl;
-	if (m_lighting == K_OBJECTS || m_lighting == K_BOTH) {
-		tl = &TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay][lightIndex];
-	} else {
-		tl = &TheGlobalData->m_terrainLighting[TheGlobalData->m_timeOfDay][lightIndex];
-	}
-
-	CWnd *pWnd = this->GetDlgItem(IDC_XYZ_STATIC);
-	if (pWnd)
-	{
-		Vector3 light(tl->lightPos.x, tl->lightPos.y, tl->lightPos.z);
-		light.Normalize();
-
-		CString str;
-		str.Format("XYZ: %.2f, %.2f, %.2f", light.X, light.Y, light.Z);
-		pWnd->SetWindowText(str);
-	}
+	return TRUE;	// return TRUE unless you set the focus to a control
+								// EXCEPTION: OCX Property Pages should return FALSE
 }
 
 /** Displays the current values in the fields. */
 void GlobalLightOptions::stuffValuesIntoFields(Int lightIndex)
 {
+	const GlobalData::TerrainLighting *tl = getTerrainLighting(lightIndex);
+
 	//MODDD - script moved to a new method 'determineHorizontalCoords', called elsewhere
 
 	//MODDD - adding arg 'lightIndex'
@@ -626,7 +632,9 @@ void GlobalLightOptions::stuffValuesIntoFields(Int lightIndex)
 	//MODDD - script condensed
 	if (lightIndex==K_SUN)
 	{
-		updateLightPositionDisplay(lightIndex);
+		Vector3 light(tl->lightPos.x, tl->lightPos.y, tl->lightPos.z);
+		light.Normalize();
+		updateLightPositionDisplay(&light);
 	}
 
 	//MODDD - script moved to new method 'updateColorFields', called above
@@ -639,6 +647,34 @@ void GlobalLightOptions::stuffValuesIntoFields(Int lightIndex)
 	//showLightFeedback(lightIndex);
 }
 
+
+//MODDD - implementation from .h
+Real GlobalLightOptions::ComponentToPercent(Int component)
+{
+	Real percent;
+	if (component >= 255) {
+		return 1.0;
+	}
+	if (component <= 0) {
+		return 0.0;
+	}
+	percent = (Real)component/255.0;
+	return percent;
+}
+
+//MODDD - implementation from .h
+Int GlobalLightOptions::PercentToComponent(Real percent)
+{
+	Int component;
+	if (percent >= 1.0) {
+		return 255;
+	}
+	if (percent <= 0.0) {
+		return 0;
+	}
+	component = (percent * 255.0);
+	return component;
+}
 
 /** Gets the new edit control text, converts it to an int, then updates
 		the slider and brush tool. */
@@ -660,9 +696,9 @@ BOOL GlobalLightOptions::GetInt(Int ctrlID, Int *rVal)
 
 void GlobalLightOptions::PutInt(Int ctrlID, Int val)
 {
-	CString str;
 	CWnd *pEdit = GetDlgItem(ctrlID);
 	if (pEdit) {
+		CString str;
 		str.Format("%d", val);
 		pEdit->SetWindowText(str);
 	}
@@ -688,25 +724,20 @@ void GlobalLightOptions::OnChangeSunFrontBackEdit()
 {
 	if (m_updating) return;
 	GetInt(IDC_FB_EDIT, &m_angleAzimuth[K_SUN]);
-	m_updating = true;
+	//MODDD - these 'applyAngle' calls don't need 'm_updating' guards - removed
 	applyAngle(K_SUN);
-	m_updating = false;
 }
 void GlobalLightOptions::OnChangeAccent1FrontBackEdit()
 {
 	if (m_updating) return;
 	GetInt(IDC_FB_EDIT1, &m_angleAzimuth[K_ACCENT1]);
-	m_updating = true;
 	applyAngle(K_ACCENT1);
-	m_updating = false;
 }
 void GlobalLightOptions::OnChangeAccent2FrontBackEdit()
 {
 	if (m_updating) return;
 	GetInt(IDC_FB_EDIT2, &m_angleAzimuth[K_ACCENT2]);
-	m_updating = true;
 	applyAngle(K_ACCENT2);
-	m_updating = false;
 }
 // ---
 
@@ -738,9 +769,8 @@ void GlobalLightOptions::OnChangeSunLeftRightEdit()
 		return;
 	}
 	GetInt(IDC_LR_EDIT, &m_angleElevation[K_SUN]);
-	m_updating = true;
+	//MODDD - these 'applyAngle' calls don't need 'm_updating' guards - removed
 	applyAngle(K_SUN);
-	m_updating = false;
 }
 void GlobalLightOptions::OnChangeAccent1LeftRightEdit()
 {
@@ -748,9 +778,7 @@ void GlobalLightOptions::OnChangeAccent1LeftRightEdit()
 		return;
 	}
 	GetInt(IDC_LR_EDIT1, &m_angleElevation[K_ACCENT1]);
-	m_updating = true;
 	applyAngle(K_ACCENT1);
-	m_updating = false;
 }
 void GlobalLightOptions::OnChangeAccent2LeftRightEdit()
 {
@@ -758,9 +786,7 @@ void GlobalLightOptions::OnChangeAccent2LeftRightEdit()
 		return;
 	}
 	GetInt(IDC_LR_EDIT2, &m_angleElevation[K_ACCENT2]);
-	m_updating = true;
 	applyAngle(K_ACCENT2);
-	m_updating = false;
 }
 // ---
 
@@ -770,12 +796,7 @@ void GlobalLightOptions::OnChangeAccent2LeftRightEdit()
 void GlobalLightOptions::applyColor(Int lightIndex)
 {
 	Int clr;
-	GlobalData::TerrainLighting tl;
-	if (m_lighting == K_OBJECTS || m_lighting == K_BOTH) {
-		tl = TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay][lightIndex];
-	} else {
-		tl = TheGlobalData->m_terrainLighting[TheGlobalData->m_timeOfDay][lightIndex];
-	}
+	GlobalData::TerrainLighting tl = getTerrainLightingCopy(lightIndex);
 	if (lightIndex == K_SUN) {
 		tl.ambient.red		= TheGlobalData->m_terrainAmbient[K_SUN].red;
 		tl.ambient.green	= TheGlobalData->m_terrainAmbient[K_SUN].green;
@@ -900,52 +921,8 @@ void GlobalLightOptions::PopSliderChanged(const long sliderID, long theVal)
 {
 	//MODDD - replacement
 	// Changing the editable text field values already triggers the field edit event (ex: 'OnChangeSunFrontBackEdit'),
-	// so no need to do anything else here
-	/*
-	switch (sliderID) {
-
-		case IDC_FB_POPUP:
-			m_angleAzimuth[K_SUN] = theVal;
-			PutInt(IDC_FB_EDIT, m_angleAzimuth[K_SUN]);
-			applyAngle(0);
-			break;
-
-		case IDC_FB_POPUP1:
-			m_angleAzimuth[K_ACCENT1] = theVal;
-			PutInt(IDC_FB_EDIT1, m_angleAzimuth[K_ACCENT1]);
-			applyAngle(1);
-			break;
-
-		case IDC_FB_POPUP2:
-			m_angleAzimuth[K_ACCENT2] = theVal;
-			PutInt(IDC_FB_EDIT2, m_angleAzimuth[K_ACCENT2]);
-			applyAngle(2);
-			break;
-
-		case IDC_LR_POPUP:
-			m_angleElevation[K_SUN] = theVal;
-			PutInt(IDC_LR_EDIT, m_angleElevation[K_SUN]);
-			applyAngle(0);
-			break;
-
-		case IDC_LR_POPUP1:
-			m_angleElevation[K_ACCENT1] = theVal;
-			PutInt(IDC_LR_EDIT1, m_angleElevation[K_ACCENT1]);
-			applyAngle(1);
-			break;
-
-		case IDC_LR_POPUP2:
-			m_angleElevation[K_ACCENT2] = theVal;
-			PutInt(IDC_LR_EDIT2, m_angleElevation[K_ACCENT2]);
-			applyAngle(2);
-			break;
-
-		default:
-			// uh-oh!
-			DEBUG_CRASH(("Slider message from unknown control"));
-			break;
-	}
-	*/
+	// so no need to do anything else here.
+	// Removing the 'm_angleAzimuth' / 'm_angleElevation' assignments and 'applyAngle' calls
 	switch (sliderID) {
 
 		case IDC_FB_POPUP:
@@ -1064,9 +1041,13 @@ void GlobalLightOptions::OnColorPress()
 	if (dlg.DoModal() == IDOK) {
 		m_colorButton.setColor(CButtonShowColor::BGRtoRGB(dlg.GetColor()));
 		RGBColor color = m_colorButton.getColor();
+		//MODDD - guard with 'm_updating' so each R-G-B field edit doesn't trigger an update.
+		// May as well wait until all 3 values are entered
+		m_updating = true;
 		PutInt(IDC_RA_EDIT, PercentToComponent(color.red));
 		PutInt(IDC_GA_EDIT, PercentToComponent(color.green));
 		PutInt(IDC_BA_EDIT, PercentToComponent(color.blue));
+		m_updating = false;
 		applyColor(K_SUN);
 	}
 }
@@ -1081,7 +1062,7 @@ void GlobalLightOptions::OnClose()
 		lightRay.x=0.0f;lightRay.y=0.0f;lightRay.z=-1.0f;	//default light above terrain.
 		pView->doLightFeedback(false,lightRay,0);	//turn off the light direction indicator
 	}
-};
+}
 
 void GlobalLightOptions::OnShowWindow(BOOL bShow, UINT nStatus)
 {
@@ -1107,7 +1088,7 @@ void GlobalLightOptions::OnShowWindow(BOOL bShow, UINT nStatus)
 #if 0
 	SpitLights();
 #endif
-};
+}
 
 void GlobalLightOptions::OnMove(int x, int y)
 {
