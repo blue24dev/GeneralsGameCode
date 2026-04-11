@@ -748,7 +748,8 @@ Bool WorldHeightMap::ParseWorldDictDataChunk(DataChunkInput &file, DataChunkInfo
 */
 Bool WorldHeightMap::ParseLightingDataChunk(DataChunkInput &file, DataChunkInfo *info, void *userData)
 {
-		TheWritableGlobalData->m_timeOfDay = (TimeOfDay)file.readInt();
+		//MODDD - subtract 1 to account for my edit to the 'TimeOfDay' enum
+		TheWritableGlobalData->m_timeOfDay = (TimeOfDay)(file.readInt() - 1);
 		Int i;
 		GlobalData::TerrainLighting	initLightValues	= { { 0,0,0},{0,0,0},{0,0,-1.0f}};
 

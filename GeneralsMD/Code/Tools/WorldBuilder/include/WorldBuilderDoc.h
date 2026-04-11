@@ -33,7 +33,7 @@ class Undoable;
 class DataChunkInput;
 struct DataChunkInfo;
 
-//MODDD - 15 ahahah brother are you serious
+//MODDD - it isn't 2003 anymore
 //#define MAX_UNDOS 15
 #define MAX_UNDOS 64
 
