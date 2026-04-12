@@ -81,6 +81,8 @@
 #include "Win32Device/Common/Win32LocalFileSystem.h"
 #include "Win32Device/Common/Win32BIGFileSystem.h"
 
+//MODDD
+#include "NewHeightMap.h"
 
 //MODDD - why so static
 //static SubsystemInterfaceList TheSubsystemListRecord;
@@ -175,13 +177,16 @@ HINSTANCE ApplicationHInstance = nullptr;
 /////////////////////////////////////////////////////////////////////////////
 // CWorldBuilderApp
 
+//MODDD - added explicit 'CWorldBuilderApp::' scopes to the first set of method references for clarity
 BEGIN_MESSAGE_MAP(CWorldBuilderApp, CWinApp)
 	//{{AFX_MSG_MAP(CWorldBuilderApp)
-	ON_COMMAND(ID_APP_ABOUT, OnAppAbout)
-	ON_COMMAND(IDM_RESET_WINDOWS, OnResetWindows)
-	ON_COMMAND(ID_FILE_OPEN, OnFileOpen)
-	ON_COMMAND(ID_TEXTURESIZING_MAPCLIFFTEXTURES, OnTexturesizingMapclifftextures)
-	ON_UPDATE_COMMAND_UI(ID_TEXTURESIZING_MAPCLIFFTEXTURES, OnUpdateTexturesizingMapclifftextures)
+	ON_COMMAND(ID_APP_ABOUT, CWorldBuilderApp::OnAppAbout)
+	ON_COMMAND(IDM_RESET_WINDOWS, CWorldBuilderApp::OnResetWindows)
+	//MODDD - new
+	ON_COMMAND(ID_FILE_NEW, CWorldBuilderApp::OnFileNew)
+	ON_COMMAND(ID_FILE_OPEN, CWorldBuilderApp::OnFileOpen)
+	ON_COMMAND(ID_TEXTURESIZING_MAPCLIFFTEXTURES, CWorldBuilderApp::OnTexturesizingMapclifftextures)
+	ON_UPDATE_COMMAND_UI(ID_TEXTURESIZING_MAPCLIFFTEXTURES, CWorldBuilderApp::OnUpdateTexturesizingMapclifftextures)
 	//}}AFX_MSG_MAP
 	// Standard file based document commands
 	ON_COMMAND(ID_FILE_NEW, CWinApp::OnFileNew)
@@ -272,6 +277,17 @@ static LONG WINAPI UnHandledExceptionFilter(struct _EXCEPTION_POINTERS* e_info)
 
 /////////////////////////////////////////////////////////////////////////////
 // CWorldBuilderApp initialization
+
+BOOL CWorldBuilderApp::InitApplication()
+{
+	//MODD
+	this->m_pDocManager = &m_docManager;
+	// For a possible alternative, this is how the doc manager could be set from the static variable (a standard, expected to exist - not meaningful if it's null)
+	//   m_pDocManager = CDocManager::pStaticDocManager;
+	//   CDocManager::pStaticDocManager = nullptr;
+	
+	return CWinApp::InitApplication();
+}
 
 BOOL CWorldBuilderApp::InitInstance()
 {
@@ -681,6 +697,51 @@ void CWorldBuilderApp::OnResetWindows()
 
 }
 
+//MODDD - new
+void CWorldBuilderApp::OnFileNew()
+{
+	//MODDD - contents moved from 'CWorldBuilderDoc::OnNewDocument()'.
+	// This stops the 'CWinApp::OnFileNew()' call from removing association with the existing map if the user chooses
+	// to cancel the new-map-size dialog.
+	// ------------------------------
+	static Bool firstTime = true;
+
+	// clear out map-specific text
+	TheGameText->reset();
+
+	TNewHeightInfo hi;
+	hi.initialHeight = AfxGetApp()->GetProfileInt("GameOptions", "Default Map Height", 16);
+	hi.xExtent = AfxGetApp()->GetProfileInt("GameOptions", "Default Map X-size", 100);
+	hi.yExtent = AfxGetApp()->GetProfileInt("GameOptions", "Default Map Y-size", 100);
+	hi.borderWidth = AfxGetApp()->GetProfileInt("GameOptions", "Default Map Border", 30);
+	hi.forResize = false;
+	if (!firstTime) {
+		CString label;
+		label.LoadString(IDS_NEW);
+		CNewHeightMap htDialog(&hi, label);
+		if (IDOK == htDialog.DoModal()) {
+			htDialog.GetHeightInfo(&hi);
+			AfxGetApp()->WriteProfileInt("GameOptions", "Default Map Height", hi.initialHeight);
+			AfxGetApp()->WriteProfileInt("GameOptions", "Default Map X-size", hi.xExtent);
+			AfxGetApp()->WriteProfileInt("GameOptions", "Default Map Y-size", hi.yExtent);
+			AfxGetApp()->WriteProfileInt("GameOptions", "Default Map Border", hi.borderWidth);
+		} else {
+			return;
+		}
+	}
+	// ------------------------------
+
+	//MODDD - save a refernece to the 'hi' struct since 'CWorldBuilderDoc::OnNewDocument()' will need it soon enough.
+	// It's fine to refer to stack memory since this is all within the 'OnFileNew()' call below (still in scope -> 'hi''s
+	// memory is valid).
+	m_newHeightInfoPtr = &hi;
+
+	//MODDD - setting this here should be fine.
+	firstTime = false;
+
+	CWinApp::OnFileNew();
+}
+
 void CWorldBuilderApp::OnFileOpen()
 {
 #ifdef DO_MAPS_IN_DIRECTORIES
@@ -720,4 +781,10 @@ void CWorldBuilderApp::OnUpdateTexturesizingMapclifftextures(CCmdUI* pCmdUI)
 {
 	// TODO: Add your command update UI handler code here
 
+}
+
+//MODDD
+TNewHeightInfo* CWorldBuilderApp::getRecentNewHeightInfo()
+{
+	return m_newHeightInfoPtr;
 }

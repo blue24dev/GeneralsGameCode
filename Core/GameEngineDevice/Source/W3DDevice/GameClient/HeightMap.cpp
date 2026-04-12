@@ -501,7 +501,18 @@ Int HeightMapRenderObjClass::updateVB(DX8VertexBufferClass	*pVB, VERTEX_FORMAT *
 						border = true;
 					}
 					*/
-					Bool isCliff = pMap->getCliffState(xCoord, yCoord) || showAsVisibleCliff(xCoord, yCoord);
+
+					//MODDD - show tiles from 'showAsVisibleCliff' as purple instead of red to make this easier to understand.
+					// Tiles marked as impassable by the user (option in the terrain painter tool) or by an elevation being too
+					// extreme from height adjustments ('pMap->getCliffState') are separate from tiles marked for 'showAsVisibleCliff'.
+					// The first category can be reverted by the user forcing tiles as passable, the second category is fixed per
+					// elevation and never changed by user input per tile, but there is the 'Impassable Options' dialog's 'Angle',
+					// which looks like a tolerance for what elevation difference counts for this 2nd type.
+					// THAT'S NOT AT ALL CONFUSING, RIGHT?
+					//Bool isCliff = pMap->getCliffState(xCoord, yCoord) || showAsVisibleCliff(xCoord, yCoord);
+					Bool isCliffForced = pMap->getCliffState(xCoord, yCoord);
+					Bool isCliffNatural = showAsVisibleCliff(xCoord, yCoord);
+					Bool isCliff = (isCliffForced || isCliffNatural);
 
 					//MODDD - removing tiles being 'border' spaces overriding impassable marking
 					//if ( isCliff || border || cliffMapped) {
@@ -530,9 +541,19 @@ Int HeightMapRenderObjClass::updateVB(DX8VertexBufferClass	*pVB, VERTEX_FORMAT *
 									}
 								} else
 								*/
+
+								//MODDD
+								/*
 								if (isCliff) {
 									pCurVertices[vertex].diffuse &= 0xFFFF0000; // red with alpha.
 								}
+								*/
+								if (isCliffForced) {
+									pCurVertices[vertex].diffuse &= 0xFFFF0000; // red with alpha.
+								} else if(isCliffNatural) {
+									pCurVertices[vertex].diffuse &= 0x7FFF00FF; // purple with alpha.
+								}
+
 								if (cliffMapped && vertex==0) {
 									pCurVertices[vertex].diffuse &= 0xFF000000; // Black.
 									pCurVertices[vertex].diffuse |= 0xff00; // Add green.

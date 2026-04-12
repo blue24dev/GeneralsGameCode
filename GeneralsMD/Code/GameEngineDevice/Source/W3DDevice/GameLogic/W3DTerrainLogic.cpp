@@ -165,8 +165,18 @@ Bool W3DTerrainLogic::loadMap( AsciiString filename , Bool query )
 		return FALSE;
 
 	// Map file now contains lighting & time of day info.
-	if( TheWritableGlobalData->setTimeOfDay( TheGlobalData->m_timeOfDay ) )
-		TheGameClient->setTimeOfDay( TheGlobalData->m_timeOfDay );
+	//MODDD - if the real-time time-of-day system is being used & we're loading a saved game, don't run this.
+	// This would have already been handled by 'GameStateMap::xfer' earlier and this would overwrite what it found.
+#if !REAL_TIME_TOD_CHANGE
+	Bool canSetTimeOfDay = TRUE;
+#else
+	Bool canSetTimeOfDay = (globalXferStatus != XFER_LOAD);
+#endif
+	if (canSetTimeOfDay)
+	{
+		if( TheWritableGlobalData->setTimeOfDay( TheGlobalData->m_timeOfDay ) )
+			TheGameClient->setTimeOfDay( TheGlobalData->m_timeOfDay );
+	}
 
 	return TRUE;  // success
 

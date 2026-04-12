@@ -54,6 +54,12 @@
 #include "RulerTool.h"
 #include "Common/Debug.h"
 
+//MODDD
+#include "WorldBuilderDocManager.h"
+
+//MODDD
+typedef struct TNewHeightInfo_s TNewHeightInfo;
+
 /////////////////////////////////////////////////////////////////////////////
 // CWorldBuilderApp:
 // See WorldBuilder.cpp for the implementation of this class
@@ -78,6 +84,10 @@ public:
 	// ClassWizard generated virtual function overrides
 	//{{AFX_VIRTUAL(CWorldBuilderApp)
 	public:
+
+	//MODDD
+	virtual BOOL InitApplication() override;
+
 	virtual BOOL InitInstance() override;
 	virtual int ExitInstance() override;
 	//}}AFX_VIRTUAL
@@ -86,6 +96,8 @@ public:
 	//{{AFX_MSG(CWorldBuilderApp)
 	afx_msg void OnAppAbout();
 	afx_msg void OnResetWindows();
+	//MODDD - new
+	afx_msg void OnFileNew();
 	afx_msg void OnFileOpen();
 	afx_msg void OnTexturesizingMapclifftextures();
 	afx_msg void OnUpdateTexturesizingMapclifftextures(CCmdUI* pCmdUI);
@@ -132,6 +144,10 @@ protected:
 	CDocTemplate			*m_3dtemplate;
 
 	MapObject					*m_pasteMapObjList;	///< List of copied/cut map objects.
+
+	//MODDD
+	CWorldBuilderDocManager m_docManager;
+	TNewHeightInfo* m_newHeightInfoPtr;
 
 protected:
 	void deletePasteObjList(void)
@@ -184,6 +200,9 @@ public:
 	/// Handles command messages.
 	virtual BOOL OnCmdMsg(UINT nID, int nCode, void* pExtra,
 						  AFX_CMDHANDLERINFO* pHandlerInfo) override;
+
+	//MODDD
+	TNewHeightInfo* getRecentNewHeightInfo();
 };
 
 inline CWorldBuilderApp *WbApp() { return (CWorldBuilderApp*)::AfxGetApp(); }

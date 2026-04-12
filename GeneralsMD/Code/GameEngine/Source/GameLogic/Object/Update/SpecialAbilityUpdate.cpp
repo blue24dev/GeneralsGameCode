@@ -267,7 +267,9 @@ UpdateSleepTime SpecialAbilityUpdate::update()
         case SPECIAL_BLACKLOTUS_CAPTURE_BUILDING:
         case SPECIAL_HACKER_DISABLE_BUILDING:
         {
-          if (target->getTeam() == getObject()->getTeam())
+          //MODDD - changed from a strict same-team check
+          //if (target->getTeam() == getObject()->getTeam())
+          if (getObject()->isAlly(target))
           {
             // it's been captured by a colleague! we should stop.
             shouldAbort = TRUE;
@@ -1007,7 +1009,9 @@ void SpecialAbilityUpdate::startPreparation()
       Object *target = TheGameLogic->findObjectByID( m_targetID );
       if (target)
       {
-        if (target->getTeam() == getObject()->getTeam())
+        //MODDD
+        //if (target->getTeam() == getObject()->getTeam())
+        if (getObject()->isAlly(target))
         {
           // it's been captured by a colleague! we should stop.
           return;
@@ -1050,8 +1054,10 @@ void SpecialAbilityUpdate::startPreparation()
       if( target )
       {
 
-        Relationship r = getObject()->getRelationship(target);
-        if( r == ALLIES )
+        //MODDD
+        //Relationship r = getObject()->getRelationship(target);
+        //if( r == ALLIES )
+        if (getObject()->isAlly(target))
           return;
 
         //Specialized code that specifically creates and looks up a laser update.
@@ -1169,8 +1175,10 @@ Bool SpecialAbilityUpdate::continuePreparation()
         return false;
       }
 
-      Relationship r = getObject()->getRelationship(target);
-      if( r == ALLIES )
+      //MODDD - use the convenience feature anyway
+      //Relationship r = getObject()->getRelationship(target);
+      //if( r == ALLIES )
+      if (getObject()->isAlly(target))
       {
         //It's been captured by a colleague, so cancel!
         return false;
@@ -1203,8 +1211,10 @@ Bool SpecialAbilityUpdate::continuePreparation()
         return false;
       }
 
-      Relationship r = getObject()->getRelationship(target);
-      if( r == ALLIES )
+      //MODDD
+      //Relationship r = getObject()->getRelationship(target);
+      //if( r == ALLIES )
+      if (getObject()->isAlly(target))
       {
         //It's been captured by a colleague, so cancel!
         return false;
@@ -1258,12 +1268,13 @@ Bool SpecialAbilityUpdate::continuePreparation()
 //-------------------------------------------------------------------------------------------------
 void SpecialAbilityUpdate::triggerAbilityEffect()
 {
-  const SpecialAbilityUpdateModuleData* data = getSpecialAbilityUpdateModuleData();
-  const SpecialPowerTemplate *spTemplate = data->m_specialPowerTemplate;
-  Object *object = getObject();
-
   //Award experience to units for triggering the ability (optional and ini specified).
   //NOTE: Be aware of persistent abilities that call trigger over and over again!
+  //MODDD - disagree with assuming the unit-experience / player-skill-point bonuses should happen just because an ability reached this point.
+  // Ex: a black lotus continually trying to steal cash from a player with no money and making no money -> getting promoted looks weird.
+  // Moving this to an 'onAbilityEffectSuccess' event called from below when appropriate.
+  // ---
+  /*
   if( data->m_awardXPForTriggering )
   {
     ExperienceTracker *xpTracker = object->getExperienceTracker();
@@ -1286,9 +1297,37 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
   AudioEventRTS sound = data->m_triggerSound;
   sound.setObjectID( object->getID() );
   TheAudio->addAudioEvent( &sound );
+  */
 
 
-  Bool okToLoseStealth = TRUE;
+  Bool okToLoseStealth;
+
+  //MODDD - bulk of the method moved to 'attemptTriggerAbilityEffect' so the outcome (success, yes/no) can be checked
+  Bool success = attemptTriggerAbilityEffect(okToLoseStealth);
+
+  //MODDD
+  if (success)
+  {
+    onAbilityEffectSuccess(okToLoseStealth);
+  }
+
+  //MODDD - moving this too, since the original 'onAbilityEffectSuccess' being above returning often caused early termination
+  // that would've skipped here (intent is this check is only done on success)
+  //if( data->m_loseStealthOnTrigger && okToLoseStealth)...
+}
+
+//MODDD - most of 'triggerAbilityEffect''s contents - returns success (whether to award XP/skill points, etc.).
+// Any return statements now include a boolean for success, and added a 'return true' for successful paths per ability enum.
+// Note that if there are any deeper ways for something to fail, such as 'update->initStickyBomb' not producing anything,
+// calls like that would need to return something or a yes/no val in order for this method to decide success - implying 'yes'
+// if that point was reached is all we can do for now (and is what it would be as-is anyway).
+Bool SpecialAbilityUpdate::attemptTriggerAbilityEffect(Bool& okToLoseStealth)
+{
+  const SpecialAbilityUpdateModuleData* data = getSpecialAbilityUpdateModuleData();
+  const SpecialPowerTemplate *spTemplate = data->m_specialPowerTemplate;
+  Object *object = getObject();
+
+  okToLoseStealth = TRUE;
 
   switch( spTemplate->getSpecialPowerType() )
   {
@@ -1306,6 +1345,7 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
           if( ai )
           {
             ai->aiAttackObject( target, NO_MAX_SHOTS_LIMIT, CMD_FROM_AI );
+            return true;
           }
         }
       }
@@ -1314,7 +1354,8 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
     case SPECIAL_HELIX_NAPALM_BOMB:
     {
       // Couldn't be simpler... the special object is the bomb
-      createSpecialObject();
+      //MODDD - going to imply this producing something implies success
+      return (createSpecialObject() != nullptr);
       break;
     }
     case SPECIAL_TANKHUNTER_TNT_ATTACK:
@@ -1326,7 +1367,7 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
       //sanity
       if( !target )
       {
-        return;
+        return false;
       }
 
       if( target->checkAndDetonateBoobyTrap(getObject()) )
@@ -1334,7 +1375,7 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
         // Whoops, it was mined.  Cancel if it or us is now dead.
         if( target->isEffectivelyDead() || getObject()->isEffectivelyDead() )
         {
-          return;
+          return false;
         }
       }
 
@@ -1342,7 +1383,7 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
 			{
 				// The only way it can be booby trapped after a detonate would be if it is an allied booby trap.
 				// Regardless of why, we can't double booby trap something.
-				return;
+				return false;
 			}
 
       Object *charge = createSpecialObject();
@@ -1358,12 +1399,12 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
             charge->getTemplate()->getName().str(),
             target->getTemplate()->getName().str() ) );
           killSpecialObjects();
-          return;
+          return false;
         }
         //Setting the producer ID allows the sticky bomb update module to initialize
         //and setup timers, etc.
         update->initStickyBomb( target, object );
-
+        return true;
 
       }
       break;
@@ -1377,12 +1418,14 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
       //sanity
       if( !target )
       {
-        return;
+        return false;
       }
 
-      Relationship r = object->getRelationship(target);
-      if ( r == ALLIES)
-        return;
+      //MODDD
+      //Relationship r = object->getRelationship(target);
+      //if ( r == ALLIES)
+      if (object->isAlly(target))
+        return false;
 
       //Disable the target for a specified amount of time.
       target->setDisabledUntil( DISABLED_HACKED, TheGameLogic->getFrame() + data->m_effectDuration );
@@ -1415,6 +1458,9 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
           }
         }
       }
+
+      // 'target->setDisabledUntil' was called, so decide this is success regardless of creating particle effects afterwards
+      return true;
       break;
     }
 
@@ -1426,7 +1472,7 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
       //sanity
       if( !target )
       {
-        return;
+        return false;
       }
 
       if( target->checkAndDetonateBoobyTrap(getObject()) )
@@ -1434,14 +1480,16 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
         // Whoops, it was mined.  Cancel if it or us is now dead.
         if( target->isEffectivelyDead() || getObject()->isEffectivelyDead() )
         {
-          return;
+          return false;
         }
       }
 
-      if (target->getTeam() == object->getTeam())
+      //MODDD
+      //if (target->getTeam() == object->getTeam())
+      if (object->isAlly(target))
       {
         // it's been captured by a colleague! we should stop.
-        return;
+        return false;
       }
 
       // Just in case we are capturing a building which is already garrisoned by other
@@ -1457,7 +1505,8 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
       if ( contain && contain->isGarrisonable() )
       {
         contain->removeAllContained( TRUE );
-        break; // we do not want to set a neutral building to our team if we are not in it, that would be confusing!
+        //break; // we do not want to set a neutral building to our team if we are not in it, that would be confusing!
+        return false;
       }
       */
 
@@ -1477,6 +1526,7 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
       }
 
       object->getControllingPlayer()->getAcademyStats()->recordBuildingCapture();
+      return true;
       break;
     }
     case SPECIAL_BLACKLOTUS_STEAL_CASH_HACK:
@@ -1486,7 +1536,14 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
       //sanity
       if( !target )
       {
-        return;
+        return false;
+      }
+
+      //MODDD - to stop in the rare case that a building is captured by you or an ally while being cash-hacked.
+      // Continuing to cash hack would steal from the new owner (yes, even yourself -> cheezy way to farm lotus experience)
+      if (getObject()->isAlly(target))
+      {
+        return false;
       }
 
       //Steal cash from the other team!
@@ -1502,6 +1559,9 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
 #endif
         //Check to see if they have the cash, otherwise, take the remainder!
         cash = min( desiredAmount, cash );
+
+        //MODDD - ending the block scope sooner so this only handles the transaction logic.
+        // I still think a '$0' should appear if no money was stolen for feedback that something was attempted.
         if( cash > 0 )
         {
           //Steal the cash
@@ -1516,21 +1576,29 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
           {
             TheEva->setShouldPlay( EVA_CashStolen );
           }
+        }
 
-          //Display cash income floating over the blacklotus
-          UnicodeString moneyString;
-          moneyString.format( TheGameText->fetch( "GUI:AddCash" ), cash );
-          Coord3D pos;
-          pos.set( object->getPosition() );
-          pos.z += 20.0f; //add a little z to make it show up above the unit.
-          TheInGameUI->addFloatingText( moneyString, &pos, GameMakeColor( 0, 255, 0, 255 ) );
+        //MODDD - excluded from the 'cash > 0' check - show the cash amount unconditionally, even if 0
+        //Display cash income floating over the blacklotus
+        UnicodeString moneyString;
+        moneyString.format( TheGameText->fetch( "GUI:AddCash" ), cash );
+        Coord3D pos;
+        pos.set( object->getPosition() );
+        pos.z += 20.0f; //add a little z to make it show up above the unit.
+        TheInGameUI->addFloatingText( moneyString, &pos, GameMakeColor( 0, 255, 0, 255 ) );
 
+        //MODDD - NOTE - however, the '$0' for the player losing cash isn't needed - there's enough feedback now.
+        if( cash > 0 )
+        {
           //Display cash lost floating over the target
           moneyString.format( TheGameText->fetch( "GUI:LoseCash" ), cash );
           pos.set( target->getPosition() );
           pos.z += 30.0f; //add a little z to make it show up above the unit.
           TheInGameUI->addFloatingText( moneyString, &pos, GameMakeColor( 255, 0, 0, 255 ) );
         }
+
+        // decide success based off of whether anything was actually stolen
+        return (cash > 0);
       }
       break;
     }
@@ -1544,7 +1612,7 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
         // Whoops, it was mined.  Cancel if it or us is now dead.
         if( target->isEffectivelyDead() || getObject()->isEffectivelyDead() )
         {
-          return;
+          return false;
         }
       }
 
@@ -1570,6 +1638,8 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
             }
           }
         }
+        // going to imply success - looked for things to detonate, regardless of finding anything or not
+        return true;
       }
       else
       {
@@ -1577,7 +1647,7 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
         //sanity
         if( !target )
         {
-          return;
+          return false;
         }
 
         Object *charge = createSpecialObject();
@@ -1591,11 +1661,12 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
               object->getTemplate()->getName().str(),
               charge->getTemplate()->getName().str() ) );
             killSpecialObjects();
-            return;
+            return false;
           }
           //Setting the producer ID allows the sticky bomb update module to initialize
           //and setup timers, etc.
           update->initStickyBomb( target, object );
+          return true;
         }
       }
       break;
@@ -1611,21 +1682,21 @@ void SpecialAbilityUpdate::triggerAbilityEffect()
         if( update )
         {
           update->disguiseAsObject( target );
+          return true;
         }
       }
 
       break;
     }
+    //MODDD - for safety, unknown enum choice handling (as-is codebase would've run anything in 'onAbilityEffectSuccess' in this case)
+    default:
+      // imply success if nothing else here could say otherwise?
+      return true;
+      break;
   }
 
-  if( data->m_loseStealthOnTrigger && okToLoseStealth)
-  {
-    StealthUpdate* stealth = getObject()->getStealth();
-    if( stealth )
-    {
-      stealth->markAsDetected();
-    }
-  }
+  // Going to require success to be explicit - if you reached this far, nope
+  return false;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1848,6 +1919,46 @@ void SpecialAbilityUpdate::finishAbility()
 	//TheAudio->addAudioEvent(&event);
 
 	onExit( false );
+}
+
+//MODDD - an event on 'triggerAbilityEffect' running successfully, as opposed to being interrupted for some reason.
+// Contains the bonuses granted early simply from reaching 'triggerAbilityEffect' in the as-is codebase.
+void SpecialAbilityUpdate::onAbilityEffectSuccess(Bool okToLoseStealth)
+{
+  const SpecialAbilityUpdateModuleData* data = getSpecialAbilityUpdateModuleData();
+  Object *object = getObject();
+
+  if( data->m_awardXPForTriggering )
+  {
+    ExperienceTracker *xpTracker = object->getExperienceTracker();
+    if( xpTracker )
+    {
+      xpTracker->addExperiencePoints( data->m_awardXPForTriggering );
+    }
+  }
+  //Also add skill points. If unspecified, it'll use the award experience to units for triggering value.
+  Int skillPoints = data->m_skillPointsForTriggering != -1 ? data->m_skillPointsForTriggering : data->m_awardXPForTriggering;
+  if( skillPoints > 0 )
+  {
+    Player *player = object->getControllingPlayer();
+    if( player )
+    {
+      player->addSkillPoints( skillPoints );
+    }
+  }
+
+  AudioEventRTS sound = data->m_triggerSound;
+  sound.setObjectID( object->getID() );
+  TheAudio->addAudioEvent( &sound );
+
+  if( data->m_loseStealthOnTrigger && okToLoseStealth)
+  {
+    StealthUpdate* stealth = getObject()->getStealth();
+    if( stealth )
+    {
+      stealth->markAsDetected();
+    }
+  }
 }
 
 //-------------------------------------------------------------------------------------------------

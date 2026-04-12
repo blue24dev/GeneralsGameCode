@@ -286,6 +286,10 @@ public:
 	Player* getControllingPlayer() const;
 	Relationship getRelationship(const Object *that) const;
 
+	//MODDD - convenience relationship checks since they're common
+	Bool isAlly(const Object* other) const;
+	Bool isEnemy(const Object* other) const;
+
 	Color getIndicatorColor() const;
 	Color getNightIndicatorColor() const;
 	Bool hasCustomIndicatorColor() const { return m_indicatorColor != 0; }
