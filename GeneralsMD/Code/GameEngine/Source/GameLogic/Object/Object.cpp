@@ -2178,6 +2178,18 @@ Relationship Object::getRelationship(const Object *that) const
 
 }
 
+//MODDD
+Bool Object::isAlly(const Object* other) const
+{
+	return (this->getRelationship(other) == ALLIES);
+}
+
+//MODDD
+Bool Object::isEnemy(const Object* other) const
+{
+	return (this->getRelationship(other) == ENEMIES);
+}
+
 //=============================================================================
 // Object::getControllingPlayer
 //=============================================================================
@@ -7785,15 +7797,22 @@ RadarPriorityType Object::getRadarPriority() const
 	//
 	if( priority == RADAR_PRIORITY_INVALID )
 	{
-
 		// objects that are "garrisonable" show up on the radar
 		ContainModuleInterface *cmi = getContain();
 		if( cmi && cmi->isGarrisonable() )
 			priority = RADAR_PRIORITY_STRUCTURE;
 
 		// objects that are "capturable" show up on the radar
+		//MODDD - why not check for the 'STRUCTURE' kindof?
+		// ---
+		/*
 		if( isKindOf( KINDOF_CAPTURABLE ) )
 			priority = RADAR_PRIORITY_STRUCTURE;
+		*/
+		// ---
+		if (isKindOf( KINDOF_STRUCTURE))
+			priority = RADAR_PRIORITY_STRUCTURE;
+		// ---
 
 
 	}

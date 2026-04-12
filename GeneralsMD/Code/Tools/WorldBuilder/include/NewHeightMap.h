@@ -23,7 +23,8 @@
 
 #include "Lib/BaseType.h"
 
-typedef struct {
+//MODDD - added 'TNewHeightInfo_s' name
+typedef struct TNewHeightInfo_s {
 	Int xExtent;
 	Int yExtent;
 	Int initialHeight;

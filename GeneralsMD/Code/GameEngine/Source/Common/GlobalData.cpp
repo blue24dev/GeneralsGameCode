@@ -1199,9 +1199,10 @@ Bool GlobalData::setTimeOfDay( TimeOfDay tod )
 	}
 	
 #if REAL_TIME_TOD_CHANGE
-	// This allows a loaded map to know that its 'TheGlobalData->setTimeOfDay' call should set 'tod_frame' so
+	// This allows a loaded map to know that its 'TheWritableGlobalData->setTimeOfDay' call should set 'tod_frame' so
 	// that the frame begins at the time-of-day the map was saved with.
-	if (tod_assign) {
+	if (tod_assign)
+	{
 		setTodFrameFromParam(tod);
 		extern void determineTimeOfDayGlobals();
 		// Run this to set things expected to be set for other real-time time-of-day related places

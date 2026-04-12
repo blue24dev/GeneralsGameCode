@@ -438,11 +438,32 @@ void GameStateMap::xfer( Xfer *xfer )
 	if( xfer->getXferMode() == XFER_LOAD )
 	{
 		TheGameLogic->startNewGame( TRUE );
-		//MODDD - NOTE - not that anywhere refers to this, but this is incorrect.
+		//MODDD - NOTE - not that anywhere refers to this, but this is incorrect. (or, really, GameLogic's 'loadingSave' is only accurate to loading the GameStateMap)
 		// There are a lot of blocks left, the game is still being loaded for a while.
 		// See Xfer.h's 'globalXferStatus' for a better way to track whether a game is being loaded/saved/neither.
 		TheGameLogic->setLoadingSave( FALSE );
 	}
+
+	//MODDD - handling xfer of the time-of-day here, since 'TheGameLogic->startNewGame' above reaches the
+	// 'TheWritableGlobalData->m_timeOfDay' load from 'WorldHeightMap::ParseLightingDataChunk'. That's where the time-of-day
+	// baked into the map comes from both on starting a game (new campaign / GC / skirmish game) or loading a saved game.
+	// Restoring 'timeOfDay' here overrides that per whatever it was at the time the user saved the game.
+	// It would probably be safe to do this at the start of 'GameLogic::xfer' before objects are loaded, but here is also
+	// before several other things such as the players list (see 'GameState::init()' for the items between 'CHUNK_GameStateMap'
+	// here and 'CHUNK_GameLogic').
+	// The first 'TheWritableGlobalData->setTimeOfDay' call done on loading the map (anytime, not just a saved game) is in 'W3DTerrainLogic::loadMap'.
+#if REAL_TIME_TOD_CHANGE
+	xfer->xferUnsignedInt(&tod_frame);
+	// Actually, no need to save the 'm_timeOfDay' - 'tod_frame' is more specific and can be used to re-determine the time-of-day at the time of save
+	//xfer->xferUser(&TheWritableGlobalData->m_timeOfDay, sizeof(TheGlobalData->m_timeOfDay));
+	if( xfer->getXferMode() == XFER_LOAD )
+	{
+		// If this is loading a saved game, need to update some other time-of-day related variables immediately.
+		// Don't wait for an interval to be reached the first time.
+		extern void realTimeTOD_Update();
+		realTimeTOD_Update();
+	}
+#endif
 
 }
 

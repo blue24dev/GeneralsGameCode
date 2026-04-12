@@ -149,6 +149,8 @@ Bool ConvertToHijackedVehicleCrateCollide::executeCrateBehavior( Object *other )
 		TheEva->setShouldPlay( EVA_VehicleStolen );
 	}
 
+	//MODDD - this doesn't call the 'Object::defect' that includes 
+
 	other->setTeam( obj->getControllingPlayer()->getDefaultTeam() );
 	other->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_HIJACKED ) );// I claim this car in the name of the GLA
 

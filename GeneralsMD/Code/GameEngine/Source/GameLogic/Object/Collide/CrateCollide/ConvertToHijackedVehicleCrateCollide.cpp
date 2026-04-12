@@ -112,6 +112,8 @@ Bool ConvertToHijackedVehicleCrateCollide::isValidToExecute( const Object *other
 		return FALSE;
 	}
 
+	//MODDD - disagree with this point, the passengers can just get kicked out then - think jarmen kell's pilot snipe & immediately taking the vehicle
+	/*
 	if( other->isKindOf( KINDOF_TRANSPORT ) )
 	{
 		//Kris: Allow empty transports to be hijacked.
@@ -120,6 +122,7 @@ Bool ConvertToHijackedVehicleCrateCollide::isValidToExecute( const Object *other
 			return FALSE;// dustin sez: do not jack vehicles that may carry hostile passengers
 		}
 	}
+	*/
 
 	//MODDD - redundant, already checked for above
 	/*
@@ -164,6 +167,17 @@ Bool ConvertToHijackedVehicleCrateCollide::executeCrateBehavior( Object *other )
 	}
 
 	other->setTeam( obj->getControllingPlayer()->getDefaultTeam() );
+	
+	//MODDD - since this skips the kick-out from calling 'Object::setTeam' instead of 'Object::defect', handle that here if needed.
+	// And, going off 'Object::defect', the kick-out happens after calling 'setTeam'.
+	// ---
+	ContainModuleInterface *ct = getContain();
+	if (ct && ct->isKickOutOnCapture())
+	{
+		ct->removeAllContained( TRUE );
+	}
+	// ---
+
 	other->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_HIJACKED ) );// I claim this car in the name of the GLA
 
 	AIUpdateInterface* targetAI = other->getAIUpdateInterface();
