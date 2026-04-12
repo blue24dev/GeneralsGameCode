@@ -74,6 +74,8 @@ set(WORLDBUILDER_SRC
     "src/ShadowOptions.cpp"
     "src/SplashScreen.cpp"
     "src/StdAfx.cpp"
+    #MODDD - new
+    "src/StdAfx_private.cpp"
     "src/TeamBehavior.cpp"
     "src/TeamGeneric.cpp"
     "src/TeamIdentity.cpp"
@@ -97,6 +99,8 @@ set(WORLDBUILDER_SRC
     "src/WHeightMapEdit.cpp"
     "src/WorldBuilder.cpp"
     "src/WorldBuilderDoc.cpp"
+    #MODDD - new
+    "src/WorldBuilderDocManager.cpp"
     "src/WorldBuilderView.cpp"
     "include/addplayerdialog.h"
     "include/AutoEdgeOutTool.h"
@@ -175,6 +179,8 @@ set(WORLDBUILDER_SRC
     "include/ShadowOptions.h"
     "include/SplashScreen.h"
     "include/StdAfx.h"
+    #MODDD - new
+    "include/StdAfx_private.h"
     "include/TeamBehavior.h"
     "include/TeamGeneric.h"
     "include/TeamIdentity.h"
@@ -196,6 +202,8 @@ set(WORLDBUILDER_SRC
     "include/WHeightMapEdit.h"
     "include/WorldBuilder.h"
     "include/WorldBuilderDoc.h"
+    #MODDD - new
+    "include/WorldBuilderDocManager.h"
     "include/WorldBuilderView.h"
 )
 

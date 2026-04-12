@@ -228,7 +228,12 @@ protected:
 	void startPreparation();		//Begins the preparation of ability -- like firing off a hacker attack, or laser tracer, etc.
 	Bool continuePreparation();	//Updates the preparation of ability -- like recalculating tracer lines.
 	void triggerAbilityEffect();	//After the preparation time has elapsed, this part actually triggers the desired effect of the special ability.
+	//MODDD
+	Bool attemptTriggerAbilityEffect(Bool& okToLoseStealth);
 	void finishAbility();
+
+	//MODDD
+	void onAbilityEffectSuccess(Bool okToLoseStealth);
 
 	void validateSpecialObjects();
 

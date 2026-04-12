@@ -1250,31 +1250,10 @@ BOOL CWorldBuilderDoc::OnNewDocument()
 #endif
 	if (!CDocument::OnNewDocument())
 		return FALSE;
-	static Bool firstTime = true;
 
-	// clear out map-specific text
-	TheGameText->reset();
+	//MODDD - script to choose a starting map size moved to 'CWorldBuilderApp::OnFileNew'
 
-	TNewHeightInfo hi;
-	hi.initialHeight = AfxGetApp()->GetProfileInt("GameOptions", "Default Map Height", 16);
-	hi.xExtent = AfxGetApp()->GetProfileInt("GameOptions", "Default Map X-size", 100);
-	hi.yExtent = AfxGetApp()->GetProfileInt("GameOptions", "Default Map Y-size", 100);
-	hi.borderWidth = AfxGetApp()->GetProfileInt("GameOptions", "Default Map Border", 30);
-	hi.forResize = false;
-	if (!firstTime) {
-		CString label;
-		label.LoadString(IDS_NEW);
-		CNewHeightMap htDialog(&hi, label);
-		if (IDOK == htDialog.DoModal()) {
-			htDialog.GetHeightInfo(&hi);
-			AfxGetApp()->WriteProfileInt("GameOptions", "Default Map Height", hi.initialHeight);
-			AfxGetApp()->WriteProfileInt("GameOptions", "Default Map X-size", hi.xExtent);
-			AfxGetApp()->WriteProfileInt("GameOptions", "Default Map Y-size", hi.yExtent);
-			AfxGetApp()->WriteProfileInt("GameOptions", "Default Map Border", hi.borderWidth);
-		} else {
-			return(false);
-		}
-	}
+	TNewHeightInfo* hi = WbApp()->getRecentNewHeightInfo();
 
 	//MODDD
 	CMainFrame::GetMainFrame()->onNewMapStart();
@@ -1303,8 +1282,11 @@ BOOL CWorldBuilderDoc::OnNewDocument()
 	if (p3View) {
 		p3View->resetRenderObjects();
 	}
-	firstTime = false;
-	m_heightMap = NEW_REF(WorldHeightMapEdit,(hi.xExtent,hi.yExtent,hi.initialHeight, hi.borderWidth));
+
+	//MODDD - moved
+	//firstTime = false;
+
+	m_heightMap = NEW_REF(WorldHeightMapEdit,(hi->xExtent,hi->yExtent,hi->initialHeight, hi->borderWidth));
 	// note - mHeight map has ref count of 1.
 
 	// Create a default water area.
@@ -1312,15 +1294,15 @@ BOOL CWorldBuilderDoc::OnNewDocument()
 	ICoord3D loc;
 	pTrig->setWaterArea(true);
 	pTrig->setTriggerName("Default Water");
-	loc.x = -hi.borderWidth*MAP_XY_FACTOR;
-	loc.y = -hi.borderWidth*MAP_XY_FACTOR;
+	loc.x = -hi->borderWidth*MAP_XY_FACTOR;
+	loc.y = -hi->borderWidth*MAP_XY_FACTOR;
 	loc.z = TheGlobalData->m_waterPositionZ;
 	pTrig->addPoint(loc);
-	loc.x = (hi.xExtent+hi.borderWidth)*MAP_XY_FACTOR;
+	loc.x = (hi->xExtent+hi->borderWidth)*MAP_XY_FACTOR;
 	pTrig->addPoint(loc);
-	loc.y = (hi.yExtent+hi.borderWidth)*MAP_XY_FACTOR;
+	loc.y = (hi->yExtent+hi->borderWidth)*MAP_XY_FACTOR;
 	pTrig->addPoint(loc);
-	loc.x = -hi.borderWidth*MAP_XY_FACTOR;
+	loc.x = -hi->borderWidth*MAP_XY_FACTOR;
 	pTrig->addPoint(loc);
 	PolygonTrigger::addPolygonTrigger(pTrig);
 	TheLayersList->addPolygonTriggerToLayersList(pTrig, pTrig->getLayerName());

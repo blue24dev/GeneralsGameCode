@@ -146,8 +146,9 @@ GameStatus gameStatus = GAMESTATUS_NONE;
 Bool objectInitLock = FALSE;
 
 #if REAL_TIME_TOD_CHANGE
-// Goes from 0, counts up, and loops back to 0 on reaching 'TOD_CYCLE_LENGTH_FRAMES'
-//MODDD - TODO - save this the time of day value. This 'xfer' here will probably be fine.
+// Goes from 0, counts up, and loops back to 0 on reaching 'TOD_CYCLE_LENGTH_FRAMES'.
+// Also, note that this is set by 'GlobalData::setTimeOfDay', which is aware of calls from loading a map.
+// This starts 'tod_frame' and several other related variables from the map's baked-in time-of-day.
 UnsignedInt tod_frame = 0;
 // Whether a 'setTimeOfDay' call should set 'tod_frame' (ex: loading a map), or let 'tod_frame'
 // decide the time of day instead.
@@ -4196,6 +4197,16 @@ extern __int64 Total_Load_3D_Assets;
 #endif
 
 #if REAL_TIME_TOD_CHANGE
+void realTimeTOD_Update()
+{
+	determineTimeOfDayGlobals();
+
+	tod_assign = FALSE;
+	if( TheWritableGlobalData->setTimeOfDay( tod_current ) )
+		TheGameClient->setTimeOfDay( tod_current );
+	tod_assign = TRUE;
+}
+
 TimeOfDay determineTimeOfDayFromFrame( UnsignedInt frame )
 {
 	UnsignedInt timeOfDayPeriod = frame / (TOD_CYCLE_LENGTH_FRAMES / 4);
@@ -4312,13 +4323,9 @@ void GameLogic::update()
 	TheGameClient->setFrame(now);
 	
 #if REAL_TIME_TOD_CHANGE
-	if (tod_frame % TOD_UPDATE_INTERVAL == 0) {
-		determineTimeOfDayGlobals();
-
-		tod_assign = FALSE;
-		if( TheWritableGlobalData->setTimeOfDay( tod_current ) )
-			TheGameClient->setTimeOfDay( tod_current );
-		tod_assign = TRUE;
+	if (tod_frame % TOD_UPDATE_INTERVAL == 0)
+	{
+		realTimeTOD_Update();
 	}
 #endif
 
@@ -4513,7 +4520,8 @@ void GameLogic::update()
 		
 #if REAL_TIME_TOD_CHANGE
 		tod_frame++;
-		if (tod_frame >= TOD_CYCLE_LENGTH_FRAMES) {
+		if (tod_frame >= TOD_CYCLE_LENGTH_FRAMES)
+		{
 			tod_frame = 0;
 		}
 #endif
