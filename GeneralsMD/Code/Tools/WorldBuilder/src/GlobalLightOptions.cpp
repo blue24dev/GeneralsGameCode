@@ -448,36 +448,36 @@ static void SpitLights()
 	lights[1] = "2";
 	lights[2] = "3";
 
-	Int time=0;
-	for (; time<4; time++) {
+	Int time;
+	for (time=TIME_OF_DAY_FIRST; time<TIME_OF_DAY_COUNT; time++) {
 		for (Int light=0; light<3; light++) {
-			redA = TheGlobalData->m_terrainLighting[time+TIME_OF_DAY_FIRST][light].ambient.red*255;
-			greenA = TheGlobalData->m_terrainLighting[time+TIME_OF_DAY_FIRST][light].ambient.green*255;
-			blueA = TheGlobalData->m_terrainLighting[time+TIME_OF_DAY_FIRST][light].ambient.blue*255;
+			redA = TheGlobalData->m_terrainLighting[time][light].ambient.red*255;
+			greenA = TheGlobalData->m_terrainLighting[time][light].ambient.green*255;
+			blueA = TheGlobalData->m_terrainLighting[time][light].ambient.blue*255;
 
-			redD = TheGlobalData->m_terrainLighting[time+TIME_OF_DAY_FIRST][light].diffuse.red*255;
-			greenD = TheGlobalData->m_terrainLighting[time+TIME_OF_DAY_FIRST][light].diffuse.green*255;
-			blueD = TheGlobalData->m_terrainLighting[time+TIME_OF_DAY_FIRST][light].diffuse.blue*255;
+			redD = TheGlobalData->m_terrainLighting[time][light].diffuse.red*255;
+			greenD = TheGlobalData->m_terrainLighting[time][light].diffuse.green*255;
+			blueD = TheGlobalData->m_terrainLighting[time][light].diffuse.blue*255;
 
-			x = TheGlobalData->m_terrainLighting[time+TIME_OF_DAY_FIRST][light].lightPos.x;
-			y = TheGlobalData->m_terrainLighting[time+TIME_OF_DAY_FIRST][light].lightPos.y;
-			z = TheGlobalData->m_terrainLighting[time+TIME_OF_DAY_FIRST][light].lightPos.z;
+			x = TheGlobalData->m_terrainLighting[time][light].lightPos.x;
+			y = TheGlobalData->m_terrainLighting[time][light].lightPos.y;
+			z = TheGlobalData->m_terrainLighting[time][light].lightPos.z;
 
 			DEBUG_LOG(("TerrainLighting%sAmbient%s = R:%d G:%d B:%d", times[time], lights[light], redA, greenA, blueA));
 			DEBUG_LOG(("TerrainLighting%sDiffuse%s = R:%d G:%d B:%d", times[time], lights[light], redD, greenD, blueD));
 			DEBUG_LOG(("TerrainLighting%sLightPos%s = X:%0.2f Y:%0.2f Z:%0.2f", times[time], lights[light], x, y, z));
 
-			redA = TheGlobalData->m_terrainObjectsLighting[time+TIME_OF_DAY_FIRST][light].ambient.red*255;
-			greenA = TheGlobalData->m_terrainObjectsLighting[time+TIME_OF_DAY_FIRST][light].ambient.green*255;
-			blueA = TheGlobalData->m_terrainObjectsLighting[time+TIME_OF_DAY_FIRST][light].ambient.blue*255;
+			redA = TheGlobalData->m_terrainObjectsLighting[time][light].ambient.red*255;
+			greenA = TheGlobalData->m_terrainObjectsLighting[time][light].ambient.green*255;
+			blueA = TheGlobalData->m_terrainObjectsLighting[time][light].ambient.blue*255;
 
-			redD = TheGlobalData->m_terrainObjectsLighting[time+TIME_OF_DAY_FIRST][light].diffuse.red*255;
-			greenD = TheGlobalData->m_terrainObjectsLighting[time+TIME_OF_DAY_FIRST][light].diffuse.green*255;
-			blueD = TheGlobalData->m_terrainObjectsLighting[time+TIME_OF_DAY_FIRST][light].diffuse.blue*255;
+			redD = TheGlobalData->m_terrainObjectsLighting[time][light].diffuse.red*255;
+			greenD = TheGlobalData->m_terrainObjectsLighting[time][light].diffuse.green*255;
+			blueD = TheGlobalData->m_terrainObjectsLighting[time][light].diffuse.blue*255;
 
-			x = TheGlobalData->m_terrainObjectsLighting[time+TIME_OF_DAY_FIRST][light].lightPos.x;
-			y = TheGlobalData->m_terrainObjectsLighting[time+TIME_OF_DAY_FIRST][light].lightPos.y;
-			z = TheGlobalData->m_terrainObjectsLighting[time+TIME_OF_DAY_FIRST][light].lightPos.z;
+			x = TheGlobalData->m_terrainObjectsLighting[time][light].lightPos.x;
+			y = TheGlobalData->m_terrainObjectsLighting[time][light].lightPos.y;
+			z = TheGlobalData->m_terrainObjectsLighting[time][light].lightPos.z;
 
 			DEBUG_LOG(("TerrainObjectsLighting%sAmbient%s = R:%d G:%d B:%d", times[time], lights[light], redA, greenA, blueA));
 			DEBUG_LOG(("TerrainObjectsLighting%sDiffuse%s = R:%d G:%d B:%d", times[time], lights[light], redD, greenD, blueD));
@@ -489,9 +489,9 @@ static void SpitLights()
 	}
 
 	DEBUG_LOG(("GlobalLighting Code\n"));
-	for (time=0; time<4; time++) {
+	for (time=TIME_OF_DAY_FIRST; time<TIME_OF_DAY_COUNT; time++) {
 		for (Int light=0; light<3; light++) {
-			Int theTime = time+TIME_OF_DAY_FIRST;
+			Int theTime = time;
 			GlobalData::TerrainLighting tl = TheGlobalData->m_terrainLighting[theTime][light];
 
 			DEBUG_LOG(("TheGlobalData->m_terrainLighting[%d][%d].ambient.red = %0.4ff;", theTime, light, tl.ambient.red));
@@ -651,29 +651,25 @@ void GlobalLightOptions::stuffValuesIntoFields(Int lightIndex)
 //MODDD - implementation from .h
 Real GlobalLightOptions::ComponentToPercent(Int component)
 {
-	Real percent;
 	if (component >= 255) {
 		return 1.0;
 	}
 	if (component <= 0) {
 		return 0.0;
 	}
-	percent = (Real)component/255.0;
-	return percent;
+	return (Real)component/255.0;
 }
 
 //MODDD - implementation from .h
 Int GlobalLightOptions::PercentToComponent(Real percent)
 {
-	Int component;
 	if (percent >= 1.0) {
 		return 255;
 	}
 	if (percent <= 0.0) {
 		return 0;
 	}
-	component = (percent * 255.0);
-	return component;
+	return (percent * 255.0);
 }
 
 /** Gets the new edit control text, converts it to an int, then updates

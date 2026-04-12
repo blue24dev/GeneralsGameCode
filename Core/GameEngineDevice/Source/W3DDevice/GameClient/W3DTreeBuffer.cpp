@@ -628,8 +628,9 @@ void W3DTreeBuffer::setTextureLOD(Int lod)
 //=============================================================================
 /** Calculates the diffuse lighting as affected by dynamic lighting. */
 //=============================================================================
+//MODDD - 'objectLighting' param no longer needed
 UnsignedInt W3DTreeBuffer::doLighting(const Vector3 *normal,
-															const GlobalData::TerrainLighting	*objectLighting,
+															//const GlobalData::TerrainLighting	*objectLighting,
 															const Vector3 *emissive, UnsignedInt vertDiffuse, Real scale) const
 {
 
@@ -741,7 +742,10 @@ void W3DTreeBuffer::loadTreesInVertexAndIndexBuffers(RefRenderObjListIterator *p
 	m_anythingChanged = false;
 	Int curTree=0;
 	Int bNdx;
-	const GlobalData::TerrainLighting *objectLighting = TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay];
+
+	//MODDD - no longer needed, determined per 'doLighting' method instead (easier real-time time-of-day support)
+	//const GlobalData::TerrainLighting *objectLighting = TheGlobalData->m_terrainObjectsLighting[TheGlobalData->m_timeOfDay];
+
 	for (bNdx=0; bNdx<MAX_BUFFERS; bNdx++) {
 		m_curNumTreeVertices[bNdx] = 0;
 		m_curNumTreeIndices[bNdx] = 0;
@@ -837,7 +841,8 @@ void W3DTreeBuffer::loadTreesInVertexAndIndexBuffers(RefRenderObjListIterator *p
 			if (normals == nullptr) {
 				doVertexLighting = false;
 				Vector3 normal(0.0f,0.0f,1.0f);
-				diffuse = doLighting(&normal, objectLighting, &emissive, 0xFFFFFFFF, 1.0f);
+				//MODDD - 'objectLighting' arg (2nd) removed
+				diffuse = doLighting(&normal, &emissive, 0xFFFFFFFF, 1.0f);
 			}
 	/*
 	 *
@@ -977,7 +982,8 @@ void W3DTreeBuffer::loadTreesInVertexAndIndexBuffers(RefRenderObjListIterator *p
 					} else {
 						vertexDiffuse = 0xffffffff;
 					}
-					curVb->diffuse = doLighting(&normal, objectLighting, &emissive,
+					//MODDD - 'objectLighting' arg (2nd) removed
+					curVb->diffuse = doLighting(&normal, &emissive,
 														vertexDiffuse, 1.0f);
 				} else {
 					curVb->diffuse = diffuse;

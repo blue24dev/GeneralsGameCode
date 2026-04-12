@@ -724,51 +724,52 @@ void WorldHeightMapEdit::saveToFile(DataChunkOutput &chunkWriter)
 	chunkWriter.openDataChunk("GlobalLighting", 	K_LIGHTING_VERSION_3);
 		//MODDD - add 1 to account for my edit to the 'TimeOfDay' enum
 		chunkWriter.writeInt((Int)TheGlobalData->m_timeOfDay + 1);
-		for (i=0; i<4; i++) {
-			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].ambient.red);
-			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].ambient.green);
-			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].ambient.blue);
-			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].diffuse.red);
-			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].diffuse.green);
-			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].diffuse.blue);
-			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].lightPos.x);
-			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].lightPos.y);
-			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].lightPos.z);
+		for (i=TIME_OF_DAY_FIRST; i<TIME_OF_DAY_COUNT; i++)
+		{
+			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][0].ambient.red);
+			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][0].ambient.green);
+			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][0].ambient.blue);
+			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][0].diffuse.red);
+			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][0].diffuse.green);
+			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][0].diffuse.blue);
+			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][0].lightPos.x);
+			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][0].lightPos.y);
+			chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][0].lightPos.z);
 
-			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].ambient.red);
-			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].ambient.green);
-			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].ambient.blue);
-			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].diffuse.red);
-			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].diffuse.green);
-			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].diffuse.blue);
-			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].lightPos.x);
-			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].lightPos.y);
-			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].lightPos.z);
+			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][0].ambient.red);
+			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][0].ambient.green);
+			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][0].ambient.blue);
+			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][0].diffuse.red);
+			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][0].diffuse.green);
+			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][0].diffuse.blue);
+			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][0].lightPos.x);
+			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][0].lightPos.y);
+			chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][0].lightPos.z);
 
-			Int j=1;
-			for (; j<MAX_GLOBAL_LIGHTS; j++)
+			Int j;
+			for (j=1; j<MAX_GLOBAL_LIGHTS; j++)
 			{	//save state of new lights added in version 3.
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].ambient.red);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].ambient.green);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].ambient.blue);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].diffuse.red);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].diffuse.green);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].diffuse.blue);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].lightPos.x);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].lightPos.y);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].lightPos.z);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].ambient.red);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].ambient.green);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].ambient.blue);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].diffuse.red);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].diffuse.green);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].diffuse.blue);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].lightPos.x);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].lightPos.y);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].lightPos.z);
 			}
 			for (j=1; j<MAX_GLOBAL_LIGHTS; j++)
 			{
-				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].ambient.red);
-				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].ambient.green);
-				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].ambient.blue);
-				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].diffuse.red);
-				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].diffuse.green);
-				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].diffuse.blue);
-				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].lightPos.x);
-				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].lightPos.y);
-				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].lightPos.z);
+				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][j].ambient.red);
+				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][j].ambient.green);
+				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][j].ambient.blue);
+				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][j].diffuse.red);
+				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][j].diffuse.green);
+				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][j].diffuse.blue);
+				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][j].lightPos.x);
+				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][j].lightPos.y);
+				chunkWriter.writeReal(TheGlobalData->m_terrainLighting[i][j].lightPos.z);
 			}
 		}
  		chunkWriter.writeInt(TheW3DShadowManager->getShadowColor());
