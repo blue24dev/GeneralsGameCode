@@ -339,8 +339,7 @@ void PopulateStartingCashComboBox(GameWindow *comboBox, GameInfo *myGame)
 	// (often 10000) because it hasn't come from history from Skirmish/Network.ini yet.
   //Int currentSelectionIndex = -1;
 
-  MultiplayerStartingMoneyList::const_iterator it = startingCashMap.begin();
-  for ( ; it != startingCashMap.end(); it++ )
+  for (MultiplayerStartingMoneyList::const_iterator it = startingCashMap.begin(); it != startingCashMap.end(); it++ )
   {
     Int newIndex = GadgetComboBoxAddEntry(comboBox, formatMoneyForStartingCashComboBox( *it ),
                                           comboBox->winGetEnabled() ? comboBox->winGetEnabledTextColor() : comboBox->winGetDisabledTextColor());
@@ -367,7 +366,7 @@ void PopulateStartingCashComboBox(GameWindow *comboBox, GameInfo *myGame)
     DEBUG_CRASH( ("Current selection for starting cash not found in list") );
     currentSelectionIndex = GadgetComboBoxAddEntry(comboBox, formatMoneyForStartingCashComboBox( myGame->getStartingCash() ),
                                           comboBox->winGetEnabled() ? comboBox->winGetEnabledTextColor() : comboBox->winGetDisabledTextColor());
-    GadgetComboBoxSetItemData(comboBox, currentSelectionIndex, (void *)it->countMoney() );
+    GadgetComboBoxSetItemData(comboBox, currentSelectionIndex, (void *)myGame->getStartingCash().countMoney() );
   }
 
   GadgetComboBoxSetSelectedPos(comboBox, currentSelectionIndex);

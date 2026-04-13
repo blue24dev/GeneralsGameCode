@@ -5152,6 +5152,20 @@ void Object::xfer( Xfer *xfer )
 	// disabled till frame
 	xfer->xferUser( m_disabledTillFrame, sizeof( UnsignedInt ) * DISABLED_COUNT );
 
+	// OK, now that we have xferred our status bits and disabled data, it's safe to set the team...
+	// TheSuperHackers @todo Refactor so that this code can be moved to loadPostProcess.
+	if( xfer->getXferMode() == XFER_LOAD )
+	{
+		Team *team = TheTeamFactory->findTeamByID( teamID );
+		if( team == nullptr )
+		{
+			DEBUG_CRASH(( "Object::xfer - Unable to load team" ));
+			throw SC_INVALID_DATA;
+		}
+		const Bool restoring = true;
+		setOrRestoreTeam( team, restoring );
+	}
+
 	// special model condition until
 	xfer->xferUnsignedInt( &m_smcUntil );
 
