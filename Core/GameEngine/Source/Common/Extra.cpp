@@ -50,6 +50,9 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		return;
 	}
 
+	// Keep track of the vision before my tampering in case stealth detection needs to know what it was
+	Real originalVision = _this->m_visionRange;
+
 	// This area is called after ThingFactory::parseObjectDefinition's 'ini->initFromINI( thingTemplate...' call,
 	// so any hackish edits to apply to everything can go here.
 	if (_this->isKindOf(KINDOF_STRUCTURE))
@@ -213,7 +216,18 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			foundStealthDetectorUpdate = true;
 			StealthDetectorUpdateModuleData* _data = (StealthDetectorUpdateModuleData*)data;
 			stealthDetectorData = _data;
-			_data->m_detectionRange *= 1.2f;
+			if (_data->m_detectionRange >= 0.0f)
+			{
+				_data->m_detectionRange *= 1.12f;
+			}
+			else
+			{
+				// Normally, the stealth detection range would come from the unit's vision if the detection range isn't explicitly
+				// provided, but I don't want stealth detection to get the same boost as vision, so establish the 'detectionRange'
+				// here from the vision as it was before my tampering, and with a different bonus since 'detectionRange' is normally
+				// always less than vision when specified anyway (not manually defined -> more than it would have been -> less bonus).
+				data->detectionRange = originalVision * 1.08f;
+			}
 		}
 		else if( modNameKey == ActiveShroudUpgradeNameKey )
 		{

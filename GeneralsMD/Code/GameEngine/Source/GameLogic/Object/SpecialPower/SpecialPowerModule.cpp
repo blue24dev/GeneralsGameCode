@@ -384,7 +384,15 @@ Real SpecialPowerModule::getPercentReady() const
 	{
 		if (getObject()->isKindOf( KINDOF_FS_SUPERWEAPON ))
 		{
-			reloadTime += LOGICFRAMES_PER_SECOND * 60 * 4;
+			// If the super weapon has a reload time <= 4 minutes, add 2 minutes. Otherwise, add 4 minutes.
+			if (modData->m_specialPowerTemplate->getReloadTime() <= LOGICFRAMES_PER_SECOND * 60 * 4)
+			{
+				reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
+			}
+			else
+			{
+				reloadTime += LOGICFRAMES_PER_SECOND * 60 * 4;
+			}
 		}
 		else if (getObject()->getTemplate()->isMaxSimultaneousDeterminedBySuperweaponRestriction())
 		{
@@ -511,7 +519,15 @@ void SpecialPowerModule::startPowerRecharge()
 		/*
 		if (getObject()->isKindOf( KINDOF_FS_SUPERWEAPON ))
 		{
-			reloadTime += LOGICFRAMES_PER_SECOND * 60 * 4;
+			// If the super weapon has a reload time <= 4 minutes, add 2 minutes. Otherwise, add 4 minutes.
+			if (modData->m_specialPowerTemplate->getReloadTime() <= LOGICFRAMES_PER_SECOND * 60 * 4)
+			{
+				reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
+			}
+			else
+			{
+				reloadTime += LOGICFRAMES_PER_SECOND * 60 * 4;
+			}
 		}
 		else if (getObject()->getTemplate()->isMaxSimultaneousDeterminedBySuperweaponRestriction())
 		{

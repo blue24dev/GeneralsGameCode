@@ -445,7 +445,7 @@
 
 // ----------------------------------------------------------------------------------------------------------
 // Some post-setting convenience features
-#if CUSTOM_ATTRIBUTES_CHANGES
+#if CUSTOM_ATTRIBUTE_CHANGES
 	#define HEALTH_ADJUSTMENT_FILTER(_obj, _health) _health = healthAdjustmentFilter(_obj, _health);
 #else
 	// nothing - no effect
