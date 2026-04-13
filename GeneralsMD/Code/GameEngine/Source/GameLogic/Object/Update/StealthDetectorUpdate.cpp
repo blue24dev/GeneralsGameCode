@@ -189,7 +189,10 @@ UpdateSleepTime StealthDetectorUpdate::update()
 	PartitionFilterSameMapStatus					filterMapStatus(getObject());
 	PartitionFilter*											filters[] = { &filterStealthOrStealthGarrisoned, &filterTeam, &filterKindof, &filterMapStatus, nullptr };
 
-	Real visionRange = self->getVisionRange();
+	//MODDD - use the range from the template instead, so this isn't affected by things that modify the vision per-unit
+	// like the currently active battle plan (the value here sourced from unit vision isn't kept in sync with that).
+	//Real visionRange = self->getVisionRange();
+	Real visionRange = self->getTemplate()->friend_calcVisionRange();
 	if( data->m_detectionRange > 0.0f )
 	{
 		visionRange = data->m_detectionRange;
