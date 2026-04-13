@@ -158,6 +158,8 @@ TimeOfDay tod_next;
 TimeOfDay tod_model;
 UnsignedInt tod_IntervalFrame;
 Real tod_IntervalPortion;
+
+void determineTimeOfDayGlobals();
 #endif
 
 static void findAndSelectCommandCenter(Object *obj, void* alreadyFound);

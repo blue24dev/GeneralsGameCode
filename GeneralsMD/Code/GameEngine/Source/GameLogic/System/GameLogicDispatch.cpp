@@ -1169,7 +1169,17 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 				break;
 
 			// sanity, the player must actually control this object
-			if( objectWantingToExit->getControllingPlayer() != msgPlayer )
+			//MODDD - instead of the object wanting to exit, check the container for belonging to the correct player.
+			// In a strange scenario, a unit can contain units from another player (ex: if only either the container or things
+			// contained changes ownership by map script - in zero hour campaign mission GLA05, put the rescued POWs in a bus
+			// and take it to the destination - the units inside change ownership, reflected once evacuated they stop responding
+			// to selection/move/etc.).
+			// The as-is way will block clicking the button to evacuate the unit, even though the owner of the container is the
+			// only one that can see the unit buttons to click/evacuate them.
+			// Interestingly enough, the 'evacuate all' button skips this check anyway, and garrisoning any other unit inside will
+			// trigger a check to remove any non-player-owned unit (see 'OpenContain::onCollide').
+			//if( objectWantingToExit->getControllingPlayer() != msgPlayer )
+			if( objectContainingExiter->getControllingPlayer() != msgPlayer )
 				break;
 
 			objectWantingToExit->releaseWeaponLock(LOCKED_TEMPORARILY);	// release any temporary locks.

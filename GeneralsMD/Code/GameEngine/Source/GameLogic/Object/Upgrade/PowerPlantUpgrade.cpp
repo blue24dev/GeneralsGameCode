@@ -161,17 +161,19 @@ void PowerPlantUpgrade::xfer( Xfer *xfer )
 	//MODDD - moved from 'loadPostProcess' so that this runs before 'Energy::loadPostProcess'.
 	// The owner of this object is correctly set at the time so this is now feasible.
 	// ---
-	// Most upgrade modules have state change effects that are themselves saved.  This one is a fire and forget.
-	// So we need to re-fire on load if we are turned on.
 	if( xfer->getXferMode() == XFER_LOAD )
 	{
-		if( isAlreadyUpgraded() )
+		// Most upgrade modules have state change effects that are themselves saved.  This one is a fire and forget.
+		// So we need to re-fire on load if we are turned on.
+		if (isAlreadyUpgraded())
 		{
-			Player *player = getObject()->getControllingPlayer();
+			Object* obj = getObject();
+			Player* player = obj->getControllingPlayer();
 
-			// add the new power production to the object
-			if( player )
-				player->addPowerBonus(getObject());
+			if (player && !obj->isDisabled())
+			{
+				player->addPowerBonus(obj);
+			}
 		}
 	}
 	// ---

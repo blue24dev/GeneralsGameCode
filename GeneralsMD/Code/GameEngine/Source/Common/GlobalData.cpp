@@ -1062,7 +1062,7 @@ void GlobalData::resetLightingFields()
 		m_terrainLightPos[i].y = 0.0f;
 		m_terrainLightPos[i].z = -1.0f;
 
-		for (j=0; j<TIME_OF_DAY_COUNT; j++)
+		for (j=TIME_OF_DAY_FIRST; j<TIME_OF_DAY_COUNT; j++)
 		{	m_terrainLighting[ j ][i].ambient.red=0;
 			m_terrainLighting[ j ][i].ambient.green=0;
 			m_terrainLighting[ j ][i].ambient.blue=0;
