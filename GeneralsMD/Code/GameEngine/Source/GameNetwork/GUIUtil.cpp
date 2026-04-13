@@ -360,6 +360,8 @@ void PopulateStartingCashComboBox(GameWindow *comboBox, GameInfo *myGame)
 	// a starting value that doesn't match any dropdown choices).
 	// Using 'myGame->getStartingCash()' was probably the intent, but, again, this may not be accurate yet per
 	// the notes further above.
+  // UPDATE - TheSuperHackers since fixed this, so even the commented-out original reflects the 'myGame->...' way that would
+	// work, but keeping in my deeper fixes anyway at this point.
 	/*
   if ( currentSelectionIndex == -1 )
   {

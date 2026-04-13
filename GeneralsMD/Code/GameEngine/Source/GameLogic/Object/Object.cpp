@@ -4966,7 +4966,13 @@ void Object::xfer( Xfer *xfer )
 	//MODDD - instead of applying the matrix or pos/orientation now, wait for the drawable to be made since
 	// it can be affected by this if present. It's possible for this call to lead to an exepction if the drawable
 	// hasn't been made:
-	//   setTransformationMatrix -> reactToTransformChange -> OpenContain::containReactToTransformChange > GarrisonContain::redeployOccupants() -> matchObjectsToGarrisonPoints() -> positionObjectsAtStationGarrisonPoints() -> loadStatioGarrisonPoints() -> <expects 'draw' to be non-null>
+	//   setTransformationMatrix
+	//   reactToTransformChange
+	//   OpenContain::containReactToTransformChange
+	//   GarrisonContain::redeployOccupants()
+	//   matchObjectsToGarrisonPoints()
+	//   positionObjectsAtStationGarrisonPoints()
+	//   loadStatioGarrisonPoints() -> expects 'draw' to be non-null
 	// In fact just wait for the team too, no harm in that.
 	Matrix3D mtx;
 	Coord3D pos;
@@ -5067,33 +5073,6 @@ void Object::xfer( Xfer *xfer )
 	// private status
 	xfer->xferUnsignedByte( &m_privateStatus );
 
-	// OK, now that we have xferred our status bits, it's safe to set the team...
-	if( xfer->getXferMode() == XFER_LOAD )
-	{
-		Team *team = TheTeamFactory->findTeamByID( teamID );
-		if( team == nullptr )
-		{
-			DEBUG_CRASH(( "Object::xfer - Unable to load team" ));
-			throw SC_INVALID_DATA;
-		}
-
-		const Bool restoring = true;
-		setOrRestoreTeam( team, restoring );
-
-		//MODDD - Run these since having a drawable and having the correct team assigned
-		if (version >= 7)
-		{
-			setTransformMatrix(&mtx);
-		}
-		else
-		{
-			setPosition( &pos );
-			setOrientation( orientation );
-		}
-
-		constructorOnActualTeamAssigned();
-	}
-
 	//MODDD - NOTE - is 'setGeometryInfo' ever called to reach anything that should happen in response to this being loaded in?
 	// geometry info
 	xfer->xferSnapshot( &m_geometryInfo );
@@ -5164,6 +5143,19 @@ void Object::xfer( Xfer *xfer )
 		}
 		const Bool restoring = true;
 		setOrRestoreTeam( team, restoring );
+
+		//MODDD - Run these since having a drawable and having the correct team assigned
+		if (version >= 7)
+		{
+			setTransformMatrix(&mtx);
+		}
+		else
+		{
+			setPosition( &pos );
+			setOrientation( orientation );
+		}
+
+		constructorOnActualTeamAssigned();
 	}
 
 	// special model condition until
