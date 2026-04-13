@@ -107,7 +107,9 @@ Bool ConvertToHijackedVehicleCrateCollide::isValidToExecute( const Object *other
 
 	Relationship r = getObject()->getRelationship( other );
 	//Only hijack enemy objects
-	if( r != ENEMIES )
+	//MODDD - TEST. What about neutrals too?
+	//if( r != ENEMIES )
+	if( r == ALLIES )
 	{
 		return FALSE;
 	}
@@ -171,7 +173,7 @@ Bool ConvertToHijackedVehicleCrateCollide::executeCrateBehavior( Object *other )
 	//MODDD - since this skips the kick-out from calling 'Object::setTeam' instead of 'Object::defect', handle that here if needed.
 	// And, going off 'Object::defect', the kick-out happens after calling 'setTeam'.
 	// ---
-	ContainModuleInterface *ct = getContain();
+	ContainModuleInterface *ct = other->getContain();
 	if (ct && ct->isKickOutOnCapture())
 	{
 		ct->removeAllContained( TRUE );
