@@ -216,7 +216,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			foundStealthDetectorUpdate = true;
 			StealthDetectorUpdateModuleData* _data = (StealthDetectorUpdateModuleData*)data;
 			stealthDetectorData = _data;
-			if (_data->m_detectionRange >= 0.0f)
+			if (_data->m_detectionRange > 0.0f)
 			{
 				_data->m_detectionRange *= 1.12f;
 			}
@@ -226,7 +226,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 				// provided, but I don't want stealth detection to get the same boost as vision, so establish the 'detectionRange'
 				// here from the vision as it was before my tampering, and with a different bonus since 'detectionRange' is normally
 				// always less than vision when specified anyway (not manually defined -> more than it would have been -> less bonus).
-				data->detectionRange = originalVision * 1.08f;
+				_data->m_detectionRange = originalVision * 1.08f;
 			}
 		}
 		else if( modNameKey == ActiveShroudUpgradeNameKey )
