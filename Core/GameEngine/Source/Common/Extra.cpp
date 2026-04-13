@@ -229,6 +229,15 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 				_data->m_detectionRange = originalVision * 1.08f;
 			}
 		}
+		else if( modNameKey == SpecialAbilityUpdateNameKey )
+		{
+			SpecialAbilityUpdateModuleData* _data = (SpecialAbilityUpdateModuleData*)data;
+			// NOTE - this constant comes from SPECIAL_ABILITY_HUGE_DISTANCE in SpecialAbilityUpdate.h
+			if (_data->m_startAbilityRange > 0 && _data->m_startAbilityRange < 10000000.0f)
+			{
+				_data->m_startAbilityRange *= 1.15f;
+			}
+		}
 		else if( modNameKey == ActiveShroudUpgradeNameKey )
 		{
 			foundActiveShroudUpgrade = true;
