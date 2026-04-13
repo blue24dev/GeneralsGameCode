@@ -755,72 +755,79 @@ Bool WorldHeightMap::ParseLightingDataChunk(DataChunkInput &file, DataChunkInfo 
 
 		//MODDD - TODO - preprocessor constant for this?
 		// Note that the defaults in the GameData.ini file for lighting never take effect because the ones from
-		// the map are always used instead. To force the ones from GameData.ini instead, remove all the
-		// 'TheWritableGlobalData->...' assignments below and just replace them with the 'file.readReal()' call.
+		// the map are always used instead here. To force the ones from GameData.ini instead, remove/disable all the
+		// 'TheWritableGlobalData->...' assignments below.
 		// Then if you get some time-of-day settings that are fine-tuned to look good for a real-time change once,
 		// you can just use that for all the maps instead.
 
 		// initialize the directions of the lights to not be totally invalid, in case old maps are read
-		for (i=0; i<4; i++) {
-			for (Int j=0;j<MAX_GLOBAL_LIGHTS; j++) {
-				TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j]=initLightValues;
-				TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j]=initLightValues;
+		for (i=TIME_OF_DAY_FIRST; i<TIME_OF_DAY_COUNT; i++)
+		{
+			for (Int j=0;j<MAX_GLOBAL_LIGHTS; j++)
+			{
+				TheWritableGlobalData->m_terrainObjectsLighting[i][j]=initLightValues;
+				TheWritableGlobalData->m_terrainLighting[i][j]=initLightValues;
 			}
 		}
 
-		for (i=0; i<4; i++) {
-			TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].ambient.red = file.readReal();
-			TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].ambient.green = file.readReal();
-			TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].ambient.blue = file.readReal();
-			TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].diffuse.red = file.readReal();
-			TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].diffuse.green = file.readReal();
-			TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].diffuse.blue = file.readReal();
-			TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].lightPos.x = file.readReal();
-			TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].lightPos.y = file.readReal();
-			TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][0].lightPos.z = file.readReal();
+		for (i=TIME_OF_DAY_FIRST; i<TIME_OF_DAY_COUNT; i++)
+		{
+			TheWritableGlobalData->m_terrainLighting[i][0].ambient.red = file.readReal();
+			TheWritableGlobalData->m_terrainLighting[i][0].ambient.green = file.readReal();
+			TheWritableGlobalData->m_terrainLighting[i][0].ambient.blue = file.readReal();
+			TheWritableGlobalData->m_terrainLighting[i][0].diffuse.red = file.readReal();
+			TheWritableGlobalData->m_terrainLighting[i][0].diffuse.green = file.readReal();
+			TheWritableGlobalData->m_terrainLighting[i][0].diffuse.blue = file.readReal();
+			TheWritableGlobalData->m_terrainLighting[i][0].lightPos.x = file.readReal();
+			TheWritableGlobalData->m_terrainLighting[i][0].lightPos.y = file.readReal();
+			TheWritableGlobalData->m_terrainLighting[i][0].lightPos.z = file.readReal();
 
-			TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].ambient.red = file.readReal();
-			TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].ambient.green = file.readReal();
-			TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].ambient.blue = file.readReal();
-			TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].diffuse.red = file.readReal();
-			TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].diffuse.green = file.readReal();
-			TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].diffuse.blue = file.readReal();
-			TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].lightPos.x = file.readReal();
-			TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].lightPos.y = file.readReal();
-			TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][0].lightPos.z = file.readReal();
+			TheWritableGlobalData->m_terrainObjectsLighting[i][0].ambient.red = file.readReal();
+			TheWritableGlobalData->m_terrainObjectsLighting[i][0].ambient.green = file.readReal();
+			TheWritableGlobalData->m_terrainObjectsLighting[i][0].ambient.blue = file.readReal();
+			TheWritableGlobalData->m_terrainObjectsLighting[i][0].diffuse.red = file.readReal();
+			TheWritableGlobalData->m_terrainObjectsLighting[i][0].diffuse.green = file.readReal();
+			TheWritableGlobalData->m_terrainObjectsLighting[i][0].diffuse.blue = file.readReal();
+			TheWritableGlobalData->m_terrainObjectsLighting[i][0].lightPos.x = file.readReal();
+			TheWritableGlobalData->m_terrainObjectsLighting[i][0].lightPos.y = file.readReal();
+			TheWritableGlobalData->m_terrainObjectsLighting[i][0].lightPos.z = file.readReal();
 
-			if (info->version >= K_LIGHTING_VERSION_2) {
+			if (info->version >= K_LIGHTING_VERSION_2)
+			{
 				for (Int j=1; j<3; j++)	//added support for 2 extra object lights
 				{
-					TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].ambient.red = file.readReal();
-					TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].ambient.green = file.readReal();
-					TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].ambient.blue = file.readReal();
-					TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].diffuse.red = file.readReal();
-					TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].diffuse.green = file.readReal();
-					TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].diffuse.blue = file.readReal();
-					TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].lightPos.x = file.readReal();
-					TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].lightPos.y = file.readReal();
-					TheWritableGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].lightPos.z = file.readReal();
+					TheWritableGlobalData->m_terrainObjectsLighting[i][j].ambient.red = file.readReal();
+					TheWritableGlobalData->m_terrainObjectsLighting[i][j].ambient.green = file.readReal();
+					TheWritableGlobalData->m_terrainObjectsLighting[i][j].ambient.blue = file.readReal();
+					TheWritableGlobalData->m_terrainObjectsLighting[i][j].diffuse.red = file.readReal();
+					TheWritableGlobalData->m_terrainObjectsLighting[i][j].diffuse.green = file.readReal();
+					TheWritableGlobalData->m_terrainObjectsLighting[i][j].diffuse.blue = file.readReal();
+					TheWritableGlobalData->m_terrainObjectsLighting[i][j].lightPos.x = file.readReal();
+					TheWritableGlobalData->m_terrainObjectsLighting[i][j].lightPos.y = file.readReal();
+					TheWritableGlobalData->m_terrainObjectsLighting[i][j].lightPos.z = file.readReal();
 				}
 			}
-			if (info->version >= K_LIGHTING_VERSION_3) {
+			if (info->version >= K_LIGHTING_VERSION_3)
+			{
 				for (Int j=1; j<3; j++)	//added support for 2 extra terrain lights
 				{
-					TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].ambient.red = file.readReal();
-					TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].ambient.green = file.readReal();
-					TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].ambient.blue = file.readReal();
-					TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].diffuse.red = file.readReal();
-					TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].diffuse.green = file.readReal();
-					TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].diffuse.blue = file.readReal();
-					TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].lightPos.x = file.readReal();
-					TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].lightPos.y = file.readReal();
-					TheWritableGlobalData->m_terrainLighting[i+TIME_OF_DAY_FIRST][j].lightPos.z = file.readReal();
+					TheWritableGlobalData->m_terrainLighting[i][j].ambient.red = file.readReal();
+					TheWritableGlobalData->m_terrainLighting[i][j].ambient.green = file.readReal();
+					TheWritableGlobalData->m_terrainLighting[i][j].ambient.blue = file.readReal();
+					TheWritableGlobalData->m_terrainLighting[i][j].diffuse.red = file.readReal();
+					TheWritableGlobalData->m_terrainLighting[i][j].diffuse.green = file.readReal();
+					TheWritableGlobalData->m_terrainLighting[i][j].diffuse.blue = file.readReal();
+					TheWritableGlobalData->m_terrainLighting[i][j].lightPos.x = file.readReal();
+					TheWritableGlobalData->m_terrainLighting[i][j].lightPos.y = file.readReal();
+					TheWritableGlobalData->m_terrainLighting[i][j].lightPos.z = file.readReal();
 				}
 			}
 		}
-		if (!file.atEndOfChunk()) {
+		if (!file.atEndOfChunk())
+		{
 			UnsignedInt shadowColor = file.readInt();
-			if (TheW3DShadowManager) {
+			if (TheW3DShadowManager)
+			{
 				TheW3DShadowManager->setShadowColor(shadowColor);
 			}
 		}

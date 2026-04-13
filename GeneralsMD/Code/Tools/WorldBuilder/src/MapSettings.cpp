@@ -130,7 +130,7 @@ void MapSettings::OnOK()
 {
 	CComboBox *timeofday = (CComboBox*)GetDlgItem(IDC_MAP_TIMEOFDAY);
 	CComboBox *weather = (CComboBox*)GetDlgItem(IDC_MAP_WEATHER);
-	TimeOfDay tod = (TimeOfDay) (timeofday->GetCurSel()+TIME_OF_DAY_FIRST);
+	TimeOfDay tod = (TimeOfDay) (timeofday->GetCurSel());
 	Weather theWeather = (Weather) weather->GetCurSel();
 
 	TheWritableGlobalData->setTimeOfDay(tod);

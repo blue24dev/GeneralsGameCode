@@ -268,8 +268,9 @@ protected:
 	void loadTreesInVertexAndIndexBuffers(RefRenderObjListIterator *pDynamicLightsIterator); ///< Fills the index and vertex buffers for drawing.
 	void updateVertexBuffer(); ///< Fills the index and vertex buffers for drawing.
 	void cull(const CameraClass * camera);						 ///< Culls the trees.
+	//MODDD - 'objectLighting' param no longer needed
 	UnsignedInt  doLighting(const Vector3 *normal,
-		const GlobalData::TerrainLighting	*objectLighting,
+		//const GlobalData::TerrainLighting	*objectLighting,
 		const Vector3 *emissive, UnsignedInt vertexDiffuse, Real scale) const;
 #if 0 // sort is no longer used and messes up the order. jba [6/6/2003]
 	void sort( Int iterations );								 ///< Performs partial bubble sort.

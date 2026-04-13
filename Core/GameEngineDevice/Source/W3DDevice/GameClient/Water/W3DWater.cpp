@@ -286,7 +286,7 @@ WaterRenderObjClass::~WaterRenderObjClass()
 
 	Int i;
 
-	for(i=0; i<TIME_OF_DAY_COUNT; i++)
+	for(i=TIME_OF_DAY_FIRST; i<TIME_OF_DAY_COUNT; i++)
 	{	REF_PTR_RELEASE(m_settings[i].skyTexture);
 		REF_PTR_RELEASE(m_settings[i].waterTexture);
 	}
@@ -302,7 +302,7 @@ WaterRenderObjClass::~WaterRenderObjClass()
 	m_meshDataSize = 0;
 
 	//Release strings allocated inside global water settings.
-	for  (i=0; i<TIME_OF_DAY_COUNT; i++)
+	for(i=TIME_OF_DAY_FIRST; i<TIME_OF_DAY_COUNT; i++)
 	{	WaterSettings[i].m_skyTextureFile.clear();
 		WaterSettings[i].m_waterTextureFile.clear();
 	}
