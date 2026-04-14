@@ -1632,10 +1632,16 @@ void WorldHeightMapEdit::showTileStatusInfo(void)
 void WorldHeightMapEdit::setHeight(Int xIndex, Int yIndex, UnsignedByte height) {
 		Int ndx = (yIndex*m_width)+xIndex;
 		if ((ndx>=0) && (ndx<m_dataSize) && m_data) m_data[ndx]=height;
+		//MODDD - NOTE - it seems inefficient to update the height of 3 adjacent tiles when most operations will cover an area
+		// of tiles (each adjacent tile was likely already covered by another 'setHeight' call at that exact x/y with no offset applied).
+		//MODDD - TODO - should be able to remove the 2nd thru 4th calls, and let the caller (height-affecting tools) call
+		// 'setCellCliffFlagFromHeights' on tiles on the outside (an extra outer ring) of the brush area.
 		setCellCliffFlagFromHeights(xIndex, yIndex);
+		/*
 		setCellCliffFlagFromHeights(xIndex-1, yIndex);
 		setCellCliffFlagFromHeights(xIndex, yIndex-1);
 		setCellCliffFlagFromHeights(xIndex-1, yIndex-1);
+		*/
 }
 
 
@@ -3464,7 +3470,7 @@ void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *ou
 	float bestDistance = okDistance + 0.1;
 	// And for the border index & mod type for the border at the best distance currently
 	int bestDistanceBorderNdx = -1;
-	BorderModificationType bestDistanceMod = BORDERMOD_TYPE_NONE;
+	BorderModificationType bestDistanceMod = BORDERMOD_NONE;
 
 	//MODDD - moved from the loop below, this doesn't depend on the current iteration at all
 	Vector3 vecPt(pt->x / MAP_XY_FACTOR, pt->y / MAP_XY_FACTOR, 0);
@@ -3540,7 +3546,7 @@ void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *ou
 			// (less drag freedom) isn't worthwhile.
 			bestDistance = testDistance;
 			bestDistanceBorderNdx = i;
-			bestDistanceMod = BORDERMOD_TYPE_FREE;
+			bestDistanceMod = BORDERMOD_FREE;
 			continue;
 		}
 
@@ -3554,7 +3560,7 @@ void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *ou
 			if (testDistance < bestDistance) {
 				bestDistance = testDistance;
 				bestDistanceBorderNdx = i;
-				bestDistanceMod = BORDERMOD_TYPE_UP;
+				bestDistanceMod = BORDERMOD_UP;
 				continue;
 			}
 
@@ -3564,21 +3570,21 @@ void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *ou
 			if (testDistance < bestDistance) {
 				bestDistance = testDistance;
 				bestDistanceBorderNdx = i;
-				bestDistanceMod = BORDERMOD_TYPE_RIGHT;
+				bestDistanceMod = BORDERMOD_RIGHT;
 				continue;
 			}
 
 			// This is the bottom-left corner of a border: not possible to resize from here.
 			// Grabbing this doesn't really serve a purpose, so only allow this outcome if nothing else is selected.
 			// Prefer absolutely anything else, basically.
-			if (bestDistanceMod == BORDERMOD_TYPE_NONE || bestDistanceMod == BORDERMOD_TYPE_INVALID) {
+			if (bestDistanceMod == BORDERMOD_NONE || bestDistanceMod == BORDERMOD_INVALID) {
 				vecTestPt.X = 0;
 				vecTestPt.Y = 0;
 				testDistance = Vector3::Distance(vecPt, vecTestPt);
 				if (testDistance < bestDistance) {
 					// Don't change 'bestDistance' - allow anything else to work instead
 					bestDistanceBorderNdx = i;
-					bestDistanceMod = BORDERMOD_TYPE_INVALID;
+					bestDistanceMod = BORDERMOD_INVALID;
 					continue;
 				}
 			}

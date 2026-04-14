@@ -200,6 +200,9 @@ protected:
 	void readTexClass(TXTextureClass *texClass, TileData **tileData);
 	Int updateTileTexturePositions(Int *edgeHeight); ///< Places each tile in the texture.
 	void initCliffFlagsFromHeights();
+
+	//MODDD - now public
+public:
 	void setCellCliffFlagFromHeights(Int xIndex, Int yIndex);
 
 protected:	 // file reader callbacks.

@@ -28,6 +28,16 @@ class WorldHeightMapEdit;
 /////////////////////////////////////////////////////////////////////////////
 // TerrainMaterial dialog
 
+//MODDD - to control which of 3 choices the user has selected for painting pathing info since adding a 3rd one.
+// In fact, may as well include painting terrain normally as a choice & eliminate the need for 'isPaintingPathingInfo'.
+enum TerrainToolPaintType CPP_11(: Int)
+{
+	TERRAIN_TOOL_PAINT_TEXTURE,
+	TERRAIN_TOOL_PAINT_PASSABLE,
+	TERRAIN_TOOL_PAINT_IMPASSABLE,
+	TERRAIN_TOOL_PAINT_UPDATE_FROM_HEIGHT
+};
+
 class TerrainMaterial : public COptionsPanel, public PopupSliderOwner
 {
 // Construction
@@ -62,6 +72,8 @@ protected:
 	afx_msg void OnImpassable();
 	afx_msg void OnPassableCheck();
 	afx_msg void OnPassable();
+	//MODDD
+	afx_msg void OnUpdateFromHeight();
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 
@@ -76,8 +88,12 @@ protected:
 	WBPopupSliderButton			m_widthPopup;
 	Int											m_currentWidth;
 
+	//MODDD - replaced
+	/*
 	static Bool m_paintingPathingInfo;	 // If true, we are painting passable/impassable.  If false, normal texture painting.
 	static Bool m_paintingPassable;
+	*/
+	static TerrainToolPaintType m_paintType;
 
 protected:
 	void addTerrain(char *pPath, Int terrainNdx, HTREEITEM parent);
@@ -95,8 +111,12 @@ public:
 	static void setToolOptions(Bool singleCell);
 	static void setWidth(Int width);
 
+	//MODDD - replaced
+	/*
 	static Bool isPaintingPathingInfo(void) {return m_paintingPathingInfo;}
 	static Bool isPaintingPassable(void) {return m_paintingPassable;}
+	*/
+	static TerrainToolPaintType getPaintType() {return m_paintType;}
 
 public:
 	Bool setTerrainTreeViewSelection(HTREEITEM parent, Int selection);
@@ -105,6 +125,11 @@ public:
 	virtual void GetPopSliderInfo(const long sliderID, long *pMin, long *pMax, long *pLineSize, long *pInitial) override;
 	virtual void PopSliderChanged(const long sliderID, long theVal) override;
 	virtual void PopSliderFinished(const long sliderID, long theVal) override;
+
+	//MODDD
+	void setPaintTypeRadioButtonGroupEnabled(Bool enabled);
+	TerrainToolPaintType getPaintTypeFromUI();
+
 };
 
 //{{AFX_INSERT_LOCATION}}

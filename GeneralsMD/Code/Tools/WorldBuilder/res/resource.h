@@ -424,6 +424,10 @@
 #define IDC_MAX_UNIT7                   1201
 #define IDC_RADIO3                      1201
 #define IDC_TeamGeneric_Script4         1201
+
+//MODDD - new
+#define IDC_UPDATE_FROM_HEIGHT          1201
+
 #define IDC_UNIT_TYPE7                  1202
 #define IDC_RADIO4                      1202
 #define IDC_TeamGeneric_Script5         1202
