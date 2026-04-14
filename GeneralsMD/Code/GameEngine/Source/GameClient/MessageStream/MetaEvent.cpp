@@ -919,7 +919,7 @@ MetaMapRec *MetaMap::getMetaMapRec(GameMessage::Type t)
 			map->m_usableIn = COMMANDUSABLE_GAME;
 		}
 	}
-#endif // #if _ALLOW_DEBUG_CHEATS_IN_DEBUG
+#endif // _ALLOW_DEBUG_CHEATS_IN_DEBUG
 }
 
 //-------------------------------------------------------------------------------------------------
