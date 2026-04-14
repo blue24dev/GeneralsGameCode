@@ -32,7 +32,7 @@ BorderTool::BorderTool() : Tool(ID_BORDERTOOL, IDC_POINTER),
 													 m_addingNewBorder(false),
 													 m_modifyBorderNdx(-1),
 													 //MODDD - may as well
-													 m_modificationType(BORDERMOD_TYPE_INVALID)
+													 m_modificationType(BORDERMOD_INVALID)
 
 { }
 
@@ -103,13 +103,13 @@ void BorderTool::mouseMoved(TTrackingMode m, CPoint viewPt, WbView* pView, CWorl
 			//MODDD - Removing this case. Setting the border NDX here is redundant anyway.
 			// In fact, an INVALID type already forces m_modifyBorderNdx to -1 so this shouldn't be reached then.
 			//case MOD_TYPE_INVALID: m_modifyBorderNdx = -1; return;
-			case BORDERMOD_TYPE_UP:
+			case BORDERMOD_UP:
 				currentBorder.y = REAL_TO_INT((new3DPoint.y / MAP_XY_FACTOR) + 0.5f);
 				break;
-			case BORDERMOD_TYPE_RIGHT:
+			case BORDERMOD_RIGHT:
 				currentBorder.x = REAL_TO_INT((new3DPoint.x / MAP_XY_FACTOR) + 0.5f);
 				break;
-			case BORDERMOD_TYPE_FREE:
+			case BORDERMOD_FREE:
 				currentBorder.x = REAL_TO_INT((new3DPoint.x / MAP_XY_FACTOR) + 0.5f);
 				currentBorder.y = REAL_TO_INT((new3DPoint.y / MAP_XY_FACTOR) + 0.5f);
 				break;
@@ -166,13 +166,13 @@ void BorderTool::mouseDown(TTrackingMode m, CPoint viewPt, WbView* pView, CWorld
 
 	//MODDD - comparisons to numbers replaced with enum values
 	// if bottom left boundary grabbed
-	if (m_modificationType == BORDERMOD_TYPE_INVALID)
+	if (m_modificationType == BORDERMOD_INVALID)
 	{
 		// modifying the bottom left is not allowed.
 		m_modifyBorderNdx = -1;
 	}
 	// else if no boundary is near
-	else if (m_modificationType == BORDERMOD_TYPE_NONE)
+	else if (m_modificationType == BORDERMOD_NONE)
 	{
 		// add a boundary
 		m_addingNewBorder = true;
@@ -202,7 +202,7 @@ void BorderTool::mouseDown(TTrackingMode m, CPoint viewPt, WbView* pView, CWorld
 
 		//MODDD - use FREE type to size towards the top or right sides, same as changing an
 		// existing border from the top-right corner.
-		m_modificationType = BORDERMOD_TYPE_FREE;
+		m_modificationType = BORDERMOD_FREE;
 	}
 }
 
@@ -236,6 +236,6 @@ void BorderTool::mouseUp(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldBu
 	}
 
 	//MODDD - for safety, may as well reset these on releasing the mouse.
-	m_modificationType = BORDERMOD_TYPE_INVALID;
+	m_modificationType = BORDERMOD_INVALID;
 	m_modifyBorderNdx = -1;
 }

@@ -1315,7 +1315,7 @@ void ActiveBody::onSubdualChange( Bool isNowSubdued )
 		{
 			me->setDisabled(DISABLED_SUBDUED);
 
-			//MODDD - any reason why? Things inside will be paused if they're affected by the disable & resume when it's over.
+			//MODDD - why? Things inside will be paused if they're affected by the disable & resume when it's over.
 			// See things disabled by being UNDERPOWERED - there is no equivalent call & never noticed any issues there.
 			/*
       ContainModuleInterface *contain = me->getContain();

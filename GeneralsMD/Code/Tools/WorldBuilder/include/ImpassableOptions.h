@@ -18,22 +18,33 @@
 
 #pragma once
 
+//MODDD
+class WbView3d;
+
 class ImpassableOptions : public CDialog
 {
 	public:
 		enum { IDD = IDD_IMPASSABLEOPTIONS };
 
 	public:
-		ImpassableOptions(CWnd* pParent = nullptr, Real defaultSlope = 45.0f);
+		//MODDD - added param 'view'
+		ImpassableOptions(CWnd* pParent = nullptr, WbView3d* view = nullptr, Real defaultSlope = 45.0f);
 		virtual ~ImpassableOptions() override;
+
+		//MODDD
+		virtual int DoModal() override;
+
 		Real GetSlopeToShow() const { return m_slopeToShow; }
 		Real GetDefaultSlope() const { return m_defaultSlopeToShow; }
-		void SetDefaultSlopeToShow(Real slopeToShow) { m_slopeToShow = slopeToShow; }
+		//MODDD - rename: 'SetDefaultSlopeToShow' -> 'SetSlopeToShow'
+		void SetSlopeToShow(Real slopeToShow) { m_slopeToShow = slopeToShow; }
 
 	protected:
 		Real m_slopeToShow;	// Clamped in the range of [0,90]
 		Real m_defaultSlopeToShow;
 		Bool m_showImpassableAreas;
+		//MODDD
+		WbView3d* m_view;
 
 		Bool ValidateSlope();	// Returns TRUE if it was valid, FALSE if it had to adjust it.
 

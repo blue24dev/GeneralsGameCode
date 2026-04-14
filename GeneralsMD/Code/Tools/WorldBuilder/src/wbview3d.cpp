@@ -3167,9 +3167,16 @@ void WbView3d::OnUpdateViewShowimpassableareas(CCmdUI* pCmdUI)
 void WbView3d::OnImpassableAreaOptions()
 {
 	if (TheTerrainRenderObject) {
+		//MODDD - rename: 'SetDefaultSlopeToShow' -> 'SetSlopeToShow'
+		// And for less confusion, letting the dialog handle these things internally.
+		// For instance, the 'preview' button already has to make a similar 'setViewImpassableAreaSlope' anyway.
+		// Lastly, use the constructor to set both the default and normal slope.
+		// That way, canceling restores the value at the start of opening the dialog, not the hardcoded default of 45 deg.
+		// ---
+		/*
 		{
 			ImpassableOptions opts;
-			opts.SetDefaultSlopeToShow(TheTerrainRenderObject->getViewImpassableAreaSlope());
+			opts.SetSlopeToShow(TheTerrainRenderObject->getViewImpassableAreaSlope());
 			if (opts.DoModal() == IDOK) {
 				TheTerrainRenderObject->setViewImpassableAreaSlope(opts.GetSlopeToShow());
 			} else {
@@ -3179,6 +3186,11 @@ void WbView3d::OnImpassableAreaOptions()
 
 		IRegion2D range = {0,0,0,0};
 		updateHeightMapInView(WbDoc()->GetHeightMap(), false, range);
+		*/
+		// ---
+		ImpassableOptions opts(nullptr, this, TheTerrainRenderObject->getViewImpassableAreaSlope());
+		opts.DoModal();
+		// ---
 	}
 }
 

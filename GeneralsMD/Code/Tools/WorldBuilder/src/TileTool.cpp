@@ -146,13 +146,46 @@ void TileTool::mouseMoved(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldB
 			if (i<0 || i>=m_htMapEditCopy->getXExtent()) continue;
 			for (j=minY; j<minY+width; j++) {
 				if (j<0 || j>=m_htMapEditCopy->getYExtent()) continue;
+				//MODDD - adjusted for changes to how this is stored and a new third choice
+				// ---
+				/*
 				if (TerrainMaterial::isPaintingPathingInfo()) {
 					m_htMapEditCopy->setCliff(i, j, !TerrainMaterial::isPaintingPassable());
-				} else {
+				}
+				else
+				{
 					if (m_htMapEditCopy->setTileNdx(i, j, m_textureClassToDraw, width==1)) {
 						fullUpdate = true;
 					}
 				}
+				*/
+				// ---
+				switch(TerrainMaterial::getPaintType())
+				{
+					case TERRAIN_TOOL_PAINT_TEXTURE:
+					{
+						if (m_htMapEditCopy->setTileNdx(i, j, m_textureClassToDraw, width==1)) {
+							fullUpdate = true;
+						}
+						break;
+					}
+					case TERRAIN_TOOL_PAINT_PASSABLE:
+					{
+						m_htMapEditCopy->setCliff(i, j, false);
+						break;
+					}
+					case TERRAIN_TOOL_PAINT_IMPASSABLE:
+					{
+						m_htMapEditCopy->setCliff(i, j, true);
+						break;
+					}
+					case TERRAIN_TOOL_PAINT_UPDATE_FROM_HEIGHT:
+					{
+						m_htMapEditCopy->setCellCliffFlagFromHeights(i, j);
+						break;
+					}
+				}
+				// ---
 				didAnything = true;
 				if (totalMinX>i) totalMinX = i;
 				if (totalMinY>j) totalMinY = j;
