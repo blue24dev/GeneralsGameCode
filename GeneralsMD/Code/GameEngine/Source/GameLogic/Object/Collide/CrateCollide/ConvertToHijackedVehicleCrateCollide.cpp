@@ -88,7 +88,10 @@ Bool ConvertToHijackedVehicleCrateCollide::isValidToExecute( const Object *other
 		return FALSE; //Kris: Patch 1.03 -- Prevent hijackers from being able to hijack battle buses.
 	}
 
-	if( other->isKindOf( KINDOF_AIRCRAFT ) || other->isKindOf( KINDOF_BOAT ) )
+	//MODDD - let's allow aircraft if it's not airborne (docket at airfield).
+	// (boats is tempting too, in case the hijacker were amphibious, and you could check for ridiculous cases like an entire aircraft carrier)
+	//if( other->isKindOf( KINDOF_AIRCRAFT ) || other->isKindOf( KINDOF_BOAT ) )
+	if((other->isKindOf(KINDOF_AIRCRAFT) && other->isAirborneTarget()) || other->isKindOf( KINDOF_BOAT ))
 	{
 		//Can't hijack planes and boats!
 		return FALSE;
@@ -100,10 +103,13 @@ Bool ConvertToHijackedVehicleCrateCollide::isValidToExecute( const Object *other
 		return FALSE;
 	}
 
+	//MODDD - why not allow a counter-hijack?
+	/*
 	if( other->getStatusBits().test( OBJECT_STATUS_HIJACKED ) )
 	{
 		return FALSE;// oops, sorry, I'll jack the next one.
 	}
+	*/
 
 	Relationship r = getObject()->getRelationship( other );
 	//Only hijack enemy objects

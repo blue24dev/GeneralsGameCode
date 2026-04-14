@@ -43,8 +43,12 @@ static Int defaultMaterialIndex = 0;
 Int TerrainMaterial::m_currentFgTexture(3);
 Int TerrainMaterial::m_currentBgTexture(6);
 
+//MODDD - replaced
+/*
 Bool TerrainMaterial::m_paintingPathingInfo;
 Bool TerrainMaterial::m_paintingPassable;
+*/
+TerrainToolPaintType TerrainMaterial::m_paintType;
 
 TerrainMaterial::TerrainMaterial(CWnd* pParent /*=nullptr*/) :
 	m_updating(false),
@@ -72,6 +76,8 @@ BEGIN_MESSAGE_MAP(TerrainMaterial, COptionsPanel)
 	ON_BN_CLICKED(IDC_IMPASSABLE, OnImpassable)
 	ON_BN_CLICKED(IDC_PASSABLE_CHECK, OnPassableCheck)
 	ON_BN_CLICKED(IDC_PASSABLE, OnPassable)
+	//MODDD
+	ON_BN_CLICKED(IDC_UPDATE_FROM_HEIGHT, OnUpdateFromHeight)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
@@ -220,16 +226,28 @@ BOOL TerrainMaterial::OnInitDialog()
 	m_terrainSwatches.Create(nullptr, "", WS_CHILD, rect, this, IDC_TERRAIN_SWATCHES);
 	m_terrainSwatches.ShowWindow(SW_SHOW);
 
+	//MODDD - replaced
+	/*
 	m_paintingPathingInfo = false;
 	m_paintingPassable = false;
-	CButton *button = (CButton *)GetDlgItem(IDC_PASSABLE_CHECK);
+	*/
+	m_paintType = TERRAIN_TOOL_PAINT_TEXTURE;
+
+	CButton *button;
+	button = (CButton *)GetDlgItem(IDC_PASSABLE_CHECK);
 	button->SetCheck(false);
 	button = (CButton *)GetDlgItem(IDC_PASSABLE);
 	button->SetCheck(false);
-	button->EnableWindow(false);
+	
 	button = (CButton *)GetDlgItem(IDC_IMPASSABLE);
 	button->SetCheck(true);
-	button->EnableWindow(false);
+	
+	//MODDD
+	button = (CButton *)GetDlgItem(IDC_UPDATE_FROM_HEIGHT);
+	button->SetCheck(false);
+
+	//MODDD - condensed repetitive calls above
+	setPaintTypeRadioButtonGroupEnabled(false);
 
 	m_widthPopup.SetupPopSliderButton(this, IDC_SIZE_POPUP, this);
 	m_staticThis = this;
@@ -510,28 +528,24 @@ BOOL TerrainMaterial::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 	return CDialog::OnNotify(wParam, lParam, pResult);
 }
 
-void TerrainMaterial::OnImpassable()
-{
-	m_paintingPassable = false;
-	CButton *button = (CButton *)GetDlgItem(IDC_PASSABLE);
-	button->SetCheck(0);
-}
-
 void TerrainMaterial::OnPassableCheck()
 {
 	CButton *owner = (CButton*) GetDlgItem(IDC_PASSABLE_CHECK);
 	Bool isChecked = (owner->GetCheck() != 0);
-	CButton *button = (CButton *)GetDlgItem(IDC_PASSABLE);
-	button->EnableWindow(isChecked);
-	button = (CButton *)GetDlgItem(IDC_IMPASSABLE);
-	button->EnableWindow(isChecked);
+	//MODDD - condensed
+	setPaintTypeRadioButtonGroupEnabled(isChecked);
+
 	Bool showImpassable = false;
 	if (TheTerrainRenderObject) {
 		showImpassable = TheTerrainRenderObject->getShowImpassableAreas();
 	}
 	m_terrainSwatches.EnableWindow(!isChecked);
 	m_terrainTreeView.EnableWindow(!isChecked);
-	m_paintingPathingInfo = isChecked;
+
+	//MODDD - replaced
+	//m_paintingPathingInfo = isChecked;
+	m_paintType = getPaintTypeFromUI();
+
 	if (showImpassable != isChecked) {
 		TheTerrainRenderObject->setShowImpassableAreas(isChecked);
 		// Force the entire terrain mesh to be rerendered.
@@ -548,7 +562,88 @@ void TerrainMaterial::OnPassableCheck()
 
 void TerrainMaterial::OnPassable()
 {
-	m_paintingPassable = true;
-	CButton *button = (CButton *)GetDlgItem(IDC_IMPASSABLE);
+	//MODDD
+	//m_paintingPassable = true;
+	m_paintType = TERRAIN_TOOL_PAINT_PASSABLE;
+
+	CButton *button;
+	button = (CButton *)GetDlgItem(IDC_IMPASSABLE);
 	button->SetCheck(0);
+	//MODDD
+	button = (CButton *)GetDlgItem(IDC_UPDATE_FROM_HEIGHT);
+	button->SetCheck(0);
+}
+
+//MODDD - moved from above
+void TerrainMaterial::OnImpassable()
+{
+	//MODDD
+	//m_paintingPassable = false;
+	m_paintType = TERRAIN_TOOL_PAINT_IMPASSABLE;
+
+	CButton *button;
+	button = (CButton *)GetDlgItem(IDC_PASSABLE);
+	button->SetCheck(0);
+	//MODDD
+	button = (CButton *)GetDlgItem(IDC_UPDATE_FROM_HEIGHT);
+	button->SetCheck(0);
+}
+
+//MODDD
+void TerrainMaterial::OnUpdateFromHeight()
+{
+	m_paintType = TERRAIN_TOOL_PAINT_UPDATE_FROM_HEIGHT;
+
+	CButton *button;
+	button = (CButton *)GetDlgItem(IDC_PASSABLE);
+	button->SetCheck(0);
+	button = (CButton *)GetDlgItem(IDC_IMPASSABLE);
+	button->SetCheck(0);
+}
+
+//MODD
+void TerrainMaterial::setPaintTypeRadioButtonGroupEnabled(Bool enabled)
+{
+	CButton *button;
+	button = (CButton *)GetDlgItem(IDC_PASSABLE);
+	button->EnableWindow(enabled);
+	button = (CButton *)GetDlgItem(IDC_IMPASSABLE);
+	button->EnableWindow(enabled);
+	button = (CButton *)GetDlgItem(IDC_UPDATE_FROM_HEIGHT);
+	button->EnableWindow(enabled);
+}
+
+//MODDD
+TerrainToolPaintType TerrainMaterial::getPaintTypeFromUI()
+{
+	CButton *owner = (CButton*) GetDlgItem(IDC_PASSABLE_CHECK);
+	Bool isChecked = (owner->GetCheck() != 0);
+	if (isChecked)
+	{
+		// checked - decide the type from which radio button is selected
+		CButton *button;
+		button = (CButton *)GetDlgItem(IDC_PASSABLE);
+		if (button->GetCheck() != 0)
+		{
+			return TERRAIN_TOOL_PAINT_PASSABLE;
+		}
+		button = (CButton *)GetDlgItem(IDC_IMPASSABLE);
+		if (button->GetCheck() != 0)
+		{
+			return TERRAIN_TOOL_PAINT_IMPASSABLE;
+		}
+		button = (CButton *)GetDlgItem(IDC_UPDATE_FROM_HEIGHT);
+		if (button->GetCheck() != 0)
+		{
+			return TERRAIN_TOOL_PAINT_UPDATE_FROM_HEIGHT;
+		}
+
+		// nothing checked?
+		return TERRAIN_TOOL_PAINT_IMPASSABLE;
+	}
+	else
+	{
+		// not checked
+		return TERRAIN_TOOL_PAINT_TEXTURE;
+	}
 }

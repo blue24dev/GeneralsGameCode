@@ -28,6 +28,9 @@
 
 class MoundOptions : public COptionsPanel	, public PopupSliderOwner
 {
+	//MODDD - higher tool limit
+	// ---
+	/*
 // Construction
 public:
 	enum {MIN_MOUND_HEIGHT=1,
@@ -40,6 +43,17 @@ public:
 				MAX_BRUSH_SIZE=51,
 				MIN_FEATHER=0,
 				MAX_FEATHER=20};
+	*/
+	// ---
+public:
+	enum {MIN_MOUND_HEIGHT=1,
+				MAX_MOUND_HEIGHT=50
+	};
+	enum {MIN_BRUSH_SIZE=1,
+				MAX_BRUSH_SIZE=60,
+				MIN_FEATHER=0,
+				MAX_FEATHER=20};
+	// ---
 
 	MoundOptions(CWnd* pParent = nullptr);   // standard constructor
 

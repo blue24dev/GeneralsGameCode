@@ -534,10 +534,14 @@ BEGIN
     LTEXT           "35 FT.",IDC_WIDTH_LABEL,59,230,43,8
     CONTROL         "Paint passable/impassable terrain",IDC_PASSABLE_CHECK,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,5,244,164,12
-    CONTROL         "Passable",IDC_PASSABLE,"Button",BS_AUTORADIOBUTTON,27,
+    //MODDD - adding 'WS_GROUP' to the first radio button of a group, proper to do this even if this is the only group
+    CONTROL         "Passable",IDC_PASSABLE,"Button",BS_AUTORADIOBUTTON | WS_GROUP,27,
                     259,98,10
     CONTROL         "Impassable",IDC_IMPASSABLE,"Button",BS_AUTORADIOBUTTON,
                     27,270,98,10
+    //MODDD - new choice
+    CONTROL         "Update From Height",IDC_UPDATE_FROM_HEIGHT,"Button",BS_AUTORADIOBUTTON,
+                    27,281,98,10
 END
 
 IDD_MOUND_OPTIONS DIALOG DISCARDABLE  0, 0, 200, 146

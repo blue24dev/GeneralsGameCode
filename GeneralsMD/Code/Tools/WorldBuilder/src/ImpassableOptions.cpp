@@ -27,9 +27,15 @@
 #include "wbview3d.h"
 #include "WorldBuilderDoc.h"
 
+//MODDD
+#include "WHeightMapEdit.h"
+
 //-------------------------------------------------------------------------------------------------
-ImpassableOptions::ImpassableOptions(CWnd* pParent, Real defaultSlope) :
+//MODDD - added param 'view'
+ImpassableOptions::ImpassableOptions(CWnd* pParent, WbView3d* view, Real defaultSlope) :
 	CDialog(ImpassableOptions::IDD, pParent),
+	//MODDD
+	m_view(view),
 	m_slopeToShow(defaultSlope),
 	m_defaultSlopeToShow(defaultSlope)
 {
@@ -42,6 +48,25 @@ ImpassableOptions::ImpassableOptions(CWnd* pParent, Real defaultSlope) :
 ImpassableOptions::~ImpassableOptions()
 {
 	TheTerrainRenderObject->setShowImpassableAreas(m_showImpassableAreas);
+}
+
+//MODDD - outcome is checked and reacted to here, moved from 'wbview3d.cpp'
+int ImpassableOptions::DoModal()
+{
+	int res = CDialog::DoModal();
+	if (res == IDOK) {
+		// use what's in the text field at the moment
+		TheTerrainRenderObject->setViewImpassableAreaSlope(m_slopeToShow);
+	} else {
+		// set this back to what was in the text field at first in case the preview feature changed it to something else
+		TheTerrainRenderObject->setViewImpassableAreaSlope(m_defaultSlopeToShow);
+	}
+
+	// Run to apply the most recent 'setViewImpassableAreaSlope' call
+	IRegion2D range = {0,0,0,0};
+	m_view->updateHeightMapInView(m_view->WbDoc()->GetHeightMap(), false, range);
+
+	return res;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -94,15 +119,22 @@ void ImpassableOptions::OnAngleChange()
 		astr.format("%.2f", m_slopeToShow);
 		pWnd->SetWindowText(astr.str());
 	}
-	TheTerrainRenderObject->setViewImpassableAreaSlope(m_slopeToShow);
+	//MODDD - why not wait for clicking the preview button to do this?
+	//TheTerrainRenderObject->setViewImpassableAreaSlope(m_slopeToShow);
 }
 
 void ImpassableOptions::OnPreview()
 {
 	// update it.
+	//WbView3d *pView = CWorldBuilderDoc::GetActive3DView();
+
+	//MODDD - moved to here
+	TheTerrainRenderObject->setViewImpassableAreaSlope(m_slopeToShow);
+
 	IRegion2D range = {0,0,0,0};
-	WbView3d *pView = CWorldBuilderDoc::GetActive3DView();
-	pView->updateHeightMapInView(TheTerrainRenderObject->getMap(), false, range);
+	//MODDD - better resemble the final call, though I doubt there's any functional difference in this
+	//pView->updateHeightMapInView(TheTerrainRenderObject->getMap(), false, range);
+	m_view->updateHeightMapInView(m_view->WbDoc()->GetHeightMap(), false, range);
 }
 
 BEGIN_MESSAGE_MAP(ImpassableOptions, CDialog)
