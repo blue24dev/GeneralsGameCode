@@ -438,6 +438,55 @@ Real healthAdjustmentFilter(Object* obj, Real healthVal)
 	}
 	return _healthVal;
 }
+
+UnsignedInt specialPowerReloadTimeAdjustmentFilter(Object* obj, UnsignedInt reloadTime, Bool _isSharedNSync)
+{
+	UnsignedInt _reloadTime = reloadTime;
+
+	if (!_isSharedNSync)
+	{
+		// Non-shared special powers, typically superweapons or some single-use + cooldown abilities (ex: radar van scan).
+		// 'obj' is always known here and can be used to influence the effect (ex: only change times for superweapons, not radar van scans, etc.).
+		// Note that some things have the same appearance as that but are actually tied to firing a weapon instead. Ex: Jarmen Kell's pilot snipe.
+#if RTS_ZEROHOUR
+		if (obj->isKindOf( KINDOF_FS_SUPERWEAPON ))
+		{
+			// If the super weapon has a reload time <= 4 minutes, add 2 minutes. Otherwise, add 4 minutes.
+			if (reloadTime <= LOGICFRAMES_PER_SECOND * 60 * 4)
+			{
+				_reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
+			}
+			else
+			{
+				_reloadTime += LOGICFRAMES_PER_SECOND * 60 * 4;
+			}
+		}
+		else if (obj->getTemplate()->isMaxSimultaneousDeterminedBySuperweaponRestriction())
+		{
+			// For contra: affect superunit abilities too
+			// If the reload time is under 1 minute, add 30 seconds. Probably not too annoying anyway.
+			// TODO - check for having infinite range, that's a good indicator of how annoying it could be.
+			if (reloadTime < LOGICFRAMES_PER_SECOND * 60 * 1)
+			{
+				_reloadTime += LOGICFRAMES_PER_SECOND * 30;
+			}
+			else
+			{
+				_reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
+			}
+		}
+#endif
+	}
+	else
+	{
+		// shared ability - ex: spy satelite (just 1 no matter how many command centers you make), any special powers from promotion points.
+		// 'obj' is always NULL here, as shared abilities typically stand alone from whatever structure happens to be needed to link to them
+		// (in nearly every case, it's the command center anyway).
+		// ...
+	}
+	return _reloadTime;
+}
+
 #endif // CUSTOM_ATTRIBUTE_CHANGES
 
 

@@ -453,6 +453,14 @@
 	#define HEALTH_ADJUSTMENT_FILTER(_obj, _health)
 #endif
 
+#if CUSTOM_ATTRIBUTE_CHANGES
+	// run through the filter
+	#define SPECIALPOWER_RELOADTIME_ADJUSTMENT_FILTER(_obj, _reloadTime, _isSharedNSync) _reloadTime = specialPowerReloadTimeAdjustmentFilter(_obj, _reloadTime, _isSharedNSync);
+#else
+	// nothing - no effect
+	#define SPECIALPOWER_RELOADTIME_ADJUSTMENT_FILTER(_obj, _reloadTime, _isSharedNSync)
+#endif
+
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 	// run through the filter to see if this player benefits from cheats
 	#define APPLY_MONEY_CHEAT(_player, _moneyAmount) _moneyAmount = getCheatAdjustedMoneyAmount(_player, _moneyAmount);

@@ -1199,9 +1199,19 @@ void PhysicsBehavior::onCollide( Object *other, const Coord3D *loc, const Coord3
 	// ignore collisions with our "ignore" thingy, if any (and vice versa)
 	AIUpdateInterface* ai = obj->getAIUpdateInterface();
 	//MODDD - NOTE - is there any reason 'getIgnoredObstacleID' is used instead of 'getGoalObject()->getID()' ?
+	// ORIGINAL
+	//if (ai != nullptr && ai->getIgnoredObstacleID() == other->getID())
 	// Possible alternative:
 	//if (ai != nullptr && ai->getGoalObject() && ai->getGoalObject()->getID() == other->getID())
-	if (ai != nullptr  && ai->getIgnoredObstacleID() == other->getID())
+	// ---
+	// BLEND
+	Bool hijackerException = (obj->hasHijackerCollide() && ai->getAIStateType() == AI_FORCE_ATTACK_OBJECT);
+	if (ai != nullptr &&
+		(
+			ai->getIgnoredObstacleID() == other->getID() ||
+			(hijackerException && ai->getGoalObject() && ai->getGoalObject()->getID() == other->getID())
+		)
+	)
 	{
 /// @todo srj -- what the hell is this code doing here? ack!
 		//Before we return, check for a very special case of an infantry colliding with an unmanned vehicle.
@@ -1210,8 +1220,17 @@ void PhysicsBehavior::onCollide( Object *other, const Coord3D *loc, const Coord3
 		//MODDD - also require this object to be intending to 'enter' something.
 		// Ex: in the Contra mod, stealth general Jarmen Kell placing a parasite on a neutral vehicle sometimes causes him
 		// to pilot it on getting too close, even though the intent isn't to enter the vehicle at all.
+		// Also, allow a hijacker trying to 'attack' a vehicle to enter on touch too (ex: a flying hijacker trying to garrison
+		// a neutral vehicle).
+
 		//if( obj->isKindOf( KINDOF_INFANTRY ) && other->isDisabledByType( DISABLED_UNMANNED ) )
-		if( obj->isKindOf( KINDOF_INFANTRY ) && other->isDisabledByType( DISABLED_UNMANNED ) && ai->getAIStateType() == AI_ENTER )
+		if(
+			obj->isKindOf( KINDOF_INFANTRY ) && other->isDisabledByType( DISABLED_UNMANNED ) &&
+			(
+				ai->getAIStateType() == AI_ENTER ||
+				hijackerException
+			)
+		)
 		{
 			//This is in fact the case, and we are doing it here because it applies to all infantry in any unmanned vehicle.
 			//This could be done via a special/new module, but doing it here doesn't require a new module update to every infantry.

@@ -2814,7 +2814,8 @@ void AIUpdateInterface::aiDoCommand(const AICommandParms* parms)
 		case AICMD_ENTER://///////////////////////////////////////////////////////////////
 		{
 			//MODDD - check if there should be a similar special no-weapons check for being a hijacker
-		  if (!parms->m_obj->hasHijackerCollide())
+			Object* self = getObject();
+		  if (!self->hasHijackerCollide())
 		  {
 			  // not a hijacker - retail
 				privateEnter(parms->m_obj, parms->m_cmdSource);
@@ -2822,7 +2823,7 @@ void AIUpdateInterface::aiDoCommand(const AICommandParms* parms)
 		  else
 		  {
 			  // hijacker
-			  const WeaponSet* ws = getObject()->getWeaponSet();
+			  const WeaponSet* ws = self->getWeaponSet();
 				if (ws->getWeaponInWeaponSlot(PRIMARY_WEAPON) == nullptr && ws->getWeaponInWeaponSlot(SECONDARY_WEAPON) == nullptr && ws->getWeaponInWeaponSlot(TERTIARY_WEAPON) == nullptr)
 				{
 					// no weapons -> retail anyway
@@ -2848,7 +2849,8 @@ void AIUpdateInterface::aiDoCommand(const AICommandParms* parms)
 			// However, this means mods that were to use custom 'AIUpdate' classes already would likely have a conflict.
 			// The current approach here works as long sa whatever 'AIUpdate' class used doesn't have 'AICMD...' behavior
 			// that overrides what's here (more weird edge cases to play wack-a-mole with, hooray).
-			const WeaponSet* ws = getObject()->getWeaponSet();
+			Object* self = getObject();
+			const WeaponSet* ws = self->getWeaponSet();
 			if (ws->getWeaponInWeaponSlot(PRIMARY_WEAPON) == nullptr && ws->getWeaponInWeaponSlot(SECONDARY_WEAPON) == nullptr && ws->getWeaponInWeaponSlot(TERTIARY_WEAPON) == nullptr)
 			{
 				// no weapons -> retail hijacking behavior
@@ -2858,6 +2860,15 @@ void AIUpdateInterface::aiDoCommand(const AICommandParms* parms)
 			{
 				// lets hijackers assisted by a weapon (ex: flying hijackers in the Contra mod) work as expected
 				// (Triggers the, presumably, dart-towards weapon and 'ConvertToHijackedVehicleCrateCollide' should take care of the rest)
+				//MODDD - TODO - consider testing this for the odd scenario of giving an order to enter/hijack a vehicle, which is piloted/hijacked
+				// by an allied unit before this hijacker reaches it. I could see the hijack order continuing to try and hijack the now-friendly
+				// vehicle (weird behavior), instead of stopping since that's now a friendly. 'Force Attack' is being used to force a hijacker
+				// to use weapons on the target regardless of being a neutral player so entering a neutral vehicle with its hijack-dart weapon works.
+				// It would be best to change how 'privateHijack' works to allow using weapons (if available) on the target under the assumption that's
+				// the point of a hijacker having weapons. See how the normal attack AI state does it.
+				// (this all applies to 'privateForceAttackObject' further above as well)
+				// AND, still, don't allow the hijack-hint on disguised enemy bomb trucks meant to fool you!
+				// And guard mode hijack for normal hijackers isn't working at the moment - how does retail make guard mode use 'hijack' instead of attacking with weapons like everywhere else?
 				privateForceAttackObject(parms->m_obj, NO_MAX_SHOTS_LIMIT, parms->m_cmdSource);
 			}
 			break;

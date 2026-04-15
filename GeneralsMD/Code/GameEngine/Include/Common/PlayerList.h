@@ -87,9 +87,6 @@ public:
 	virtual void update() override;
 
 	//MODDD
-	void onGameEnd();
-
-	//MODDD
 	Player* findNeutralPlayer();
 	Player* findCivilianPlayer();
 	Player* findFirstSlotPlayer();
@@ -136,7 +133,9 @@ public:
 		Return the "local" player (ie, the human playing the game).
 		This will never return null.
 	*/
-	inline Player *getLocalPlayer() { DEBUG_ASSERTCRASH(m_local != nullptr, ("null m_local")); return m_local; }
+	//MODDD - implementation moved to .cpp, changed a bit
+	//inline Player *getLocalPlayer() { DEBUG_ASSERTCRASH(m_local != nullptr, ("null m_local")); return m_local; }
+	Player *getLocalPlayer();
 
 	//MODDD
 	Bool isLocalPlayerSet();

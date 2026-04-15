@@ -378,37 +378,10 @@ Real SpecialPowerModule::getPercentReady() const
 	*/
 	// ---------
 	UnsignedInt reloadTime = modData->m_specialPowerTemplate->getReloadTime();
-	//MODDD - for me only: extra time for superweapons
-	if (!modData->m_specialPowerTemplate->isSharedNSync())
-	{
-		if (getObject()->isKindOf( KINDOF_FS_SUPERWEAPON ))
-		{
-			// If the super weapon has a reload time <= 4 minutes, add 2 minutes. Otherwise, add 4 minutes.
-			if (modData->m_specialPowerTemplate->getReloadTime() <= LOGICFRAMES_PER_SECOND * 60 * 4)
-			{
-				reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
-			}
-			else
-			{
-				reloadTime += LOGICFRAMES_PER_SECOND * 60 * 4;
-			}
-		}
-		else if (getObject()->getTemplate()->isMaxSimultaneousDeterminedBySuperweaponRestriction())
-		{
-			// For contra: affect superunit abilities too
-			// If the reload time is under 1 minute, add 30 seconds. Probably not too annoying anyway.
-			// TODO - check for having infinite range, that's a good indicator of how annoying it could be.
-			if (modData->m_specialPowerTemplate->getReloadTime() < LOGICFRAMES_PER_SECOND * 60 * 1)
-			{
-				reloadTime += LOGICFRAMES_PER_SECOND * 30;
-			}
-			else
-			{
-				reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
-			}
-		}
-	}
 
+	//MODDD
+	SPECIALPOWER_RELOADTIME_ADJUSTMENT_FILTER(getObject(), reloadTime, modData->m_specialPowerTemplate->isSharedNSync())
+	
 	Real percent = 1.0f - ((readyFrame - TheGameLogic->getFrame()) /
 												 (Real)reloadTime);
 	// ---------
@@ -513,33 +486,10 @@ void SpecialPowerModule::startPowerRecharge()
 		//m_availableOnFrame = TheGameLogic->getFrame() + getSpecialPowerTemplate()->getReloadTime();
 		// ---------
 		UnsignedInt reloadTime = modData->m_specialPowerTemplate->getReloadTime();
-		//MODDD - for me only: extra time for superweapons
-		if (getObject()->isKindOf( KINDOF_FS_SUPERWEAPON ))
-		{
-			// If the super weapon has a reload time <= 4 minutes, add 2 minutes. Otherwise, add 4 minutes.
-			if (modData->m_specialPowerTemplate->getReloadTime() <= LOGICFRAMES_PER_SECOND * 60 * 4)
-			{
-				reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
-			}
-			else
-			{
-				reloadTime += LOGICFRAMES_PER_SECOND * 60 * 4;
-			}
-		}
-		else if (getObject()->getTemplate()->isMaxSimultaneousDeterminedBySuperweaponRestriction())
-		{
-			// For contra: affect superunit abilities too
-			// If the reload time is under 1 minute, add 30 seconds. Probably not too annoying anyway.
-			// TODO - check for having infinite range, that's a good indicator of how annoying it could be.
-			if (modData->m_specialPowerTemplate->getReloadTime() < LOGICFRAMES_PER_SECOND * 60 * 1)
-			{
-				reloadTime += LOGICFRAMES_PER_SECOND * 30;
-			}
-			else
-			{
-				reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
-			}
-		}
+
+		//MODDD - also, this route is for non-shared special powers only  - see 'Player::resetOrStartSpecialPowerReadyFrame'
+		// for the custom attribute hack insertion for shared special powers.
+		SPECIALPOWER_RELOADTIME_ADJUSTMENT_FILTER(getObject(), reloadTime, FALSE)
 
 		m_availableOnFrame = TheGameLogic->getFrame() + reloadTime;
 		// ---------
