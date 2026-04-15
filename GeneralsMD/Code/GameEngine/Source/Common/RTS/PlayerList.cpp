@@ -150,15 +150,18 @@ void PlayerList::reset()
 		m_players[i]->deletePlayerAI();
 
 	TheTeamFactory->clear(); // cleans up energy, among other things
-	init();
-}
-
-//MODDD
-void PlayerList::onGameEnd()
-{
+	
+	//MODDD - un-set the existing 'm_local' if needed.
+	// Typical call trace to reach here:
+	//   GameEngine::reset (ending a game)
+	//   GameEngine::resetSubsytems
+	//   SubsystemInterfaceList::resetAll()
+	//   PlayerList::reset (here)
 	if (m_local)
 		m_local->becomingLocalPlayer(false);
-	m_local = nullptr;
+
+	//MODDD - NOTE - This will set 'm_local' to null
+	init();
 }
 
 //MODDD - new
@@ -616,9 +619,10 @@ void PlayerList::init()
 
 	// call setLocalPlayer so that becomingLocalPlayer() gets called appropriately
 	//MODDD - don't think this is needed, replacing with a null assignment
-	//setLocalPlayer(m_players[0]);
+	// ...I stand corrected. I really don't think anything should be interacting with a 'local player' before a game's even started, but, what do I know.
+	// Doing the duct-tape fix from retail in 'getLocalPlayer' instead: return #0 as a placeholder for the sake of not crashing
+	//setLocalPlayer(m_players[0])
 	m_local = nullptr;
-
 }
 
 //-----------------------------------------------------------------------------
@@ -677,6 +681,12 @@ Team *PlayerList::validateTeam( AsciiString owner )
 		t = getNeutralPlayer()->getDefaultTeam();
 	}
 	return t;
+}
+
+//MODDD - implementation moved from .h, changed a bit
+Player* PlayerList::getLocalPlayer()
+{
+	return m_local ? m_local : m_players[0];
 }
 
 //MODDD - tell if the local player has been set to a non-default choice

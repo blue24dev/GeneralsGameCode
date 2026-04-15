@@ -2483,7 +2483,7 @@ void Player::doBountyForKill(const Object* killer, const Object* victim)
 	if( bounty )
 	{
 		//MODDD - money cheat check
-		APPLY_MONEY_CHEAT(this, bounty);
+		APPLY_MONEY_CHEAT(this, bounty)
 
 		getMoney()->deposit( bounty );
 		m_scoreKeeper.addMoneyEarned( bounty );
@@ -3368,7 +3368,11 @@ void Player::resetOrStartSpecialPowerReadyFrame( const SpecialPowerTemplate *tem
 		timer = &(*it);
 		if ( timer->m_templateID == lookupID )
 		{
-			timer->m_readyFrame = now + temp->getReloadTime();
+			//MODDD - expanded to make hackery easier if needed
+			//timer->m_readyFrame = now + temp->getReloadTime();
+			UnsignedInt reloadTime = temp->getReloadTime();
+			SPECIALPOWER_RELOADTIME_ADJUSTMENT_FILTER(nullptr, reloadTime, TRUE)
+			timer->m_readyFrame = now + reloadTime;
 			return;
 		}
 	}
