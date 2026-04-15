@@ -30,6 +30,7 @@
 // fail according to github's automatic builds if the 'false'/'true' keywords reach the preprocessor.
 // And note the preprocessor constants RTS_GENERALS and RTS_ZEROHOUR defined as 1 for the respective game builds.
 // For script used in both cases ('Core' folder instead of 'Generals'/'GeneralsMD'), it may make sense to involve that.
+// See 'Core/GameEngine/Include/Common/Debug.h' and 'GameMemory.h' for some other new macro settings mentioned by 'MODDD'.
 // ---
 // Note: Retail compatibility must not be broken before this project officially does.
 // Use RETAIL_COMPATIBLE_CRC and RETAIL_COMPATIBLE_XFER_SAVE to guard breaking changes.
@@ -253,10 +254,6 @@
 // In any case, the 'MSG_META_DEMO_...'(...Debug.ini) and 'MSG_CHEAT_...'(...Demo.ini) sets of messages/files
 // appear to be intended to be mutually exclusive.
 #define BLOCK_DEBUG_DEMO_MESSAGE_INPUTS 1
-
-// If on, some features normally only for debug builds are enabled for release builds.
-// Not every idea is covered by this - see GameMemory.h
-#define DEBUG_HELP_FOR_RELEASE 1
 
 // Double the max player count from 16 to 32. Needed for multiplayer for the retail Laser General challenge map to work,
 // since as-is, the map uses enough players to only allow for adding 1 more.
