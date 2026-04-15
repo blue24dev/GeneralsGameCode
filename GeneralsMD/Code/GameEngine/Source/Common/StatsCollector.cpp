@@ -154,8 +154,10 @@ void StatsCollector::collectUnitCountStats()
 
 	for(Object *obj =	TheGameLogic->getFirstObject(); obj; obj = obj->getNextObject())
 	{
-
-		if((!(obj->isKindOf(KINDOF_INFANTRY) || obj->isKindOf(KINDOF_VEHICLE))) || ( obj->isNeutralControlled()) ||(obj->getControllingPlayer()->getSide().compare("Civilian") == 0))
+		//MODDD - there is a cached civilian player to check against.
+		// 'Object::isNeutralControlled' now includes neutral & civilian checks, so need or the string check at all here.
+		//if((!(obj->isKindOf(KINDOF_INFANTRY) || obj->isKindOf(KINDOF_VEHICLE))) || ( obj->isNeutralControlled()) ||(obj->getControllingPlayer()->getSide().compare("Civilian") == 0))
+		if((!(obj->isKindOf(KINDOF_INFANTRY) || obj->isKindOf(KINDOF_VEHICLE))) || ( obj->isNeutralControlled()))
 			continue;
 
 		if(obj->getControllingPlayer()->isLocalPlayer())

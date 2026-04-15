@@ -55,6 +55,8 @@ class DataChunkOutput;
 class Player;
 class Team;
 class TeamFactory;
+//MODDD
+class PlayerTemplate;
 
 //-------------------------------------------------------------------------------------------------
 enum AllowPlayerRelationship CPP_11(: Int)
@@ -85,6 +87,11 @@ public:
 	virtual void update() override;
 
 	//MODDD
+	void onGameEnd();
+
+	//MODDD
+	Player* findNeutralPlayer();
+	Player* findCivilianPlayer();
 	Player* findFirstSlotPlayer();
 	void populateSlotPlayerRefs();
 	void postPlayersInit();
@@ -107,11 +114,18 @@ public:
 	Player *getNthPlayer(Int i);
 
 	/**
-		return the "neutral" Player. there is always a player that is "neutral" wrt
+		return the "neutral" Player. there is always a player that is "neutral" with
 		all other players (this is so that everything can be associated with a nonnull
 		Player, to simplify the universe). This will never return null.
 	*/
-	Player *getNeutralPlayer() { DEBUG_ASSERTCRASH(m_players[0] != nullptr, ("null neutral")); return m_players[0]; }
+	//MODDD - now a cached var instead
+	//Player *getNeutralPlayer() { DEBUG_ASSERTCRASH(m_players[0] != nullptr, ("null neutral")); return m_players[0]; }
+	Player *getNeutralPlayer() { return m_neutralPlayer; }
+
+	//MODDD - tell whether this is a player that typically owns non-playable-user-owned-things, such as unmanned vehicles,
+	// ungarrisoned buildings, tech structures, etc.
+	// In many cases, this is often a standard-named 'civilian' player, so this check is better than only a '... == neutral player' check.
+	Bool isPlayerUnaffiliated(Player* player);
 
 	/**
 		return the Player with the given internal name, or null if none found.
@@ -170,6 +184,11 @@ private:
 	Player				*m_local;
 	Int						m_playerCount;
 	Player				*m_players[MAX_PLAYER_COUNT];
+
+	//MODDD
+	Player* m_neutralPlayer;
+	Player* m_civilianPlayer;
+	const PlayerTemplate* m_civilianPlayerTemplate;
 
 //MODDD - add a list of references to players meant to be playable by someone connected to the game since
 // they aren't generated (names "player<0-7") as expected by network mode in FGC_CAMPAIGN.

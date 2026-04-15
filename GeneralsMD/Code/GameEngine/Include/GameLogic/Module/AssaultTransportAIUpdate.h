@@ -40,7 +40,9 @@ enum AssaultStateTypes CPP_11(: Int)
 	ASSAULTING,						      ///< Transport is waiting while troops do fighting.
 };
 
-#define MAX_TRANSPORT_SLOTS 10
+//MODDD - it isn't 2003 anymore
+//#define MAX_TRANSPORT_SLOTS 10
+#define MAX_TRANSPORT_SLOTS 32
 
 //-------------------------------------------------------------------------------------------------
 class AssaultTransportAIUpdateModuleData : public AIUpdateModuleData

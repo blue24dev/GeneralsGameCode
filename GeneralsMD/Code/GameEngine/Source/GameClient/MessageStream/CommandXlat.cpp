@@ -539,6 +539,10 @@ void pickAndPlayUnitVoiceResponse( const DrawableList *list, GameMessage::Type m
 					}
 				}
 				// order matters: we want to know if I consider it to be an ally, not vice versa
+				//MODDD - why not play a more neutral clip for entering a neutral vehicle?
+				// Refactoring & changing to resemble above
+				// ---
+				/*
 				else if( target && obj->getRelationship(target) != ALLIES )
 				{
 					soundToPlayPtr = templ->getPerUnitSound( "VoiceEnterHostile" );
@@ -547,6 +551,26 @@ void pickAndPlayUnitVoiceResponse( const DrawableList *list, GameMessage::Type m
 				{
 					soundToPlayPtr = templ->getPerUnitSound( "VoiceEnter" );
 				}
+				*/
+				// ---
+				else
+				{
+				  if( target && obj->getRelationship(target) == ENEMIES )
+					{
+						soundToPlayPtr = templ->getPerUnitSound( "VoiceEnterHostile" );
+					}
+					else
+					{
+						soundToPlayPtr = templ->getPerUnitSound( "VoiceEnter" );
+					}
+				}
+				// ---
+				objectWithSound = obj;
+				skip = true;
+				break;
+			//MODDD - new hijack message
+			case GameMessage::MSG_HIJACK:
+				soundToPlayPtr = templ->getPerUnitSound( "VoiceEnterHostile" );
 				objectWithSound = obj;
 				skip = true;
 				break;
@@ -1070,9 +1094,11 @@ GameMessage::Type CommandTranslator::issueMoveToLocationCommand( const Coord3D *
 
 //------------------------------------------------------------------------------------
 /// @todo Play attack command response sound on client-side to hide latency
+//MODDD - new param 'isForced'
 GameMessage::Type CommandTranslator::createAttackMessage( Drawable *draw,
 																													Drawable *other,
-																													CommandEvaluateType commandType )
+																													CommandEvaluateType commandType,
+																												  Bool isForced)
 {
 	GameMessage::Type msgType = GameMessage::MSG_INVALID;
 
@@ -1085,7 +1111,9 @@ GameMessage::Type CommandTranslator::createAttackMessage( Drawable *draw,
 		return msgType;
 
 	// insert object attack command message into stream
-	msgType = GameMessage::MSG_DO_ATTACK_OBJECT;
+	//MODDD
+	//msgType = GameMessage::MSG_DO_ATTACK_OBJECT;
+	msgType = (!isForced) ? GameMessage::MSG_DO_ATTACK_OBJECT : GameMessage::MSG_DO_FORCE_ATTACK_OBJECT;
 
 	// only make the message if we are really doing a command
 	if( commandType == DO_COMMAND )
@@ -1106,9 +1134,11 @@ GameMessage::Type CommandTranslator::createAttackMessage( Drawable *draw,
  * Create DO_ATTACK_GROUND_OBJECT messages for each selected object, instructing it to attack the given enemy.
  * Return TRUE if any attacks actually occurred.
  */
+//MODDD - new param 'isForced'
 GameMessage::Type CommandTranslator::issueAttackCommand( Drawable *target,
 																												 CommandEvaluateType commandType,
-																												 GUICommandType command )
+																												 GUICommandType command,
+																												 Bool isForced)
 {
 	GameMessage::Type msgType = GameMessage::MSG_INVALID;
 
@@ -1134,7 +1164,9 @@ GameMessage::Type CommandTranslator::issueAttackCommand( Drawable *target,
 				break;
 #endif
 			case GUI_COMMAND_NONE:
-				msgType = GameMessage::MSG_DO_ATTACK_OBJECT;
+				//MODDD
+				//msgType = GameMessage::MSG_DO_ATTACK_OBJECT;
+				msgType = (!isForced) ? GameMessage::MSG_DO_ATTACK_OBJECT : GameMessage::MSG_DO_FORCE_ATTACK_OBJECT;
 				break;
 			default:
 				DEBUG_CRASH( ("issueAttackCommand was passed in a GUICommandType type that isn't supported yet...") );
@@ -1167,7 +1199,7 @@ GameMessage::Type CommandTranslator::issueAttackCommand( Drawable *target,
 		for( DrawableListCIt it = selected->begin(); it != selected->end(); ++it )
 		{
 			draw = *it;
-			msgType = createAttackMessage(draw, target, commandType );
+			msgType = createAttackMessage(draw, target, commandType, isForced );
 		}
 	}
 
@@ -1425,10 +1457,13 @@ GameMessage::Type CommandTranslator::issueFireWeaponCommand( const CommandButton
 }
 
 //-------------------------------------------------------------------------------------------------
-GameMessage::Type CommandTranslator::createEnterMessage( Drawable *enter,
-																												 CommandEvaluateType commandType )
+//MODDD - renamed from 'createEnterMessage' to '_createEnterMessage', new param 'msgType' - turned into a utility for below to use
+GameMessage::Type CommandTranslator::_createEnterMessage( Drawable *enter,
+																												 CommandEvaluateType commandType,
+																												 GameMessage::Type msgType)
 {
-	GameMessage::Type msgType = GameMessage::MSG_ENTER;
+	//MODDD - for one particular variant instead
+	//GameMessage::Type msgType = GameMessage::MSG_ENTER;
 
 	// if we're just evaluating then get out of here without actually doing the action
 	if( commandType == EVALUATE_ONLY )
@@ -1459,6 +1494,18 @@ GameMessage::Type CommandTranslator::createEnterMessage( Drawable *enter,
 	// return the type of the message used
 	return msgType;
 
+}
+
+//MODDD - usages of above
+GameMessage::Type CommandTranslator::createEnterMessage( Drawable *enter,
+																												 CommandEvaluateType commandType)
+{
+	return _createEnterMessage(enter, commandType, GameMessage::MSG_ENTER);
+}
+GameMessage::Type CommandTranslator::createHijackMessage( Drawable *enter,
+																												 CommandEvaluateType commandType)
+{
+	return _createEnterMessage(enter, commandType, GameMessage::MSG_HIJACK);
 }
 
 //====================================================================================
@@ -1755,8 +1802,11 @@ GameMessage::Type CommandTranslator::evaluateContextCommand( Drawable *draw,
 				{
 					switch( command->getCommandType() )
 					{
-						case GUICOMMANDMODE_CONVERT_TO_CARBOMB:
+						//MODDD - custom message for hijack
 						case GUICOMMANDMODE_HIJACK_VEHICLE:
+							msgType = createHijackMessage( draw, type );
+							break;
+						case GUICOMMANDMODE_CONVERT_TO_CARBOMB:
 						case GUICOMMANDMODE_SABOTAGE_BUILDING:
 							msgType = createEnterMessage( draw, type );
 							break;
@@ -2040,8 +2090,9 @@ GameMessage::Type CommandTranslator::evaluateContextCommand( Drawable *draw,
 
 				// Now, this just tricks the AI  into making the hijacker run towards the target vehicle
         // I must add a test to keep him from actually entering an enemy vehicle (contained)... Lorenzen
-        msgType = createEnterMessage( draw, type );
-
+				//MODDD - custom message for hijack
+        msgType = createHijackMessage( draw, type );
+				//msgType = createHijackMessageDeep( draw, type );
 			}
 			else
 			{

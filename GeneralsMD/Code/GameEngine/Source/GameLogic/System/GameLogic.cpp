@@ -2577,8 +2577,8 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 				{
 					rel = ALLIES;
 				}
-				else if (thatPlayer != ThePlayerList->getNeutralPlayer()
-					&& thatPlayer != ThePlayerList->findPlayerWithNameKey(NAMEKEY("PlyrCivilian")))
+				//MODDD - simpler check for 'not a typical active player'
+				else if (!ThePlayerList->isPlayerUnaffiliated(thatPlayer))
 				{
 					rel = ENEMIES;
 				}
@@ -2593,7 +2593,6 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 			// Basically, the multiplayer-set team alliances are unaffected (don't force them to be enemies with
 			// each other), and make all slot players enemies with players not assigned by a slot (ex: AI enemy
 			// general player baked into the map).
-			Player* civilianPlayer = ThePlayerList->findPlayerWithNameKey(NAMEKEY("PlyrCivilian"));
 			int i;
 			for (i=0; i<ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 			{
@@ -2614,7 +2613,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 					}
 					
 					Relationship rel;
-					if (thatPlayer == ThePlayerList->getNeutralPlayer() || thatPlayer == civilianPlayer)
+					if (ThePlayerList->isPlayerUnaffiliated(thatPlayer))
 					{
 						// Found the neutral or civilian player - naturally, we're neutral
 						rel = NEUTRAL;

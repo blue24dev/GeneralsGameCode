@@ -514,6 +514,19 @@ StateReturnType AITNGuardOuterState::onEnter()
 StateReturnType AITNGuardOuterState::update()
 {
 	Object *owner = getMachineOwner();
+
+	//MODDD - game crashed on a 4v4 multiplayer game in Contra, 'AITunnelNetworkGuardState::update' calling
+	// 'm_guardMachine->updateStateMachine()' to reach here.
+	// 'm_attackState' was null & this wasn't checked for here. How did this happen?
+	// My guesses are
+	// 1. 'onEnter' wasn't called to set 'm_attackState' before 'update'
+	// 2. 'onExit' was called under the assumption the state is done being used, then 'update' is called again
+	// Consider adding some extra stats for debugging help to figure this out in case this issue is encountered again
+	if (m_attackState == nullptr)
+	{
+		return STATE_FAILURE;
+	}
+
 	Object* goalObj = m_attackState->getMachineGoalObject();
 	if (goalObj)
 	{

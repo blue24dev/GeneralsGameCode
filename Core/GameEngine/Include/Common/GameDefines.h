@@ -254,6 +254,10 @@
 // appear to be intended to be mutually exclusive.
 #define BLOCK_DEBUG_DEMO_MESSAGE_INPUTS 1
 
+// If on, some features normally only for debug builds are enabled for release builds.
+// Not every idea is covered by this - see GameMemory.h
+#define DEBUG_HELP_FOR_RELEASE 1
+
 // Double the max player count from 16 to 32. Needed for multiplayer for the retail Laser General challenge map to work,
 // since as-is, the map uses enough players to only allow for adding 1 more.
 // Toggling this causes a tiny compile error that shows save compatibility being broken.

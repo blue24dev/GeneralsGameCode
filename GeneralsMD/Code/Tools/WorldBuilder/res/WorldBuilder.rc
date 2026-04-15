@@ -540,7 +540,7 @@ BEGIN
     CONTROL         "Impassable",IDC_IMPASSABLE,"Button",BS_AUTORADIOBUTTON,
                     27,270,98,10
     //MODDD - new choice
-    CONTROL         "Update From Height",IDC_UPDATE_FROM_HEIGHT,"Button",BS_AUTORADIOBUTTON,
+    CONTROL         "Update from height",IDC_UPDATE_FROM_HEIGHT,"Button",BS_AUTORADIOBUTTON,
                     27,281,98,10
 END
 
