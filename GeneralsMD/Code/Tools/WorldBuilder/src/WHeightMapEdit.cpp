@@ -1636,12 +1636,11 @@ void WorldHeightMapEdit::setHeight(Int xIndex, Int yIndex, UnsignedByte height) 
 		// of tiles (each adjacent tile was likely already covered by another 'setHeight' call at that exact x/y with no offset applied).
 		//MODDD - TODO - should be able to remove the 2nd thru 4th calls, and let the caller (height-affecting tools) call
 		// 'setCellCliffFlagFromHeights' on tiles on the outside (an extra outer ring) of the brush area.
+		// ...apparently the dark gods do not smile upon this - let's shelve that idea for now.
 		setCellCliffFlagFromHeights(xIndex, yIndex);
-		/*
 		setCellCliffFlagFromHeights(xIndex-1, yIndex);
 		setCellCliffFlagFromHeights(xIndex, yIndex-1);
 		setCellCliffFlagFromHeights(xIndex-1, yIndex-1);
-		*/
 }
 
 

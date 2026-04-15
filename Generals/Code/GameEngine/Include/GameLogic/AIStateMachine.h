@@ -1081,9 +1081,9 @@ private:
 /**
  * Move close to GoalObject and enter it.
  */
-class AIEnterState : public AIInternalMoveToState
+class _AIEnterState : public AIInternalMoveToState
 {
-	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE(AIEnterState, "AIEnterState")
+	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE(_AIEnterState, "AIEnterState")
 protected:
 	ObjectID m_entryToClear;
 protected:
@@ -1092,12 +1092,12 @@ protected:
 	virtual void xfer( Xfer *xfer ) override;
 	virtual void loadPostProcess() override;
 public:
-	AIEnterState( StateMachine *machine ) : AIInternalMoveToState( machine, "AIEnterState" ) { }
+	_AIEnterState( StateMachine *machine ) : AIInternalMoveToState( machine, "AIEnterState" ) { }
 	virtual StateReturnType onEnter() override;
 	virtual StateReturnType update() override;
 	virtual void onExit( StateExitType status ) override;
 };
-EMPTY_DTOR(AIEnterState)
+EMPTY_DTOR(_AIEnterState)
 
 //-----------------------------------------------------------------------------------------------------------
 class AIExitState : public State

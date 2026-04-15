@@ -607,6 +607,14 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 			m_lockWeaponCreate = lockWeaponCreate;
 		}
 
+		//MODDD
+		m_hasHijackerCollide = FALSE;
+	  CollideModuleInterface* containTest = newMod->getCollide();
+		if (containTest != nullptr)
+		{
+			m_hasHijackerCollide = containTest->isHijackedVehicleCrateCollide();
+		}
+
 		AIUpdateInterface* ai = newMod->getAIUpdateInterface();
 		if (ai)
 		{
@@ -2339,7 +2347,10 @@ Bool Object::isLocallyViewed() const
 //=============================================================================
 Bool Object::isNeutralControlled() const
 {
-	return getControllingPlayer() == ThePlayerList->getNeutralPlayer();
+	//MODDD - it's long since been a standard for there to be a 'civilian' player that actually owns most 'non-player-owned' stuff.
+	// May as well check for that too.
+	//return getControllingPlayer() == ThePlayerList->getNeutralPlayer();
+	return ThePlayerList->isPlayerUnaffiliated(getControllingPlayer());
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -143,7 +143,7 @@ private:
 
 	GuardRetaliateExitConditions m_exitConditions;
 	AIAttackState *m_attackState;
-	AIEnterState *m_enterState;
+	_AIEnterState *m_enterState;
 };
 
 //--------------------------------------------------------------------------------------

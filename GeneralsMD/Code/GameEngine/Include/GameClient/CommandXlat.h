@@ -57,10 +57,19 @@ private:
 	UnsignedInt m_mouseRightUp;		// when the mouse up happened
 
 	GameMessage::Type createMoveToLocationMessage( Drawable *draw, const Coord3D *dest, CommandEvaluateType commandType );
-	GameMessage::Type createAttackMessage( Drawable *draw, Drawable *other, CommandEvaluateType commandType );
+	//MODDD - new param 'isForced'
+	GameMessage::Type createAttackMessage( Drawable *draw, Drawable *other, CommandEvaluateType commandType, Bool isForced );
+	//MODDD - renamed from 'createEnterMessage' to '_createEnterMessage', new param 'msgType' - turned into a utility for below to use
+	GameMessage::Type _createEnterMessage( Drawable *enter, CommandEvaluateType commandType, GameMessage::Type msgType );
+	//MODDD - new
+	// ---
+	//GameMessage::Type createHijackMessageDeep( Drawable *enter, CommandEvaluateType commandType );
 	GameMessage::Type createEnterMessage( Drawable *enter, CommandEvaluateType commandType );
+	GameMessage::Type createHijackMessage( Drawable *enter, CommandEvaluateType commandType );
+	// ---
 	GameMessage::Type issueMoveToLocationCommand( const Coord3D *pos, Drawable *drawableInWay, CommandEvaluateType commandType );
-	GameMessage::Type issueAttackCommand( Drawable *target, CommandEvaluateType commandType, GUICommandType command = (GUICommandType)0 );
+	//MODDD - new param 'isForced'
+	GameMessage::Type issueAttackCommand( Drawable *target, CommandEvaluateType commandType, GUICommandType command = (GUICommandType)0, Bool issueAttackCommand = FALSE );
 	GameMessage::Type issueSpecialPowerCommand( const CommandButton *command, CommandEvaluateType commandType, Drawable *target, const Coord3D *pos, Object* ignoreSelObj );
 	GameMessage::Type issueFireWeaponCommand( const CommandButton *command, CommandEvaluateType commandType, Drawable *target, const Coord3D *pos );
 	GameMessage::Type issueCombatDropCommand( const CommandButton *command, CommandEvaluateType commandType, Drawable *target, const Coord3D *pos );
