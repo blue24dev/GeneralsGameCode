@@ -404,7 +404,7 @@ Real healthAdjustmentFilter(Object* obj, Real healthVal)
 	return _healthVal;
 }
 
-UnsignedInt specialPowerReloadTimeAdjustmentFilter(Object* obj, UnsignedInt reloadTime, Bool _isSharedNSync)
+UnsignedInt specialPowerReloadTimeAdjustmentFilter(const Object* obj, UnsignedInt reloadTime, Bool _isSharedNSync)
 {
 	UnsignedInt _reloadTime = reloadTime;
 
