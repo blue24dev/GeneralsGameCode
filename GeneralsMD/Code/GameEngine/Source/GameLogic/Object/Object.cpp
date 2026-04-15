@@ -558,6 +558,9 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 		m_tempWeaponBonusHelper = newInstance(TempWeaponBonusHelper)(this, &tempWeaponBonusModuleData);
 		*curB++ = m_tempWeaponBonusHelper;
 	}
+	
+	//MODDD
+	m_hasHijackerCollide = FALSE;
 
 	// behaviors are always done first, so they get into the publicModule arrays
 	// before anything else.
@@ -607,12 +610,13 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 			m_lockWeaponCreate = lockWeaponCreate;
 		}
 
-		//MODDD
-		m_hasHijackerCollide = FALSE;
 	  CollideModuleInterface* containTest = newMod->getCollide();
 		if (containTest != nullptr)
 		{
-			m_hasHijackerCollide = containTest->isHijackedVehicleCrateCollide();
+			if (containTest->isHijackedVehicleCrateCollide())
+			{
+				m_hasHijackerCollide = TRUE;
+			}
 		}
 
 		AIUpdateInterface* ai = newMod->getAIUpdateInterface();

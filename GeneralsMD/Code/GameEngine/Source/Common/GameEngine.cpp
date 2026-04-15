@@ -807,12 +807,6 @@ void GameEngine::reset()
 		TheNetwork = nullptr;
 	}
 
-	//MODDD - let the player list know a game is ending
-	if (ThePlayerList->getPlayerCount() > 0)
-	{
-		ThePlayerList->onGameEnd();
-	}
-
 	if(background)
 	{
 		background->destroyWindows();

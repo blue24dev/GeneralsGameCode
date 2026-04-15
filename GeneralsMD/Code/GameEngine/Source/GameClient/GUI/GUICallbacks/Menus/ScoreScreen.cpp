@@ -2132,11 +2132,16 @@ void grabMultiPlayerInfo()
 			continue;
 		}
 
-		// Exclude the neutral and civilian players.
+		// Exclude neutral and civilian players.
+		if (ThePlayerList->isPlayerUnaffiliated(player))
+		{
+			continue;
+		}
+		
 		// Also, exclude human-marked players.
 		// This would cover the dummy "ThePlayer" in GC maps, and any other non-slot human-marked players, not interesting
 		// because they wouldn't have a connected human player (non-slot) nor computer to make the player do anything.
-		if (ThePlayerList->isPlayerUnaffiliated(player) || player->getPlayerType() == PLAYER_HUMAN)
+		if (player->getPlayerType() == PLAYER_HUMAN)
 		{
 			continue;
 		}
