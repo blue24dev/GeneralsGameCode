@@ -101,6 +101,34 @@ Player *PlayerList::getNthPlayer(Int i)
 	return m_players[i];
 }
 
+//MODDD - tell whether this is a player that typically owns non-playable-user-owned-things, such as unmanned vehicles,
+// ungarrisoned buildings, tech structures, etc.
+// In many cases, this is often a standard-named 'civilian' player, so this check is better than only a '... == neutral player' check.
+Bool PlayerList::isPlayerUnaffiliated(Player* player)
+{
+	if (player == getNeutralPlayer())
+	{
+		return TRUE;
+	}
+
+	if (m_civilianPlayer != nullptr && player == m_civilianPlayer)
+	{
+		return TRUE;
+	}
+
+	if (player->getPlayerTemplate() == nullptr)
+	{
+		return TRUE;
+	}
+
+	if (m_civilianPlayerTemplate != nullptr && player->getPlayerTemplate() == m_civilianPlayerTemplate)
+	{
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 //-----------------------------------------------------------------------------
 Player *PlayerList::findPlayerWithNameKey(NameKeyType key)
 {
@@ -123,6 +151,90 @@ void PlayerList::reset()
 
 	TheTeamFactory->clear(); // cleans up energy, among other things
 	init();
+}
+
+//MODDD
+void PlayerList::onGameEnd()
+{
+	if (m_local)
+		m_local->becomingLocalPlayer(false);
+	m_local = nullptr;
+}
+
+//MODDD - new
+// Once all players have been built from the map, find the neutral player, likely to be cached for easier references later.
+// (shouldn't need to call this over and over after finding & saving it once for a game)
+// The as-is 'PlayerList' had the assumption that player #0 was always the neutral player, but 'SidesList::validateSides()'
+// appears to suggest it could be any other player, depending on the first one encountered with an empty name.
+Player* PlayerList::findNeutralPlayer()
+{
+	AsciiString targetPlayerName;
+	Player* playerRef;
+
+	targetPlayerName.set("");
+	playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+	if (playerRef != nullptr)
+	{
+		return playerRef;
+	}
+
+	// shouldn't be possible to have no empty-named player - force the retail default of player #0 then?
+	return m_players[0];
+}
+
+//MODDD - new
+// Once all players have been built from the map, find the civilian player, similar to above.
+Player* PlayerList::findCivilianPlayer()
+{
+	// First, try the strict check: "PlyrCivilian"
+	AsciiString targetPlayerName;
+	Player* playerRef;
+
+	targetPlayerName.set("PlyrCivilian");
+	playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+	if (playerRef != nullptr)
+	{
+		// Not part of retail, but could require it to have the 'Civilian' side name. Curious if this assumption never holds up anyway.
+		//if (playerRef->getSide().compare("Civilian") == 0)
+		{
+			return playerRef;
+		}
+	}
+
+	// just "Civilian"?
+	targetPlayerName.set("Civilian");
+	playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+	if (playerRef != nullptr)
+	{
+		//if (playerRef->getSide().compare("Civilian") == 0)
+		{
+			return playerRef;
+		}
+	}
+
+	// Try any player who's side is 'Civilian'.
+	// ...actually, deciding against this. I've seen co-op intended maps for the retail game use "Civilian"-sided players
+	// for everything so they're not automatically removed by the skirmish system's checks (only skirmish is possible for
+	// network games in retail).
+	/*
+	if (m_civilianPlayerTemplate != nullptr)
+	{
+		Int i;
+		for (i = 0; i < m_playerCount; i++)
+		{
+			//if (m_players[i]->getSide().compare("Civilian") == 0)
+			if (m_players[i]->getPlayerTemplate() == m_civilianPlayerTemplate)
+			{
+				return m_players[i];
+			}
+		}
+	}
+	*/
+
+	// Nothing worked - give up, not worth digging deeper when retail never expected this, or was at least ok dealing with
+	// a lack of civilian player. There is still the neutral one guaranteed as player #0 in the list.
+	// (using the first computer player for this isn't advisable, total crapshoot on being a normal active AI-controlled player)
+	return nullptr;
 }
 
 //MODDD - new
@@ -332,26 +444,25 @@ void PlayerList::newGame()
 
 	reset();
 
-	//MODDD - a special init for the neutral player since 'initFromDict' is never called for this one.
-	// Note that 'm_playerCount' is always set to 1 on resetting the player list, so 'm_players[0]' (always the neutral
-	// player) is skipped in the loop below. Could argue the 'pname.isEmpty()' check could be removed and just start the
-	// loop at 'i = 1' to skip 'getSideInfo(0)' since that's also the source of the neutral player.
-	// Or to expect any index to be the neutral player anyway, 'PlayerList::reset' could start at 'm_playerCount=0', let
-	// the first (hopefully only / present once) empty-named sideInfo set the neutral player index, and use the special
-	// init on that one & skip the rest of the loop for that index.
-	getNeutralPlayer()->initNeutral();
-
 	// ok, now create the rest of players we need.
-	Bool setLocal = false;
+	//MODDD - no need for this now
+	//Bool setLocal = false;
 	for( i = 0; i < TheSidesList->getNumSides(); i++)
 	{
 		Dict *d = TheSidesList->getSideInfo(i)->getDict();
 		AsciiString pname = d->getAsciiString(TheKey_playerName);
-		if (pname.isEmpty())
-			continue;	// it's neutral, which we've already done, so skip it.
 
 		/// @todo The Player class should have a reset() method, instead of directly calling initFromDict() (MSB)
 		Player* p = m_players[m_playerCount++];
+		
+		//MODDD - moved the empty-name check below getting the current player & incrementing 'playerCount',
+		// and calling a special 'initNeutral' here.
+		// There should still never be more than one blank-named / 'neutral' player, however.
+		if (pname.isEmpty())
+		{
+			p->initNeutral();
+			continue;	// it's neutral, which we've already done, so skip it.
+		}
 
 		//MODDD - quick hack. Carry the 'slotIndex' from the side over to this player.
 		// (do this early since some stuff in 'initFromDict' might need to know this in time)
@@ -366,7 +477,7 @@ void PlayerList::newGame()
 		{
 			DEBUG_LOG(("Player %s is multiplayer local", pname.str()));
 			setLocalPlayer(p);
-			setLocal = true;
+			//setLocal = true;
 		}
 		
 		//MODDD - NOTE - this block should never be needed to tell who the local player is for FGC_CAMPAIGN.
@@ -378,10 +489,12 @@ void PlayerList::newGame()
 		// consistency and remove this block entirely (probably only campaign & shell game modes, even generals challenge
 		// is just a reskin of skirmish).
 #if FORCE_GAME_CONTEXT != FGC_CAMPAIGN
-		if (!setLocal && !TheNetwork && d->getBool(TheKey_playerIsHuman))
+		//MODDD
+		//if (!setLocal && !TheNetwork && d->getBool(TheKey_playerIsHuman))
+		if (!isLocalPlayerSet() && !TheNetwork && d->getBool(TheKey_playerIsHuman))
 		{
 			setLocalPlayer(p);
-			setLocal = true;
+			//setLocal = true;
 		}
 #else
 		// Do a check for having the 'IsHuman' bool anyway.
@@ -402,12 +515,19 @@ void PlayerList::newGame()
 		TheSidesList->getSideInfo(i)->releaseBuildList();
 	}
 
+	//MODDD
+	m_civilianPlayerTemplate = ThePlayerTemplateStore->findPlayerTemplate( NAMEKEY("FactionCivilian") );
+	m_neutralPlayer = findNeutralPlayer();
+	m_civilianPlayer = findCivilianPlayer();
+	
 	populateSlotPlayerRefs();
 
 	//MODDD
 	postPlayersInit();
 
-	if (!setLocal)
+	//MODDD
+	//if (!setLocal)
+	if (!isLocalPlayerSet())
 	{
 		DEBUG_ASSERTCRASH(TheNetwork, ("*** Map has no human player... picking first nonneutral player for control"));
 		//MODDD - NOTE - this for-loop is going through 'getNumSides()' yet getting the 'i-th' player with 'i' instead of
@@ -419,7 +539,7 @@ void PlayerList::newGame()
 			{
 				p->setPlayerType(PLAYER_HUMAN, false);
 				setLocalPlayer(p);
-				setLocal = true;
+				//setLocal = true;
 				break;
 			}
 		}
@@ -476,16 +596,28 @@ void PlayerList::newGame()
 //-----------------------------------------------------------------------------
 void PlayerList::init()
 {
-	m_playerCount = 1;
+	//MODDD - changing the start 'playerCount' to 0, finding the neutral player increases the count like anything else.
+	//m_playerCount = 1;
+	m_playerCount = 0;
+
+	//MODDD
+	m_neutralPlayer = nullptr;
+	m_civilianPlayer = nullptr;
+	m_civilianPlayerTemplate = nullptr;
 	m_slotPlayerRefsSoftCount = 0;
 
-	m_players[0]->init(nullptr);
+	//MODDD - why separately?
+	//m_players[0]->init(nullptr);
 
-	for (int i = 1; i < MAX_PLAYER_COUNT; i++)
+	//MODDD
+	//for (int i = 1; i < MAX_PLAYER_COUNT; i++)
+	for (int i = 0; i < MAX_PLAYER_COUNT; i++)
 		m_players[i]->init(nullptr);
 
 	// call setLocalPlayer so that becomingLocalPlayer() gets called appropriately
-	setLocalPlayer(m_players[0]);
+	//MODDD - don't think this is needed, replacing with a null assignment
+	//setLocalPlayer(m_players[0]);
+	m_local = nullptr;
 
 }
 
@@ -547,10 +679,10 @@ Team *PlayerList::validateTeam( AsciiString owner )
 	return t;
 }
 
-//MODDD - tell if the local player has been set to a non-default choice (anything other than the neutral player).
+//MODDD - tell if the local player has been set to a non-default choice
 Bool PlayerList::isLocalPlayerSet()
 {
-	return m_local != getNeutralPlayer();
+	return m_local != nullptr;
 }
 
 //-----------------------------------------------------------------------------

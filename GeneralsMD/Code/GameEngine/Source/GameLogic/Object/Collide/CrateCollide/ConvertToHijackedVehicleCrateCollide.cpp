@@ -73,10 +73,56 @@ ConvertToHijackedVehicleCrateCollide::~ConvertToHijackedVehicleCrateCollide()
 //-------------------------------------------------------------------------------------------------
 Bool ConvertToHijackedVehicleCrateCollide::isValidToExecute( const Object *other ) const
 {
+	//MODDD - replacing this parent call with a more specialized version
+	// ---------------
+	/*
 	if( !CrateCollide::isValidToExecute(other) )
 	{
 		return FALSE;
 	}
+	*/
+	// ------------------------------
+	//The ground never picks up a crate
+	if( other == nullptr )
+		return FALSE;
+
+	if( other->isKindOf( KINDOF_IGNORED_IN_GUI ) )
+		return FALSE;
+
+	const CrateCollideModuleData* md = getCrateCollideModuleData();
+
+	// Must be a "Unit" type thing.  Real Game Object, not just Object
+	if( other->getAIUpdateInterface() == nullptr)
+		return FALSE;
+
+	// must match our kindof flags (if any)
+	if ( !other->isKindOfMulti(md->m_kindof, md->m_kindofnot) )
+		return FALSE;
+
+	if( other->isEffectivelyDead() )
+		return FALSE;
+
+	// TheSuperHackers @bugfix Stubbjax 09/02/2026 Prevent the crate from being collected multiple times in a single frame.
+#if !RETAIL_COMPATIBLE_CRC
+	if (getObject()->isDestroyed() && !md->m_allowMultiPickup)
+		return FALSE;
+#endif
+
+	if( md->m_isForbidOwnerPlayer  &&  (getObject()->getControllingPlayer() == other->getControllingPlayer()) )
+		return FALSE; // Design has decreed this to not be picked up by the dead guy's team.
+
+	if( md->m_isHumanOnlyPickup  &&  other->getControllingPlayer() && (other->getControllingPlayer()->getPlayerType() != PLAYER_HUMAN) )
+		return FALSE; // Human only mission crate
+
+	if( (md->m_pickupScience != SCIENCE_INVALID)  &&  other->getControllingPlayer()  &&  !other->getControllingPlayer()->hasScience(md->m_pickupScience) )
+		return FALSE; // Science required to pick this up
+
+	if( other->isKindOf( KINDOF_PARACHUTE ) )
+		return FALSE;
+	// ------------------------------
+
+	//MODDD - NOTE - a check for 'KINDOF_VEHICLE' isn't needed as the module is always paired with 'RequiredKindOf = VEHICLE'
+	// in the retail state of the game and likely any mods relying on this vehicle-only requirement.
 
 	if( other->isEffectivelyDead() )
 	{
@@ -85,6 +131,9 @@ Bool ConvertToHijackedVehicleCrateCollide::isValidToExecute( const Object *other
 
 	if( other->isKindOf( KINDOF_IMMUNE_TO_CAPTURE ) )
 	{
+		//MODDD - NOTE - this comment if confusing. Battle buses don't have this flag in the retail game (INI as of that), and the
+		// 'other->getContain()->getContainCount() > 0' check further down already handles blocking hijacking for garrisoned
+		// vehicles.
 		return FALSE; //Kris: Patch 1.03 -- Prevent hijackers from being able to hijack battle buses.
 	}
 
@@ -113,9 +162,7 @@ Bool ConvertToHijackedVehicleCrateCollide::isValidToExecute( const Object *other
 
 	Relationship r = getObject()->getRelationship( other );
 	//Only hijack enemy objects
-	//MODDD - TEST. What about neutrals too?
-	//if( r != ENEMIES )
-	if( r == ALLIES )
+	if( r != ENEMIES )
 	{
 		return FALSE;
 	}
@@ -257,6 +304,10 @@ Bool ConvertToHijackedVehicleCrateCollide::executeCrateBehavior( Object *other )
 			break;
 		}
 	}
+
+	//MODDD - this shouldn't be necessary seeing as hijacking shouldn't allow unmanned vehicles, but just in case.
+	// Typically, forbidding non-enemy (ex: neutral-aligned player units) avoids this anyway.
+	other->clearDisabled( DISABLED_UNMANNED );
 
 	if ( ! targetCanEject )
 	{

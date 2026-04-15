@@ -381,6 +381,10 @@ enum AICommandType CPP_11(: Int)	// Stored in save file, do not reorder/renumber
 	AICMD_GET_HEALED,
 	AICMD_GET_REPAIRED,
 	AICMD_ENTER,
+
+	//MODDD
+	AICMD_HIJACK,
+
 	AICMD_DOCK,
 	AICMD_EXIT,
 	AICMD_EVACUATE,
@@ -706,6 +710,14 @@ public:
 		aiDoCommand(&parms);
 	}
 
+	//MODDD
+	void aiHijack( Object *obj, CommandSourceType cmdSource )
+	{
+		AICommandParms parms(AICMD_HIJACK, cmdSource);
+		parms.m_obj = obj;
+		aiDoCommand(&parms);
+	}
+
 	void aiDock( Object *obj, CommandSourceType cmdSource )
 	{
 		AICommandParms parms(AICMD_DOCK, cmdSource);
@@ -932,6 +944,10 @@ public:
 	void groupGetHealed( Object *healDepot, CommandSourceType cmdSource );		///< go get healed at the heal depot
 	void groupGetRepaired( Object *repairDepot, CommandSourceType cmdSource );///< go get repaired at the repair depot
 	void groupEnter( Object *obj, CommandSourceType cmdSource );							///< enter the given object
+
+	//MODDD
+	void groupHijack( Object *obj, CommandSourceType cmdSource );							///< enter the given object
+
 	void groupDock( Object *obj, CommandSourceType cmdSource );							///< get near given object and wait for enter clearance
 	void groupExit( Object *objectToExit, CommandSourceType cmdSource );			///< get out of this Object
 	void groupEvacuate( CommandSourceType cmdSource );												///< empty its contents

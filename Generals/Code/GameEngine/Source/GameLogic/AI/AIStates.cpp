@@ -709,7 +709,7 @@ AIStateMachine::AIStateMachine( Object *obj, AsciiString name ) : StateMachine( 
 	defineState( AI_PANIC,											newInstance(AIPanicState)( this ), AI_IDLE, AI_MOVE_AWAY_FROM_REPULSORS );
 	defineState( AI_DEAD,												newInstance(AIDeadState)( this ), AI_IDLE, AI_IDLE );
 	defineState( AI_DOCK,												newInstance(AIDockState)( this ), AI_IDLE, AI_IDLE );
-	defineState( AI_ENTER,											newInstance(AIEnterState)( this ), AI_IDLE, AI_IDLE );
+	defineState( AI_ENTER,											newInstance(_AIEnterState)( this ), AI_IDLE, AI_IDLE );
 	defineState( AI_EXIT,												newInstance(AIExitState)( this ), AI_IDLE, AI_IDLE );
 	defineState( AI_GUARD,											newInstance(AIGuardState)( this ), AI_IDLE, AI_IDLE );
 	defineState( AI_GUARD_TUNNEL_NETWORK,				newInstance(AITunnelNetworkGuardState)( this ), AI_IDLE, AI_IDLE );
@@ -5983,7 +5983,7 @@ StateReturnType AIDockState::update()
 // ------------------------------------------------------------------------------------------------
 /** CRC */
 // ------------------------------------------------------------------------------------------------
-void AIEnterState::crc( Xfer *xfer )
+void _AIEnterState::crc( Xfer *xfer )
 {
 	AIInternalMoveToState::crc(xfer);
 }
@@ -5991,7 +5991,7 @@ void AIEnterState::crc( Xfer *xfer )
 // ------------------------------------------------------------------------------------------------
 /** Xfer Method */
 // ------------------------------------------------------------------------------------------------
-void AIEnterState::xfer( Xfer *xfer )
+void _AIEnterState::xfer( Xfer *xfer )
 {
   // version
   XferVersion currentVersion = 1;
@@ -6006,13 +6006,13 @@ void AIEnterState::xfer( Xfer *xfer )
 // ------------------------------------------------------------------------------------------------
 /** Load post process */
 // ------------------------------------------------------------------------------------------------
-void AIEnterState::loadPostProcess()
+void _AIEnterState::loadPostProcess()
 {
 	AIInternalMoveToState::loadPostProcess();
 }
 
 //----------------------------------------------------------------------------------------------------------
-StateReturnType AIEnterState::onEnter()
+StateReturnType _AIEnterState::onEnter()
 {
 	m_entryToClear = INVALID_ID;
 
@@ -6049,7 +6049,7 @@ StateReturnType AIEnterState::onEnter()
 }
 
 //----------------------------------------------------------------------------------------------------------
-void AIEnterState::onExit( StateExitType status )
+void _AIEnterState::onExit( StateExitType status )
 {
 	Object* obj = getMachineOwner();
 	AIInternalMoveToState::onExit( status );
@@ -6092,7 +6092,7 @@ static bool hasVerticalOverlap(const Object* a, const Object* b)
 }
 
 //----------------------------------------------------------------------------------------------------------
-StateReturnType AIEnterState::update()
+StateReturnType _AIEnterState::update()
 {
 
 	// update the goal position to coincide with the GoalObject

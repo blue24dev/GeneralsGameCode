@@ -629,6 +629,15 @@ Bool ActionManager::canEnterObject( const Object *obj, const Object *objectToEnt
 		if (!collide)
 			continue;
 
+		//MODDD - requiring this to not be a hijacker collide module in the odd case of 'canHijackVehicle' failing but
+		// here passing. Note that hijacker collision allows the target to be an enemy unlike typical entry.
+		//MODDD - TODO - Should this be done for sabotage too?  Maybe have a broader 'isNonStandardCollide' in 'CollideModuleInterface' for
+		// any hijack, sabotage collide's to use instead?
+		if (collide->isHijackedVehicleCrateCollide())
+		{
+			continue;
+		}
+
 		if( collide->wouldLikeToCollideWith( objectToEnter ) )
 		{
 			//I thought this was a little confusing that it would return TRUE here before
@@ -637,6 +646,8 @@ Bool ActionManager::canEnterObject( const Object *obj, const Object *objectToEnt
 			//for terrorist converting carbombs, and pilots entering vehicles. In these cases,
 			//the vehicles don't have transport capacities, therefore returning true here
 			//foregoes that checking later on.
+			//MODDD - NOTE - adding custom routes for hijack, etc. instead of just using 'enter''s, so that they don't all use
+			// 'canEnterObject' when they often have their own more fitting checks
 			return TRUE;
 		}
 	}
@@ -880,13 +891,22 @@ Bool ActionManager::canHijackVehicle( const Object *obj, const Object *objectToH
 		return FALSE;
 	}
 
+	//MODDD - seems like this is a good idea too?
+	if (objectToHijack->isKindOf( KINDOF_IGNORED_IN_GUI ))
+	{
+		return FALSE;
+	}
+
+	//MODDD - no need for these here, the 'ConvertToHijackedVehicleCrateCollide' module for a hijacker will check for these.
+	// Could argue that for several checks above too probably.
+	/*
 	Relationship r = obj->getRelationship(objectToHijack);
 	//Only hijack enemy objects
 	if( r != ENEMIES )
 	{
 		return FALSE;
 	}
-
+	
 	//Make sure target is a vehicle.
 	if( ! objectToHijack->isKindOf( KINDOF_VEHICLE ) )
 	{
@@ -904,6 +924,13 @@ Bool ActionManager::canHijackVehicle( const Object *obj, const Object *objectToH
 	{
 		return FALSE;
 	}
+	*/
+
+	//MODDD - easy way to skip checking for something that doesn't exist
+	if (!obj->hasHijackerCollide())
+	{
+		return FALSE;
+	}
 
 	// last, see if we'd like to collide with 'objectToHijack'
 	for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
@@ -912,7 +939,8 @@ Bool ActionManager::canHijackVehicle( const Object *obj, const Object *objectToH
 		if (!collide)
 			continue;
 
-		if( collide->wouldLikeToCollideWith( objectToHijack ) && collide->isHijackedVehicleCrateCollide() )
+		//MODDD - swapping order of the conditions. Shouldn't you want to skip so many checks if this isn't even a hijacker collide?
+		if( collide->isHijackedVehicleCrateCollide() && collide->wouldLikeToCollideWith( objectToHijack ) )
 		{
 			return TRUE;
 		}

@@ -1054,7 +1054,9 @@ void Player::becomingTeamMember(Object *obj, Bool yes)
 
 	// when we capture a building, we need to see if there's an AutoDepositUpdate hooked to it,
 	// if so, award the cash bonus
-	if(this != ThePlayerList->getNeutralPlayer() && yes)
+	//MODDD - use a broader utility
+	//if(this != ThePlayerList->getNeutralPlayer() && yes)
+	if(!ThePlayerList->isPlayerUnaffiliated(this) && yes)
 	{
 		NameKeyType key_AutoDepositUpdate = NAMEKEY("AutoDepositUpdate");
 		AutoDepositUpdate *adu = (AutoDepositUpdate *)obj->findUpdateModule(key_AutoDepositUpdate);

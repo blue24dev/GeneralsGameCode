@@ -544,7 +544,7 @@ void AITNGuardOuterState::onExit( StateExitType status )
 // ------------------------------------------------------------------------------------------------
 void AITNGuardReturnState::crc( Xfer *xfer )
 {
-	AIEnterState::crc(xfer);
+	_AIEnterState::crc(xfer);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -557,7 +557,7 @@ void AITNGuardReturnState::xfer( Xfer *xfer )
   XferVersion version = currentVersion;
   xfer->xferVersion( &version, currentVersion );
 
-	AIEnterState::xfer(xfer);
+	_AIEnterState::xfer(xfer);
 
 	xfer->xferUnsignedInt(&m_nextReturnScanTime);
 }
@@ -567,7 +567,7 @@ void AITNGuardReturnState::xfer( Xfer *xfer )
 // ------------------------------------------------------------------------------------------------
 void AITNGuardReturnState::loadPostProcess()
 {
-	AIEnterState::loadPostProcess();
+	_AIEnterState::loadPostProcess();
 }
 
 //--------------------------------------------------------------------------------------
@@ -588,7 +588,7 @@ StateReturnType AITNGuardReturnState::onEnter()
 	getMachine()->setGoalObject(bestTunnel);
 	getMachineOwner()->getAI()->friend_setGoalObject(bestTunnel);
 
-	return AIEnterState::onEnter();
+	return _AIEnterState::onEnter();
 }
 
 //--------------------------------------------------------------------------------------
@@ -621,7 +621,7 @@ StateReturnType AITNGuardReturnState::update()
 	}
 
 	// Just let the return movement finish.
-	StateReturnType ret = AIEnterState::update();
+	StateReturnType ret = _AIEnterState::update();
 	if (ret==STATE_CONTINUE) return STATE_CONTINUE;
 	return STATE_SUCCESS;
 
@@ -630,7 +630,7 @@ StateReturnType AITNGuardReturnState::update()
 //--------------------------------------------------------------------------------------
 void AITNGuardReturnState::onExit( StateExitType status )
 {
-	AIEnterState::onExit( status );
+	_AIEnterState::onExit( status );
 }
 
 //-- AITNGuardIdleState ----------------------------------------------------------------------------

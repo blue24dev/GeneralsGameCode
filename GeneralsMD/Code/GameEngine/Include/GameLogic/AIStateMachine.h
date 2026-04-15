@@ -73,6 +73,10 @@ enum AIStateType CPP_11(: Int)
 	AI_DEAD,
 	AI_DOCK,																	///< dock with GoalObject, if GoalObject has a DockUpdate module
 	AI_ENTER,																	///< move to GoalObject and "enter" it when close
+
+	//MODDD
+	AI_HIJACK,
+
 	AI_GUARD,																	///< guard your current location
 	AI_HUNT,																	///< seek and destroy behavior
 	AI_WANDER,																///< Wander around following a waypoint path.
@@ -1096,9 +1100,13 @@ private:
 /**
  * Move close to GoalObject and enter it.
  */
-class AIEnterState : public AIInternalMoveToState
+//MODDD - renamed from 'AIEnterState' to '_AIEnterState' to be used as the basis for 'Enter'-like states.
+// A more fitting name may be 'AIMoveIntoObject', to cover enter, hijack, sabotage, making a car-bomb (anything else?).
+class _AIEnterState : public AIInternalMoveToState
 {
-	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE(AIEnterState, "AIEnterState")
+	//MODDD - update for being an abstract class (never directly created)
+	//MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE(_AIEnterState, "AIEnterState")
+	MEMORY_POOL_GLUE_ABC(_AIEnterState)
 protected:
 	ObjectID m_entryToClear;
 protected:
@@ -1107,12 +1115,37 @@ protected:
 	virtual void xfer( Xfer *xfer ) override;
 	virtual void loadPostProcess() override;
 public:
-	AIEnterState( StateMachine *machine ) : AIInternalMoveToState( machine, "AIEnterState" ) { }
+	//MODDD - constructor adjustment
+	//_AIEnterState( StateMachine *machine ) : AIInternalMoveToState( machine, "AIEnterState" ) { }
+	_AIEnterState( StateMachine *machine, AsciiString name ) : AIInternalMoveToState( machine, name ) { }
 	virtual StateReturnType onEnter() override;
 	virtual StateReturnType update() override;
 	virtual void onExit( StateExitType status ) override;
+
+	//MODDD - new - overridable
+	virtual Bool canEnterGoal() = 0;
+};
+EMPTY_DTOR(_AIEnterState)
+
+//MODDD
+class AIEnterState : public _AIEnterState
+{
+	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE(AIEnterState, "AIEnterState")
+	public:
+	AIEnterState( StateMachine *machine ) : _AIEnterState( machine, "AIEnterState" ) { }
+	virtual Bool canEnterGoal() override;
 };
 EMPTY_DTOR(AIEnterState)
+
+//MODDD
+class AIHijackState : public _AIEnterState
+{
+	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE(AIHijackState, "AIHijackState")
+	public:
+	AIHijackState( StateMachine *machine ) : _AIEnterState( machine, "AIHijackState" ) { }
+	virtual Bool canEnterGoal() override;
+};
+EMPTY_DTOR(AIHijackState)
 
 //-----------------------------------------------------------------------------------------------------------
 class AIExitState : public State

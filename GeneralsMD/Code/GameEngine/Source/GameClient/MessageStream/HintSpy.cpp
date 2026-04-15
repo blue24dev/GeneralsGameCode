@@ -129,6 +129,8 @@ GameMessageDisposition HintSpyTranslator::translateGameMessage(const GameMessage
 
 		//-----------------------------------------------------------------------------
 		case GameMessage::MSG_ENTER:
+		//MODDD - assuming doing the same thing for the new message(s) is ok?
+		case GameMessage::MSG_HIJACK:
 			TheInGameUI->createGarrisonHint( msg );
 			break;
 

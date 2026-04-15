@@ -2812,8 +2812,56 @@ void AIUpdateInterface::aiDoCommand(const AICommandParms* parms)
 			privateGetRepaired(parms->m_obj, parms->m_cmdSource);
 			break;
 		case AICMD_ENTER://///////////////////////////////////////////////////////////////
-			privateEnter(parms->m_obj, parms->m_cmdSource);
+		{
+			//MODDD - check if there should be a similar special no-weapons check for being a hijacker
+		  if (!parms->m_obj->hasHijackerCollide())
+		  {
+			  // not a hijacker - retail
+				privateEnter(parms->m_obj, parms->m_cmdSource);
+		  }
+		  else
+		  {
+			  // hijacker
+			  const WeaponSet* ws = getObject()->getWeaponSet();
+				if (ws->getWeaponInWeaponSlot(PRIMARY_WEAPON) == nullptr && ws->getWeaponInWeaponSlot(SECONDARY_WEAPON) == nullptr && ws->getWeaponInWeaponSlot(TERTIARY_WEAPON) == nullptr)
+				{
+					// no weapons -> retail anyway
+					privateEnter(parms->m_obj, parms->m_cmdSource);
+				}
+				else
+				{
+					// let the hijacker use its weapon to enter the neutral vehicle
+					privateForceAttackObject(parms->m_obj, NO_MAX_SHOTS_LIMIT, parms->m_cmdSource);
+				}
+				break;
+		  }
+
 			break;
+		}
+		//MODDD
+		case AICMD_HIJACK://///////////////////////////////////////////////////////////////
+		{
+			//MODDD - ordinarily, this would just be 'privateHijack', but adding an extra check: has any weapons.
+			// An alternative is having an 'AIUpdate' override for the hijacker, like 'HijackerAIUpdate' (not to be confused
+			// with the current 'HijackerUpdate' that's for some of the logic).
+			// The new class could override 'aiDoCommand' to implement 'AMCMD_HIJACK' and 'AICMD_ENTER' for special behavior.
+			// However, this means mods that were to use custom 'AIUpdate' classes already would likely have a conflict.
+			// The current approach here works as long sa whatever 'AIUpdate' class used doesn't have 'AICMD...' behavior
+			// that overrides what's here (more weird edge cases to play wack-a-mole with, hooray).
+			const WeaponSet* ws = getObject()->getWeaponSet();
+			if (ws->getWeaponInWeaponSlot(PRIMARY_WEAPON) == nullptr && ws->getWeaponInWeaponSlot(SECONDARY_WEAPON) == nullptr && ws->getWeaponInWeaponSlot(TERTIARY_WEAPON) == nullptr)
+			{
+				// no weapons -> retail hijacking behavior
+				privateHijack(parms->m_obj, parms->m_cmdSource);
+			}
+			else
+			{
+				// lets hijackers assisted by a weapon (ex: flying hijackers in the Contra mod) work as expected
+				// (Triggers the, presumably, dart-towards weapon and 'ConvertToHijackedVehicleCrateCollide' should take care of the rest)
+				privateForceAttackObject(parms->m_obj, NO_MAX_SHOTS_LIMIT, parms->m_cmdSource);
+			}
+			break;
+		}
 		case AICMD_DOCK:
 			privateDock(parms->m_obj, parms->m_cmdSource);
 			break;
@@ -3864,6 +3912,28 @@ void AIUpdateInterface::privateEnter( Object *obj, CommandSourceType cmdSource )
 	}
 }
 
+//MODDD - copy of above fine-tuned for hijacking
+void AIUpdateInterface::privateHijack( Object *obj, CommandSourceType cmdSource )
+{
+	Object *me = getObject();
+	if( me->isMobile() == FALSE )
+		return;
+
+	//Resetting the locomotor here was initially added for scripting purposes. It has been moved
+	//to the responsibility of the script to reset the locomotor before moving. This is needed because
+	//other systems (like the battle drone) change the locomotor based on what it's trying to do, and
+	//doesn't want to get reset when ordered to move.
+	//chooseLocomotorSet(LOCOMOTORSET_NORMAL);
+
+	if( TheActionManager->canHijackVehicle( me, obj, cmdSource ) )
+	{
+		getStateMachine()->clear();
+		getStateMachine()->setGoalObject( obj );
+		setLastCommandSource( cmdSource );
+		getStateMachine()->setState( AI_HIJACK );
+	}
+}
+
 //----------------------------------------------------------------------------------------
 /**
  * Dock with the given object
@@ -4376,6 +4446,10 @@ Object* AIUpdateInterface::getEnterTarget()
 	AIStateType stateType = getAIStateType();
 
 	if( stateType != AI_ENTER &&
+
+			//MODDD - check for new message type
+			stateType != AI_HIJACK &&
+
 			stateType != AI_GUARD_TUNNEL_NETWORK &&
 			stateType != AI_GET_REPAIRED )
 		return nullptr;

@@ -2110,7 +2110,6 @@ void grabMultiPlayerInfo()
 	// Grouping only computer players together as rows like "GLA Enemies" like as-is, and still keeping slot players separate should suffice.
 	// ---
 #if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE || FORCE_GAME_CONTEXT == FGC_CAMPAIGN
-	Player* civilianPlayer = ThePlayerList->findPlayerWithNameKey(NAMEKEY("PlyrCivilian"));
 	for (int i = 0; i < ThePlayerList->getPlayerCount(); i++) {
 		// Iterate through all players (not necessarily slot players, includes players baked into the map).
 		// Only want players baked into the map here, i.e. the AI controlled general that owns the map.
@@ -2119,7 +2118,6 @@ void grabMultiPlayerInfo()
 		// kind of like how single-player logic for the score screen combines all 'enemies'.
 		// Look to there for inspiration I suppose.
 		Player* player = ThePlayerList->getNthPlayer(i);
-		
 		// Exclude slot players - already added by the loop above
 		if (player->slotIndex != -1)
 		{
@@ -2138,7 +2136,7 @@ void grabMultiPlayerInfo()
 		// Also, exclude human-marked players.
 		// This would cover the dummy "ThePlayer" in GC maps, and any other non-slot human-marked players, not interesting
 		// because they wouldn't have a connected human player (non-slot) nor computer to make the player do anything.
-		if (player == ThePlayerList->getNeutralPlayer() || player == civilianPlayer || player->getPlayerType() == PLAYER_HUMAN)
+		if (ThePlayerList->isPlayerUnaffiliated(player) || player->getPlayerType() == PLAYER_HUMAN)
 		{
 			continue;
 		}

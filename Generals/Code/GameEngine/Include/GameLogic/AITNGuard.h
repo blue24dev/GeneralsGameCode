@@ -185,13 +185,13 @@ private:
 };
 
 //--------------------------------------------------------------------------------------
-class AITNGuardReturnState : public AIEnterState
+class AITNGuardReturnState : public _AIEnterState
 {
 	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE(AITNGuardReturnState, "AITNGuardReturnState")
 private:
 	AITNGuardMachine* getGuardMachine() { return (AITNGuardMachine*)getMachine(); }
 public:
-	AITNGuardReturnState( StateMachine *machine ) : AIEnterState(machine )
+	AITNGuardReturnState( StateMachine *machine ) : _AIEnterState(machine )
 	{
 		m_nextReturnScanTime = 0;
 	}

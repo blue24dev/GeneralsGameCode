@@ -1150,6 +1150,24 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			break;
 
 		}
+		//MODDD - new message
+		case GameMessage::MSG_HIJACK:
+		{
+			Object *enter = findObjectByID( msg->getArgument( 1 )->objectID );
+
+			// sanity
+			if( enter == nullptr )
+				break;
+
+			if( currentlySelectedGroup )
+			{
+				currentlySelectedGroup->releaseWeaponLockForGroup(LOCKED_TEMPORARILY);	// release any temporary locks.
+				currentlySelectedGroup->groupHijack( enter, CMD_FROM_PLAYER );
+			}
+
+			break;
+
+		}
 
 		//---------------------------------------------------------------------------------------------
 		case GameMessage::MSG_EXIT:

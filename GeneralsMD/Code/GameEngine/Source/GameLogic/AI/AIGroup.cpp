@@ -2438,6 +2438,21 @@ void AIGroup::groupEnter( Object *obj, CommandSourceType cmdSource )
 	}
 }
 
+//MODDD
+#include "GameLogic/Weapon.h"
+void AIGroup::groupHijack( Object *obj, CommandSourceType cmdSource )
+{
+	std::list<Object *>::iterator i;
+	for( i = m_memberList.begin(); i != m_memberList.end(); ++i )
+	{
+		AIUpdateInterface *ai = (*i)->getAIUpdateInterface();
+		if (ai)
+		{
+			ai->aiHijack( obj, cmdSource );
+		}
+	}
+}
+
 /**
  * Get near given object and wait for enter clearance
  */

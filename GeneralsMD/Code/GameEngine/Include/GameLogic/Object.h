@@ -341,6 +341,8 @@ public:
 	//MODDD
 	StealthUpdate*          getStealthOwnerStealthStrict() const;
 
+	//MODDD
+	Bool hasHijackerCollide() const { return m_hasHijackerCollide; }
 
 	// special case for the AIUpdateInterface, since it will be referred to a great deal
 	inline AIUpdateInterface *getAIUpdateInterface() { return m_ai; }
@@ -537,7 +539,8 @@ public:
 	UnsignedInt getMostPercentReadyToFireAnyWeapon() const;
 
 	//MODDD - added
-	WeaponSlotType getCurrentWeaponSlot() const { return m_weaponSet.getCurWeaponSlot(); };
+	const WeaponSet* getWeaponSet() const { return &m_weaponSet; }
+	WeaponSlotType getCurrentWeaponSlot() const { return m_weaponSet.getCurWeaponSlot(); }
 
 	Weapon* getWeaponInWeaponSlot(WeaponSlotType wslot) const { return m_weaponSet.getWeaponInWeaponSlot(wslot); }
 	UnsignedInt getWeaponInWeaponSlotCommandSourceMask( WeaponSlotType wSlot ) const { return m_weaponSet.getNthCommandSourceMask( wSlot ); }
@@ -937,6 +940,7 @@ private:
 	// Not expected for normal units (come from a factory / instantly appear) or buildings after they are constructed.
 	// Selling an already completed structure doesn't use this, though could if you want that to.
 	Int moneySpentOnMe;
+	Bool m_hasHijackerCollide;
 
 };
 

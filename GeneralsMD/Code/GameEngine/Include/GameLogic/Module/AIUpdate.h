@@ -268,6 +268,8 @@ protected:
 	virtual void privateGetHealed( Object *healDepot, CommandSourceType cmdSource );		///< get healed at heal depot
 	virtual void privateGetRepaired( Object *repairDepot, CommandSourceType cmdSource );///< get repaired at repair depot
 	virtual void privateEnter( Object *obj, CommandSourceType cmdSource );							///< enter the given object
+	//MODDD
+	virtual void privateHijack( Object *obj, CommandSourceType cmdSource );							///< enter the given object
 	virtual void privateDock( Object *obj, CommandSourceType cmdSource );							///< get near given object and wait for enter clearance
 	virtual void privateExit( Object *objectToExit, CommandSourceType cmdSource );			///< get out of this Object
 	virtual void privateExitInstantly( Object *objectToExit, CommandSourceType cmdSource );			///< get out of this Object this frame

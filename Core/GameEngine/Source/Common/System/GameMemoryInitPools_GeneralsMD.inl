@@ -444,6 +444,10 @@ static PoolSizeRec PoolSizes[] =
 	{ "AIMoveAndEvacuateState", 1200, 32 },
 	{ "AIMoveAndDeleteState", 600, 32 },
 	{ "AIEnterState", 600, 32 },
+
+	//MODDD
+	{ "AIHijackState", 600, 32 },
+
 	{ "JetOrHeliReturningToDeadAirfieldState", 64, 32 },
 	{ "JetOrHeliReturnForLandingState", 64, 32 },
 	{ "TurretAIIdleState", 600, 32 },
