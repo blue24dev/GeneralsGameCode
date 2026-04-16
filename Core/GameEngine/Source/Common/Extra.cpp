@@ -20,6 +20,8 @@
 #if CUSTOM_ATTRIBUTE_CHANGES
 
 // includes for hackish edits further below
+#include "Common/ThingFactory.h"
+#include "GameClient/ControlBar.h"
 #include "GameLogic/Module/ActiveBody.h"
 #include "GameLogic/Module/StructureBody.h"
 #if RTS_ZEROHOUR
@@ -30,6 +32,8 @@
 #include "GameLogic/Module/StealthDetectorUpdate.h"
 #include "GameLogic/Module/SpecialAbilityUpdate.h"
 #include "GameLogic/Module/ActiveShroudUpgrade.h"
+#include "GameLogic/Module/OCLSpecialPower.h"
+#include "GameLogic/Module/CashHackSpecialPower.h"
 
 void automaticThingTemplateChanges(ThingTemplate* _this)
 {
@@ -88,10 +92,14 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		// enforce a minimum of 180 vision first.
 		// Note this happens before the multiplication so the real effective minimum is higher.
 		// TODO - can you iterate through weapons to see what the longest range is to see if this should be automatically boosted?
-		if (_this->m_visionRange < 180.0f) {
-			_this->m_visionRange = 180.0f;
+		if (_this->m_visionRange > 0)
+		{
+			if (_this->m_visionRange < 180.0f)
+			{
+				_this->m_visionRange = 180.0f;
+			}
+			_this->m_visionRange *= 1.3f;
 		}
-		_this->m_visionRange *= 1.3f;
 	}
 
 	// EXTRA SLOW-DOWN FOR EVERYTHING
@@ -151,6 +159,8 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	static NameKeyType StealthDetectorUpdateNameKey = NAMEKEY("StealthDetectorUpdate");
 	static NameKeyType SpecialAbilityUpdateNameKey = NAMEKEY("SpecialAbilityUpdate");
 	static NameKeyType ActiveShroudUpgradeNameKey = NAMEKEY("ActiveShroudUpgrade");
+	static NameKeyType OCLSpecialPowerNameKey = NAMEKEY("OCLSpecialPower");
+	static NameKeyType CashHackSpecialPowerNameKey = NAMEKEY("CashHackSpecialPower");
 	
 	Bool foundStealthDetectorUpdate = false;
 	Bool foundActiveShroudUpgrade = false;
@@ -254,6 +264,17 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			foundActiveShroudUpgrade = true;
 		}
+		else if( modNameKey == CashHackSpecialPowerNameKey )
+		{
+			CashHackSpecialPowerModuleData* _data = (CashHackSpecialPowerModuleData*)data;
+			// cut the amount stolen by 60%, infinite-range cash hack special powers are obnoxious
+			_data->m_defaultAmountToSteal *= 0.4;
+			std::vector<CashHackSpecialPowerModuleData::Upgrades>::iterator it;
+			for (it = _data->m_upgrades.begin(); it != _data->m_upgrades.end(); ++it)
+			{
+				it->m_amountToSteal *= 0.4;
+			}
+		}
 	}
 
 	// Temp hack. Add active-shroud-generation to anything that is a stealth detector.
@@ -302,6 +323,85 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		}
   }
 	*/
+}
+
+//MODDD - to do after parsing everything else.
+// Ex: 'TheControlBar' is unavailable until this point ('ControlBar::init' handles parsing in 'CommandButton.ini', not 'GameEngine::init'
+// that does it for thing templates and a host of other things).
+// For reference, 'ControlBar::init' is reached by 'initSubsystem(TheGameClient...' in 'GameEngine::init', which is called after thing templates are handled.
+void automaticChangesPostINIParsing()
+{
+#if RTS_ZEROHOUR
+	static NameKeyType OCLSpecialPowerNameKey = NAMEKEY("OCLSpecialPower");
+	ThingTemplateHashMap* templateHashMap = TheThingFactory->getTemplateHashMap();
+	ThingTemplateHashMap::iterator it;
+	for (it = templateHashMap->begin(); it != templateHashMap->end(); ++it)
+	{
+		ThingTemplate* _this = (*it).second;
+
+		//TODO - should overrides be blocked like the '_this->m_reskinnedFrom != nullptr' check elsewhere? Not sure, see if doing this for the base
+		// implicitly carries over to overrides for this post-parsing run-through
+
+		Int modIdx;
+		const ModuleInfo& mi = _this->getBehaviorModuleInfo();
+		for (modIdx = 0; modIdx < mi.getCount(); ++modIdx)
+		{
+			AsciiString modName = mi.getNthName(modIdx);
+			const ModuleData* data = mi.getNthData(modIdx);
+			if (modName.isEmpty())
+				continue;
+			NameKeyType modNameKey = NAMEKEY(modName);
+
+			if( modNameKey == OCLSpecialPowerNameKey )
+			{
+				OCLSpecialPowerModuleData* _data = (OCLSpecialPowerModuleData*)data;
+
+				if (_data->m_createLoc == CREATE_AT_LOCATION)
+				{
+					// See if this is an OCL special power that requires the user to place something on the map with a build preview, such as the sneak attack.
+					// In several mods, the 'ReferenceObject' field is either missing or referring to a nonexistent object - sometimes, just the incorrect variant
+					// such as a stealth-gen sneak attack tunnel for the chem general's ability, but that detail is probably negligible.
+					// This field was just for the AI to do finer collision checks with the resulting object, but this is now needed even for player use because of
+					// a TheSuperHacker's change in 'ActionManager::canDoSpecialPowerAtLocation' with RETAIL_COMPATIBLE_CRC=0: the 'reference object' is used to see
+					// if the object is placeable on the game's end so the client saying it's buildable isn't blindly trusted (anti-cheat measure).
+					const ThingTemplate* referenceObjectRef = nullptr;
+					if (!_data->m_referenceThingName.isEmpty())
+					{
+						referenceObjectRef = TheThingFactory->findTemplate( _data->m_referenceThingName );
+					}
+
+					if (referenceObjectRef == nullptr)
+					{
+						// No 'ReferenceObject' field, or whatever was provided wasn't found in the list of game objects - need to figure out what the field should be.
+						// I did find that there is always a CommandButton that can be used to decide what this should be: Command = SPECIAL_POWER_CONSTRUCT or SPECIAL_POWER_CONSTRUCT_FROM_SHORTCUT,
+						// has an 'Object' field that would match the special power's 'ReferenceObject' in retail -> copy it over to apply the fix.
+						// The only issue is, there isn't a way to tell which abilities ever have a button to use them with placement (special power needs a valid 'ReferenceObject')
+						// without checking every single button & coming up empty or finding one of the expected 'Command'.
+						const CommandButton* commandButtons = TheControlBar->getCommandButtons();
+						const CommandButton* commandButton;
+						for( commandButton = commandButtons; commandButton != nullptr; commandButton = commandButton->getNext() )
+						{
+							if (commandButton->getCommandType() == GUI_COMMAND_SPECIAL_POWER_CONSTRUCT || commandButton->getCommandType() == GUI_COMMAND_SPECIAL_POWER_CONSTRUCT_FROM_SHORTCUT)
+							{
+								if (commandButton->getThingTemplate() != nullptr)
+								{
+									referenceObjectRef = commandButton->getThingTemplate();
+									break;
+								}
+							}
+						}
+
+						if (referenceObjectRef != nullptr)
+						{
+							// we got em'.
+							_data->m_referenceThingName = referenceObjectRef->getName();
+						}
+					}
+				}
+			}
+		}
+	}
+#endif
 }
 
 void automaticWeaponTemplateChanges(WeaponTemplate* _this)

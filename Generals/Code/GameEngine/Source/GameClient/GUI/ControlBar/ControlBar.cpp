@@ -690,7 +690,7 @@ Bool CommandButton::isValidObjectTarget(const Drawable* source, const Drawable* 
 const FieldParse CommandSet::m_commandSetFieldParseTable[] =
 {
 
-	{ "1",			CommandSet::parseCommandButton, (void *)nullptr,		offsetof( CommandSet, m_command ) },
+	{ "1",			CommandSet::parseCommandButton, (void *)0,		offsetof( CommandSet, m_command ) },
 	{ "2",			CommandSet::parseCommandButton, (void *)1,		offsetof( CommandSet, m_command ) },
 	{ "3",			CommandSet::parseCommandButton, (void *)2,		offsetof( CommandSet, m_command ) },
 	{ "4",			CommandSet::parseCommandButton, (void *)3,		offsetof( CommandSet, m_command ) },

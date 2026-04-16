@@ -95,6 +95,9 @@ public:
 	Drawable *newDrawable(const ThingTemplate *tmplate, DrawableStatusBits statusBits = DRAWABLE_STATUS_DEFAULT );
 	//MODDD - new overload, added param 'drawableID'
 	Drawable *newDrawable(const ThingTemplate *tmplate, DrawableID drawableID, DrawableStatusBits statusBits = DRAWABLE_STATUS_DEFAULT );
+	
+	//MODDD - for hackery
+	ThingTemplateHashMap* getTemplateHashMap() {return &m_templateHashMap;}
 
 	static void parseObjectDefinition( INI* ini, const AsciiString& name, const AsciiString& reskinFrom );
 

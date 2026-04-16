@@ -1427,7 +1427,7 @@ void W3DModelDrawModuleData::parseConditionState(INI* ini, void *instance, void 
 		{ "AltTurretArtAngle", INI::parseAngleReal, nullptr, offsetof(ModelConditionInfo, m_turrets[1].m_turretArtAngle) },
 		{ "AltTurretPitch",	parseBoneNameKey, nullptr, offsetof(ModelConditionInfo, m_turrets[1].m_turretPitchNameKey) },
 		{ "AltTurretArtPitch", INI::parseAngleReal, nullptr, offsetof(ModelConditionInfo, m_turrets[1].m_turretArtPitch) },
-		{ "ShowSubObject", parseShowHideSubObject, (void*)nullptr, offsetof(ModelConditionInfo, m_hideShowVec) },
+		{ "ShowSubObject", parseShowHideSubObject, (void*)0, offsetof(ModelConditionInfo, m_hideShowVec) },
 		{ "HideSubObject", parseShowHideSubObject, (void*)1, offsetof(ModelConditionInfo, m_hideShowVec) },
 		{ "WeaponFireFXBone", parseWeaponBoneName, nullptr, offsetof(ModelConditionInfo, m_weaponFireFXBoneName[0]) },
 		{ "WeaponRecoilBone", parseWeaponBoneName, nullptr, offsetof(ModelConditionInfo, m_weaponRecoilBoneName[0]) },
@@ -3656,6 +3656,16 @@ void W3DModelDraw::reactToTransformChange( const Matrix3D* oldMtx,
 	if (m_trackRenderObject)
 	{
 		Object *obj = getDrawable()->getObject();
+
+		//MODDD - this can happen if something with certain 'DrawModule''s like a 'W3DOverlordTruckDraw' is used as a
+		// 'command'='SPECIAL_POWER_CONSTRUCT_FROM_SHORTCUT' CommandButton's object for the build preview (the drawable
+		// is made with 'm_trackRenderObject'='true' to reach here).
+		// Ex: setting the sneak attack special power use button's 'Object' to the command truck in Contra
+		if (obj == nullptr)
+		{
+			return;
+		}
+
 		const Coord3D* pos = getDrawable()->getPosition();
 
 		if ( m_fullyObscuredByShroud || obj->testStatus( OBJECT_STATUS_STEALTHED ) == TRUE )
