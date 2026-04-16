@@ -72,8 +72,8 @@ const FieldParse DrawGroupInfo::s_fieldParseTable[] =
 	{ "FontIsBold",														INI::parseBool,						nullptr, offsetof( DrawGroupInfo, m_fontIsBold ) },
 	{ "DropShadowOffsetX",										INI::parseInt,						nullptr, offsetof( DrawGroupInfo, m_dropShadowOffsetX) },
 	{ "DropShadowOffsetY",										INI::parseInt,						nullptr, offsetof( DrawGroupInfo, m_dropShadowOffsetY) },
-	{ "DrawPositionXPixel",			  						parseInt,									(void*)nullptr, 0 },
-	{ "DrawPositionXPercent",			  					parsePercentToReal,				(void*)nullptr, 0 },
+	{ "DrawPositionXPixel",			  						parseInt,									(void*)0, 0 },
+	{ "DrawPositionXPercent",			  					parsePercentToReal,				(void*)0, 0 },
 	{ "DrawPositionYPixel",			  						parseInt,									(void*)1, 0 },
 	{ "DrawPositionYPercent",			  					parsePercentToReal,				(void*)1, 0 },
 

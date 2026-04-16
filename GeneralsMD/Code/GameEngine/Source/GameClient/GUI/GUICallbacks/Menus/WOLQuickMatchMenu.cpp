@@ -1839,7 +1839,7 @@ WindowMsgHandledType WOLQuickMatchMenuSystem( GameWindow *window, UnsignedInt ms
 					for ( Int i=0; i<numMaps; ++i )
 					{
 						GadgetListBoxAddEntryImage(listboxMapSelect, unselectedImage, i, 0);
-						GadgetListBoxSetItemData(listboxMapSelect, (void *)nullptr, i);
+						GadgetListBoxSetItemData(listboxMapSelect, (void *)0, i);
 						GadgetListBoxAddEntryText(listboxMapSelect, GadgetListBoxGetText(listboxMapSelect, i, 1), GameSpyColor[GSCOLOR_MAP_UNSELECTED], i, 1);
 					}
 				}
