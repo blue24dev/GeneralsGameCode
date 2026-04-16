@@ -521,7 +521,10 @@ StateReturnType AITNGuardOuterState::update()
 	// My guesses are
 	// 1. 'onEnter' wasn't called to set 'm_attackState' before 'update'
 	// 2. 'onExit' was called under the assumption the state is done being used, then 'update' is called again
-	// Consider adding some extra stats for debugging help to figure this out in case this issue is encountered again
+	// Consider adding some extra stats for debugging help to figure this out in case this issue is encountered again.
+	// I have to wonder if this is related to a bug on 'ActionManager::canDoSpecialPowerAtLocation' with 'RETAIL_COMPATIBLE_CRC'
+	// at the time (player-placed sneak attacks are never possible). I don't think AI placed ones would be affected by this
+	// (no human player was using a sneak attack nor ability using the same enum at the time).
 	if (m_attackState == nullptr)
 	{
 		return STATE_FAILURE;

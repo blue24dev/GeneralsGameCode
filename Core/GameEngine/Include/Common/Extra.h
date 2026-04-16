@@ -29,6 +29,7 @@ void addCustomWeaponBonuses(const Weapon* _this, const Object* source, WeaponBon
 Real getHealthMulti(const ThingTemplate* _this);
 Real healthAdjustmentFilter(Object* obj, Real healthVal);
 UnsignedInt specialPowerReloadTimeAdjustmentFilter(const Object* obj, UnsignedInt reloadTime, Bool isSharedNSync);
+void automaticChangesPostINIParsing();
 #endif
 
 #if CUSTOM_GAME_DATA_CHANGES
