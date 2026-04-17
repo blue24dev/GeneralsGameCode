@@ -225,27 +225,8 @@ UpdateSleepTime AutoDepositUpdate::update()
 //------------------------------------------------------------------------------------------------
 Int AutoDepositUpdate::getUpgradedSupplyBoost() const
 {
-	Player *player = getObject()->getControllingPlayer();
-	if (!player) return 0;
-
-	// Loop through the upgrade pairs and see if an upgrade is present that adds supply boost
-	std::list<upgradePair>::const_iterator it = getAutoDepositUpdateModuleData()->m_upgradeBoost.begin();
-	while (it != getAutoDepositUpdateModuleData()->m_upgradeBoost.end())
-	{
-		upgradePair info = *it;
-
-		// Check if the player has the desired upgrade. If so return the boost
-		static const UpgradeTemplate *upgradeTemplate = TheUpgradeCenter->findUpgrade( info.type.c_str() );
-		if (player && upgradeTemplate && player->hasUpgradeComplete(upgradeTemplate))
-		{
-			return info.amount;
-		}
-
-		// check next
-		++it;
-	}
-
-	return 0;
+	//MODDD - condensed into a utility
+	return ::getUpgradedSupplyBoost(getObject(), &getAutoDepositUpdateModuleData()->m_upgradeBoost);
 }
 
 // ------------------------------------------------------------------------------------------------

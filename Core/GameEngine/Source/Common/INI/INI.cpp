@@ -1642,7 +1642,7 @@ void INI::initFromINIMulti_allowUnknown( void *what, const MultiIniFieldParse& p
 		if( field )
 		{
 
-			if( stricmp( field, m_blockEndToken ) == 0 )
+			if( stricmp( field, getEndToken() ) == 0 )
 			{
 				done = TRUE;
 			}
@@ -1696,7 +1696,7 @@ void INI::initFromINIMulti_allowUnknown( void *what, const MultiIniFieldParse& p
 
 			done = TRUE;
 			DEBUG_CRASH( ("Error parsing block '%s', in INI file '%s'.  Missing '%s' token",
-												 m_curBlockStart, getFilename().str(), m_blockEndToken) );
+												 m_curBlockStart, getFilename().str(), getEndToken()) );
 			throw INI_MISSING_END_TOKEN;
 
 		}
