@@ -65,7 +65,7 @@ ObjectOptions::ObjectOptions(CWnd* pParent /*=nullptr*/)
 }
 
 
-ObjectOptions::~ObjectOptions(void)
+ObjectOptions::~ObjectOptions()
 {
 	deleteInstance(m_objectsList);
 	m_objectsList = nullptr;
@@ -706,7 +706,7 @@ BOOL ObjectOptions::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 }
 
 
-MapObject *ObjectOptions::getCurMapObject(void)
+MapObject *ObjectOptions::getCurMapObject()
 {
 	if (m_staticThis && m_currentObjectIndex >= 0) {
 		MapObject *pObj = m_staticThis->m_objectsList;
@@ -722,7 +722,7 @@ MapObject *ObjectOptions::getCurMapObject(void)
 	return(nullptr);
 }
 
-AsciiString ObjectOptions::getCurGdfName(void)
+AsciiString ObjectOptions::getCurGdfName()
 {
 	MapObject *pCur = getCurMapObject();
 	if (pCur) {
@@ -804,7 +804,7 @@ MapObject *ObjectOptions::duplicateCurMapObjectForPlace(const Coord3D* loc, Real
 	return(nullptr);
 }
 
-Real ObjectOptions::getCurObjectHeight(void)
+Real ObjectOptions::getCurObjectHeight()
 {
 	if (m_staticThis) {
 		CWnd *pWnd = m_staticThis->GetDlgItem(IDC_OBJECT_HEIGHT_EDIT);
