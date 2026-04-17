@@ -19,6 +19,12 @@ class UpgradeTemplate;
 class Object;
 class Weapon;
 class WeaponBonus;
+struct upgradePair;
+
+//MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
+void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCreateCalls = FALSE);
+// General utilities I came up with to condense some common script. 'common/GameUtility.h' might also be a good place for this.
+Int getUpgradedSupplyBoost(const Object* collectingObject, const std::list<upgradePair>* upgradeBoostList);
 
 #if CUSTOM_ATTRIBUTE_CHANGES
 void automaticThingTemplateChanges(ThingTemplate* _this);

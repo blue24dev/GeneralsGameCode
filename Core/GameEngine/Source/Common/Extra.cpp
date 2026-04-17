@@ -11,12 +11,93 @@
 #include "GameLogic/Object.h"
 #include "GameNetwork/GameInfo.h"
 #include "GameLogic/GameLogic.h"
-#include "GameLogic/module/BodyModule.h"
+#include "GameLogic/Module/AutoDepositUpdate.h"
+#include "GameLogic/Module/BodyModule.h"
+#include "GameLogic/Module/CreateModule.h"
+#include "GameLogic/Module/SpecialPowerModule.h"
 
+//MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
+// Condensed several snippets of copied script into this, with a few additions to fix the bug on buildings
+// with non-shared special powers (ex: strategy center, battle plans & CIA intelligence) starting with
+// endless cooldowns on RETAIL_COMPATIBLE_CRC=0.
+void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCreateCalls)
+{
+	BehaviorModule** m;
 
-// It would make sense to consider the majority of this file "MODDD - for me only".
+	// This for-loop is as-is behavior
+	for (m = obj->getBehaviorModules(); *m; ++m)
+	{
+		CreateModuleInterface* create = (*m)->getCreate();
+		if (!create)
+			continue;
 
+		create->onBuildComplete();
+	}
 
+	// The rest of below is new
+	// ---------------------------
+	if(!checkForSpecialPowerModuleCreateCalls)
+	{
+		// skip further down - ex: made by a warfactory. The SpecialPowerModule constructor already calls 'onSpecialPowerCreation' if it
+		// isn't under construction at the time (structures block this since they start at in-construction / 0%-progress technically).
+		// So for vehicles, etc., as-is behavior already works.
+		return;
+	}
+
+	// First, see if there is a "SpecialPowerCreate" module.
+	// If so, this module's 'onBuildComplete' would have already run above, which would have called 'onSpecialPowerCreation' already
+	// (no need to do so manually further down).
+	Bool foundSpecialPowerCreateModule = FALSE;
+	static NameKeyType key_SpecialPowerCreate = NAMEKEY("SpecialPowerCreate");
+	for (m = obj->getBehaviorModules(); *m; ++m)
+	{
+		if ((*m)->getModuleNameKey() == key_SpecialPowerCreate)
+		{
+			foundSpecialPowerCreateModule = TRUE;
+			break;
+		}
+	}
+
+	if (!foundSpecialPowerCreateModule)
+	{
+		// Didn't find any 'SpecialPowerCreate' modules - call 'notifyBuildComplete'
+		for (m = obj->getBehaviorModules(); *m; ++m)
+		{
+			SpecialPowerModuleInterface* sp = (*m)->getSpecialPower();
+			if (!sp)
+				continue;
+
+			sp->notifyBuildComplete();
+		}
+	}
+}
+
+Int getUpgradedSupplyBoost(const Object* collectingObject, const std::list<upgradePair>* upgradeBoostList)
+{
+	Player *player = collectingObject->getControllingPlayer();
+	if (!player) return 0;
+
+	// Loop through the upgrade pairs and see if an upgrade is present that adds supply boost
+	std::list<upgradePair>::const_iterator it = upgradeBoostList->begin();
+	while (it != upgradeBoostList->end())
+	{
+		upgradePair info = *it;
+
+		// Check if the player has the desired upgrade. If so return the boost
+		static const UpgradeTemplate *upgradeTemplate = TheUpgradeCenter->findUpgrade( info.type.c_str() );
+		if (upgradeTemplate && player->hasUpgradeComplete(upgradeTemplate))
+		{
+			return info.amount;
+		}
+
+		// check next
+		++it;
+	}
+
+	return 0;
+}
+
+// It would make sense to consider this section "MODDD - for me only". Same for the cheat-related things further down.
 #if CUSTOM_ATTRIBUTE_CHANGES
 
 // includes for hackish edits further below
