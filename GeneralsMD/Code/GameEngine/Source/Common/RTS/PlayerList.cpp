@@ -116,11 +116,13 @@ Bool PlayerList::isPlayerUnaffiliated(Player* player)
 		return TRUE;
 	}
 
+	// No side at all?
 	if (player->getPlayerTemplate() == nullptr)
 	{
 		return TRUE;
 	}
 
+	// Is this player using the "FactionCivilian" side?
 	if (m_civilianPlayerTemplate != nullptr && player->getPlayerTemplate() == m_civilianPlayerTemplate)
 	{
 		return TRUE;
@@ -197,7 +199,7 @@ Player* PlayerList::findCivilianPlayer()
 	playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
 	if (playerRef != nullptr)
 	{
-		// Not part of retail, but could require it to have the 'Civilian' side name. Curious if this assumption never holds up anyway.
+		// Not part of retail, but could require it to have the 'Civilian' side name. I doubt this would ever not be the case.
 		//if (playerRef->getSide().compare("Civilian") == 0)
 		{
 			return playerRef;

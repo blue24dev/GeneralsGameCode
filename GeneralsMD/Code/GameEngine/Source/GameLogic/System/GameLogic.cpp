@@ -2577,7 +2577,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 				{
 					rel = ALLIES;
 				}
-				//MODDD - simpler check for 'not a typical active player'
+				//MODDD - simpler check for 'is a typical active player'
 				else if (!ThePlayerList->isPlayerUnaffiliated(thatPlayer))
 				{
 					rel = ENEMIES;
@@ -5885,61 +5885,4 @@ void GameLogic::loadPostProcess()
 	// re-sort the priority queue all at once now that all modules are on it
 	remakeSleepyUpdate();
 
-}
-
-//MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
-// Condensed several snippets of copied script into this, with a few additions to fix the bug on buildings
-// with non-shared special powers (ex: strategy center, battle plans & CIA intelligence) starting with
-// endless cooldowns on RETAIL_COMPATIBLE_CRC=0.
-#include "GameLogic/Module/SpecialPowerModule.h"
-void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCreateCalls)
-{
-	BehaviorModule** m;
-
-	// This for-loop is as-is behavior
-	for (m = obj->getBehaviorModules(); *m; ++m)
-	{
-		CreateModuleInterface* create = (*m)->getCreate();
-		if (!create)
-			continue;
-
-		create->onBuildComplete();
-	}
-
-	// The rest of below is new
-	// ---------------------------
-	if(!checkForSpecialPowerModuleCreateCalls)
-	{
-		// skip further down - ex: made by a warfactory. The SpecialPowerModule constructor already calls 'onSpecialPowerCreation' if it
-		// isn't under construction at the time (structures block this since they start at in-construction / 0%-progress technically).
-		// So for vehicles, etc., as-is behavior already works.
-		return;
-	}
-
-	// First, see if there is a "SpecialPowerCreate" module.
-	// If so, this module's 'onBuildComplete' would have already run above, which would have called 'onSpecialPowerCreation' already
-	// (no need to do so manually further down).
-	Bool foundSpecialPowerCreateModule = FALSE;
-	static NameKeyType key_SpecialPowerCreate = NAMEKEY("SpecialPowerCreate");
-	for (m = obj->getBehaviorModules(); *m; ++m)
-	{
-		if ((*m)->getModuleNameKey() == key_SpecialPowerCreate)
-		{
-			foundSpecialPowerCreateModule = TRUE;
-			break;
-		}
-	}
-
-	if (!foundSpecialPowerCreateModule)
-	{
-		// Didn't find any 'SpecialPowerCreate' modules - call 'notifyBuildComplete'
-		for (m = obj->getBehaviorModules(); *m; ++m)
-		{
-			SpecialPowerModuleInterface* sp = (*m)->getSpecialPower();
-			if (!sp)
-				continue;
-
-			sp->notifyBuildComplete();
-		}
-	}
 }

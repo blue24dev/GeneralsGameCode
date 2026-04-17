@@ -186,23 +186,11 @@ INI::INI()
 	m_filename					= "None";
 	m_loadType					= INI_LOAD_INVALID;
 	m_lineNum						= 0;
-	m_seps							= " \n\r\t=";			///< make sure you update m_sepsPercent/m_sepsColon as well
-	m_sepsPercent				= " \n\r\t=%%";
-	m_sepsColon					= " \n\r\t=:";
-	m_sepsQuote					= "\"\n=";				///< stop at " = EOL
-	m_blockEndToken			= "END";
-	m_endOfFile					= FALSE;
 	m_buffer[0]					= 0;
+	m_endOfFile					= FALSE;
 #ifdef DEBUG_CRASHING
 	m_curBlockStart[0]	= 0;
 #endif
-
-}
-
-//-------------------------------------------------------------------------------------------------
-//-------------------------------------------------------------------------------------------------
-INI::~INI()
-{
 
 }
 
@@ -420,7 +408,7 @@ UnsignedInt INI::load( AsciiString filename, INILoadType loadType, Xfer *pXfer, 
 			AsciiString currentLine = m_buffer;
 
 			// the first word is the type of data we're processing
-			const char *token = strtok( m_buffer, m_seps );
+			const char *token = strtok( m_buffer, getSeps() );
 			if( token )
 			{
 				//MODDD - send arg 'myTypeTable'
@@ -734,7 +722,7 @@ void INI::parseAsciiStringVector( INI* ini, void * /*instance*/, void *store, co
 {
 	std::vector<AsciiString>* asv = (std::vector<AsciiString>*)store;
 	asv->clear();
-	for (const char *token = ini->getNextTokenOrNull(); token != nullptr; token = ini->getNextTokenOrNull())
+	for (const char *token = ini->getNextTokenOrNull(); token; token = ini->getNextTokenOrNull())
 	{
 		asv->push_back(token);
 	}
@@ -747,7 +735,7 @@ void INI::parseAsciiStringVectorAppend( INI* ini, void * /*instance*/, void *sto
 	std::vector<AsciiString>* asv = (std::vector<AsciiString>*)store;
 	// nope, don't clear. duh.
 	// asv->clear();
-	for (const char *token = ini->getNextTokenOrNull(); token != nullptr; token = ini->getNextTokenOrNull())
+	for (const char *token = ini->getNextTokenOrNull(); token; token = ini->getNextTokenOrNull())
 	{
 		asv->push_back(token);
 	}
@@ -759,7 +747,7 @@ void INI::parseAsciiStringVectorAppend( INI* ini, void * /*instance*/, void *sto
 {
 	ScienceVec* asv = (ScienceVec*)store;
 	asv->clear();
-	for (const char *token = ini->getNextTokenOrNull(); token != nullptr; token = ini->getNextTokenOrNull())
+	for (const char *token = ini->getNextTokenOrNull(); token; token = ini->getNextTokenOrNull())
 	{
 		if (stricmp(token, "None") == 0)
 		{
@@ -976,7 +964,7 @@ void INI::parseBitString32( INI* ini, void * /*instance*/, void *store, const vo
 	Bool foundAddOrSub = false;
 
 	// loop through all tokens
-	for (const char *token = ini->getNextTokenOrNull(); token != nullptr; token = ini->getNextTokenOrNull())
+	for (const char *token = ini->getNextTokenOrNull(); token; token = ini->getNextTokenOrNull())
 	{
 		if (stricmp(token, "NONE") == 0)
 		{
@@ -1552,7 +1540,7 @@ void INI::initFromINIMulti( void *what, const MultiIniFieldParse& parseTableList
 		if( field )
 		{
 
-			if( stricmp( field, m_blockEndToken ) == 0 )
+			if( stricmp( field, getEndToken() ) == 0 )
 			{
 				done = TRUE;
 			}
@@ -1604,7 +1592,7 @@ void INI::initFromINIMulti( void *what, const MultiIniFieldParse& parseTableList
 
 			done = TRUE;
 			DEBUG_CRASH( ("Error parsing block '%s', in INI file '%s'.  Missing '%s' token",
-												 m_curBlockStart, getFilename().str(), m_blockEndToken) );
+												 m_curBlockStart, getFilename().str(), getEndToken()) );
 			throw INI_MISSING_END_TOKEN;
 
 		}
@@ -1654,7 +1642,7 @@ void INI::initFromINIMulti_allowUnknown( void *what, const MultiIniFieldParse& p
 		if( field )
 		{
 
-			if( stricmp( field, m_blockEndToken ) == 0 )
+			if( stricmp( field, getEndToken() ) == 0 )
 			{
 				done = TRUE;
 			}
@@ -1708,7 +1696,7 @@ void INI::initFromINIMulti_allowUnknown( void *what, const MultiIniFieldParse& p
 
 			done = TRUE;
 			DEBUG_CRASH( ("Error parsing block '%s', in INI file '%s'.  Missing '%s' token",
-												 m_curBlockStart, getFilename().str(), m_blockEndToken) );
+												 m_curBlockStart, getFilename().str(), getEndToken()) );
 			throw INI_MISSING_END_TOKEN;
 
 		}
@@ -1723,7 +1711,6 @@ void INI::initFromINIMulti_allowUnknown( void *what, const MultiIniFieldParse& p
 //-------------------------------------------------------------------------------------------------
 /*static*/ const char* INI::getNextToken(const char* seps)
 {
-	if (!seps) seps = getSeps();
 	const char *token = ::strtok(nullptr, seps);
 	if (!token)
 		throw INI_INVALID_DATA;
@@ -1733,7 +1720,6 @@ void INI::initFromINIMulti_allowUnknown( void *what, const MultiIniFieldParse& p
 //-------------------------------------------------------------------------------------------------
 /*static*/ const char* INI::getNextTokenOrNull(const char* seps)
 {
-	if (!seps) seps = getSeps();
 	const char *token = ::strtok(nullptr, seps);
 	return token;
 }
@@ -2007,12 +1993,10 @@ void INI::parseSoundsList( INI* ini, void *instance, void *store, const void* /*
 	std::vector<AsciiString> *vec = (std::vector<AsciiString>*) store;
 	vec->clear();
 
-	const char* SEPS = " \t,=";
-	const char *c = ini->getNextTokenOrNull(SEPS);
-	while ( c )
+	constexpr const char* Seps = " \t,=";
+	for (const char* token = ini->getNextTokenOrNull(Seps); token; token = ini->getNextTokenOrNull(Seps))
 	{
-		vec->push_back( c );
-		c = ini->getNextTokenOrNull(SEPS);
+		vec->push_back(token);
 	}
 }
 

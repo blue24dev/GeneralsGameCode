@@ -75,12 +75,9 @@ void parseUpgradePair( INI *ini, void *instance, void *store, const void *userDa
 	info.amount = 0;
 
 	const char *token = ini->getNextToken( ini->getSepsColon() );
-
 	if ( stricmp(token, "UpgradeType") == 0 )
 	{
-		token = ini->getNextTokenOrNull( ini->getSepsColon() );
-		if (!token)	throw INI_INVALID_DATA;
-
+		token = ini->getNextToken( ini->getSepsColon() );
 		info.type = token;
 	}
 	else
@@ -228,27 +225,8 @@ UpdateSleepTime AutoDepositUpdate::update()
 //------------------------------------------------------------------------------------------------
 Int AutoDepositUpdate::getUpgradedSupplyBoost() const
 {
-	Player *player = getObject()->getControllingPlayer();
-	if (!player) return 0;
-
-	// Loop through the upgrade pairs and see if an upgrade is present that adds supply boost
-	std::list<upgradePair>::const_iterator it = getAutoDepositUpdateModuleData()->m_upgradeBoost.begin();
-	while (it != getAutoDepositUpdateModuleData()->m_upgradeBoost.end())
-	{
-		upgradePair info = *it;
-
-		// Check if the player has the desired upgrade. If so return the boost
-		static const UpgradeTemplate *upgradeTemplate = TheUpgradeCenter->findUpgrade( info.type.c_str() );
-		if (player && upgradeTemplate && player->hasUpgradeComplete(upgradeTemplate))
-		{
-			return info.amount;
-		}
-
-		// check next
-		++it;
-	}
-
-	return 0;
+	//MODDD - condensed into a utility
+	return ::getUpgradedSupplyBoost(getObject(), &getAutoDepositUpdateModuleData()->m_upgradeBoost);
 }
 
 // ------------------------------------------------------------------------------------------------
