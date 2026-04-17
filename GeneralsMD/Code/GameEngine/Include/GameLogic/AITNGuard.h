@@ -168,6 +168,9 @@ public:
 	AITNGuardOuterState( StateMachine *machine ) : State( machine, "AITNGuardOuter" )
 	{
 		m_attackState = nullptr;
+		//MODDD - debug
+		onEnterEverCalled = false;
+		onExitEverCalled = false;
 	}
 	virtual StateReturnType onEnter() override;
 	virtual StateReturnType update() override;
@@ -182,6 +185,10 @@ private:
 
 	TunnelNetworkExitConditions m_exitConditions;
 	AIAttackState *m_attackState;
+
+	//MODDD - debug
+	Bool onEnterEverCalled;
+	Bool onExitEverCalled;
 };
 
 //--------------------------------------------------------------------------------------

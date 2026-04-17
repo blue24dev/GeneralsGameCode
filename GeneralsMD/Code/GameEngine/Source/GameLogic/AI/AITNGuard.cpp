@@ -484,6 +484,9 @@ AITNGuardOuterState::~AITNGuardOuterState()
 //--------------------------------------------------------------------------------------
 StateReturnType AITNGuardOuterState::onEnter()
 {
+	//MODDD - debug help
+	onEnterEverCalled = true;
+
 	if (getGuardMachine()->getGuardMode() == GUARDMODE_GUARD_WITHOUT_PURSUIT)
 	{
 		// "patrol" mode does not follow targets outside the guard area.
@@ -558,6 +561,9 @@ StateReturnType AITNGuardOuterState::update()
 //--------------------------------------------------------------------------------------
 void AITNGuardOuterState::onExit( StateExitType status )
 {
+	//MODDD - debug help
+	onExitEverCalled = true;
+
 	if (m_attackState)
 	{
 		m_attackState->onExit(status);
