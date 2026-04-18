@@ -3075,7 +3075,7 @@ void ScriptActions::doCameraMotionBlur(Bool zoomIn, Bool saturate)
 }
 
 //MODDD - removed 'static' modifier, can be externed from other places
-//static PlayerMaskType getHumanPlayerMask( void )
+//static PlayerMaskType getHumanPlayerMask()
 PlayerMaskType getHumanPlayerMask()
 {
 #if RETAIL_COMPATIBLE_CRC

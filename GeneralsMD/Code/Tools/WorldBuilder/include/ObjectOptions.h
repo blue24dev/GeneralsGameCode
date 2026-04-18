@@ -35,7 +35,12 @@ class ObjectOptions : public COptionsPanel
 public:
 	ObjectOptions(CWnd* pParent = nullptr);   ///< standard constructor
 
-	virtual ~ObjectOptions(void) override;   ///< standard destructor
+	virtual ~ObjectOptions() override;   ///< standard destructor
+	
+	//MODDD
+	void onMapChangeStart();
+	void onMapChangeEnd();
+	void onRequestForNewSideSuccess();
 
 	//MODDD - safety, increasing this
 	//enum { NAME_MAX_LEN = 64 };
@@ -64,6 +69,8 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(ObjectOptions)
 	virtual BOOL OnInitDialog() override;
+	//MODDD
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	afx_msg void OnEditchangeOwningteam();
 	afx_msg void OnCloseupOwningteam();
 	afx_msg void OnSelchangeOwningteam();
@@ -96,22 +103,17 @@ protected:
 	//MODDD
 	HTREEITEM getSelectedRootItemFromObjectTreeView();
 
-	static MapObject *getCurMapObject(void);
+	static MapObject *getCurMapObject();
 
 public:
-	static const char * getCurObjectName(void) {return m_currentObjectName;};
+	static const char * getCurObjectName() {return m_currentObjectName;};
 	static MapObject *duplicateCurMapObjectForPlace(const Coord3D* loc, Real angle, Bool checkPlayers = true);
 	static MapObject *getObjectNamed(AsciiString name);
 	static Int getObjectNamedIndex(const AsciiString& name);
 	static void selectObject(const MapObject* pObj);
-	static Real getCurObjectHeight(void);
+	static Real getCurObjectHeight();
 	static void update();
-	static AsciiString getCurGdfName(void);
-
-	//MODDD
-	void onMapChangeStart();
-	void onMapChangeEnd();
-	void onRequestForNewSideSuccess();
+	static AsciiString getCurGdfName();
 
 };
 

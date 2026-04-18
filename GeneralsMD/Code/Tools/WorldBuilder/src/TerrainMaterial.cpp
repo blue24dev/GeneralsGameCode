@@ -140,7 +140,7 @@ void TerrainMaterial::setToolOptions(Bool singleCell)
 	}
 }
 
-void TerrainMaterial::updateLabel(void)
+void TerrainMaterial::updateLabel()
 {
 	CWorldBuilderDoc *pDoc = CWorldBuilderDoc::GetActiveDoc();
 	if (!pDoc) return;
@@ -166,7 +166,7 @@ void TerrainMaterial::updateLabel(void)
 	}
 }
 
-void TerrainMaterial::updateTextureSelection(void)
+void TerrainMaterial::updateTextureSelection()
 {
 	if (m_staticThis) {
 		m_staticThis->setTerrainTreeViewSelection(TVI_ROOT, m_staticThis->m_currentFgTexture);

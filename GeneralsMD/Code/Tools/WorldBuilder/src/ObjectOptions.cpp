@@ -65,7 +65,7 @@ ObjectOptions::ObjectOptions(CWnd* pParent /*=nullptr*/)
 }
 
 
-ObjectOptions::~ObjectOptions(void)
+ObjectOptions::~ObjectOptions()
 {
 	deleteInstance(m_objectsList);
 	m_objectsList = nullptr;
@@ -453,6 +453,14 @@ BOOL ObjectOptions::OnInitDialog()
 	              // EXCEPTION: OCX Property Pages should return FALSE
 }
 
+//MODDD
+void ObjectOptions::OnShowWindow(BOOL bShow, UINT nStatus)
+{
+	CDialog::OnShowWindow(bShow, nStatus);
+
+  // TODO?
+}
+
 /** Locate the child item in tree item parent with name pLabel.  If not
 found, add it.  Either way, return child. */
 HTREEITEM ObjectOptions::findOrAdd(HTREEITEM parent, const char *pLabel)
@@ -706,7 +714,7 @@ BOOL ObjectOptions::OnNotify(WPARAM wParam, LPARAM lParam, LRESULT* pResult)
 }
 
 
-MapObject *ObjectOptions::getCurMapObject(void)
+MapObject *ObjectOptions::getCurMapObject()
 {
 	if (m_staticThis && m_currentObjectIndex >= 0) {
 		MapObject *pObj = m_staticThis->m_objectsList;
@@ -722,7 +730,7 @@ MapObject *ObjectOptions::getCurMapObject(void)
 	return(nullptr);
 }
 
-AsciiString ObjectOptions::getCurGdfName(void)
+AsciiString ObjectOptions::getCurGdfName()
 {
 	MapObject *pCur = getCurMapObject();
 	if (pCur) {
@@ -804,7 +812,7 @@ MapObject *ObjectOptions::duplicateCurMapObjectForPlace(const Coord3D* loc, Real
 	return(nullptr);
 }
 
-Real ObjectOptions::getCurObjectHeight(void)
+Real ObjectOptions::getCurObjectHeight()
 {
 	if (m_staticThis) {
 		CWnd *pWnd = m_staticThis->GetDlgItem(IDC_OBJECT_HEIGHT_EDIT);
