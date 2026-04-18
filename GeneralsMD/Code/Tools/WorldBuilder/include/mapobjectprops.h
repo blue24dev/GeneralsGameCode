@@ -48,6 +48,12 @@ public:
 	virtual ~MapObjectProps() override;
 	void makeMain();
 
+	//MODDD
+	void onMapChangeStart();
+	void onMapChangeEnd();
+	void clearFields();
+	void setFieldsEnabled(Bool enabled);
+
 // Dialog Data
 	//{{AFX_DATA(MapObjectProps)
 	enum { IDD = IDD_MAPOBJECT_PROPS };
@@ -103,6 +109,8 @@ protected:
 	virtual BOOL OnInitDialog() override;
 	virtual void OnOK() override;
 	virtual void OnCancel() override;
+	//MODDD
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	afx_msg void OnSelchangeProperties();
 	afx_msg void OnEditprop();
 	afx_msg void OnNewprop();

@@ -481,6 +481,7 @@ void CMainFrame::onMapChangeStart()
 {
 	m_objectOptions.onMapChangeStart();
 	m_globalLightOptions.onMapChangeStart();
+	m_mapObjectProps.onMapChangeStart();
 }
 
 //MODDD - new event
@@ -489,6 +490,7 @@ void CMainFrame::onMapChangeEnd()
 {
 	m_objectOptions.onMapChangeEnd();
 	m_globalLightOptions.onMapChangeEnd();
+	m_mapObjectProps.onMapChangeEnd();
 }
 
 /////////////////////////////////////////////////////////////////////////////

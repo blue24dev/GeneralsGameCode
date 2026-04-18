@@ -1612,6 +1612,14 @@ BOOL MapObjectProps::OnInitDialog()
   return TRUE;
 }
 
+//MODDD
+void MapObjectProps::OnShowWindow(BOOL bShow, UINT nStatus)
+{
+	CDialog::OnShowWindow(bShow, nStatus);
+
+  // TODO
+}
+
 //---------------------------------------------------------------------------------------------------
 /*static*/ void MapObjectProps::update()
 {
@@ -1626,6 +1634,10 @@ void MapObjectProps::updateTheUI()
 	if (this != TheMapObjectProps) {
 		return;
 	}
+
+  //MODDD - require re-finding the 'dictSource' every time.
+  m_dictSource = nullptr;
+
 	for (MapObject *pMapObj = MapObject::getFirstMapObject(); pMapObj; pMapObj = pMapObj->getNext()) {
 		if (!pMapObj->isSelected() || pMapObj->isWaypoint() || pMapObj->isLight()) {
 			continue;
@@ -1640,11 +1652,20 @@ void MapObjectProps::updateTheUI()
 		// simply break after the first one that's selected
 		break;
 	}
+
+  //MODDD - if no selected unit could be found, reset everything
+  if (m_dictSource == nullptr)
+  {
+    clearFields();
+  }
 }
 
 /// Move *all* data from object to dialog controls
 void MapObjectProps::updateTheUI(MapObject *pMapObj)
 {
+  //MODDD - allow editing the fields, since they're attached to an object
+  setFieldsEnabled(true);
+
   _DictToName();
   _DictToTeam();
   _DictToScript();
@@ -2891,3 +2912,42 @@ void MapObjectProps::OnKillfocusMAPOBJECTXYPosition()
   SetPosition();
 }
 
+//MODDD
+void MapObjectProps::onMapChangeStart()
+{
+	// the unit selected at the time won't be a thing, so clear this dialog
+  m_dictSource = nullptr;
+  clearFields();
+}
+
+//MODDD
+void MapObjectProps::onMapChangeEnd()
+{
+	// nothing needed here
+}
+
+//MODDD
+// also, TODO - check 'this->IsWindowVisible()' for ignoring a call, but run this on opening/showing the dialog
+// (really 'updateUI' to see if nothing's selected -> reach here accordingly).
+void MapObjectProps::clearFields()
+{
+  CWnd* pItem;
+  pItem = GetDlgItem(IDC_MAPOBJECT_Name);
+  pItem->SetWindowText("");
+  CComboBox* pComboBox = (CComboBox*)GetDlgItem(IDC_MAPOBJECT_Team);
+  pComboBox->ResetContent();
+  // TODO
+
+  // assumption: the fields are cleared because an item isn't selected (editing them wouldn't have any impact)
+  setFieldsEnabled(false);
+}
+
+void MapObjectProps::setFieldsEnabled(Bool enabled)
+{
+  CWnd* pItem;
+  pItem = GetDlgItem(IDC_MAPOBJECT_Name);
+  pItem->EnableWindow(enabled);
+  pItem = GetDlgItem(IDC_MAPOBJECT_Team);
+  pItem->EnableWindow(enabled);
+  // TODO
+}

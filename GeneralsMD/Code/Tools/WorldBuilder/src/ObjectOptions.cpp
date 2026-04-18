@@ -453,6 +453,14 @@ BOOL ObjectOptions::OnInitDialog()
 	              // EXCEPTION: OCX Property Pages should return FALSE
 }
 
+//MODDD
+void ObjectOptions::OnShowWindow(BOOL bShow, UINT nStatus)
+{
+	CDialog::OnShowWindow(bShow, nStatus);
+
+  // TODO?
+}
+
 /** Locate the child item in tree item parent with name pLabel.  If not
 found, add it.  Either way, return child. */
 HTREEITEM ObjectOptions::findOrAdd(HTREEITEM parent, const char *pLabel)

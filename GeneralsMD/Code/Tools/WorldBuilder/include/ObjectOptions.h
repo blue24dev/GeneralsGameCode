@@ -36,6 +36,11 @@ public:
 	ObjectOptions(CWnd* pParent = nullptr);   ///< standard constructor
 
 	virtual ~ObjectOptions() override;   ///< standard destructor
+	
+	//MODDD
+	void onMapChangeStart();
+	void onMapChangeEnd();
+	void onRequestForNewSideSuccess();
 
 	//MODDD - safety, increasing this
 	//enum { NAME_MAX_LEN = 64 };
@@ -64,6 +69,8 @@ protected:
 	// Generated message map functions
 	//{{AFX_MSG(ObjectOptions)
 	virtual BOOL OnInitDialog() override;
+	//MODDD
+	afx_msg void OnShowWindow(BOOL bShow, UINT nStatus);
 	afx_msg void OnEditchangeOwningteam();
 	afx_msg void OnCloseupOwningteam();
 	afx_msg void OnSelchangeOwningteam();
@@ -107,11 +114,6 @@ public:
 	static Real getCurObjectHeight();
 	static void update();
 	static AsciiString getCurGdfName();
-
-	//MODDD
-	void onMapChangeStart();
-	void onMapChangeEnd();
-	void onRequestForNewSideSuccess();
 
 };
 
