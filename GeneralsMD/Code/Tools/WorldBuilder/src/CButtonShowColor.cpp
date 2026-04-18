@@ -75,7 +75,7 @@ CButtonShowColor::~CButtonShowColor()
 }
 
 //MODDD - implementations moved from .h (getColor and all setColor overloads)
-const RGBColor& CButtonShowColor::getColor(void) const
+const RGBColor& CButtonShowColor::getColor() const
 {
 	return m_color;
 }

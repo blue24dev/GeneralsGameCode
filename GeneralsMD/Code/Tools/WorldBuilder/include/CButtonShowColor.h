@@ -25,7 +25,7 @@ class CButtonShowColor : public CButton
 
 	public:
 		//MODDD - implementations moved to .cpp
-		const RGBColor& getColor(void) const;
+		const RGBColor& getColor() const;
 		void setColor(Int color);
 		void setColor(const RGBColor& color);
 		virtual ~CButtonShowColor() override;
