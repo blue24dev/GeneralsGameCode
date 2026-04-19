@@ -77,6 +77,12 @@ public:
 	virtual void mouseMoved(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldBuilderDoc *pDoc) {}
 	virtual void mouseDown(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldBuilderDoc *pDoc) {}
 	virtual void mouseUp(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldBuilderDoc *pDoc) {}
+
+	//MODDD - new event: tell the UI to keep itself up-to-date, presumably because of something that changed the selection
+	// (ex: undo/redo, deletion).
+	virtual void onUpdate() {}
+	virtual void onDelete() {}
+
 	virtual WorldHeightMapEdit *getHeightMap() {return nullptr;}
 
 	static Real calcRoundBlendFactor(CPoint center, Int x, Int y, Int brushWidth, Int featherWidth);

@@ -91,8 +91,9 @@ public:
 	void onEditScripts();
 
 	//MODDD - getters
-	ObjectOptions* getObjectOptionsPanel() { return &m_objectOptions; };
-	GlobalLightOptions* getGlobalLightOptionsPanel() { return &m_globalLightOptions; };
+	ObjectOptions* getObjectOptionsPanel() { return &m_objectOptions; }
+	GlobalLightOptions* getGlobalLightOptionsPanel() { return &m_globalLightOptions; }
+	MapObjectProps* getMapObjectProps() { return &m_mapObjectProps; }
 
 	//MODDD - new events
 	void onNewMapStart();

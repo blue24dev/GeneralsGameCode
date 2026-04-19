@@ -539,9 +539,12 @@ BOOL CWorldBuilderApp::OnCmdMsg(UINT nID, int nCode, void* pExtra,
 //=============================================================================
 void CWorldBuilderApp::selectPointerTool()
 {
-	setActiveTool(&m_pointerTool);
+	//MODDD - moved 'clearSelection' above 'setActiveTool' instead so that can react to the situation sooner
+	// ---
 	// Clear selection.
 	m_pointerTool.clearSelection();
+	// ---
+	setActiveTool(&m_pointerTool);
 }
 
 //=============================================================================
@@ -558,11 +561,14 @@ void CWorldBuilderApp::setActiveTool(Tool *pNewTool)
 	if (m_selTool && m_selTool != pNewTool) {
 		m_selTool->deactivate();
 	}
+
+	//MODDD - set in time so 'WaypointOptions::updateTheUI()' can refer to the actual 'current' tool
+	m_curTool = pNewTool;
+	m_selTool = pNewTool;
+
 	if (pNewTool) {
 		pNewTool->activate();
 	}
-	m_curTool = pNewTool;
-	m_selTool = pNewTool;
 }
 
 //=============================================================================

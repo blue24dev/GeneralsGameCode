@@ -64,9 +64,13 @@ protected:
 	void poly_pickOnMouseDown(CPoint viewPt, WbView* pView);
 	void startMouseDown(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldBuilderDoc *pDoc);
 
+	//MODDD
+	virtual void updateOptionsDialog();
+
 public:
 	static Bool isActive() {return m_poly_isActive;};
-	static Bool deleteSelectedPolygon();
+	//MODDD - no longer static
+	Bool deleteSelectedPolygon();
 	static Bool isSelected(PolygonTrigger *pTrig) {return (pTrig && (pTrig==m_poly_curSelectedPolygon));};
 	static Int getSelectedPointNdx() {return m_poly_dragPointNdx;};
 	static PolygonTrigger *pickPolygon(Coord3D loc, CPoint viewPt, WbView* pView);
@@ -77,6 +81,11 @@ public:
 	virtual void mouseDown(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldBuilderDoc *pDoc) override;
 	virtual void mouseMoved(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldBuilderDoc *pDoc) override;
 	virtual void mouseUp(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldBuilderDoc *pDoc) override;
+
+	//MODDD
+	virtual void onUpdate() override;
+	virtual void onDelete() override;
+
 	virtual void setCursor() override;
 	virtual void activate() override; ///< Become the current tool.
 	virtual void deactivate() override; ///< Become not the current tool.

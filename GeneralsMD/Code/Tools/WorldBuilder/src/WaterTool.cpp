@@ -118,7 +118,11 @@ void WaterTool::mouseDown(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldB
 
 }
 
-
+//MODDD
+void WaterTool::updateOptionsDialog()
+{
+	WaterOptions::update();
+}
 
 /** Set the cursor. */
 void WaterTool::setCursor()
@@ -481,7 +485,9 @@ void WaterTool::fillTheArea(TTrackingMode m, CPoint viewPt, WbView* pView, CWorl
 		REF_PTR_RELEASE(pUndo); // belongs to pDoc now.
 		m_poly_curSelectedPolygon = pNew;
 		m_poly_dragPointNdx = -1;
-		WaterOptions::update();
+		//MODDD - replaced with 'updateOptionsDialog'
+		//WaterOptions::update();
+		updateOptionsDialog();
 	}	else {
 		deleteInstance(pNew);
 	}
