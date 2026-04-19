@@ -1865,7 +1865,6 @@ void AIPlayer::buildUpgrade(const AsciiString &upgrade)
 	msg.concat(upgrade);
 	msg.concat(" at this time.  Ignoring request.");
 	TheScriptEngine->AppendDebugMessage( msg, false);
-	return;
 }
 
 // ------------------------------------------------------------------------------------------------
