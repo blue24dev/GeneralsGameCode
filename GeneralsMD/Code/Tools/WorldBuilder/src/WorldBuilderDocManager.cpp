@@ -10,6 +10,10 @@
 //#include <stdlib.h>
 #include <cstdlib>
 
+// why is the 'vc6-debug+t+e' build refusing to cooperate here
+#define _countof __crt_countof
+
+
 // Copied from 'DOCMGR.CPP' in the MFC library (1998).
 // Overriding 'CDocTemplate::MatchDocType' to never return 'yesAlreadyOpen' might also work.
 CDocument* CWorldBuilderDocManager::OpenDocumentFile(LPCTSTR lpszFileName)

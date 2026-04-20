@@ -808,7 +808,7 @@ const Coord3D& W3DView::get3DCameraPosition() const
 // Ex: With GameData.ini settings of CameraHeight=232 and MaxCameraHeight=900, 'm_zoom' was '3.76' before that commit.
 // (for the math to make sense, add 'm_groundLevel=10' to each before dividing MaxCameraHeight by CameraHeight)
 // After the commit, 'm_zoom' was 1.0 (appears relative to 'm_maxCameraHeight' instead of 'm_cameraHeight').
-// Several places like health bars need the old zoom or they will be affected in unintentional ways.
+// Several places like health bars need the old zoom or they will be affected in unintended ways.
 Real W3DView::getZoomOld() const
 {
 	// follow-up: 'm_groundLevel' -> 'm_pos.z', or often a default of 10
