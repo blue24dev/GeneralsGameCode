@@ -3,6 +3,9 @@
 
 #include "StdAfx_private.h"
 
+// mfc/include/afxpriv.h, reaches mfc/include/afxconv -> atlmfc/include/atlconv.h
+#include <afxpriv.h>
+
 // MFC dependency: 'FILECORE.CPP'
 
 // ---------------
