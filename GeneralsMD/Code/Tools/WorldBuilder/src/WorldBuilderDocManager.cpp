@@ -7,7 +7,8 @@
 #include "WorldBuilderDocManager.h"
 
 //TEST
-#include <stdlib.h>
+//#include <stdlib.h>
+#include <cstdlib>
 
 // Copied from 'DOCMGR.CPP' in the MFC library (1998).
 // Overriding 'CDocTemplate::MatchDocType' to never return 'yesAlreadyOpen' might also work.
