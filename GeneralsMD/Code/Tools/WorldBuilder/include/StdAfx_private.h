@@ -3,6 +3,14 @@
 
 #include "StdAfx.h"
 
+// some other things originally included by '<mfc>/src/stdafx.h' (included by most .cpp files in <mfc>/src):
+// ---
+// '<mfc>/include/afx.h', includes '<standard>/stdlib.h' for '_countof'
+#include <afx.h>
+// '<mfc>/include/afxpriv.h', includes afxconv.h -> atlconv.h
+#include <afxpriv.h>
+// ---
+
 #pragma once
 
 // Think of this file as a stand-in for the MFC library's not-publically-available 'STDAFX.H' file.
