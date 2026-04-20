@@ -13,15 +13,7 @@
 // why is the 'vc6-debug+t+e' build refusing to cooperate here
 #define _countof __crt_countof
 
-
-extern "C++"
-{
-    template <typename _CountofType, size_t _SizeOfArray>
-    char (*__countof_helper(_UNALIGNED _CountofType (&_Array)[_SizeOfArray]))[_SizeOfArray];
-
-    #define __crt_countof(_Array) (sizeof(*__countof_helper(_Array)) + 0)
-}
-
+#define __crt_countof(_Array) (sizeof(_Array) / sizeof(_Array[0]))
 
 // Copied from 'DOCMGR.CPP' in the MFC library (1998).
 // Overriding 'CDocTemplate::MatchDocType' to never return 'yesAlreadyOpen' might also work.
