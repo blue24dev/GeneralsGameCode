@@ -811,7 +811,8 @@ const Coord3D& W3DView::get3DCameraPosition() const
 // Several places like health bars need the old zoom or they will be affected in unintentional ways.
 Real W3DView::getZoomOld() const
 {
-	return getCurrentHeightAboveGround() / (m_groundLevel + TheGlobalData->m_cameraHeight);
+	// follow-up: 'm_groundLevel' -> 'm_pos.z', or often a default of 10
+	return getCurrentHeightAboveGround() / (m_pos.z + TheGlobalData->m_cameraHeight);
 }
 
 //-------------------------------------------------------------------------------------------------
