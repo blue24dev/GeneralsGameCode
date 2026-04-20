@@ -6,6 +6,9 @@
 //#include "resource.h"
 #include "WorldBuilderDocManager.h"
 
+//TEST
+#include <stdlib.h>
+
 // Copied from 'DOCMGR.CPP' in the MFC library (1998).
 // Overriding 'CDocTemplate::MatchDocType' to never return 'yesAlreadyOpen' might also work.
 CDocument* CWorldBuilderDocManager::OpenDocumentFile(LPCTSTR lpszFileName)
