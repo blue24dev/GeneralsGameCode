@@ -13,8 +13,12 @@
 // ---
 
 // I don't know why the 'vc6-debug+t+e' job in github always says '_countof' is undefined.
-// '_countof' was found in stdlib.h, '__crt_countof' was found in 'vcruntime.h' (probably too specific) on my machine and
-// appears to fix the issue.
+// '_countof' was found in stdlib.h, '__crt_countof' was found in 'vcruntime.h' (probably too specific of a file) on
+// my machine and appears to fix the issue.
+// Curiously, the '#ifdef __cplusplus' block's definition caused compile errors:
+//   ...
+//   #define __crt_countof(_Array) (sizeof(*__countof_helper(_Array)) + 0)
+// while the '#else' block, used below for '#define __crt_countof', works.
 //#include <stdlib.h>
 //#include <cstdlib>
 #ifndef _countof
