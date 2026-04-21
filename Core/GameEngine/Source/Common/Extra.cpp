@@ -184,7 +184,8 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	}
 
 	// EXTRA SLOW-DOWN FOR EVERYTHING
-	_this->m_buildTime *= 1.35f;
+	//_this->m_buildTime *= 1.35f;
+	_this->m_buildTime *= 1.60f;
 
 	// Make things that are exclusively dozers cheaper.
 	// This that are dozers and harvesters at the same time (GLA workers) don't need as much of a reduction.
@@ -492,7 +493,8 @@ void automaticWeaponTemplateChanges(WeaponTemplate* _this)
 
 void automaticUpgradeTemplateChanges(UpgradeTemplate* _this)
 {
-	_this->m_buildTime *= 1.1f * 1.35f;
+	//_this->m_buildTime *= 1.1f * 1.35f;
+	_this->m_buildTime *= 1.1f * 1.60f;
 }
 
 // Override the weapon bonuses from the 'GameData.ini' file.
@@ -694,10 +696,16 @@ void automaticGlobalDataChanges()
 Real moneyScalarAdjustmentFilter(const Player* player)
 {
 	// The income bonus for AI players can increase over the course of a long game.
+	/*
 	const UnsignedInt startMin = 8;
 	const UnsignedInt endMin = 80;
 	const Real startModifier = 1.1f;
 	const Real endModifier = 4.0f;
+	*/
+	const UnsignedInt startMin = 10;
+	const UnsignedInt endMin = 80;
+	const Real startModifier = 1.0f;
+	const Real endModifier = 3.0f;
 
 	Real scalar = 1.0f;
 
@@ -752,10 +760,16 @@ UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDepo
 Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 {
 	// AI players can build faster over the course of a long game.
+	/*
 	const UnsignedInt startMin = 8;
 	const UnsignedInt endMin = 80;
 	const Real startModifier = 1.00f;
 	const Real endModifier = 0.76f;
+	*/
+	const UnsignedInt startMin = 8;
+	const UnsignedInt endMin = 80;
+	const Real startModifier = 1.00f;
+	const Real endModifier = 0.85f;
 
 	Int _buildTime = buildTime;
 	if (player->getPlayerType() == PLAYER_COMPUTER)
