@@ -466,7 +466,9 @@ BOOL WbView::OnSetCursor(CWnd* pWnd, UINT nHitTest, UINT message)
 void WbView::OnEditDelete()
 {
 	if (PolygonTool::isActive() || m_showPolygonTriggers) {
-		if (PolygonTool::deleteSelectedPolygon()) {
+		//MODDD - non-static reference now
+		//if (PolygonTool::deleteSelectedPolygon()) {
+		if (WbApp()->getPolygonTool()->deleteSelectedPolygon()) {
 			return;
 		}
 	}
@@ -476,6 +478,12 @@ void WbView::OnEditDelete()
 	// Execute it.
 	pDoc->AddAndDoUndoable(pUndo);
 	REF_PTR_RELEASE(pUndo); // belongs to pDoc now.
+
+	//MODDD
+	if (WbApp()->getCurTool())
+	{
+		WbApp()->getCurTool()->onDelete();
+	}
 }
 
 /** Handles the key down event.  Currently, handles delete keys, and checks

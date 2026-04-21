@@ -863,7 +863,8 @@ void MapObjectProps::_DictToHealth()
 	CWnd* pItem2 = GetDlgItem(IDC_MAPOBJECT_StartingHealthEdit);
 	if (pItem && pItem2) {
 		if (value == 0) {
-			pItem->SelectString(-1, "0%");
+      //MODDD - mistake, the string for '0%' is actually "Dead".
+			pItem->SelectString(-1, "Dead");
 			pItem2->SetWindowText("");
 			pItem2->EnableWindow(FALSE);
 		} else if (value == 25) {
@@ -1140,19 +1141,25 @@ void MapObjectProps::_HealthToDict()
 	static char buf[1024];
 
 	CComboBox *owner = (CComboBox*)GetDlgItem(IDC_MAPOBJECT_StartingHealth);
+  //MODDD - 'edit' declaration moved here, now disabled on setting a non-'Other' option
+	CWnd* edit = GetDlgItem(IDC_MAPOBJECT_StartingHealthEdit);
 	owner->GetWindowText(buf, sizeof(buf)-2);
 	if (strcmp(buf, "Dead") == 0) {
 		value = 0;
+		edit->EnableWindow(FALSE);
 	} else if (strcmp(buf, "25%") == 0) {
 		value = 25;
+		edit->EnableWindow(FALSE);
 	} else if (strcmp(buf, "50%") == 0) {
 		value = 50;
+		edit->EnableWindow(FALSE);
 	} else if (strcmp(buf, "75%") == 0) {
 		value = 75;
+		edit->EnableWindow(FALSE);
 	} else if (strcmp(buf, "100%") == 0) {
 		value = 100;
+		edit->EnableWindow(FALSE);
 	} else if (strcmp(buf, "Other") == 0) {
-		CWnd* edit = GetDlgItem(IDC_MAPOBJECT_StartingHealthEdit);
 		edit->EnableWindow(TRUE);
 		CString cstr;
 		edit->GetWindowText(cstr);
@@ -1161,6 +1168,13 @@ void MapObjectProps::_HealthToDict()
 		}
 		value = atoi(cstr.GetBuffer(0));
 	}
+  //MODDD - adding handling a case nothing is selected in the dropdown in case the field to the right is clicked & clicked away from at that time.
+  // Though this shouldn't be possible anymore.
+  else
+  {
+    return;
+  }
+
 	CWorldBuilderDoc* pDoc = CWorldBuilderDoc::GetActiveDoc();
   if ( pDoc != nullptr )
   {
@@ -2932,14 +2946,48 @@ void MapObjectProps::onMapChangeEnd()
 void MapObjectProps::clearFields()
 {
   CWnd* pItem;
+  CComboBox* pCombo;
+  CButton* pButton;
+
   pItem = GetDlgItem(IDC_MAPOBJECT_Name);
   pItem->SetWindowText("");
-  CComboBox* pComboBox = (CComboBox*)GetDlgItem(IDC_MAPOBJECT_Team);
-  pComboBox->ResetContent();
-  // TODO
+  pCombo = (CComboBox*)GetDlgItem(IDC_MAPOBJECT_Team);
+  pCombo->ResetContent();
+  pCombo = (CComboBox*)GetDlgItem(IDC_MAPOBJECT_Script);
+  pCombo->ResetContent();
+
+  // NOTE: some combobox's options are hardcoded into 'WorldBuilder.rc' and shouldn't be cleared. Just make the current
+  // selection nothing and be done with it.
+  // Deeper explanation: look for the line 'IDD_TeamObjectProperties DLGINIT' in 'WorldBuilder.rc'.
+  // Below 'BEGIN' is this (one line here for clarity):
+  //   IDC_MAPOBJECT_StartingHealth, 0x403, 5, 0, 0x6544, 0x6461, "\000"
+  // Everything after the first 4 params is the contents of the string encoded as hex in as many 4-hex-char params as needed,
+  // ending in a separate "\000" if the last character of the last param otherwise isn't '0x00'.
+  // To get the order right, take each 4-hex param, split it into 2-hex pieces, swap the order, convert to ASCII characters.
+  // Ex: '0x6544' -> '0x44','0x65' -> 'De'.
+  // Done for '0x6461' that comes after: 'ad'. String all 4-hex conversions together: 'Dead'.
+  // ...Thanks .rc files for feeling like a feat of reverse engineering to understand.
+  pCombo = (CComboBox*)GetDlgItem(IDC_MAPOBJECT_StartingHealth);
+  pCombo->SetCurSel(-1);
+
+  pItem = GetDlgItem(IDC_MAPOBJECT_StartingHealthEdit);
+  pItem->SetWindowText("");
+  
+	pButton = (CButton*)GetDlgItem(IDC_MAPOBJECT_Enabled);
+	pButton->SetCheck(false);
 
   // assumption: the fields are cleared because an item isn't selected (editing them wouldn't have any impact)
   setFieldsEnabled(false);
+}
+
+//MODDD
+void MapObjectProps::onDelete()
+{
+  //if (m_dictSource == nullptr)
+  {
+    // go back to no-options
+    WbApp()->getPointerTool()->activate();
+  }
 }
 
 void MapObjectProps::setFieldsEnabled(Bool enabled)
@@ -2949,5 +2997,15 @@ void MapObjectProps::setFieldsEnabled(Bool enabled)
   pItem->EnableWindow(enabled);
   pItem = GetDlgItem(IDC_MAPOBJECT_Team);
   pItem->EnableWindow(enabled);
-  // TODO
+  pItem = GetDlgItem(IDC_MAPOBJECT_Script);
+  pItem->EnableWindow(enabled);
+  pItem = GetDlgItem(IDC_MAPOBJECT_StartingHealth);
+  pItem->EnableWindow(enabled);
+  pItem = GetDlgItem(IDC_MAPOBJECT_StartingHealthEdit);
+  pItem->EnableWindow(enabled);
+  pItem = GetDlgItem(IDC_MAPOBJECT_Enabled);
+  pItem->EnableWindow(enabled);
+
+
+
 }

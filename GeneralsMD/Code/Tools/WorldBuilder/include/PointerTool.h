@@ -54,7 +54,8 @@ protected:
 	HCURSOR m_moveCursor;
 
 protected:
-	void checkForPropertiesPanel();
+	//MODDD - new param 'useNoOptionsFallback'
+	void checkForPropertiesPanel(Bool useNoOptionsFallback = false);
 
 public:
 	PointerTool();
@@ -69,6 +70,10 @@ public:
 	virtual void mouseDown(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldBuilderDoc *pDoc) override;
 	virtual void mouseMoved(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldBuilderDoc *pDoc) override;
 	virtual void mouseUp(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldBuilderDoc *pDoc) override;
+
+	//MODDD
+	virtual void onUpdate() override;
+	virtual void onDelete() override;
 
 public:
 	static void clearSelection(); ///< Clears the selected objects selected flags.

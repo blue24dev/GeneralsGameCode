@@ -96,6 +96,10 @@ PolygonTrigger *WaypointOptions::getSingleSelectedPolygon()
 	return(nullptr);
 }
 
+//MODDD - TODO - I feel this should be overhauled so only 'isWaypointTool' being true/false decides whether to check
+// for 'theMapObj' or 'theTrigger' accordingly. Then receiving one of 'nullptr' gives a blank version of that window.
+// A lot of things between here and the now-'if (isWaypointTool) {' line below could likely be moved to either
+// 'setupUIFor...' helper too.
 void WaypointOptions::updateTheUI()
 {
 	Tool *curTool = ((CWorldBuilderApp*)AfxGetApp())->getCurTool();
@@ -107,21 +111,9 @@ void WaypointOptions::updateTheUI()
 	CWnd *pWnd = this->GetDlgItem(IDC_WAYPOINTNAME_EDIT);
 	CWnd *pCaption1 = this->GetDlgItem(IDC_WAYPOINT_CAPTION1);
 	CWnd *pCaption2 = this->GetDlgItem(IDC_WAYPOINT_PATHLABELS);
-	CWnd *pCaption3 = this->GetDlgItem(65535);
-	CWnd *pCaption4 = this->GetDlgItem(65534);
-	CWnd *pCaption5 = this->GetDlgItem(IDC_LIST_WAYPOINTS);
 
 	CComboBox *pCombo = (CComboBox*)GetDlgItem(IDC_WAYPOINTNAME_EDIT);
 	CComboBox *pListWayptNames = (CComboBox*)GetDlgItem(IDC_LIST_OF_WAYPOINT_NAMES);
-
-	CWnd *pWaypointLabel1 = GetDlgItem(IDC_WAYPOINTLABEL1_EDIT);
-	CWnd *pWaypointLabel2 = GetDlgItem(IDC_WAYPOINTLABEL2_EDIT);
-	CWnd *pWaypointLabel3 = GetDlgItem(IDC_WAYPOINTLABEL3_EDIT);
-
-	CWnd *pWaypointLocation = this->GetDlgItem(IDC_WAYPOINT_LOCATION);
-	CWnd *pWaypointX = GetDlgItem(IDC_WAYPOINT_LOCATIONX);
-	CWnd *pWaypointY = GetDlgItem(IDC_WAYPOINT_LOCATIONY);
-	CButton *pBiDirCheck = (CButton *)GetDlgItem(IDC_WAYPOINT_BIDIRECTIONAL);
 
 	if (theTrigger) {
 		pCaption1->ShowWindow(SW_SHOW);
@@ -198,79 +190,137 @@ void WaypointOptions::updateTheUI()
 		pCombo->ShowWindow(SW_SHOW);
 	}
 
-	if ((theMapObj || isWaypointTool) && pWnd ) {
+	//MODDD - why the 'pWnd' null checks, it was already referred to without null checks at all well before this point
+	// Also, starting the condition with just 'isWaypointTool' to be easier to understand.
+	//if ((theMapObj || isWaypointTool) ) {
+	if (isWaypointTool) {
 		if (theMapObj) {
-			Bool exists;
-			pWnd->EnableWindow();
-			pWnd->SetWindowText(theMapObj->getProperties()->getAsciiString(TheKey_waypointName).str());
-			pCaption1->SetWindowText("Waypoint name:");
-			SetWindowText("Waypoint Options");
-			CWorldBuilderDoc* pDoc = CWorldBuilderDoc::GetActiveDoc();
-
-			/* display location of waypoint */
-
-			pWaypointLocation->ShowWindow(SW_SHOW);
-			pWaypointY->ShowWindow(SW_SHOW);
-			pWaypointX->ShowWindow(SW_SHOW);
-			pListWayptNames->ShowWindow(SW_SHOW);
-			pCaption5->ShowWindow(SW_SHOW);
-			const Coord3D *waypointLocation = getSingleSelectedWaypoint()->getLocation();
-			AsciiString locX, locY;
-
-			// convert the location coordinates to strings
-			locX.format("%f", waypointLocation->x);
-			locY.format("%f", waypointLocation->y);
-
-			// set the window text to reflect the current position of the waypoint
-			pWaypointX->SetWindowText(locX.str());
-			pWaypointY->SetWindowText(locY.str());
-
-			if (pDoc->isWaypointLinked(theMapObj)) {
-				pCaption2->ShowWindow(SW_SHOW);
-				AsciiString name;
-				name = theMapObj->getProperties()->getAsciiString(TheKey_waypointPathLabel1, &exists);
-				pWaypointLabel1->ShowWindow(SW_SHOW);
-				pWaypointLabel1->SetWindowText(name.str());
-				name = theMapObj->getProperties()->getAsciiString(TheKey_waypointPathLabel2, &exists);
-				pWaypointLabel2->ShowWindow(SW_SHOW);
-				pWaypointLabel2->SetWindowText(name.str());
-				name = theMapObj->getProperties()->getAsciiString(TheKey_waypointPathLabel3, &exists);
-				pWaypointLabel3->ShowWindow(SW_SHOW);
-				pWaypointLabel3->SetWindowText(name.str());
-			} else {
-				pCaption2->ShowWindow(SW_HIDE);
-				pWaypointLabel1->ShowWindow(SW_HIDE);
-				pWaypointLabel2->ShowWindow(SW_HIDE);
-				pWaypointLabel3->ShowWindow(SW_HIDE);
-			}
-			if (pBiDirCheck) {
-				pBiDirCheck->ShowWindow(SW_SHOW);
-				Bool checked = theMapObj->getProperties()->getBool(TheKey_waypointPathBiDirectional, &exists);
-				pBiDirCheck->SetCheck(checked);
-			}
+			//MODDD - condensed
+			setupUIForWaypoint(theMapObj);
 		}
-	} else if (theTrigger && pWnd) {
-		pListWayptNames->ShowWindow(SW_HIDE);
-		pWaypointLocation->ShowWindow(SW_HIDE);
-		pWaypointY->ShowWindow(SW_HIDE);
-		pWaypointX->ShowWindow(SW_HIDE);
-		pCaption3->ShowWindow(SW_HIDE);
-		pCaption4->ShowWindow(SW_HIDE);
-		pCaption5->ShowWindow(SW_HIDE);
-		pWaypointLabel1->ShowWindow(SW_HIDE);
-		pWaypointLabel2->ShowWindow(SW_HIDE);
-		pWaypointLabel3->ShowWindow(SW_HIDE);
-		pCaption2->ShowWindow(SW_HIDE);
-		pBiDirCheck->ShowWindow(SW_HIDE);
-		pCaption1->SetWindowText("Area name:");
-		SetWindowText("Area Trigger Options");
-		pWnd->SetWindowText(theTrigger->getTriggerName().str());
-		pWnd->EnableWindow();
-	}	else if (pWnd) {
+	}
+	//MODDD - new separate block for if 'theMapObj' is present
+	else if (theMapObj)
+	{
+		setupUIForWaypoint(theMapObj);
+	}
+	else if (theTrigger) {
+		//MODDD - condensed
+		setupUIForPolygon(theTrigger);
+	}	else {
 		pCaption2->ShowWindow(SW_HIDE);
 		pWnd->EnableWindow(false);
 		pWnd->SetWindowText("");
 	}
+}
+
+//MODDD
+void WaypointOptions::setupUIForWaypoint(MapObject *theMapObj)
+{
+	CWnd *pWnd = this->GetDlgItem(IDC_WAYPOINTNAME_EDIT);
+	CWnd *pCaption1 = this->GetDlgItem(IDC_WAYPOINT_CAPTION1);
+	CWnd *pCaption2 = this->GetDlgItem(IDC_WAYPOINT_PATHLABELS);
+	CWnd *pCaption5 = this->GetDlgItem(IDC_LIST_WAYPOINTS);
+
+	CComboBox *pListWayptNames = (CComboBox*)GetDlgItem(IDC_LIST_OF_WAYPOINT_NAMES);
+
+	CWnd *pWaypointLabel1 = GetDlgItem(IDC_WAYPOINTLABEL1_EDIT);
+	CWnd *pWaypointLabel2 = GetDlgItem(IDC_WAYPOINTLABEL2_EDIT);
+	CWnd *pWaypointLabel3 = GetDlgItem(IDC_WAYPOINTLABEL3_EDIT);
+
+	CWnd *pWaypointLocation = this->GetDlgItem(IDC_WAYPOINT_LOCATION);
+	CWnd *pWaypointX = GetDlgItem(IDC_WAYPOINT_LOCATIONX);
+	CWnd *pWaypointY = GetDlgItem(IDC_WAYPOINT_LOCATIONY);
+	CButton *pBiDirCheck = (CButton *)GetDlgItem(IDC_WAYPOINT_BIDIRECTIONAL);
+
+	Bool exists;
+	pWnd->EnableWindow();
+	pWnd->SetWindowText(theMapObj->getProperties()->getAsciiString(TheKey_waypointName).str());
+	pCaption1->SetWindowText("Waypoint name:");
+	SetWindowText("Waypoint Options");
+	CWorldBuilderDoc* pDoc = CWorldBuilderDoc::GetActiveDoc();
+
+	/* display location of waypoint */
+
+	pWaypointLocation->ShowWindow(SW_SHOW);
+	pWaypointY->ShowWindow(SW_SHOW);
+	pWaypointX->ShowWindow(SW_SHOW);
+	pListWayptNames->ShowWindow(SW_SHOW);
+	pCaption5->ShowWindow(SW_SHOW);
+	const Coord3D *waypointLocation = getSingleSelectedWaypoint()->getLocation();
+	AsciiString locX, locY;
+
+	// convert the location coordinates to strings
+	locX.format("%f", waypointLocation->x);
+	locY.format("%f", waypointLocation->y);
+
+	// set the window text to reflect the current position of the waypoint
+	pWaypointX->SetWindowText(locX.str());
+	pWaypointY->SetWindowText(locY.str());
+
+	if (pDoc->isWaypointLinked(theMapObj)) {
+		pCaption2->ShowWindow(SW_SHOW);
+		AsciiString name;
+		name = theMapObj->getProperties()->getAsciiString(TheKey_waypointPathLabel1, &exists);
+		pWaypointLabel1->ShowWindow(SW_SHOW);
+		pWaypointLabel1->SetWindowText(name.str());
+		name = theMapObj->getProperties()->getAsciiString(TheKey_waypointPathLabel2, &exists);
+		pWaypointLabel2->ShowWindow(SW_SHOW);
+		pWaypointLabel2->SetWindowText(name.str());
+		name = theMapObj->getProperties()->getAsciiString(TheKey_waypointPathLabel3, &exists);
+		pWaypointLabel3->ShowWindow(SW_SHOW);
+		pWaypointLabel3->SetWindowText(name.str());
+	} else {
+		pCaption2->ShowWindow(SW_HIDE);
+		pWaypointLabel1->ShowWindow(SW_HIDE);
+		pWaypointLabel2->ShowWindow(SW_HIDE);
+		pWaypointLabel3->ShowWindow(SW_HIDE);
+	}
+	if (pBiDirCheck) {
+		pBiDirCheck->ShowWindow(SW_SHOW);
+		Bool checked = theMapObj->getProperties()->getBool(TheKey_waypointPathBiDirectional, &exists);
+		pBiDirCheck->SetCheck(checked);
+	}
+}
+
+//MODDD
+void WaypointOptions::setupUIForPolygon(PolygonTrigger* theTrigger)
+{
+	CWnd *pWnd = this->GetDlgItem(IDC_WAYPOINTNAME_EDIT);
+	CWnd *pCaption1 = this->GetDlgItem(IDC_WAYPOINT_CAPTION1);
+	CWnd *pCaption2 = this->GetDlgItem(IDC_WAYPOINT_PATHLABELS);
+	//MODDD - NOTE - what in the heck is that ID? const '65535', '65534'??? why so cryptic
+	CWnd *pCaption3 = this->GetDlgItem(65535);
+	CWnd *pCaption4 = this->GetDlgItem(65534);
+	CWnd *pCaption5 = this->GetDlgItem(IDC_LIST_WAYPOINTS);
+
+	CComboBox *pListWayptNames = (CComboBox*)GetDlgItem(IDC_LIST_OF_WAYPOINT_NAMES);
+
+	CWnd *pWaypointLabel1 = GetDlgItem(IDC_WAYPOINTLABEL1_EDIT);
+	CWnd *pWaypointLabel2 = GetDlgItem(IDC_WAYPOINTLABEL2_EDIT);
+	CWnd *pWaypointLabel3 = GetDlgItem(IDC_WAYPOINTLABEL3_EDIT);
+
+	CWnd *pWaypointLocation = this->GetDlgItem(IDC_WAYPOINT_LOCATION);
+	CWnd *pWaypointX = GetDlgItem(IDC_WAYPOINT_LOCATIONX);
+	CWnd *pWaypointY = GetDlgItem(IDC_WAYPOINT_LOCATIONY);
+	CButton *pBiDirCheck = (CButton *)GetDlgItem(IDC_WAYPOINT_BIDIRECTIONAL);
+
+	pListWayptNames->ShowWindow(SW_HIDE);
+	pWaypointLocation->ShowWindow(SW_HIDE);
+	pWaypointY->ShowWindow(SW_HIDE);
+	pWaypointX->ShowWindow(SW_HIDE);
+	pCaption3->ShowWindow(SW_HIDE);
+	pCaption4->ShowWindow(SW_HIDE);
+	pCaption5->ShowWindow(SW_HIDE);
+	pWaypointLabel1->ShowWindow(SW_HIDE);
+	pWaypointLabel2->ShowWindow(SW_HIDE);
+	pWaypointLabel3->ShowWindow(SW_HIDE);
+	pCaption2->ShowWindow(SW_HIDE);
+	pBiDirCheck->ShowWindow(SW_HIDE);
+	pCaption1->SetWindowText("Area name:");
+	SetWindowText("Area Trigger Options");
+	pWnd->SetWindowText(theTrigger->getTriggerName().str());
+	pWnd->EnableWindow();
 }
 
 void WaypointOptions::update()

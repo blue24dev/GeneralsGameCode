@@ -203,6 +203,9 @@ public:
 
 	//MODDD
 	TNewHeightInfo* getRecentNewHeightInfo();
+	PointerTool* getPointerTool() { return &m_pointerTool; }
+	HandScrollTool* getHandScrollTool() { return &m_handScrollTool; }
+	PolygonTool* getPolygonTool() { return &m_polygonTool; }
 };
 
 inline CWorldBuilderApp *WbApp() { return (CWorldBuilderApp*)::AfxGetApp(); }

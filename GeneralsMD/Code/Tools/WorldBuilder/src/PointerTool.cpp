@@ -36,6 +36,9 @@
 #include "wbview3d.h"
 #include "ObjectTool.h"
 
+//MODDD
+#include "DrawObject.h"
+
 //
 // Static helper functions
 // This function spiders out and un/picks all Waypoints that have some form of indirect contact with this point
@@ -111,7 +114,8 @@ PointerTool::~PointerTool()
 }
 
 /// See if a single obj is selected that has properties.
-void PointerTool::checkForPropertiesPanel()
+//MODDD - new param 'useNoOptionsFallback'
+void PointerTool::checkForPropertiesPanel(Bool useNoOptionsFallback)
 {
 	MapObject *theMapObj = WaypointOptions::getSingleSelectedWaypoint();
 	PolygonTrigger *theTrigger = WaypointOptions::getSingleSelectedPolygon();
@@ -135,10 +139,38 @@ void PointerTool::checkForPropertiesPanel()
 		CMainFrame::GetMainFrame()->showOptionsDialog(IDD_ROAD_OPTIONS);
 		RoadOptions::updateSelection();
 	} else {
-		CMainFrame::GetMainFrame()->showOptionsDialog(IDD_MAPOBJECT_PROPS);
-		MapObjectProps::update();
-		if (theObj) {
-			ObjectOptions::selectObject(theObj);
+
+		//MODDD - don't assume object properties without checking to see at least one thing is selected - 'mapobjectprops'
+		// has checks for selected items like this
+		Bool anyObjSelected = false;
+		for (MapObject *pMapObj = MapObject::getFirstMapObject(); pMapObj; pMapObj = pMapObj->getNext()) {
+			if (!pMapObj->isSelected() || pMapObj->isWaypoint() || pMapObj->isLight()) {
+				continue;
+			}
+			anyObjSelected = true;
+			break;
+		}
+
+		if (anyObjSelected)
+		{
+			//MODDD - original block:
+			// ---
+			CMainFrame::GetMainFrame()->showOptionsDialog(IDD_MAPOBJECT_PROPS);
+			MapObjectProps::update();
+			if (theObj) {
+				ObjectOptions::selectObject(theObj);
+			}
+			// ---
+		}
+		//MODDD - also, use this to replicate retail behavior of at least choosing 'IDD_NO_OPTIONS' if no other options
+		// dialog choice was made. This call was removed from 'PointerTool::activate' (parent 'activate' call) so that
+		// doing that & then choosing a window here doesn't unnecessarily flicker on choosing the same thing if it weren't
+		// for the 'NO_OPTIONS' choice from 'Tool::activate'.
+		// ALSO - ignoring the param for now and always doing this if this point is reached.
+		// Seeing if this is a good idea for now.
+		else /*if (useNoOptionsFallback*/
+		{
+			CMainFrame::GetMainFrame()->showOptionsDialog(IDD_NO_OPTIONS);
 		}
 	}
 }
@@ -170,10 +202,16 @@ void PointerTool::clearSelection() ///< Clears the selected objects selected fla
 /// Activate.
 void PointerTool::activate()
 {
-	Tool::activate();
+	//MODDD - no sense flickering from switching away from the window shown by 'showOptionsDialog(IDD_NO_OPTIONS)' when
+	// 'checkForPropertiesPanel' will make a different 'showOptionsDialog' call soon enough
+	// (disabling the parent 'activate' call, keeping 'setDoBrushFeedback(false)')
+	//Tool::activate();
+	DrawObject::setDoBrushFeedback(false);
+
 	m_mouseUpRotate = false;
 	m_mouseUpMove = false;
-	checkForPropertiesPanel();
+	//MODDD - new arg 'true' for new param 'useNoOptionsFallback'
+	checkForPropertiesPanel(true);
 	CWorldBuilderDoc *pDoc = CWorldBuilderDoc::GetActiveDoc();
 	if (pDoc==nullptr) return;
 	WbView3d *p3View = pDoc->GetActive3DView();
@@ -336,6 +374,14 @@ void PointerTool::mouseDown(TTrackingMode m, CPoint viewPt, WbView* pView, CWorl
 				pickAllWaypointsInPath(pClosestPicked->getWaypointID(), true);
 			}
 
+		}
+		//MODDD - adding an 'else' - if nothing was selected in place of clearing the selection, let the UI know
+		else
+		{
+			//WbApp()->setActiveTool(WbApp()->getPointerTool());
+			//MapObjectProps::update();
+			//CMainFrame::GetMainFrame()->showOptionsDialog(IDD_NO_OPTIONS);
+			WbApp()->getPointerTool()->activate();
 		}
 	}
 
@@ -548,3 +594,15 @@ void PointerTool::mouseUp(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldB
 	checkForPropertiesPanel();
 }
 
+//MODDD
+// NOTE - nothing calls this at the time of writing
+void PointerTool::onUpdate()
+{
+	//WbApp()->getMapObjectProps()->update();
+	MapObjectProps::update();
+}
+
+void PointerTool::onDelete()
+{
+	CMainFrame::GetMainFrame()->getMapObjectProps()->onDelete();
+}

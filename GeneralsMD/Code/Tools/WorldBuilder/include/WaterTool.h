@@ -43,6 +43,10 @@ protected:
 
 	Real	m_currentZ;
 
+	//MODDD
+protected:
+	virtual void updateOptionsDialog() override;
+
 public:
 	static Bool isActive() {return m_water_isActive;};
 
