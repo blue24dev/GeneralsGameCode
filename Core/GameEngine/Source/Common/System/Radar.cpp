@@ -1548,6 +1548,14 @@ void Radar::linkRadarObject( RadarObject *newObj, RadarObject **list )
 //MODDD - overload for below, convenience feature
 void Radar::assignObjectColorToRadarObject( Object *obj )
 {
+	//MODDD - unknown why 'obj->friend_getRadarData()' is sometimes null.
+	// In as-is, the object would be added/removed by 'TheRadar->removeObject(obj)/...->addObject(obj)', so replicating
+	// that by re-adding the object to the radar here if 'getRadarData()' is null should be ok.
+	if (obj->friend_getRadarData() == nullptr)
+	{
+		TheRadar->addObject( obj );
+	}
+
 	assignObjectColorToRadarObject( obj->friend_getRadarData(), obj );
 }
 
