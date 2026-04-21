@@ -76,6 +76,9 @@ protected:
 	Int									 m_originalHeight;
 protected:
 	void updateTheUI();
+	//MODDD
+	void setupUIForWaypoint(MapObject *theMapObj);
+	void setupUIForPolygon(PolygonTrigger* theTrigger);
 	void changeWaypointLabel(Int editControlID, NameKeyType key);
 
 public:

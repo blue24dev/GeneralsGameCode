@@ -41,9 +41,6 @@ class Xfer;
 class File;
 enum ScienceType CPP_11(: Int);
 
-//MODDD
-class BlockParse;
-
 //-------------------------------------------------------------------------------------------------
 /** These control the behavior of loading the INI data into items */
 //-------------------------------------------------------------------------------------------------

@@ -85,7 +85,8 @@ void PolygonTool::deactivate()
 void PolygonTool::activate()
 {
 	CMainFrame::GetMainFrame()->showOptionsDialog(IDD_WAYPOINT_OPTIONS);
-	WaypointOptions::update();
+	//MODDD - replaced all 'WaypointOptions::update' calls with 'updateOptionsDialog' for flexibility
+	updateOptionsDialog();
 	if (!m_poly_curSelectedPolygon) {
 		PointerTool::clearSelection();
 		DrawObject::setDoBrushFeedback(false);
@@ -353,6 +354,12 @@ void PolygonTool::startMouseDown(TTrackingMode m, CPoint viewPt, WbView* pView, 
 			REF_PTR_RELEASE(pUndo); // belongs to pDoc now.
 		}
 	}
+	updateOptionsDialog();
+}
+
+//MODDD
+void PolygonTool::updateOptionsDialog()
+{
 	WaypointOptions::update();
 }
 
@@ -390,7 +397,7 @@ Bool PolygonTool::deleteSelectedPolygon()
 		m_poly_curSelectedPolygon = nullptr;
 		m_poly_dragPointNdx = -1;
 	}
-	WaypointOptions::update();
+	updateOptionsDialog();
 	return true;
 }
 
@@ -472,3 +479,13 @@ void PolygonTool::mouseUp(TTrackingMode m, CPoint viewPt, WbView* pView, CWorldB
 	REF_PTR_RELEASE(m_poly_moveUndoable); // belongs to pDoc now.
 }
 
+//MODDD
+void PolygonTool::onUpdate()
+{
+	// empty
+}
+
+void PolygonTool::onDelete()
+{
+	// empty
+}

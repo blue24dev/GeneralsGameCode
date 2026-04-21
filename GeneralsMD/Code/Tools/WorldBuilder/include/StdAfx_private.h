@@ -3,6 +3,29 @@
 
 #include "StdAfx.h"
 
+// some other things originally included by '<mfc>/src/stdafx.h' (included by most .cpp files in <mfc>/src):
+// ---
+// '<mfc>/include/afx.h', includes '<standard>/stdlib.h' for '_countof'
+// (this did not fix the issue I was having, but the include doesn't hurt regardless)
+#include <afx.h>
+// '<mfc>/include/afxpriv.h', includes afxconv.h -> atlconv.h
+#include <afxpriv.h>
+// ---
+
+// I don't know why the 'vc6-debug+t+e' job in github always says '_countof' is undefined.
+// '_countof' was found in stdlib.h, '__crt_countof' was found in 'vcruntime.h' (probably too specific of a file) on
+// my machine and appears to fix the issue.
+// Curiously, the '#ifdef __cplusplus' block's definition caused compile errors:
+//   ...
+//   #define __crt_countof(_Array) (sizeof(*__countof_helper(_Array)) + 0)
+// while the '#else' block, used below for '#define __crt_countof', works.
+//#include <stdlib.h>
+//#include <cstdlib>
+#ifndef _countof
+	#define _countof __crt_countof
+	#define __crt_countof(_Array) (sizeof(_Array) / sizeof(_Array[0]))
+#endif
+
 #pragma once
 
 // Think of this file as a stand-in for the MFC library's not-publically-available 'STDAFX.H' file.

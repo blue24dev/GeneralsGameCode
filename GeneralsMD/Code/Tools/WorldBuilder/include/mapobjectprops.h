@@ -52,6 +52,7 @@ public:
 	void onMapChangeStart();
 	void onMapChangeEnd();
 	void clearFields();
+	void onDelete();
 	void setFieldsEnabled(Bool enabled);
 
 // Dialog Data

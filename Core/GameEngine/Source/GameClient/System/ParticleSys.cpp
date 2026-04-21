@@ -3391,6 +3391,8 @@ void ParticleSystemManager::xfer( Xfer *xfer )
 	}
 	else
 	{
+		DEBUG_ASSERTCRASH(m_allParticleSystemList.empty(), ("ParticleSystemManager: particle systems list is expected empty at start of xfer-load."));
+
 		const ParticleSystemTemplate *systemTemplate;
 
 		// read each particle system
