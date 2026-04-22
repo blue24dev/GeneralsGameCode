@@ -570,11 +570,33 @@ void GadgetButtonEnableCheckLike( GameWindow *g, Bool makeCheckLike, Bool initia
 		g->winClearStatus( WIN_STATUS_CHECK_LIKE );
 
 	// set the initially checked "state"
+	//MODDD - NOTE - so both normal and 'check-like' buttons use the 'WIN_STATE_SELECTED' bitflag to decide if
+	// they're clicked & held-down, and checked respectively?
 	if( initiallyChecked )
 		BitSet( instData->m_state, WIN_STATE_SELECTED );
 	else
 		BitClear( instData->m_state, WIN_STATE_SELECTED );
 
+}
+
+//MODDD - overload of above that only sets whether a button is 'check-like'
+void GadgetButtonEnableCheckLike( GameWindow *g, Bool makeCheckLike )
+{
+
+	// sanity
+	if( g == nullptr )
+		return;
+
+	// get inst data
+	WinInstanceData *instData = g->winGetInstanceData();
+	if( instData == nullptr )
+		return;
+
+	// make it check like
+	if( makeCheckLike )
+		g->winSetStatus( WIN_STATUS_CHECK_LIKE );
+	else
+		g->winClearStatus( WIN_STATUS_CHECK_LIKE );
 }
 
 // GadgetButtonSetText ========================================================

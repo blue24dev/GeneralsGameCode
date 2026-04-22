@@ -758,7 +758,10 @@ public:
 	void updateBorderColor( Color color) {m_commandBarBorderColor = color;	}
 
 	/// set the command data into the button
+	//MODDD - bugfix for release buttons blocked during dirty updates
+	// new overloard for new param 'canSetButtonSelected'
 	void setControlCommand( GameWindow *button, const CommandButton *commandButton );
+	void setControlCommand( GameWindow *button, const CommandButton *commandButton, Bool canSetButtonSelected );
 
 	void getForegroundMarkerPos(Int *x, Int *y);
 	void getBackgroundMarkerPos(Int *x, Int *y);
@@ -778,6 +781,9 @@ public:
 	void drawSpecialPowerShortcutMultiplierText();
 
 	Bool hasAnyShortcutSelection() const;
+
+	//MODDD
+	friend void previouslyOpen_copy();
 
 protected:
 	void updateRadarAttackGlow ();
@@ -809,8 +815,12 @@ protected:
 	void switchToContext( ControlBarContext context, Drawable *draw );
 
 	/// set the command data into the button
+	//MODDD - bugfix for release buttons blocked during dirty updates
+	// new overloard for new param 'canSetButtonSelected'
 	void setControlCommand( const AsciiString& buttonWindowName, GameWindow *parent,
 											 const CommandButton *commandButton );
+	void setControlCommand( const AsciiString& buttonWindowName, GameWindow *parent,
+											 const CommandButton *commandButton, Bool canSetButtonSelected );
 
 	/// show/hide the portrait window image using the image pointer to set
 	void setPortraitByImage( const Image *image );

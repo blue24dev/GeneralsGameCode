@@ -3119,14 +3119,34 @@ Upgrade *Player::addUpgrade( const UpgradeTemplate *upgradeTemplate, UpgradeStat
 	// set the new status for the upgrade
 	u->setStatus( status );
 
+	//MODDD - see note below
+	Bool upgradesAffected = FALSE;
+
 	// Update our Bitmasks
 	const UpgradeMaskType& newMask = upgradeTemplate->getUpgradeMask();
 	if( status == UPGRADE_STATUS_IN_PRODUCTION )
 	{
+		//MODDD
+		//if (!m_upgradesInProgress.test(newBit))
+		if (m_upgradesInProgress.getFlip().anyIntersectionWith(newMask))
+		{
+			upgradesAffected = TRUE;
+		}
+		
 		m_upgradesInProgress.set( newMask );
 	}
 	else if( status == UPGRADE_STATUS_COMPLETE )
 	{
+		//MODDD
+		if (m_upgradesInProgress.anyIntersectionWith(newMask))
+		{
+			upgradesAffected = TRUE;
+		}
+		else if (m_upgradesCompleted.getFlip().anyIntersectionWith(newMask))
+		{
+			upgradesAffected = TRUE;
+		}
+
 		m_upgradesInProgress.clear( newMask );
 		m_upgradesCompleted.set( newMask );
 		//MODDD
@@ -3135,7 +3155,8 @@ Upgrade *Player::addUpgrade( const UpgradeTemplate *upgradeTemplate, UpgradeStat
 		}
 	}
 
-	if( ThePlayerList->getLocalPlayer() == this )
+	//MODDD - no need to do this unless the current upgrade had an effect (ex: not already present - happens for some automatic things)
+	if( ThePlayerList->getLocalPlayer() == this && upgradesAffected )
 	{
 		TheControlBar->markUIDirty();
 	}
