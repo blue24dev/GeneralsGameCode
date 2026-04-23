@@ -375,6 +375,9 @@ UpgradeTemplate *UpgradeCenter::newUpgrade( const AsciiString& name )
 	newUpgrade->setUpgradeName( name );
 	newUpgrade->setUpgradeNameKey( TheNameKeyGenerator->nameToKey( name ) );
 
+	//MODDD - let the upgrade be aware of the bit used for its mask
+	newUpgrade->setUpgradeBit(m_nextTemplateMaskBit);
+
 	// Make a unique bitmask for this new template by keeping track of what bits have been assigned
 	// damn MSFT! proper ANSI syntax for a proper 64-bit constant is "1LL", but MSVC doesn't recognize it
 	UpgradeMaskType newMask;

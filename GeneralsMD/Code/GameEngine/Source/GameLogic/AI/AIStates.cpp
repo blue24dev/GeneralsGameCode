@@ -5272,7 +5272,9 @@ StateReturnType AIAttackFireWeaponState::update()
 		rather than addressing the situation, we just punt and wait for it to clear
 		up on its own.
 	*/
-	if (m_att && !m_att->isWeaponSlotOkToFire(wslot))
+	//MODDD - 'm_att' null check removed, it appears it is impossible for it to be null by design
+	//if (m_att && !m_att->isWeaponSlotOkToFire(wslot))
+	if (!m_att->isWeaponSlotOkToFire(wslot))
 	{
 		return STATE_FAILURE;
 	}
@@ -5289,6 +5291,27 @@ StateReturnType AIAttackFireWeaponState::update()
 
 
 		obj->fireCurrentWeapon(victim);
+
+		//MODDD - bugfix for a weapon deleting itself in 'fireWeapon'.
+		// 'fireCurrentWeapon' calls 'HandleWeaponFireQueuedOCL', a utility I added to make it very obvious when a weapon's
+		// fire-OCL is being applied, since this can change the current weaponset (cause any references to existing 'Weapon'
+		// memory within that old weaponset to be invalidated if deleted memory is immediately written with '0xdeadbeef').
+		// So, re-get the current weapon just in case.
+		// A way to tell if this is necessary by whether 'HandleWeaponFireQueuedOCL' changed the current weapon set might be nice,
+		// but I don't think this should have any side effects. I believe the original dev's assumption was 'fireCurrentWeapon'
+		// above doesn't change the currently equipped weapon anyway so that behavior works like it should.
+		// ---
+		weapon = obj->getCurrentWeapon(&wslot);
+		if (weapon == nullptr)
+		{
+			// Just call it 'success' like after any script below would have, let somewhere else deal with finding a weapon if
+			// wanted.
+			// Note that 'weapon->getStatus() != READY_TO_FIRE' doesn't need to be checked because this is for adjusting the
+			// current weapon after firing to work seamlessly for next time - N/A if firing the weapon radically changes how
+			// the current weapon works (i.e. changes the weapon set being used).
+			return STATE_SUCCESS;
+		}
+		// ---
 
 		//Kris: October 21, 2003 - Patch 1.01
 		//Fixes cases where some units couldn't transfer their attack to a different object. One example was Colonel Burton attacking
@@ -5310,7 +5333,9 @@ StateReturnType AIAttackFireWeaponState::update()
 			(victim->isDestroyed() || victim->isEffectivelyDead() || (victim->isKindOf(KINDOF_MINE) && victim->testStatus(OBJECT_STATUS_MASKED)))
 		)
 		{
-			const Coord3D* originalVictimPos = m_att ? m_att->getOriginalVictimPos() : nullptr;
+			//MODDD - 'm_att' null check removed
+			//const Coord3D* originalVictimPos = m_att ? m_att->getOriginalVictimPos() : nullptr;
+			const Coord3D* originalVictimPos = m_att->getOriginalVictimPos();
 			if (originalVictimPos)
 			{
 				// note that it is important to use getLastCommandSource here; this allows

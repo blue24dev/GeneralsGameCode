@@ -129,6 +129,42 @@ static void commandButtonTooltip(GameWindow *window,
 	TheControlBar->showBuildTooltipLayout(window);
 }
 
+
+//MODDD - bugfix for release buttons blocked during dirty updates
+// Something cheezy: record whether a window was open at the time of the dirty update, since an early
+// 'switchToContext( CB_CONTEXT_NONE...)' call will make checking for visibility the usual way ineffective,
+// even if the window is about to be set to what was visible to the user at the time.
+// Any use of these methods won't be tagged since it's pretty obvious they're from me at this point.
+//Bool openPreviousFrame[ NUM_CONTEXT_PARENTS ];
+Bool previously_promotionMenuOpen = FALSE;
+ControlBarContext previously_contextOpen = CB_CONTEXT_NONE;
+void previouslyOpen_reset();
+void previouslyOpen_init()
+{
+	previouslyOpen_reset();
+}
+void previouslyOpen_reset()
+{
+	/*
+	for(int i = 0; i < NUM_CONTEXT_PARENTS; ++i)
+	{
+		openPreviousFrame[i] = FALSE;
+	}
+	*/
+}
+void previouslyOpen_copy()
+{
+	/*
+	for(int i = 0; i < NUM_CONTEXT_PARENTS; ++i)
+	{
+		openPreviousFrame[i] = TheControlBar->m_contextParent[i]->winIsHidden();
+	}
+	*/
+	previously_promotionMenuOpen = !TheControlBar->m_contextParent[CP_PURCHASE_SCIENCE]->winIsHidden();
+	previously_contextOpen = TheControlBar->m_currContext;
+}
+
+
 /// mark the UI as dirty so the context of everything is re-evaluated
 void ControlBar::markUIDirty()
 {
@@ -206,6 +242,10 @@ void ControlBar::populatePurchaseScience( Player* player )
 			commandSet3 == nullptr ||
 			commandSet8 == nullptr )
 		return;
+	
+	//MODDD - bugfix for release buttons blocked during dirty updates
+	// These 'setControlCommand' use a custom check to determine if the promotion point menu was freshly shown.
+	Bool canSetButtonSelected = ((!TheControlBar->m_contextParent[CP_PURCHASE_SCIENCE]->winIsHidden()) != previously_promotionMenuOpen);
 
 	// populate the button with commands defined
 	const CommandButton *commandButton;
@@ -231,7 +271,9 @@ void ControlBar::populatePurchaseScience( Player* player )
 
 			// populate the visible button with data from the command button
 
-			setControlCommand( m_sciencePurchaseWindowsRank1[ i ], commandButton );
+			//MODDD - bugfix for release buttons blocked during dirty updates
+			setControlCommand( m_sciencePurchaseWindowsRank1[ i ], commandButton, canSetButtonSelected );
+
 			if (!commandButton->getScienceVec().empty())
 			{
 				ScienceType	st = commandButton->getScienceVec()[ 0 ];
@@ -290,8 +332,10 @@ void ControlBar::populatePurchaseScience( Player* player )
 			m_sciencePurchaseWindowsRank3[ i ]->winEnable( FALSE );
 
 			// populate the visible button with data from the command button
+			
+			//MODDD - bugfix for release buttons blocked during dirty updates
+			setControlCommand( m_sciencePurchaseWindowsRank3[ i ], commandButton, canSetButtonSelected);
 
-			setControlCommand( m_sciencePurchaseWindowsRank3[ i ], commandButton );
 			ScienceType	st = SCIENCE_INVALID;
 			ScienceVec sv = commandButton->getScienceVec();
 			if (! sv.empty())
@@ -354,7 +398,9 @@ void ControlBar::populatePurchaseScience( Player* player )
 
 			// populate the visible button with data from the command button
 
-			setControlCommand( m_sciencePurchaseWindowsRank8[ i ], commandButton );
+			//MODDD - bugfix for release buttons blocked during dirty updates
+			setControlCommand( m_sciencePurchaseWindowsRank8[ i ], commandButton, canSetButtonSelected );
+
 			ScienceType	st = SCIENCE_INVALID;
 			st = commandButton->getScienceVec()[ 0 ];
 			if( player->isScienceDisabled( st ) )
@@ -1051,6 +1097,8 @@ void ControlBarPopupDescriptionUpdateFunc( WindowLayout *layout, void *param );
 //-------------------------------------------------------------------------------------------------
 void ControlBar::init()
 {
+	previouslyOpen_init();
+
 	INI ini;
 	m_sideSelectAnimateDown = FALSE;
 	// load the command buttons
@@ -1724,6 +1772,7 @@ void ControlBar::onPlayerSciencePurchasePointsChanged(const Player *p)
 void ControlBar::evaluateContextUI()
 {
 
+	previouslyOpen_copy();
 	//
 	// the UI has been "evaluated" and is now displaying the most current and correct
 	// information to the player
@@ -2132,6 +2181,11 @@ CBCommandStatus ControlBar::processContextSensitiveButtonTransition( GameWindow 
 //-------------------------------------------------------------------------------------------------
 void ControlBar::switchToContext( ControlBarContext context, Drawable *draw )
 {
+	//MODDD - moved from below
+	// ---
+	// save our context
+	m_currContext = context;
+	// ---
 
 	// restore the right hud to a plain window
 	setPortraitByObject( nullptr );
@@ -2388,9 +2442,11 @@ void ControlBar::switchToContext( ControlBarContext context, Drawable *draw )
 
 	}
 
+	//MODDD - moved up so this can be checked sooner
+	/*
 	// save our context
 	m_currContext = context;
-
+	*/
 }
 
 void ControlBar::setCommandBarBorder( GameWindow *button, CommandButtonMappedBorderType type)
@@ -2431,11 +2487,18 @@ void ControlBar::setCommandBarBorder( GameWindow *button, CommandButtonMappedBor
 	}
 }
 
+//MODDD - overload to call below
+void ControlBar::setControlCommand( GameWindow *button, const CommandButton *commandButton )
+{
+	setControlCommand(button, commandButton, m_currContext != previously_contextOpen);
+}
 
 //-------------------------------------------------------------------------------------------------
 /** Set the command data into the control */
 //-------------------------------------------------------------------------------------------------
-void ControlBar::setControlCommand( GameWindow *button, const CommandButton *commandButton )
+//MODDD - bugfix for release buttons blocked during dirty updates
+// new param 'canSetButtonSelected'
+void ControlBar::setControlCommand( GameWindow *button, const CommandButton *commandButton, Bool canSetButtonSelected )
 {
 
 	// the window must be a gadget button
@@ -2460,10 +2523,37 @@ void ControlBar::setControlCommand( GameWindow *button, const CommandButton *com
 	// set the button gadget control to be a normal button or a check like button if
 	// the command says it needs one
 	//
+	//MODDD - bugfix for release buttons blocked during dirty updates
+	// Note that the 'initiallyChecked' param in 'GadgetButtonEnableCheckLike' is also used when clicking & holding down
+	// the mouse on a button. If a dirty-flag-induced update causes here to be reached while holding down the mouse on a
+	// button, it will be reset, so when the user actually releases the mouse, it seems like the input was ignored.
+	// Let the caller specify whether this call shouldn't set that part of the button.
+	// This means it looks like there never was a way for checked buttons to preserve their current checked value through
+	// dirty updates, since 'initiallyChecked' also sets whether it is checked at the moment, not just initially.
+	// UPDATE - see the 'ControlBar::updateContextCommand()' -> 'GadgetCheckLikeButtonSetVisualCheck' call.
+	// After any 'GadgetButtonEnableCheckLike' below that sets the checked state to FALSE, '...setVisualCheck' will set the
+	// checked state back to what it should be. Ex: selected weapon to decide which button should be checked or unchecked.
+	//MODDD - TODO - what if a button was enabled previously but is now disabled / greyed-out, and was held down at the time?
+	// Would a release-click properly be blocked or go through anyway?
+	// (this is a better question for other buttons, since promotion buttons don't tend to suddenly become disabled)
+	if (canSetButtonSelected)
+	{
+	// Retail way: always set 'initiallyChecked=FALSE' (for non-check-like buttons, whether they are mouse-down'd on)
 	if( BitIsSet( commandButton->getOptions(), CHECK_LIKE ))
 		GadgetButtonEnableCheckLike( button, TRUE, FALSE );
 	else
 		GadgetButtonEnableCheckLike( button, FALSE, FALSE );
+	}
+	else
+	{
+	// Likely a dirty update on the same screen, though even legitimate updates from a typical upgrade completing
+	// not resetting a button's 'selected' state should be harmless (TODO - curious if that's ever not the case).
+	// Again, this only applies to non-check-like buttons, check-like buttons still involve 'initiallyChecked' here
+	if( BitIsSet( commandButton->getOptions(), CHECK_LIKE ))
+		GadgetButtonEnableCheckLike( button, TRUE, FALSE );
+	else
+		GadgetButtonEnableCheckLike( button, FALSE );
+	}
 
 	//
 	// set the imagry ... note that for 99% of the command buttons it's sufficient to specify
@@ -2539,13 +2629,22 @@ void ControlBar::postProcessCommands()
 	}
 }
 
+//MODDD - overload to call below
+void ControlBar::setControlCommand( const AsciiString& buttonWindowName, GameWindow *parent,
+																		const CommandButton *commandButton )
+{
+	setControlCommand(buttonWindowName, parent, commandButton, m_currContext != previously_contextOpen);
+}
+
 //-------------------------------------------------------------------------------------------------
 /** set the command for the button identified by the window name
 	* NOTE that parent may be nullptr, it only helps to speed up the search for a particular
 	* window ID */
 //-------------------------------------------------------------------------------------------------
+//MODDD - bugfix for release buttons blocked during dirty updates
+// new param 'canSetButtonSelected'
 void ControlBar::setControlCommand( const AsciiString& buttonWindowName, GameWindow *parent,
-																		const CommandButton *commandButton )
+																		const CommandButton *commandButton, Bool canSetButtonSelected )
 {
 	UnsignedInt winID = TheNameKeyGenerator->nameToKey( buttonWindowName );
 	GameWindow *win = TheWindowManager->winGetWindowFromId( parent, winID );
@@ -2559,7 +2658,7 @@ void ControlBar::setControlCommand( const AsciiString& buttonWindowName, GameWin
 	}
 
 	// call the workhorse
-	setControlCommand( win, commandButton );
+	setControlCommand( win, commandButton, canSetButtonSelected );
 
 }
 
@@ -2950,12 +3049,19 @@ void ControlBar::showPurchaseScience()
 
 	if(TheScriptEngine->isGameEnding())
 		return;
+
+	//MODDD - moved from below
+	m_contextParent[ CP_PURCHASE_SCIENCE ]->winHide(FALSE);
+
 	populatePurchaseScience(ThePlayerList->getLocalPlayer());
 	m_genStarFlash = FALSE;
 	if(!m_contextParent[ CP_PURCHASE_SCIENCE ]->winIsHidden())
 		return;
 	//switchToContext(CB_CONTEXT_PURCHASE_SCIENCE, nullptr);
-	m_contextParent[ CP_PURCHASE_SCIENCE ]->winHide(FALSE);
+
+	//MODDD - moved to above
+	//m_contextParent[ CP_PURCHASE_SCIENCE ]->winHide(FALSE);
+
 	if (TheGlobalData->m_animateWindows)
 		TheTransitionHandler->setGroup("GenExpFade");
 		//m_generalsScreenAnimate->registerGameWindow( m_contextParent[ CP_PURCHASE_SCIENCE ], WIN_ANIMATION_SLIDE_TOP, TRUE, 200 );
