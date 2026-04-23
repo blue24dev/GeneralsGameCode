@@ -203,6 +203,10 @@ public:
 	void friend_makeVeterancyUpgrade(VeterancyLevel v);
 
 	//MODDD
+	Int getUpgradeBit() const { return m_upgradeBit; }
+	void setUpgradeBit( Int upgradeBit ) { m_upgradeBit = upgradeBit; }
+
+	//MODDD
 #if CUSTOM_ATTRIBUTE_CHANGES
 	friend void automaticUpgradeTemplateChanges(UpgradeTemplate* _this);
 #endif
@@ -215,6 +219,10 @@ protected:
 	AsciiString m_displayNameLabel;			///< String manager label for UI display name
 	Real m_buildTime;										///< database # for how long it takes to "build" this
 	Int m_cost;													///< cost for production
+	
+	//MODDD
+	Int m_upgradeBit;
+
 	UpgradeMaskType m_upgradeMask;			///< Unique bitmask for this upgrade template
 	AudioEventRTS	m_researchSound;			///< Sound played when upgrade researched.
 	AudioEventRTS	m_unitSpecificSound;	///< Secondary sound played when upgrade researched.

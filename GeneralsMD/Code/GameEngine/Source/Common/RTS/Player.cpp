@@ -1165,7 +1165,13 @@ void Player::becomingLocalPlayer(Bool yes)
 		}
 
 		if( TheControlBar )
+		{
+			//MODDD - why was this missing a local player check?
+			if( ThePlayerList->getLocalPlayer() == this )
+			{
 			TheControlBar->markUIDirty();
+			}
+		}
 	}
 	else
 	{
@@ -1689,7 +1695,13 @@ void Player::onStructureConstructionComplete( Object *builder, Object *structure
 
 	// the GUI needs to re-evaluate the information being displayed to the user now
 	if( TheControlBar )
+	{
+		//MODDD - why was this missing a local player check?
+		if( ThePlayerList->getLocalPlayer() == this )
+		{
 		TheControlBar->markUIDirty();
+		}
+	}
 
 	// This object may require us to play some EVA sounds.
 	Player *localPlayer = ThePlayerList->getLocalPlayer();
@@ -2622,7 +2634,11 @@ Bool Player::addScience(ScienceType science)
 			}
 		}
 
+		//MODDD - why was this missing a local player check?
+		if( ThePlayerList->getLocalPlayer() == this )
+		{
 		TheControlBar->markUIDirty();// Refresh the UI to show new cameos, etc
+		}
 
 	}
 
@@ -3123,39 +3139,48 @@ Upgrade *Player::addUpgrade( const UpgradeTemplate *upgradeTemplate, UpgradeStat
 	Bool upgradesAffected = FALSE;
 
 	// Update our Bitmasks
-	const UpgradeMaskType& newMask = upgradeTemplate->getUpgradeMask();
+	//MODDD - just get it if needed now.
+	//const UpgradeMaskType& newMask = upgradeTemplate->getUpgradeMask();
 	if( status == UPGRADE_STATUS_IN_PRODUCTION )
 	{
-		//MODDD
-		//if (!m_upgradesInProgress.test(newBit))
-		if (m_upgradesInProgress.getFlip().anyIntersectionWith(newMask))
+		//MODDD - also, at this rate, may as well only do the 'm_upgradesInProgress.set' call if it would look like it
+		// would have any effect.
+		//if (m_upgradesInProgress.getFlip().anyIntersectionWith(newMask))
+		if (!m_upgradesInProgress.test(upgradeTemplate->getUpgradeBit()))
 		{
 			upgradesAffected = TRUE;
+			//MODDD - 'newMask' -> 'upgradeTemplate->getUpgradeMask()'
+			m_upgradesInProgress.set( upgradeTemplate->getUpgradeMask() );
 		}
-		
-		m_upgradesInProgress.set( newMask );
 	}
 	else if( status == UPGRADE_STATUS_COMPLETE )
 	{
 		//MODDD
-		if (m_upgradesInProgress.anyIntersectionWith(newMask))
+		//if (m_upgradesInProgress.anyIntersectionWith(newMask))
+		if (m_upgradesInProgress.test(upgradeTemplate->getUpgradeBit()))
 		{
 			upgradesAffected = TRUE;
+			//MODDD
+			m_upgradesInProgress.clear( upgradeTemplate->getUpgradeMask() );
 		}
-		else if (m_upgradesCompleted.getFlip().anyIntersectionWith(newMask))
+		
+		//MODDD
+		//if (m_upgradesCompleted.getFlip().anyIntersectionWith(newMask))
+		if (!m_upgradesCompleted.test(upgradeTemplate->getUpgradeBit()))
 		{
 			upgradesAffected = TRUE;
+			//MODDD
+			m_upgradesCompleted.set( upgradeTemplate->getUpgradeMask() );
 		}
 
-		m_upgradesInProgress.clear( newMask );
-		m_upgradesCompleted.set( newMask );
-		//MODDD
-		if (!objectInitLock) {
+		//MODDD - include 'upgradesAffected'
+		if (!objectInitLock && upgradesAffected) {
 			onUpgradeCompleted( upgradeTemplate );
 		}
 	}
 
-	//MODDD - no need to do this unless the current upgrade had an effect (ex: not already present - happens for some automatic things)
+	//MODDD - include 'upgradesAffected'
+	// no need to do this unless the current upgrade had an effect (ex: not already present - happens for some automatic things)
 	if( ThePlayerList->getLocalPlayer() == this && upgradesAffected )
 	{
 		TheControlBar->markUIDirty();
@@ -3205,28 +3230,50 @@ void Player::removeUpgrade( const UpgradeTemplate *upgradeTemplate )
 {
 	Upgrade *upgrade = findUpgrade( upgradeTemplate );
 
-	if( upgrade )
+	//MODDD - return early instead on null
+	if( upgrade == nullptr )
 	{
-		if( upgrade->friend_getNext() )
-			upgrade->friend_getNext()->friend_setPrev( upgrade->friend_getPrev() );
-		if( upgrade->friend_getPrev() )
-			upgrade->friend_getPrev()->friend_setNext( upgrade->friend_getNext() );
-		else
-			m_upgradeList = upgrade->friend_getNext();
-
-		// Clear this upgrade's bits from our mind
-		const UpgradeMaskType& oldMask = upgradeTemplate->getUpgradeMask();
-		m_upgradesInProgress.clear( oldMask );
-		m_upgradesCompleted.clear( oldMask );
-
-		if( upgrade->getStatus() == UPGRADE_STATUS_COMPLETE )
-			onUpgradeRemoved();
-
-	if( ThePlayerList->getLocalPlayer() == this )
-	{
-		TheControlBar->markUIDirty();
+		return;
 	}
 
+	//MODDD - NOTE - no 'else' was intended at the 2nd 'if' line, right?
+	// Hard to tell if that missing is deliberate or not.
+	if( upgrade->friend_getNext() )
+		upgrade->friend_getNext()->friend_setPrev( upgrade->friend_getPrev() );
+	if( upgrade->friend_getPrev() )
+		upgrade->friend_getPrev()->friend_setNext( upgrade->friend_getNext() );
+	else
+		m_upgradeList = upgrade->friend_getNext();
+	
+	//MODDD
+	Bool upgradesAffected = FALSE;
+
+	// Clear this upgrade's bits from our mind
+	//MODDD - get this as needed instead
+	//const UpgradeMaskType& oldMask = upgradeTemplate->getUpgradeMask();
+
+	//MODDD - check for whether this operation would have any effect
+	if (m_upgradesInProgress.test(upgradeTemplate->getUpgradeBit()))
+	{
+		upgradesAffected = TRUE;
+		//MODDD - 'oldMask' -> 'upgradeTemplate->getUpgradeMask()'
+		m_upgradesInProgress.clear( upgradeTemplate->getUpgradeMask() );
+	}
+	if (m_upgradesCompleted.test(upgradeTemplate->getUpgradeBit()))
+	{
+		upgradesAffected = TRUE;
+		//MODDD - 'oldMask' -> 'upgradeTemplate->getUpgradeMask()'
+		m_upgradesCompleted.clear( upgradeTemplate->getUpgradeMask() );
+	}
+
+	//MODDD - include 'upgradesAffected'
+	if( upgrade->getStatus() == UPGRADE_STATUS_COMPLETE && upgradesAffected )
+		onUpgradeRemoved();
+
+	//MODDD
+	if( ThePlayerList->getLocalPlayer() == this && upgradesAffected )
+	{
+		TheControlBar->markUIDirty();
 	}
 
 }
