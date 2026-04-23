@@ -21,6 +21,8 @@ class Weapon;
 class WeaponBonus;
 struct upgradePair;
 
+extern int g_dummy;
+
 //MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
 void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCreateCalls = FALSE);
 // General utilities I came up with to condense some common script. 'common/GameUtility.h' might also be a good place for this.

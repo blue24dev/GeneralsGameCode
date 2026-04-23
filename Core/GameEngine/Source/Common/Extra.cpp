@@ -16,6 +16,13 @@
 #include "GameLogic/Module/CreateModule.h"
 #include "GameLogic/Module/SpecialPowerModule.h"
 
+// Set this in code to let breakpoints work in release mode, as opposed to the usual 'int x; x = 4;' thing I usually do.
+// Ex:
+//   if (obj->getTemplate()->getName() == "xyz") {
+//     g_dummy = 4;
+//   }
+int g_dummy = 0;
+
 //MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
 // Condensed several snippets of copied script into this, with a few additions to fix the bug on buildings
 // with non-shared special powers (ex: strategy center, battle plans & CIA intelligence) starting with
@@ -984,6 +991,7 @@ void printItemsInContainedList(std::ofstream& outputStream, const Object* objCon
 			if (containedObj->getID() == objToLookFor->getID())
 			{
 				outputStream << "^^^ piicl_OBJTOLOOKFOR ^^^";
+				objToLookForFound = TRUE;
 			}
 		}
 	}

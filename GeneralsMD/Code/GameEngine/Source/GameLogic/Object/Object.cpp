@@ -1199,6 +1199,12 @@ Int Object::getTransportSlotCount() const
 	return count;
 }
 
+//MODDD - implementation moved from .cpp for easier debugging checks if needed
+void Object::friend_setContainedBy( Object *containedBy )
+{
+	m_containedBy = containedBy;
+}
+
 const Object* Object::getEnclosingContainedBy() const
 {
 	for (const Object* child = this, *container = getContainedBy(); container; child = container, container = container->getContainedBy())

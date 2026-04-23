@@ -136,8 +136,8 @@ static void commandButtonTooltip(GameWindow *window,
 // even if the window is about to be set to what was visible to the user at the time.
 // Any use of these methods won't be tagged since it's pretty obvious they're from me at this point.
 //Bool openPreviousFrame[ NUM_CONTEXT_PARENTS ];
-Bool previously_promotionMenuOpen = FALSE;
-ControlBarContext previously_contextOpen = CB_CONTEXT_NONE;
+Bool g_controlBar_previouslyOpen_promotionMenu = FALSE;
+ControlBarContext g_controlBar_previouslyOpen_context = CB_CONTEXT_NONE;
 void previouslyOpen_reset();
 void previouslyOpen_init()
 {
@@ -160,8 +160,8 @@ void previouslyOpen_copy()
 		openPreviousFrame[i] = TheControlBar->m_contextParent[i]->winIsHidden();
 	}
 	*/
-	previously_promotionMenuOpen = !TheControlBar->m_contextParent[CP_PURCHASE_SCIENCE]->winIsHidden();
-	previously_contextOpen = TheControlBar->m_currContext;
+	g_controlBar_previouslyOpen_promotionMenu = !TheControlBar->m_contextParent[CP_PURCHASE_SCIENCE]->winIsHidden();
+	g_controlBar_previouslyOpen_context = TheControlBar->m_currContext;
 }
 
 
@@ -245,7 +245,7 @@ void ControlBar::populatePurchaseScience( Player* player )
 	
 	//MODDD - bugfix for release buttons blocked during dirty updates
 	// These 'setControlCommand' use a custom check to determine if the promotion point menu was freshly shown.
-	Bool canSetButtonSelected = ((!TheControlBar->m_contextParent[CP_PURCHASE_SCIENCE]->winIsHidden()) != previously_promotionMenuOpen);
+	Bool canSetButtonSelected = ((!TheControlBar->m_contextParent[CP_PURCHASE_SCIENCE]->winIsHidden()) != g_controlBar_previouslyOpen_promotionMenu);
 
 	// populate the button with commands defined
 	const CommandButton *commandButton;
@@ -2490,7 +2490,7 @@ void ControlBar::setCommandBarBorder( GameWindow *button, CommandButtonMappedBor
 //MODDD - overload to call below
 void ControlBar::setControlCommand( GameWindow *button, const CommandButton *commandButton )
 {
-	setControlCommand(button, commandButton, m_currContext != previously_contextOpen);
+	setControlCommand(button, commandButton, m_currContext != g_controlBar_previouslyOpen_context);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -2633,7 +2633,7 @@ void ControlBar::postProcessCommands()
 void ControlBar::setControlCommand( const AsciiString& buttonWindowName, GameWindow *parent,
 																		const CommandButton *commandButton )
 {
-	setControlCommand(buttonWindowName, parent, commandButton, m_currContext != previously_contextOpen);
+	setControlCommand(buttonWindowName, parent, commandButton, m_currContext != g_controlBar_previouslyOpen_context);
 }
 
 //-------------------------------------------------------------------------------------------------
