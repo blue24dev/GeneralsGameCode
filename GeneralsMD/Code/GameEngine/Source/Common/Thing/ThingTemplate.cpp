@@ -1143,11 +1143,7 @@ void ThingTemplate::validateAudio()
 void ThingTemplate::validate()
 {
 	//MODDD
-#if CUSTOM_ATTRIBUTE_CHANGES
   automaticThingTemplateChanges(this);
-#endif
-
-	//MODDD
 	determineHasInactiveBodyModule();
 	makeNonCivilianGarrisonableStructureCapturableHack();
 
