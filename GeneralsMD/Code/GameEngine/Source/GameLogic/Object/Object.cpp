@@ -1199,6 +1199,12 @@ Int Object::getTransportSlotCount() const
 	return count;
 }
 
+//MODDD - implementation moved from .cpp for easier debugging checks if needed
+void Object::friend_setContainedBy( Object *containedBy )
+{
+	m_containedBy = containedBy;
+}
+
 const Object* Object::getEnclosingContainedBy() const
 {
 	for (const Object* child = this, *container = getContainedBy(); container; child = container, container = container->getContainedBy())
@@ -5711,6 +5717,13 @@ void Object::onDie( DamageInfo *damageInfo )
 		}
 		else if (isKindOf(KINDOF_INFANTRY) || isKindOf(KINDOF_VEHICLE))
 		{
+			//MODDD - TODO - a way to exclude something that is clearly a mine should be possible, without needing 'KINDOF_MINE'
+			// in case a mod has a reason for avoiding that type (some implied behavior that might not be wanted).
+			// Maybe a 'KINDOF_NOT_UNIT' to skip this notification if this point is reached?
+			// Same for being destroyed (don't add 1 to 'destroyed units' for the attacking player).
+			// Kills from a mine can still go to the owner's score, however (& still count for the producing unit's veterancy,
+			// assuming that info's preserved through OCL lists or whatever levels of indirection).
+
 			TheEva->setShouldPlay(EVA_UnitLost);
 			//Create a fake radar event so the user can use the spacebar to quickly jump to this!
 			TheRadar->tryEvent( RADAR_EVENT_FAKE, getPosition() );

@@ -635,9 +635,7 @@ public:
 	const WeaponTemplateSetVector& getWeaponTemplateSets() const {return m_weaponTemplateSets;}
 
 	//MODDD
-#if CUSTOM_ATTRIBUTE_CHANGES
 	friend void automaticThingTemplateChanges(ThingTemplate* _this);
-#endif
 
 protected:
 
