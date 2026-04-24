@@ -5,16 +5,37 @@
 #include "Common/Extra.h"
 #include "Common/Player.h"
 #include "Common/KindOf.h"
+#include "Common/ThingFactory.h"
 #include "Common/ThingTemplate.h"
 #include "Common/Upgrade.h"
+#include "GameNetwork/GameInfo.h"
+#include "GameClient/ControlBar.h"
 #include "GameLogic/Weapon.h"
 #include "GameLogic/Object.h"
-#include "GameNetwork/GameInfo.h"
 #include "GameLogic/GameLogic.h"
 #include "GameLogic/Module/AutoDepositUpdate.h"
 #include "GameLogic/Module/BodyModule.h"
 #include "GameLogic/Module/CreateModule.h"
 #include "GameLogic/Module/SpecialPowerModule.h"
+#include "GameLogic/Module/OCLSpecialPower.h"
+#include "GameLogic/Module/SalvageCrateCollide.h"
+#include "GameLogic/Module/ActiveBody.h"
+#include "GameLogic/Module/StructureBody.h"
+#if RTS_ZEROHOUR
+#include "GameLogic/Module/UndeadBody.h"
+#endif
+#include "GameLogic/Module/MaxHealthUpgrade.h"
+#include "GameLogic/Module/RebuildHoleExposeDie.h"
+#include "GameLogic/Module/StealthDetectorUpdate.h"
+#include "GameLogic/Module/SpecialAbilityUpdate.h"
+#include "GameLogic/Module/ActiveShroudUpgrade.h"
+#include "GameLogic/Module/CashHackSpecialPower.h"
+
+// It would make sense to consider 'CUSTOM_ATTRIBUTE_CHANGES' sections "MODDD - for me only".
+
+// Other new functions that handle post-parsing edits:
+//   WeaponTemplateSet::validateAutoChooseSources
+//   ThingTemplate::makeNonCivilianGarrisonableStructureCapturableHack
 
 // Set this in code to let breakpoints work in release mode, as opposed to the usual 'int x; x = 4;' thing I usually do.
 // Ex:
@@ -22,6 +43,7 @@
 //     g_dummy = 4;
 //   }
 int g_dummy = 0;
+
 
 //MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
 // Condensed several snippets of copied script into this, with a few additions to fix the bug on buildings
@@ -43,7 +65,7 @@ void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCrea
 
 	// The rest of below is new
 	// ---------------------------
-	if(!checkForSpecialPowerModuleCreateCalls)
+	if (!checkForSpecialPowerModuleCreateCalls)
 	{
 		// skip further down - ex: made by a warfactory. The SpecialPowerModule constructor already calls 'onSpecialPowerCreation' if it
 		// isn't under construction at the time (structures block this since they start at in-construction / 0%-progress technically).
@@ -104,25 +126,18 @@ Int getUpgradedSupplyBoost(const Object* collectingObject, const std::list<upgra
 	return 0;
 }
 
-// It would make sense to consider this section "MODDD - for me only". Same for the cheat-related things further down.
-#if CUSTOM_ATTRIBUTE_CHANGES
-
-// includes for hackish edits further below
-#include "Common/ThingFactory.h"
-#include "GameClient/ControlBar.h"
-#include "GameLogic/Module/ActiveBody.h"
-#include "GameLogic/Module/StructureBody.h"
-#if RTS_ZEROHOUR
-#include "GameLogic/Module/UndeadBody.h"
-#endif
-#include "GameLogic/Module/MaxHealthUpgrade.h"
-#include "GameLogic/Module/RebuildHoleExposeDie.h"
-#include "GameLogic/Module/StealthDetectorUpdate.h"
-#include "GameLogic/Module/SpecialAbilityUpdate.h"
-#include "GameLogic/Module/ActiveShroudUpgrade.h"
-#include "GameLogic/Module/OCLSpecialPower.h"
-#include "GameLogic/Module/CashHackSpecialPower.h"
-
+// Go through a ThingTemplate that's recently been parsed from the INI files
+// (ex: 'AmericaVehicle.ini' -> 'Object AmericaVehicleHumvee')
+// and see if it has any stats or modules that should be adjusted for either bug fixes or additional attribute edits
+// (ex: 30% more health for all units). The 'CUSTOM_ATTRIBUTE_CHANGES' will decide if latter changes are applied,
+// otherwise, only the minimum bug-fixing changes will be applied.
+// Most of these 'bugs' are from TheSuperHackers changes that cause new undesired behavior in the retail game or
+// mods with macro settings such as 'PRESERVE_RETAIL_BEHAVIOR' set to off. I still want to keep the setting that way
+// because it being off introduces several other fixes & efficiency improvements (pathfinding) that are good to keep.
+// Bug example: the Europe 'field promotion' ability in the 'Rise of the Reds' mod will only work on one unit
+// in the radius even though the support power's tooltip suggests and retail EXE behavior indeed does affect any number
+// of units in the radius. Sometimes it's possible to fix these issues without manual INI edits so existing mods
+// continue to work as expected.
 void automaticThingTemplateChanges(ThingTemplate* _this)
 {
 	// Don't do the stat adjustments for re-skinned things. They share the same module data so changes to each
@@ -143,9 +158,12 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		return;
 	}
 
+#if CUSTOM_ATTRIBUTE_CHANGES
 	// Keep track of the vision before my tampering in case stealth detection needs to know what it was
 	Real originalVision = _this->m_visionRange;
+#endif
 
+#if CUSTOM_ATTRIBUTE_CHANGES
 	// This area is called after ThingFactory::parseObjectDefinition's 'ini->initFromINI( thingTemplate...' call,
 	// so any hackish edits to apply to everything can go here.
 	if (_this->isKindOf(KINDOF_STRUCTURE))
@@ -236,7 +254,10 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	{
 		_this->m_shroudClearingRange *= 1.50f;
 	}
-
+#endif
+	
+	static NameKeyType SalvageCrateCollideNameKey = NAMEKEY("SalvageCrateCollide");
+#if CUSTOM_ATTRIBUTE_CHANGES
 	static NameKeyType ActiveBodyNameKey = NAMEKEY("ActiveBody");
 	static NameKeyType StructureBodyNameKey = NAMEKEY("StructureBody");
 #if RTS_ZEROHOUR
@@ -249,25 +270,52 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	static NameKeyType ActiveShroudUpgradeNameKey = NAMEKEY("ActiveShroudUpgrade");
 	static NameKeyType OCLSpecialPowerNameKey = NAMEKEY("OCLSpecialPower");
 	static NameKeyType CashHackSpecialPowerNameKey = NAMEKEY("CashHackSpecialPower");
+#endif
 	
+#if CUSTOM_ATTRIBUTE_CHANGES
 	Bool foundStealthDetectorUpdate = false;
 	Bool foundActiveShroudUpgrade = false;
 	StealthDetectorUpdateModuleData* stealthDetectorData = nullptr;
+#endif
 
-	// Automatic adjustments for the max health based on kind
+	// See if any modules need automatic adjustments.
+	// This is how health changes are applied, since health is stored in a module (ex: 'ActiveBody') instead of on the
+	// ThingTemplate itself. Also, 'const' is just to keep the compiler happy for most of these calls to get to the
+	// modules, the actual module data to be edited has that casted out so it is modifiable.
 	Int modIdx;
 	const ModuleInfo& mi = _this->getBehaviorModuleInfo();
 	for (modIdx = 0; modIdx < mi.getCount(); ++modIdx)
 	{
 		AsciiString modName = mi.getNthName(modIdx);
-		const ModuleData* data = mi.getNthData(modIdx);
 		if (modName.isEmpty())
 			continue;
+		const ModuleData* data = mi.getNthData(modIdx);
 		NameKeyType modNameKey = NAMEKEY(modName);
 
-		// Checking for 'ActiveBody', 'StructureBody', and 'UndeadBody' should be enough.
+		if( modNameKey == SalvageCrateCollideNameKey )
+		{
+			SalvageCrateCollideModuleData* _data = (SalvageCrateCollideModuleData*)data;
+			// If a salvage crate is large enough, assume it's meant to apply to multiple units.
+			// Ex: 'field promotion' in 'Rise of the Reds' uses an invisible crate to decide whatever to boost the rank of
+			// (whatever's touching the crate).
+			// A code change caused crates to stop applying after one item triggers the effect. A since-added 'allowMultiPickup'
+			// setting restores the original behavior - desired in this case.
+			// Assume that makes sense if any part of the collision is large enough.
+			//MODDD - TODO - a way for 'field promotion' to affect aircraft would be nice. Does anything explicitly forbid
+			// crate collisions with aircraft even if the height is very large?
+			if (
+				_this->m_geometryInfo.getMinorRadius() >= 20 ||
+				_this->m_geometryInfo.getMajorRadius() >= 20
+				// no need to include 'getRawHeight'.
+			)
+			{
+				_data->m_allowMultiPickup = TRUE;
+			}
+		}
+#if CUSTOM_ATTRIBUTE_CHANGES
+		// For whether it makes sense to apply health changes, checking for 'ActiveBody', 'StructureBody', and 'UndeadBody' should be enough.
 		// Other body subclasses are 'ImmortalBody' and 'HighlanderBody', which don't look to be for normal commandable/attackable things.
-		if( modNameKey == ActiveBodyNameKey )
+		else if( modNameKey == ActiveBodyNameKey )
 		{
 			ActiveBodyModuleData* _data = (ActiveBodyModuleData*)data;
 			// Assume if a health value is so absurdly high it shouldn't be touched
@@ -363,8 +411,10 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 				it->m_amountToSteal *= 0.4;
 			}
 		}
+#endif
 	}
 
+#if CUSTOM_ATTRIBUTE_CHANGES
 	// Temp hack. Add active-shroud-generation to anything that is a stealth detector.
 	// This lets shroud generation be easy to see/test in mods that never use the shroud generating module (including retail).
 	// Requires the "MODDD - for me only" block in 'UpgradeModule.cpp' to be enabled so lacking a condition still lets this work.
@@ -411,9 +461,10 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		}
   }
 	*/
+#endif
 }
 
-//MODDD - to do after parsing everything else.
+// What to do after parsing everything else.
 // Ex: 'TheControlBar' is unavailable until this point ('ControlBar::init' handles parsing in 'CommandButton.ini', not 'GameEngine::init'
 // that does it for thing templates and a host of other things).
 // For reference, 'ControlBar::init' is reached by 'initSubsystem(TheGameClient...' in 'GameEngine::init', which is called after thing templates are handled.
@@ -491,6 +542,9 @@ void automaticChangesPostINIParsing()
 	}
 #endif
 }
+
+
+#if CUSTOM_ATTRIBUTE_CHANGES
 
 void automaticWeaponTemplateChanges(WeaponTemplate* _this)
 {

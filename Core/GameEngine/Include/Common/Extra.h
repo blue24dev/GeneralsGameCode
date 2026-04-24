@@ -27,9 +27,10 @@ extern int g_dummy;
 void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCreateCalls = FALSE);
 // General utilities I came up with to condense some common script. 'common/GameUtility.h' might also be a good place for this.
 Int getUpgradedSupplyBoost(const Object* collectingObject, const std::list<upgradePair>* upgradeBoostList);
+void automaticThingTemplateChanges(ThingTemplate* _this);
+void automaticChangesPostINIParsing();
 
 #if CUSTOM_ATTRIBUTE_CHANGES
-void automaticThingTemplateChanges(ThingTemplate* _this);
 void automaticWeaponTemplateChanges(WeaponTemplate* _this);
 void automaticUpgradeTemplateChanges(UpgradeTemplate* _this);
 void automaticGlobalDataWeaponBonusChanges();
@@ -37,7 +38,6 @@ void addCustomWeaponBonuses(const Weapon* _this, const Object* source, WeaponBon
 Real getHealthMulti(const ThingTemplate* _this);
 Real healthAdjustmentFilter(Object* obj, Real healthVal);
 UnsignedInt specialPowerReloadTimeAdjustmentFilter(const Object* obj, UnsignedInt reloadTime, Bool isSharedNSync);
-void automaticChangesPostINIParsing();
 #endif
 
 #if CUSTOM_GAME_DATA_CHANGES

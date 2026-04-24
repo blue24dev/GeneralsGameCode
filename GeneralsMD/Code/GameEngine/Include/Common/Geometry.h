@@ -139,7 +139,8 @@ public:
 
 	// this has been removed and should never need to be called...
 	// you should generally call getMaxHeightAbovePosition() instead. (srj)
-	//inline Real getGeomHeight() const { return m_height; }				// z-axis
+	// MODDD - re-enabling and renaming for clarity, 'getGeomHeight' -> 'getRawHeight'
+	inline Real getRawHeight() const { return m_height; }				// z-axis
 
 	Real getBoundingCircleRadius() const { return m_boundingCircleRadius; }
 	Real getBoundingSphereRadius() const { return m_boundingSphereRadius; }
