@@ -2217,6 +2217,22 @@ static Bool doesCircleOverlapCell(Real centerX, Real centerY, Real radius, Real 
 void PartitionData::doCircleFillPrecise(Real centerX, Real centerY, Real radius)
 {
 	Int minCellX, minCellY, maxCellX, maxCellY;
+
+	//MODDD - some things with small / tiny radius's have issues, ex: 'Rise of the Reds' mod's Europe superweapon, the solar burst.
+	// Most of its effects on the target are invisible when 'doCircleFillPrecise' is used instead of 'doCircleFill'.
+	// Seems to be because the 'Precise' version is missing a minimum radius (the solar flare has radius sizes of 0).
+	// 'doCircleFill' would force them to be at least one cell's worth.
+	// ---
+	Int cellRadius = ThePartitionManager->worldToCellDist(radius);
+	if (cellRadius < 1)
+	{
+		cellRadius = 1;
+		// The approach below uses the raw 'radius' in raw distance units instead of 'cells' like the non-'Precise' function.
+		// It's possible that just setting 'radius' to a minimum of 1 is enough, but I'll keep it to retail accuracy for now.
+		radius = cellRadius * ThePartitionManager->getCellSize();
+	}
+	// ---
+
 	ThePartitionManager->worldToCell(centerX - radius, centerY - radius, &minCellX, &minCellY);
 	ThePartitionManager->worldToCell(centerX + radius, centerY + radius, &maxCellX, &maxCellY);
 
