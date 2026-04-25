@@ -137,6 +137,86 @@ ActionManager::~ActionManager()
 
 }
 
+//MODDD - an even broader helper to include units too, not just structures.
+// See 'buildingRelationshipCheckForAbility' for the main point of this.
+Bool ActionManager::generalRelationshipCheckForAbility( const Object *obj, const Object* objectTarget, Relationship rel )
+{
+	if (objectTarget->isStructure())
+	{
+		return buildingRelationshipCheckForAbility(obj, objectTarget, rel);
+	}
+	else
+	{
+		// just use the relationship
+		if (!(obj->getRelationship(objectTarget) >= rel))
+		{
+			return false;
+		}
+		return true;
+	}
+}
+
+// MODDD - Helper used by several more specific 'ActionManager::can...' methods, such as 'canCaptureBuilding' or 'can...hack'.
+// Handles some odd cases such as garrisonable buildings and capturable neutral structures.
+// This is mainly to consolidate some points brought up by other comments such as what should be capturable or hackable
+// if the explicit 'KINDOF_CAPTURABLE' flag isn't present.
+// Simple idea: faction buildings (typically player built by dozer/worker) are always capturable/hackable if non-allied-
+// owned. Non-faction buildings (broadly includes garrisonable civilian buildings and tech structures like oil derricks)
+// require the 'KINDOF_CAPTURABLE' flag to be capturable if non-allied owned. This means garrisonable civilian buildings
+// still aren't capturable even if the current player is enemies with the civilian player.
+// I disagree on there being any difference between capturable/hackable, as well as 'FS_TECHNOLOGY' having any impact.
+// Lastly, the 'rel' param is the 'maximum relationship' needed for this ability to work. Lower value = worse relationship.
+// Ex: rel=NEUTRAL -> must be neutral or enemies with
+//     rel=ENEMIES -> must be enemies with
+Bool ActionManager::buildingRelationshipCheckForAbility( const Object *obj, const Object* objectTarget, Relationship rel )
+{
+	if (objectTarget->isFactionStructure())
+	{
+		// typically player built
+	}
+	else
+	{
+		// not typically player built
+		if (!objectTarget->isKindOf(KINDOF_CAPTURABLE))
+		{
+			return false;
+		}
+	}
+
+	// Don't take from our friends or try to hack them
+	if (!(obj->getRelationship(objectTarget) <= rel))
+	{
+		return false;
+	}
+
+	// Previous way - allows any building where the owner-when-empy (ex: garrisonable civ building) is enemies with this
+	// player to always be capturable. Avoiding so garrisonable civ buildings aren't capturable in the odd case the civ
+	// player is an enemy, though I doubt that ever happens.
+	// Plus, consider the odd case of a neutral faction-building being garrisoned by allied units to make that the owner.
+	// Should it be capturable just because it was neutral controlled when empty? Capturing it would kick allied units out.
+	// Using the current team works if enemy-garrisoned since it was capturable when neutral-controlled anyway and still
+	// would be.
+	/*
+  const Team* objectTargetTeam = objectTarget->getTeam();
+	ContainModuleInterface *contain = objectTarget->getContain();
+	if (contain != nullptr)
+	{
+		Team* teamWhenEmpty = contain->getGarrisonTeamWhenEmpty();
+		if (teamWhenEmpty != nullptr)
+		{
+			//myTeam->getRelationship( that->getTeam() );
+			objectTargetTeam = teamWhenEmpty;
+		}
+	}
+
+	Relationship r = obj->getTeam()->getRelationship(objectTargetTeam);
+	if (!(r == ENEMIES || (objectTarget->isKindOf(KINDOF_CAPTURABLE) && r != ALLIES)))
+		return false;
+	*/
+
+	return true;
+}
+
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
 Bool ActionManager::canGetRepairedAt( const Object *obj, const Object *repairDest, CommandSourceType commandSource )
@@ -1029,7 +1109,6 @@ Bool ActionManager::canMakeObjectDefector( const Object *obj, const Object *obje
 
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
-
 Bool ActionManager::canCaptureBuilding( const Object *obj, const Object *objectToCapture, CommandSourceType commandSource )
 {
 
@@ -1111,21 +1190,10 @@ Bool ActionManager::canCaptureBuilding( const Object *obj, const Object *objectT
 		return false;
 	*/
 	// ---
-	const Team* objectToCaptureTeam = objectToCapture->getTeam();
-	ContainModuleInterface *contain = objectToCapture->getContain();
-	if (contain != nullptr)
-	{
-		Team* teamWhenEmpty = contain->getGarrisonTeamWhenEmpty();
-		if (teamWhenEmpty != nullptr)
-		{
-			//myTeam->getRelationship( that->getTeam() );
-			objectToCaptureTeam = teamWhenEmpty;
-		}
-	}
-
-	Relationship r = obj->getTeam()->getRelationship(objectToCaptureTeam);
-	if (!(r == ENEMIES || (objectToCapture->isKindOf(KINDOF_CAPTURABLE) && r != ALLIES)))
-		return false;
+  if (!buildingRelationshipCheckForAbility(obj, objectToCapture, NEUTRAL))
+  {
+	  return FALSE;
+  }
 	// ---
 
 	//If the enemy unit is stealthed and not detected, then we can't capture it!
@@ -1143,9 +1211,8 @@ Bool ActionManager::canCaptureBuilding( const Object *obj, const Object *objectT
 	// (obviously neutral = no capture), or they're garrisoned so the GarrisonContain's 'original team' can be used
 	// to judge if this should be capturable instead. Belonging to the civilian player we're neutral with = no sense in
 	// capturing this, as it couldn't be captured when empty.
-	// However, some GLA scenario where the civilian faction is considered an enemy could break this assumption. Could you capture civilian buildings if that were the case?
 	// ---
-	// Disabling this block, adding some things to the relationship above per that explanation.
+	// Disabling this block, adding some things to the block that involves the relationship above per the explanation.
 	/*
 	// if it's garrisoned already, we cannot capture it.
 	// (unless it's just stealth-garrisoned.)
@@ -1337,46 +1404,88 @@ Bool ActionManager::canStealCashViaHacking( const Object *obj, const Object *obj
 	if (isObjectShroudedForAction(obj, objectToHack, commandSource))
 		return FALSE;
 
+	//MODDD - replacing with 'generalRelationshipCheckForAbility' further down
+	/*
 	Relationship r = obj->getRelationship(objectToHack);
 
 	// Make sure object is an enemy
 	if( r == ENEMIES )
 	{
+		return FALSE;
+	}
+	*/
+	//MODDD - new
+	if (!generalRelationshipCheckForAbility(obj, objectToHack, ENEMIES))
+	{
+		return FALSE;
+	}
 
-		//Make sure we are targeting something that contains cash!
-		if( !objectToHack->isKindOf( KINDOF_CASH_GENERATOR ) )
-		{
-			return FALSE;
-		}
+	//Make sure we are targeting something that contains cash!
+	if( !objectToHack->isKindOf( KINDOF_CASH_GENERATOR ) )
+	{
+		return FALSE;
+	}
 
-		//Make sure object isn't under construction!
-		if( objectToHack->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ) )
-		{
-			return FALSE;
-		}
+	//Make sure object isn't under construction!
+	if( objectToHack->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ) )
+	{
+		return FALSE;
+	}
 
-		//Make sure the building is considered hackable (temp: using capturable)
-		if( !objectToHack->isKindOf( KINDOF_CAPTURABLE ) || objectToHack->isKindOf( KINDOF_REBUILD_HOLE ) )
-		{
-			return FALSE;
-		}
+	//Make sure the building is considered hackable (temp: using capturable)
+	//MODDD - excluding 'CAPTURABLE' from the check
+	if( objectToHack->isKindOf( KINDOF_REBUILD_HOLE ) )
+	{
+		return FALSE;
+	}
 
-		//If the enemy unit is stealthed and not detected, then we can't attack it!
+	//If the enemy unit is stealthed and not detected, then we can't attack it!
 	if( objectToHack->testStatus( OBJECT_STATUS_STEALTHED ) &&
 			!objectToHack->testStatus( OBJECT_STATUS_DETECTED ) &&
 			!objectToHack->testStatus( OBJECT_STATUS_DISGUISED ) )
-		{
-			return FALSE;
-		}
-
-		//Also check if the object is a container containing stealth units tricking
-		//the player into thinking it isn't actually an enemy.
-		if (appearsToContainFriendlies(obj, objectToHack))
-			return FALSE;
-
-		return TRUE;
+	{
+		return FALSE;
 	}
-	return FALSE;
+
+	//Also check if the object is a container containing stealth units tricking
+	//the player into thinking it isn't actually an enemy.
+	if (appearsToContainFriendlies(obj, objectToHack))
+		return FALSE;
+
+	return TRUE;
+}
+
+//MODDD - new, script moved to here.
+// Note that this is for the support power (from the promotion point menu), not the unit-level black lotus ability
+Bool ActionManager::canStealCashViaHackingSupportPower( const Object *obj, const Object *objectToHack, CommandSourceType commandSource )
+{
+	//MODDD 'KINDOF_STRUCTURE' check excluded, relationship check left to 'generalRelationshipCheckForAbility'
+	
+	//MODDD - new
+	if (!generalRelationshipCheckForAbility(obj, objectToHack, ENEMIES))
+	{
+		return FALSE;
+	}
+
+	//Make sure the building is considered hackable (temp: using capturable)
+	//MODDD - excluding 'CAPTURABLE' from the check
+	if( objectToHack->isKindOf( KINDOF_REBUILD_HOLE ) )
+	{
+		return FALSE;
+	}
+
+	//Can't cash hack a building that's under construction.
+	if( objectToHack->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ) )
+	{
+		return FALSE;
+	}
+
+	if (!objectToHack->isKindOf( KINDOF_CASH_GENERATOR ) )
+	{
+		return FALSE;
+	}
+
+	return true;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1409,11 +1518,19 @@ Bool ActionManager::canDisableBuildingViaHacking( const Object *obj, const Objec
 	if (isObjectShroudedForAction(obj, objectToHack, commandSource))
 		return FALSE;
 
+	//MODDD - replacing with 'buildingRelationshipCheckForAbility' further down
+	/*
 	Relationship r = obj->getRelationship(objectToHack);
 
 	// Make sure object is an enemy
 	if( r != ENEMIES )
 		return FALSE;
+	*/
+	//MODDD - new
+  if (!buildingRelationshipCheckForAbility(obj, objectToHack, ENEMIES))
+  {
+	  return FALSE;
+  }
 
 	//Make sure we are targeting a building!
 	if( !objectToHack->isKindOf( KINDOF_STRUCTURE ) )
@@ -1423,17 +1540,21 @@ Bool ActionManager::canDisableBuildingViaHacking( const Object *obj, const Objec
 
 	//Make sure the building is considered hackable (temp: using capturable)
 	// An exception is any TechFactionBuilding that is not explicitly immune to capture
+	//MODDD - this seems overcomplicated, and redundant with the 'KINDOF_REBUILD_HOLE' being explicitly denied anyway a
+	// bit further down.
+	// Also, leaving out 'KINDOF_IMMUNE_TO_CAPTURE' - mainly, buildable bunkers and base defenses can be disabled by hacking
+	// (however effective that is, may as well be able to - could punish those with poor anti-infantry).
+	/*
 	if( ( !objectToHack->isKindOf( KINDOF_CAPTURABLE ) || objectToHack->isKindOf( KINDOF_REBUILD_HOLE ) ) &&
 		! (objectToHack->isKindOf(KINDOF_FS_TECHNOLOGY) && ! objectToHack->isKindOf(KINDOF_IMMUNE_TO_CAPTURE)) )
 	{
 		return FALSE;
 	}
-
+	*/
 
 	if ( objectToHack->isKindOf( KINDOF_REBUILD_HOLE ) || objectToHack->testStatus( OBJECT_STATUS_UNDER_CONSTRUCTION ))
 		return FALSE;
-
-
+	
 	//If the enemy unit is stealthed and not detected, then we can't attack it!
 	if( objectToHack->testStatus( OBJECT_STATUS_STEALTHED ) &&
 			!objectToHack->testStatus( OBJECT_STATUS_DETECTED ) &&
@@ -1790,26 +1911,8 @@ Bool ActionManager::canDoSpecialPowerAtObject( const Object *obj, const Object *
 
 			case SPECIAL_CASH_HACK:
 				//Can only disable enemy supply centers.
-				if( target->isKindOf( KINDOF_STRUCTURE ) && r == ENEMIES )
-				{
-					//Make sure the building is considered hackable (temp: using capturable)
-					if( !target->isKindOf( KINDOF_CAPTURABLE ) || target->isKindOf( KINDOF_REBUILD_HOLE ) )
-					{
-						return FALSE;
-					}
-
-					//Can't cash hack a building that's under construction.
-					if( target->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ) )
-					{
-						return FALSE;
-					}
-
-					if (target->isKindOf( KINDOF_CASH_GENERATOR ) )
-					{
-						return true;
-					}
-				}
-				break;
+				//MODDD - moved to a method for neatness
+				return canStealCashViaHackingSupportPower ( obj, target, commandSource );
 
 			case SPECIAL_DISGUISE_AS_VEHICLE:
 				if( target->isKindOf( KINDOF_VEHICLE )
