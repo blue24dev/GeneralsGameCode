@@ -1153,6 +1153,11 @@ Object::~Object()
 //-------------------------------------------------------------------------------------------------
 void Object::onContainedBy( Object *containedBy )
 {
+	if (this->getTemplate()->getName() == "EurofighterStrikeSoundTriggerObject")
+	{
+		g_dummy = 4;
+	}
+
 	setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_UNSELECTABLE ) );
 	if (containedBy && containedBy->getContain()->isEnclosingContainerFor(this))
 		setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_MASKED ) );
@@ -1202,6 +1207,10 @@ Int Object::getTransportSlotCount() const
 //MODDD - implementation moved from .cpp for easier debugging checks if needed
 void Object::friend_setContainedBy( Object *containedBy )
 {
+	if (this->getTemplate()->getName() == "EurofighterStrikeSoundTriggerObject")
+	{
+		g_dummy = 4;
+	}
 	m_containedBy = containedBy;
 }
 
