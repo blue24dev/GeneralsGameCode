@@ -5723,6 +5723,7 @@ void Object::onDie( DamageInfo *damageInfo )
 			// Same for being destroyed (don't add 1 to 'destroyed units' for the attacking player).
 			// Kills from a mine can still go to the owner's score, however (& still count for the producing unit's veterancy,
 			// assuming that info's preserved through OCL lists or whatever levels of indirection).
+			// Ex: icarus air mines in the 'Rise of the Reds' mod. They still cause the 'unit lost' message when destroyed.
 
 			TheEva->setShouldPlay(EVA_UnitLost);
 			//Create a fake radar event so the user can use the spacebar to quickly jump to this!
