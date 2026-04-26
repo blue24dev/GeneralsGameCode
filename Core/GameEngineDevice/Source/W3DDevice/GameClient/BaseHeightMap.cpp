@@ -1902,6 +1902,11 @@ void BaseHeightMapRenderObjClass::allocateScorchBuffers()
 	m_scorchesInBuffer = 0; // If we just allocated the buffers, we got no scorches in the buffer.
 	m_curNumScorchVertices=0;
 	m_curNumScorchIndices=0;
+
+	//MODDD - removing this. Looks like a leftover test to put a few scorches an arbitrary distance from the origin
+	// (bottom-left corner of the map).
+	// Showing up on the first map played in quickstart (no shell map) is jarring without being aware of this.
+	/*
 #ifdef RTS_DEBUG
 	Vector3 loc(4*MAP_XY_FACTOR,4*MAP_XY_FACTOR,0);
 	addScorch(loc, 1*MAP_XY_FACTOR, SCORCH_1);
@@ -1909,7 +1914,7 @@ void BaseHeightMapRenderObjClass::allocateScorchBuffers()
 	loc.X += 5*MAP_XY_FACTOR;
 	addScorch(loc, 3*MAP_XY_FACTOR, SCORCH_1);
 #endif
-
+	*/
 }
 
 //=============================================================================
