@@ -806,7 +806,9 @@ protected:
 
 
 	/// evaluate what the user should see based on what selected drawables we have in our UI
+	//MODDD - existing script renamed to the underscored variant
 	void evaluateContextUI();
+	void _evaluateContextUI();
 
 	/// add the common commands of this drawable to the common command set
 	void addCommonCommands( Drawable *draw, Bool firstDrawable );

@@ -138,6 +138,7 @@ static void commandButtonTooltip(GameWindow *window,
 //Bool openPreviousFrame[ NUM_CONTEXT_PARENTS ];
 Bool g_controlBar_previouslyOpen_promotionMenu = FALSE;
 ControlBarContext g_controlBar_previouslyOpen_context = CB_CONTEXT_NONE;
+Bool g_controlBar_selectionChanged = FALSE;
 void previouslyOpen_reset();
 void previouslyOpen_init()
 {
@@ -1670,6 +1671,9 @@ void ControlBar::onDrawableSelected( Drawable *draw )
 	// set a dirty flag so next time we update we can reconstruct the UI
 	markUIDirty();
 
+	//MODDD - alongside setting the dirty flag, be aware that something about the selection changed
+	g_controlBar_selectionChanged = TRUE;
+
 	// cancel any pending GUI commands
 	TheInGameUI->setGUICommand( nullptr );
 
@@ -1683,6 +1687,9 @@ void ControlBar::onDrawableDeselected( Drawable *draw )
 
 	// set a dirty flag so next time we update we can reconstruct the UI
 	markUIDirty();
+	
+	//MODDD - alongside setting the dirty flag, be aware that something about the selection changed
+	g_controlBar_selectionChanged = TRUE;
 
 	if (TheInGameUI->getSelectCount() == 0)
 	{
@@ -1764,15 +1771,28 @@ void ControlBar::onPlayerSciencePurchasePointsChanged(const Player *p)
 	markUIDirty();
 }
 
+//MODDD - wrapper for the now-underscored variant below
+void ControlBar::evaluateContextUI()
+{
+	//MODDD - apply values to globals that are about to be reset & redetermined to be compared to what they are re-computed as
+	// (ex: whether the promotion menu is currently not open but it's decided that it will be)
+	previouslyOpen_copy();
+
+	_evaluateContextUI();
+
+	//MODDD - reset this flag, the selection must be changed again for this to apply the next time the dirty flag is set back
+	g_controlBar_selectionChanged = FALSE;
+}
+
 //-------------------------------------------------------------------------------------------------
 /** Given the drawables that we have selected into our context sensitive UI, evaluate
 	* and perform all UI manipulations to make the GUI show to the user what we want them
 	* to see */
 //-------------------------------------------------------------------------------------------------
-void ControlBar::evaluateContextUI()
+//MODDD - existing script renamed to the underscored variant, so that finishing can imply some behavior regardless of where this terminates (returns early)
+void ControlBar::_evaluateContextUI()
 {
 
-	previouslyOpen_copy();
 	//
 	// the UI has been "evaluated" and is now displaying the most current and correct
 	// information to the player
@@ -2490,7 +2510,7 @@ void ControlBar::setCommandBarBorder( GameWindow *button, CommandButtonMappedBor
 //MODDD - overload to call below
 void ControlBar::setControlCommand( GameWindow *button, const CommandButton *commandButton )
 {
-	setControlCommand(button, commandButton, m_currContext != g_controlBar_previouslyOpen_context);
+	setControlCommand(button, commandButton, m_currContext != g_controlBar_previouslyOpen_context || g_controlBar_selectionChanged);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -2633,7 +2653,7 @@ void ControlBar::postProcessCommands()
 void ControlBar::setControlCommand( const AsciiString& buttonWindowName, GameWindow *parent,
 																		const CommandButton *commandButton )
 {
-	setControlCommand(buttonWindowName, parent, commandButton, m_currContext != g_controlBar_previouslyOpen_context);
+	setControlCommand(buttonWindowName, parent, commandButton, m_currContext != g_controlBar_previouslyOpen_context || g_controlBar_selectionChanged);
 }
 
 //-------------------------------------------------------------------------------------------------
