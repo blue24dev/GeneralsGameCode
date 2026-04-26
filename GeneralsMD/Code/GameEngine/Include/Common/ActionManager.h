@@ -67,6 +67,10 @@ public:
 	virtual void reset() override { };							///< subsystem interface
 	virtual void update() override { };						///< subsystem interface
 
+	//MODDD
+	Bool generalRelationshipCheckForAbility( const Object *obj, const Object* objectTarget, Relationship rel );
+	Bool buildingRelationshipCheckForAbility( const Object *obj, const Object* objectTarget, Relationship rel );
+
 	//Single unit to unit check
 	Bool canGetRepairedAt( const Object *obj, const Object *repairDest, CommandSourceType commandSource );
 	Bool canTransferSuppliesAt( const Object *obj, const Object *transferDest );
@@ -85,6 +89,10 @@ public:
 	Bool canPickUpPrisoner( const Object *obj, const Object *prisoner, CommandSourceType commandSource );
 #endif
 	Bool canStealCashViaHacking( const Object *obj, const Object *objectToHack, CommandSourceType commandSource );
+
+	//MODDD
+	Bool canStealCashViaHackingSupportPower( const Object *obj, const Object *objectToHack, CommandSourceType commandSource );
+
 	Bool canSnipeVehicle( const Object *obj, const Object *objectToSnipe, CommandSourceType commandSource );
 	Bool canBribeUnit( const Object *obj, const Object *objectToBribe, CommandSourceType commandSource );
 	Bool canCutBuildingPower( const Object *obj, const Object *building, CommandSourceType commandSource );
