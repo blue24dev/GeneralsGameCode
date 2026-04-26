@@ -769,8 +769,9 @@ void W3DView::updateCameraClipPlanes()
 		// Use the old zoom that isn't relative to 'MaxCameraHeight' to preserve old behavior.
 		// This stops rendering from appearing to be consumed by black because the clipping pane wasn't getting the boost it
 		// needs for higher camera distance by settings edits.
-		//if (TheGlobalData->m_drawEntireTerrain || m_FXPitch < 0.95f)
-		if (TheGlobalData->m_drawEntireTerrain || m_FXPitch < 0.95f || getZoomOld() > 1.05f)
+		// UPDATE - since 'farZ' is better calculated in the first place now, my 'getZoomOld()' add-in may no longer be necessary
+		if (TheGlobalData->m_drawEntireTerrain || m_FXPitch < 0.95f)
+		//if (TheGlobalData->m_drawEntireTerrain || m_FXPitch < 0.95f || getZoomOld() > 1.05f)
 		{
 			//Extend far clip plane so entire terrain can be visible
 			farZ *= 10.0f;
