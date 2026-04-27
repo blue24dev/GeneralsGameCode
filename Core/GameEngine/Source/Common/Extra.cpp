@@ -856,7 +856,7 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 	const UnsignedInt startMin = 10;
 	const UnsignedInt endMin = 80;
 	const Real startModifier = 1.0f;
-	const Real endModifier = 3.0f;
+	const Real endModifier = 2.5f;
 
 	Real scalar = 1.0f;
 
@@ -920,7 +920,7 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 	const UnsignedInt startMin = 8;
 	const UnsignedInt endMin = 80;
 	const Real startModifier = 1.00f;
-	const Real endModifier = 0.85f;
+	const Real endModifier = 0.90f;
 
 	Int _buildTime = buildTime;
 	if (player->getPlayerType() == PLAYER_COMPUTER)
@@ -953,8 +953,8 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 	// AI players receive more experience toward promotions (not individual unit veterancy) per kill over the course of a long game.
 	const UnsignedInt startMin = 10;
 	const UnsignedInt endMin = 50;
-	const Real startModifier = 1.10f;
-	const Real endModifier = 1.80f;
+	const Real startModifier = 1.00f;
+	const Real endModifier = 1.30f;
 
 	Real _expRateModifier = expRateModifier;
 
