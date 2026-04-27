@@ -747,13 +747,20 @@ void W3DView::updateCameraTransform()
 //-------------------------------------------------------------------------------------------------
 void W3DView::updateCameraClipPlanes()
 {
-	Real farZ = 1200.0f;
+	// TheSuperHackers @bugfix Extends the initial far Z from 1200 because that is not enough at
+	// default max height 310 and default pitch 37.5.
+	static_assert(WorldHeightMap::NORMAL_DRAW_WIDTH == WorldHeightMap::NORMAL_DRAW_HEIGHT, "Expects squared draw area");
+	Real farZ = (WorldHeightMap::NORMAL_DRAW_WIDTH * 1.08f) * MAP_XY_FACTOR;
+
+	const Real heightMultiplier = m_heightAboveGround / ViewDefaultMaxHeightAboveTerrain;
+	farZ *= std::max(heightMultiplier, 1.0f);
 
 	if (m_useRealZoomCam)	//WST 10.19.2002
 	{
-		if (m_FXPitch<0.95f)
+		if (m_FXPitch < 0.95f)
 		{
-			farZ = farZ / m_FXPitch; //Extend far Z when we pitch up for RealZoomCam
+			//Extend far Z when we pitch up for RealZoomCam
+			farZ /= m_FXPitch;
 		}
 	}
 	else
@@ -762,10 +769,12 @@ void W3DView::updateCameraClipPlanes()
 		// Use the old zoom that isn't relative to 'MaxCameraHeight' to preserve old behavior.
 		// This stops rendering from appearing to be consumed by black because the clipping pane wasn't getting the boost it
 		// needs for higher camera distance by settings edits.
-		//if ((TheGlobalData->m_drawEntireTerrain) || (m_FXPitch<0.95f || m_zoom>1.05))
-		if ((TheGlobalData->m_drawEntireTerrain) || (m_FXPitch<0.95f || getZoomOld()>1.05))
-		{	//need to extend far clip plane so entire terrain can be visible
-			farZ *= MAP_XY_FACTOR;
+		// UPDATE - since 'farZ' is better calculated in the first place now, my 'getZoomOld()' add-in may no longer be necessary
+		if (TheGlobalData->m_drawEntireTerrain || m_FXPitch < 0.95f)
+		//if (TheGlobalData->m_drawEntireTerrain || m_FXPitch < 0.95f || getZoomOld() > 1.05f)
+		{
+			//Extend far clip plane so entire terrain can be visible
+			farZ *= 10.0f;
 		}
 	}
 
