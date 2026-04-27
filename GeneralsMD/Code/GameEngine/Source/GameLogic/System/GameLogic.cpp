@@ -3047,8 +3047,9 @@ void GameLogic::processDestroyList()
 				printItemsInContainedList(outputFile, currentObject, objThru);
 				outputFile.close();
 
-				// nope!  need to undersatnd the issue as it happens right now, don't interfere with possible fixes yet
-				//objThru->friend_setContainedBy(nullptr);
+				// nope!  need to understand the issue as it happens right now, don't interfere with possible fixes yet
+				// (Trying the fix now!)
+				objThru->friend_setContainedBy(nullptr);
 				//printf("%d%d", isDestroyed, (int)conList);
 			}
 		}
