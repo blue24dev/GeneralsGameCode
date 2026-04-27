@@ -66,7 +66,6 @@
 #include "GeneratedVersion.h"
 #include "resource.h"
 
-#include <rts/profile.h>
 #ifdef RTS_ENABLE_CRASHDUMP
 #include "Common/MiniDumper.h"
 #endif
@@ -798,7 +797,7 @@ Int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	// Because starting a program in another folder with the debugger attached & able to find files around itself is too hard for visual studio to do.
   //SleepEx(5000, FALSE);
 
-#ifdef RTS_PROFILE
+#ifdef RTS_PROFILE_LEGACY
   Profile::StartRange("init");
 #endif
 
@@ -848,7 +847,7 @@ Int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 
 // Force "splash image" to be loaded from a file, not a resource so same exe can be used in different localizations.
-#if defined(RTS_DEBUG) || defined RTS_PROFILE
+#if defined(RTS_DEBUG) || defined RTS_PROFILE_LEGACY
 
 			// check both localized directory and root dir
 		char filePath[_MAX_PATH];
