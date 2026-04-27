@@ -126,6 +126,71 @@ Int getUpgradedSupplyBoost(const Object* collectingObject, const std::list<upgra
 	return 0;
 }
 
+#if RTS_ZEROHOUR
+// Fix a potential issue where structures are (I suspect) unintentionally immune to subdual (ex: microwave) because
+// their subdual damage cap is less than the max health (source of the now-present 'm_subdualDamageToDisable').
+// The point of the subdual damage cap is to exceed the 'subdualDamageToDisable' a bit so that a disabled object remains
+// disabled for a little even if the disabling source is stopped (subdual damage is 'healed' every frame).
+// If the subdual damage cap is under 'subdualDamageToDisable', the disabling point will never be reached - cut by the cap first.
+// Most likely, this is because the subdual settings were copied from retail & the max health was adjusted without
+// re-adjusting the subdual settings.
+// A fix is to see if the subdual cap is under 'subdualDamageToDisable + <bare minimum extra, or nothing here>' and if so, enforce a more normal minimum.
+void checkActiveBodyModuleDataSubdualAttributes(ActiveBodyModuleData* _data)
+{
+	if (_data->m_subdualDamageCap <= 0)
+	{
+		// not even set / deliberately 0? going to assume this is for a reason - don't touch
+		return;
+	}
+
+	// First, check to see if the cap matches the sub-damage-to-disable.
+	if (_data->m_subdualDamageCap == _data->m_subdualDamageToDisable)
+	{
+		// Push the cap up a bit so the disabler stopping doesn't instantly go back to normal.
+		if (_data->m_subdualDamageCap >= 1000)
+		{
+			_data->m_subdualDamageCap = _data->m_subdualDamageToDisable + 200;
+		}
+		else if (_data->m_subdualDamageCap >= 500)
+		{
+			_data->m_subdualDamageCap = _data->m_subdualDamageToDisable + 100;
+		}
+		else if (_data->m_subdualDamageCap >= 250)
+		{
+			_data->m_subdualDamageCap = _data->m_subdualDamageToDisable + 50;
+		}
+		else
+		{
+			_data->m_subdualDamageCap = _data->m_subdualDamageToDisable + 20;
+		}
+		return;
+	}
+
+	// Is the cap less than sub-damage-to-disable? It would be impossible to disable then.
+	if (_data->m_subdualDamageCap < _data->m_subdualDamageToDisable)
+	{
+		// Does it make more sense to go with the way it would have to be for proper setup as-is (push the cap up -> harder to disable than retail)
+		// or preserve the difficulty to disable in retail, assuming the subdual settings were copied from there (push subdualDamageToDisable down ->
+		// expressing this as-is would be impossible without modifying the max-health to accomplish this).
+		// Going with the latter (act like retail since that's most likely the modder's intent), as long as it is sensible to.
+		if (_data->m_subdualDamageCap >= 1000)
+		{
+			_data->m_subdualDamageToDisable = _data->m_subdualDamageCap - 200;
+		}
+		else if (_data->m_subdualDamageCap >= 500)
+		{
+			_data->m_subdualDamageToDisable = _data->m_subdualDamageCap - 100;
+		}
+		else
+		{
+			// former way it is
+			_data->m_subdualDamageCap = _data->m_subdualDamageToDisable + 200;
+		}
+		return;
+	}
+}
+#endif
+
 // Go through a ThingTemplate that's recently been parsed from the INI files
 // (ex: 'AmericaVehicle.ini' -> 'Object AmericaVehicleHumvee')
 // and see if it has any stats or modules that should be adjusted for either bug fixes or additional attribute edits
@@ -258,12 +323,12 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 #endif
 	
 	static NameKeyType SalvageCrateCollideNameKey = NAMEKEY("SalvageCrateCollide");
-#if CUSTOM_ATTRIBUTE_CHANGES
 	static NameKeyType ActiveBodyNameKey = NAMEKEY("ActiveBody");
 	static NameKeyType StructureBodyNameKey = NAMEKEY("StructureBody");
 #if RTS_ZEROHOUR
 	static NameKeyType UndeadBodyNameKey = NAMEKEY("UndeadBody");
 #endif
+#if CUSTOM_ATTRIBUTE_CHANGES
 	static NameKeyType RebuildHoleExposeDieNameKey = NAMEKEY("RebuildHoleExposeDie");
 	static NameKeyType MaxHealthUpgradeNameKey = NAMEKEY("MaxHealthUpgrade");
 	static NameKeyType StealthDetectorUpdateNameKey = NAMEKEY("StealthDetectorUpdate");
@@ -302,8 +367,6 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			// A code change caused crates to stop applying after one item triggers the effect. A since-added 'allowMultiPickup'
 			// setting restores the original behavior - desired in this case.
 			// Assume that makes sense if any part of the collision is large enough.
-			//MODDD - TODO - a way for 'field promotion' to affect aircraft would be nice. Does anything explicitly forbid
-			// crate collisions with aircraft even if the height is very large?
 			if (
 				_this->m_geometryInfo.getMinorRadius() >= 20 ||
 				_this->m_geometryInfo.getMajorRadius() >= 20
@@ -313,48 +376,75 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 				_data->m_allowMultiPickup = TRUE;
 			}
 		}
-#if CUSTOM_ATTRIBUTE_CHANGES
 		// For whether it makes sense to apply health changes, checking for 'ActiveBody', 'StructureBody', and 'UndeadBody' should be enough.
 		// Other body subclasses are 'ImmortalBody' and 'HighlanderBody', which don't look to be for normal commandable/attackable things.
 		else if( modNameKey == ActiveBodyNameKey )
 		{
 			ActiveBodyModuleData* _data = (ActiveBodyModuleData*)data;
+			(void)_data;
+
+#if RTS_ZEROHOUR
+			// turned into a helper because copying that across 3 places would be obnoxious. Yay inheritance.
+			checkActiveBodyModuleDataSubdualAttributes(_data);
+#endif
+#if CUSTOM_ATTRIBUTE_CHANGES
 			// Assume if a health value is so absurdly high it shouldn't be touched
-			if (_data->m_maxHealth >= 1000000)continue;
-			Real healthMulti = getHealthMulti(_this);
-			if (healthMulti != 1.0f)
+			if (_data->m_maxHealth < 1000000.0f)
 			{
-				_data->m_initialHealth *= healthMulti;
-				_data->m_maxHealth *= healthMulti;
+				Real healthMulti = getHealthMulti(_this);
+				if (healthMulti != 1.0f)
+				{
+					_data->m_initialHealth *= healthMulti;
+					_data->m_maxHealth *= healthMulti;
+				}
 			}
+#endif
 		}
 		else if( modNameKey == StructureBodyNameKey )
 		{
 			StructureBodyModuleData* _data = (StructureBodyModuleData*)data;
+			(void)_data;
+			
+#if RTS_ZEROHOUR
+			checkActiveBodyModuleDataSubdualAttributes(_data);
+#endif
+#if CUSTOM_ATTRIBUTE_CHANGES
 			// Assume if a health value is so absurdly high it shouldn't be touched
-			if (_data->m_maxHealth >= 1000000.0f)continue;
-			Real healthMulti = getHealthMulti(_this);
-			if (healthMulti != 1.0f)
+			if (_data->m_maxHealth < 1000000.0f)
 			{
-				_data->m_initialHealth *= healthMulti;
-				_data->m_maxHealth *= healthMulti;
+				Real healthMulti = getHealthMulti(_this);
+				if (healthMulti != 1.0f)
+				{
+					_data->m_initialHealth *= healthMulti;
+					_data->m_maxHealth *= healthMulti;
+				}
 			}
+#endif
 		}
 #if RTS_ZEROHOUR
 		else if( modNameKey == UndeadBodyNameKey )
 		{
 			UndeadBodyModuleData* _data = (UndeadBodyModuleData*)data;
+			(void)_data;
+
+			checkActiveBodyModuleDataSubdualAttributes(_data);
+			
+#if CUSTOM_ATTRIBUTE_CHANGES
 			// Assume if a health value is so absurdly high it shouldn't be touched
-			if (_data->m_maxHealth >= 1000000.0f)continue;
-			Real healthMulti = getHealthMulti(_this);
-			if (healthMulti != 1.0f)
+			if (_data->m_maxHealth < 1000000.0f)
 			{
-				_data->m_initialHealth *= healthMulti;
-				_data->m_maxHealth *= healthMulti;
-				_data->m_secondLifeMaxHealth *= healthMulti;
+				Real healthMulti = getHealthMulti(_this);
+				if (healthMulti != 1.0f)
+				{
+					_data->m_initialHealth *= healthMulti;
+					_data->m_maxHealth *= healthMulti;
+					_data->m_secondLifeMaxHealth *= healthMulti;
+				}
 			}
+#endif
 		}
 #endif
+#if CUSTOM_ATTRIBUTE_CHANGES
 		else if( modNameKey == RebuildHoleExposeDieNameKey )
 		{
 			RebuildHoleExposeDieModuleData* _data = (RebuildHoleExposeDieModuleData*)data;
