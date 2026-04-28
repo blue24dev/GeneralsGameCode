@@ -1161,3 +1161,38 @@ void printItemsInContainedList(std::ofstream& outputStream, const Object* objCon
 	}
 	outputStream << "------------" << std::endl;
 }
+
+void objectContainedByOnDeleteCheck (Object* currentObject, const char* callSourceLabel)
+{
+	//MODDD - DEBUG - if anything is referring to this object being deleted... THAT'S BAD!
+	for (Object* objThru = TheGameLogic->getFirstObject(); objThru; objThru = objThru->getNextObject())
+	{
+		if (objThru->getContainedBy() != nullptr && objThru->getContainedBy() == currentObject)
+		{
+			std::ofstream outputFile;
+			outputFile.open("test_crash_containedByBadMemoryBug.txt", std::ios::out | std::ios::app);
+			printTimeStamp(outputFile);
+			outputFile << " - " << callSourceLabel << std::endl;
+
+			printObjectIdentifyingInfo(outputFile, currentObject);
+			outputFile << " is being destroyed but ";
+			printObjectIdentifyingInfo(outputFile, objThru);
+			outputFile << "->getContainedBy() still refers to it" << std::endl;
+				
+			if (objThru->getID() == currentObject->getID())
+			{
+				outputFile << "WARNING - they match?" << std::endl;
+			}
+				
+			printDeletionCriticalInfo(outputFile, currentObject, "obj being deleted");
+			printDeletionCriticalInfo(outputFile, objThru, "obj w/ 'getContainedBy' pointing at that");
+			printItemsInContainedList(outputFile, currentObject, objThru);
+			outputFile.close();
+
+			// nope!  need to undersatnd the issue as it happens right now, don't interfere with possible fixes yet
+			// (trying it this time)
+			objThru->friend_setContainedBy(nullptr);
+			//printf("%d%d", isDestroyed, (int)conList);
+		}
+	}
+}
