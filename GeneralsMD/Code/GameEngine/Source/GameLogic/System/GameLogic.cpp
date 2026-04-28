@@ -4666,11 +4666,20 @@ Object *GameLogic::friend_createObject( const ThingTemplate *thing, Team *team, 
 	return obj;
 }
 
+//MODDD - now a wrapper for the original content '_destroyObject'
+void GameLogic::destroyObject( Object *obj )
+{
+	_destroyObject(obj);
+#if EXTRA_DEBUG_HELP
+	g_destroyObjectSource = 0;
+#endif
+}
+
 // ------------------------------------------------------------------------------------------------
 /** Mark the object as destroyed, and place on list for deletion at the end of the next update.
  * This is the only interface to destroy objects - objects cannot be directly deleted. */
 // ------------------------------------------------------------------------------------------------
-void GameLogic::destroyObject( Object *obj )
+void GameLogic::_destroyObject( Object *obj )
 {
 	DEBUG_ASSERTCRASH(obj != nullptr, ("destroying null object"));
 

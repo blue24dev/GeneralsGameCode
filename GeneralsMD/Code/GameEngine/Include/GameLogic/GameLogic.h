@@ -184,7 +184,9 @@ public:
 	Object *friend_createObject( const ThingTemplate *thing );
 	//MODDD - added param 'objectInitLockLocalTemp', swapped 'team' and 'statusBits' order
 	Object *friend_createObject( const ThingTemplate *thing, Team *team, const ObjectStatusMaskType &objectStatusMask, Bool objectInitLockLocalTemp );
-	void destroyObject( Object *obj );							///< Mark object as destroyed for later deletion
+	//MODDD - now a wrapper for the original content '_destroyObject'
+	void destroyObject( Object *obj );
+	void _destroyObject( Object *obj );							///< Mark object as destroyed for later deletion
 	Object *findObjectByID( ObjectID id );								///< Given an ObjectID, return a pointer to the object.
  	Object *getFirstObject();									///< Returns the "first" object in the world. When used with the object method "getNextObject()", all objects in the world can be iterated.
 	ObjectID allocateObjectID();							///< Returns a new unique object id
