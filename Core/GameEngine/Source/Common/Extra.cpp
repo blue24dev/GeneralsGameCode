@@ -1176,7 +1176,7 @@ void printItemsInContainedList(std::ofstream& outputStream, const Object* objCon
 	outputStream << "------------" << std::endl;
 }
 
-void objectContainedByOnDeleteCheck (Object* currentObject, const char* callSourceLabel)
+void objectContainedByOnDeleteCheck(Object* currentObject, const char* callSourceLabel)
 {
 	//MODDD - DEBUG - if anything is referring to this object being deleted... THAT'S BAD!
 	for (Object* objThru = TheGameLogic->getFirstObject(); objThru; objThru = objThru->getNextObject())
