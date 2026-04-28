@@ -255,6 +255,10 @@
 // appear to be intended to be mutually exclusive.
 #define BLOCK_DEBUG_DEMO_MESSAGE_INPUTS 1
 
+// If on, enables some globals to help some of my new debug printouts work (might later mean for some of my debug printout
+// methods to be included in the build at all)
+#define EXTRA_DEBUG_HELP 1
+
 // Double the max player count from 16 to 32. Needed for multiplayer for the retail Laser General challenge map to work,
 // since as-is, the map uses enough players to only allow for adding 1 more.
 // Toggling this causes a tiny compile error that shows save compatibility being broken.

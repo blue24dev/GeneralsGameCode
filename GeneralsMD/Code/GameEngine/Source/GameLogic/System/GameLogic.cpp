@@ -113,6 +113,8 @@
 
 #include <rts/profile.h>
 
+struct QuitGameException {};
+
 DECLARE_PERF_TIMER(SleepyMaintenance)
 
 #include "Common/UnitTimings.h" //Contains the DO_UNIT_TIMINGS define jba.
@@ -308,6 +310,7 @@ GameLogic::GameLogic()
 	m_loadingMap = FALSE;
 	m_loadingSave = FALSE;
 	m_clearingGameData = FALSE;
+	m_quitToDesktopAfterMatch = FALSE;
 }
 
 void GameLogic::resetUpdateModuleQueues() {
@@ -1169,6 +1172,10 @@ void GameLogic::updateLoadProgress( Int progress )
 	if( m_loadScreen )
 		m_loadScreen->update( progress );
 
+	if (TheGameEngine->getQuitting() || m_quitToDesktopAfterMatch)
+	{
+		throw QuitGameException();
+	}
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1363,9 +1370,43 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	// Could also require 'm_startNewGame' to be true, since if it's false, this call does some other quick
 	// things and lets somewhere else call 'startNewGame' soon enough, but I think as soon as the intent's set
 	// is ok to declare that we're in 'setup mode'.
-	if (!loadingSaveGame) {
+	if (!loadingSaveGame)
+	{
 		gameStatus = GAMESTATUS_SETUP;
 	}
+
+	try
+	{
+		tryStartNewGame(loadingSaveGame);
+		
+		//MODDD
+		// For loading a game, setting this will be left up to the caller instead.
+		// Loading a game calls 'startNewGame' early on and still has a lot more to go, so this call finishing isn't
+		// indicative of being done with setup.
+		if (!loadingSaveGame)
+		{
+			gameStatus = GAMESTATUS_INGAME;
+		}
+	}
+	catch (QuitGameException&)
+	{
+		//MODDD - not sure best way to handle this situation?
+		// I think the game will either be in a menu (game state is non-applicable anyway) or in the shell map (be 'INGAME'
+		// after setup/etc. as usual) sometime after failure or interrupting loading for another game.
+		if (!loadingSaveGame)
+		{
+			gameStatus = GAMESTATUS_NONE;
+		}
+
+		if (m_quitToDesktopAfterMatch && TheGameEngine)
+		{
+			TheGameEngine->setQuitting(TRUE);
+		}
+	}
+}
+
+void GameLogic::tryStartNewGame( Bool loadingSaveGame )
+{
 
 	#ifdef DUMP_PERF_STATS
 	__int64 startTime64;
@@ -2864,13 +2905,11 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 		TheInGameUI->messageNoFormat( TheGameText->FETCH_OR_SUBSTITUTE( "GUI:FastForwardInstructions", L"Press F to toggle Fast Forward" ) );
   }
 
-	//MODDD
-	// For loading a game, setting this will be left up to the caller instead.
-	// Loading a game calls 'startNewGame' early on and still has a lot more to go, so this call finishing isn't
-	// indicative of being done with setup.
-	if (!loadingSaveGame) {
-		gameStatus = GAMESTATUS_INGAME;
-	}
+#ifdef PROFILER_ENABLED
+	AsciiString message;
+	message.format("GameStart: %s", TheGlobalData->m_mapName.str());
+	PROFILER_MSG(message.str(), message.getLength());
+#endif
 }
 
 //-----------------------------------------------------------------------------------------
@@ -4245,6 +4284,7 @@ void determineTimeOfDayGlobals()
 void GameLogic::update()
 {
 	USE_PERF_TIMER(GameLogic_update)
+	PROFILER_SECTION_COLOR(0x4CAF50);
 
 	LatchRestore<Bool> inUpdateLatch(m_isInUpdate, TRUE);
 #ifdef DO_UNIT_TIMINGS
@@ -4264,11 +4304,11 @@ void GameLogic::update()
 		Total_Load_3D_Assets=0;
 	#endif
 
-#ifdef RTS_PROFILE
+#ifdef RTS_PROFILE_LEGACY
     Profile::StartRange("map_load");
 #endif
 		startNewGame( FALSE );
-#ifdef RTS_PROFILE
+#ifdef RTS_PROFILE_LEGACY
     Profile::StopRange("map_load");
 #endif
 		m_startNewGame = FALSE;
@@ -4298,6 +4338,8 @@ void GameLogic::update()
 		realTimeTOD_Update();
 	}
 #endif
+
+	PROFILER_PLOT("LogicFrame", static_cast<int64_t>(now));
 
 	// update (execute) scripts
 	{
@@ -4624,11 +4666,20 @@ Object *GameLogic::friend_createObject( const ThingTemplate *thing, Team *team, 
 	return obj;
 }
 
+//MODDD - now a wrapper for the original content '_destroyObject'
+void GameLogic::destroyObject( Object *obj )
+{
+	_destroyObject(obj);
+#if EXTRA_DEBUG_HELP
+	g_destroyObjectSource = 0;
+#endif
+}
+
 // ------------------------------------------------------------------------------------------------
 /** Mark the object as destroyed, and place on list for deletion at the end of the next update.
  * This is the only interface to destroy objects - objects cannot be directly deleted. */
 // ------------------------------------------------------------------------------------------------
-void GameLogic::destroyObject( Object *obj )
+void GameLogic::_destroyObject( Object *obj )
 {
 	DEBUG_ASSERTCRASH(obj != nullptr, ("destroying null object"));
 
@@ -4817,6 +4868,86 @@ void GameLogic::exitGame()
 	TheScriptEngine->doUnfreezeTime();
 
 	TheMessageStream->appendMessage(GameMessage::MSG_CLEAR_GAME_DATA);
+
+#ifdef PROFILER_ENABLED
+	AsciiString message;
+	message.format("GameEnd: %s", TheGlobalData->m_mapName.str());
+	PROFILER_MSG(message.str(), message.getLength());
+#endif
+}
+
+// ------------------------------------------------------------------------------------------------
+
+void GameLogic::quit(Bool toDesktop)
+{
+	const Bool isNotLoading = (!isLoadingMap() && !isLoadingSave());
+
+	if (isInGame())
+	{
+		if (isInInteractiveGame())
+		{
+			if (canOpenQuitMenu())
+			{
+				ToggleQuitMenu();
+				return;
+			}
+			
+			if (isInMultiplayerGame() && !isInSkirmishGame() && TheGameInfo && !TheGameInfo->isSandbox())
+			{
+				GameMessage *msg = TheMessageStream->appendMessage(GameMessage::MSG_SELF_DESTRUCT);
+				msg->appendBooleanArgument(TRUE);
+			}
+		}
+
+		if (TheRecorder && TheRecorder->getMode() == RECORDERMODETYPE_RECORD)
+		{
+			TheRecorder->stopRecording();
+		}
+
+		setGamePaused(FALSE);
+
+		if (TheScriptEngine && isNotLoading)
+		{
+			TheScriptEngine->forceUnfreezeTime();
+			TheScriptEngine->doUnfreezeTime();
+		}
+
+		if (toDesktop)
+		{
+			if (isInMultiplayerGame())
+			{
+				m_quitToDesktopAfterMatch = TRUE;
+				if (isNotLoading)
+				{
+					exitGame();
+				}
+			}
+			else
+			{
+				if (isNotLoading)
+				{
+					clearGameData();
+				}
+			}
+		}
+		else
+		{
+			exitGame();
+		}
+	}
+
+	if (toDesktop)
+	{
+		if (!isInMultiplayerGame())
+		{
+			TheGameEngine->setQuitting(TRUE);
+		}
+	}
+
+	if (TheInGameUI)
+	{
+		TheInGameUI->setClientQuiet(TRUE);
+	}
 }
 
 // ------------------------------------------------------------------------------------------------

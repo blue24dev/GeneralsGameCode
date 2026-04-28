@@ -2314,6 +2314,9 @@ void Team::deleteTeam(Bool ignoreDead)
 		if( ignoreDead && obj->isEffectivelyDead() )
 			continue;
 
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 1;
+#endif
 		TheGameLogic->destroyObject(obj);
 	}
 }
