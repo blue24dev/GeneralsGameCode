@@ -438,9 +438,11 @@ void GameStateMap::xfer( Xfer *xfer )
 	if( xfer->getXferMode() == XFER_LOAD )
 	{
 		TheGameLogic->startNewGame( TRUE );
-		//MODDD - NOTE - not that anywhere refers to this, but this is incorrect. (or, really, GameLogic's 'loadingSave' is only accurate to loading the GameStateMap)
-		// There are a lot of blocks left, the game is still being loaded for a while.
-		// See Xfer.h's 'globalXferStatus' for a better way to track whether a game is being loaded/saved/neither.
+		//MODDD - Note - There are still things to load after this.
+		// See Xfer.h's 'globalXferStatus' for a way to track whether a game is being loaded/saved/neither as other thinsg
+		// are being loaded (better to trust).
+		// Most likely, the intent of this was only for 'startNewGame' to check 'TheGameLogic->isLoadingSave()'.
+		// The flag is turned back off now that 'startNewGame' has finished.
 		TheGameLogic->setLoadingSave( FALSE );
 	}
 

@@ -44,6 +44,9 @@
 //   }
 int g_dummy = 0;
 
+#if EXTRA_DEBUG_HELP
+int g_destroyObjectSource = 0;
+#endif
 
 //MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
 // Condensed several snippets of copied script into this, with a few additions to fix the bug on buildings
@@ -1018,7 +1021,18 @@ void printTimeStamp(std::ofstream& outputStream)
 {
 	SYSTEMTIME lt;
 	GetLocalTime(&lt);
-	outputStream << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << "." << std::setw(3) << std::setfill('0') << lt.wMilliseconds;
+	outputStream <<
+		lt.wYear << "-" <<
+		lt.wMonth << "-" <<
+		lt.wDay << " " <<
+		lt.wHour << ":" <<
+		lt.wMinute << ":" <<
+		lt.wSecond << "." <<
+		std::setw(3) <<
+		std::setfill('0') <<
+		lt.wMilliseconds <<
+		" Frame:" <<
+		TheGameLogic->getFrame();
 }
 
 // Print the most basic info to tell what this object is at a glance. That is, template name (americaVehicle-whatever)
@@ -1160,4 +1174,39 @@ void printItemsInContainedList(std::ofstream& outputStream, const Object* objCon
 		outputStream << " provided but not found" << std::endl;
 	}
 	outputStream << "------------" << std::endl;
+}
+
+void objectContainedByOnDeleteCheck (Object* currentObject, const char* callSourceLabel)
+{
+	//MODDD - DEBUG - if anything is referring to this object being deleted... THAT'S BAD!
+	for (Object* objThru = TheGameLogic->getFirstObject(); objThru; objThru = objThru->getNextObject())
+	{
+		if (objThru->getContainedBy() != nullptr && objThru->getContainedBy() == currentObject)
+		{
+			std::ofstream outputFile;
+			outputFile.open("test_crash_containedByBadMemoryBug.txt", std::ios::out | std::ios::app);
+			printTimeStamp(outputFile);
+			outputFile << " - " << callSourceLabel << std::endl;
+
+			printObjectIdentifyingInfo(outputFile, currentObject);
+			outputFile << " is being destroyed but ";
+			printObjectIdentifyingInfo(outputFile, objThru);
+			outputFile << "->getContainedBy() still refers to it" << std::endl;
+				
+			if (objThru->getID() == currentObject->getID())
+			{
+				outputFile << "WARNING - they match?" << std::endl;
+			}
+				
+			printDeletionCriticalInfo(outputFile, currentObject, "obj being deleted");
+			printDeletionCriticalInfo(outputFile, objThru, "obj w/ 'getContainedBy' pointing at that");
+			printItemsInContainedList(outputFile, currentObject, objThru);
+			outputFile.close();
+
+			// nope!  need to undersatnd the issue as it happens right now, don't interfere with possible fixes yet
+			// (trying it this time)
+			objThru->friend_setContainedBy(nullptr);
+			//printf("%d%d", isDestroyed, (int)conList);
+		}
+	}
 }

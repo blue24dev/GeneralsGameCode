@@ -807,7 +807,8 @@ SaveCode GameState::_loadGame( AvailableGameInfo gameInfo )
 	//MODDD - complementary for the 'gameStatus' assignment toward the start.
 	// The deeper 'startNewGame' call didn't change 'gameStatus' in that case, so it's up to the end of
 	// 'loadGame' here to do that.
-	if( gameInfo.saveGameInfo.saveFileType != SAVE_FILE_TYPE_MISSION ) {
+	if( gameInfo.saveGameInfo.saveFileType != SAVE_FILE_TYPE_MISSION )
+	{
 		gameStatus = GAMESTATUS_INGAME;
 	}
 	return SC_OK;
