@@ -977,6 +977,9 @@ void AISkirmishPlayer::adjustBuildList(BuildListInfo *list)
 				startPos = *obj->getPosition();
 				m_player->onStructureUndone(obj);
 				TheAI->pathfinder()->removeObjectFromPathfindMap(obj);
+#if EXTRA_DEBUG_HELP
+				g_destroyObjectSource = 6;
+#endif
 				TheGameLogic->destroyObject(obj);
 				break;
 			}

@@ -266,6 +266,9 @@ void BuildAssistant::update()
 			// TheInGameUI->message( msg );
 
 			// destroy the object
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource = 3;
+#endif
 			TheGameLogic->destroyObject( obj );
 
 			// remove this object from the sell list
@@ -1436,7 +1439,12 @@ void BuildAssistant::clearRemovableForConstruction( const ThingTemplate *whatToB
 		// UI feedback objects (always selectable) never get destroyed by construction, but also should never
 		// trip any of the other side effects of placing them in isRemovableForConstruction()
 		if( isRemovableForConstruction( them ) == TRUE && !them->isKindOf( KINDOF_ALWAYS_SELECTABLE ) )
+		{
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource = 4;
+#endif
 			TheGameLogic->destroyObject( them );
+		}
 
 	}
 	TheTerrainVisual->removeTreesAndPropsForConstruction(pos, whatToBuild->getTemplateGeometryInfo(), angle);
@@ -1642,6 +1650,9 @@ void BuildAssistant::sellObject( Object *obj )
 		{
 			if (mine->getProducerID() == obj->getID())
 			{
+#if EXTRA_DEBUG_HELP
+				g_destroyObjectSource = 5;
+#endif
 				TheGameLogic->destroyObject(mine);
 			}
 		}

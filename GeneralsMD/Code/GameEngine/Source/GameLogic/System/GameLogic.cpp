@@ -404,6 +404,9 @@ void GameLogic::destroyAllObjectsImmediate()
 	for( obj = m_objList; obj; obj = nextObj )
 	{
 		nextObj = obj->getNextObject();
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 80;
+#endif
 		destroyObject( obj );
 	}
 
@@ -2929,7 +2932,7 @@ void GameLogic::createOptimizedTree(const ThingTemplate *thingTemplate, Coord3D 
 //-----------------------------------------------------------------------------------------
 static void findAndSelectCommandCenter(Object *obj, void* alreadyFound)
 {
-	if (!((*(Bool*)alreadyFound)) && obj && obj->isKindOf(KINDOF_COMMANDCENTER) )
+	if (!((*(Bool*)alreadyFound)) && obj->isKindOf(KINDOF_COMMANDCENTER) )
 	{
 		((*(Bool*)alreadyFound)) = TRUE;
 		TheGameLogic->selectObject(obj, TRUE, obj->getControllingPlayer()->getPlayerMask(), obj->isLocallyControlled());
@@ -3833,6 +3836,9 @@ static void unitTimings()
 			Bool gotSpawn;
 			while (obj) {
 				if (obj->getTemplate() != g_UT_curThing) {
+#if EXTRA_DEBUG_HELP
+					g_destroyObjectSource = 81;
+#endif
 					TheGameLogic->destroyObject(obj);
 					gotSpawn = true;
 				}
@@ -3961,6 +3967,9 @@ static void unitTimings()
 
 	Object *obj = TheGameLogic->getFirstObject();
 	while (obj) {
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 82;
+#endif
 		TheGameLogic->destroyObject(obj);
 		obj = obj->getNextObject();
 	}
@@ -4141,6 +4150,9 @@ static void unitTimings()
 					if (obj==nullptr) break;
 #define dont_DO_TREE	1
 #ifdef DO_TREE
+#if EXTRA_DEBUG_HELP
+					g_destroyObjectSource = 83;
+#endif
 					TheGameLogic->destroyObject(obj);
 					externalAddTree(pos, 1.0f, 0.0f, "TreeOakFall1");
 					g_UT_gotUnit = true;
@@ -4671,6 +4683,7 @@ void GameLogic::destroyObject( Object *obj )
 {
 	_destroyObject(obj);
 #if EXTRA_DEBUG_HELP
+	// reset (just in case, should never be needed)
 	g_destroyObjectSource = 0;
 #endif
 }
@@ -5558,11 +5571,17 @@ void GameLogic::prepareLogicForObjectLoad()
 
 				oldTower = findObjectByID( bridgeInfo->towerObjectID[ i ] );
 				if (oldTower) {
+#if EXTRA_DEBUG_HELP
+					g_destroyObjectSource = 84;
+#endif
 					destroyObject( oldTower );
 				}
 
 			}
 
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 85;
+#endif
 			// destroy the old bridge object
 			destroyObject( oldObject );
 
@@ -5570,6 +5589,9 @@ void GameLogic::prepareLogicForObjectLoad()
 		else if( obj->isKindOf( KINDOF_WALK_ON_TOP_OF_WALL ) )
 		{
 
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 86;
+#endif
 			// destroy walk on top of wall things too
 			destroyObject( obj );
 

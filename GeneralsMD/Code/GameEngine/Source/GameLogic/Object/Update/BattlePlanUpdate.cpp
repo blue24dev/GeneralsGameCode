@@ -181,7 +181,12 @@ void BattlePlanUpdate::onDelete()
 	{
 		obj = TheGameLogic->findObjectByID( m_visionObjectID );
 		if( obj )
+		{
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource = 59;
+#endif
 			TheGameLogic->destroyObject( obj );
+		}
 	}
 
 	// If we get destroyed, then make sure we remove our bonus!

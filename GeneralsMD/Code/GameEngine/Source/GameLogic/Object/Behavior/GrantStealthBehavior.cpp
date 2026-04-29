@@ -152,7 +152,9 @@ UpdateSleepTime GrantStealthBehavior::update()
 
   if ( thisIsFinalScan )
   {
-
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 15;
+#endif
     TheGameLogic->destroyObject( self );
     return UPDATE_SLEEP_FOREVER;
   }

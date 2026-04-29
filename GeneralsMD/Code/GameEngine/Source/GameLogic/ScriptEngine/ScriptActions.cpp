@@ -99,20 +99,17 @@ extern void oversizeTheTerrain(Int amount);
 // or the indicator color. this allows us to force the situation. (srj)
 static void updateTeamAndPlayerStuff( Object *obj, void *userData )
 {
-	if (obj)
-	{
-		obj->updateUpgradeModules();
+	obj->updateUpgradeModules();
 
-		// srj sez: apparently we have to do this too, since Team::setControllingPlayer
-		// does not. Might make more sense to do it there, but am scared to at this point.
-		Drawable* draw = obj->getDrawable();
-		if (draw)
-		{
-			if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
-				draw->setIndicatorColor(obj->getNightIndicatorColor());
-			else
-				draw->setIndicatorColor(obj->getIndicatorColor());
-		}
+	// srj sez: apparently we have to do this too, since Team::setControllingPlayer
+	// does not. Might make more sense to do it there, but am scared to at this point.
+	Drawable* draw = obj->getDrawable();
+	if (draw)
+	{
+		if (TIME_OF_DAY_SOURCE == TIME_OF_DAY_NIGHT)
+			draw->setIndicatorColor(obj->getNightIndicatorColor());
+		else
+			draw->setIndicatorColor(obj->getIndicatorColor());
 	}
 }
 //-------------------------------------------------------------------------------------------------
@@ -2441,6 +2438,9 @@ void ScriptActions::doNamedDelete(const AsciiString& unitName)
 		return;
 	}
 
+#if EXTRA_DEBUG_HELP
+	g_destroyObjectSource = 78;
+#endif
 	TheGameLogic->destroyObject(theUnit);
 }
 
@@ -6818,7 +6818,12 @@ void ScriptActions::deleteAllUnmanned()
 	Object *obj = TheGameLogic->getFirstObject();
 	while (obj) {
 		if (obj->isDisabledByType(DISABLED_UNMANNED))
+		{
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource = 79;
+#endif
 			TheGameLogic->destroyObject(obj);
+		}
 		obj = obj->getNextObject();
 	}
 }

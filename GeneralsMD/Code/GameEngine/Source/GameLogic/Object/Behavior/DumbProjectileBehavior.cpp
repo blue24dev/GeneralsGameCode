@@ -391,6 +391,9 @@ void DumbProjectileBehavior::projectileFireAtObjectOrPosition( const Object *vic
 	if (!calcFlightPath(true))
 	{
 		//Can only fail if wildly incorrect points
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 11;
+#endif
 		TheGameLogic->destroyObject( projectile );
 		return;
 	}
@@ -555,6 +558,9 @@ Bool DumbProjectileBehavior::projectileHandleCollision( Object *other )
 					getObject()->getControllingPlayer()->getAcademyStats()->recordClearedGarrisonedBuilding();
 
 					// don't do the normal explosion; just destroy ourselves & return
+#if EXTRA_DEBUG_HELP
+					g_destroyObjectSource = 12;
+#endif
 					TheGameLogic->destroyObject(getObject());
 
 					return true;
@@ -595,6 +601,9 @@ void DumbProjectileBehavior::detonate()
 		}
 		else
 		{
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource = 13;
+#endif
 			TheGameLogic->destroyObject( obj );
 		}
 

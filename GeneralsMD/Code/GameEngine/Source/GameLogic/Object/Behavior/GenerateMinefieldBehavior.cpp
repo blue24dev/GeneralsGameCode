@@ -483,6 +483,9 @@ UpdateSleepTime GenerateMinefieldBehavior::update()
 						Object *obj = TheGameLogic->findObjectByID(objID);
 						if (obj)
 						{
+#if EXTRA_DEBUG_HELP
+							g_destroyObjectSource = 14;
+#endif
 							TheGameLogic->destroyObject(obj);
 						}
 					}

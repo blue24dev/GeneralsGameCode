@@ -289,6 +289,9 @@ Bool ConvertToHijackedVehicleCrateCollide::executeCrateBehavior( Object *other )
 	HijackerUpdate *hijackerUpdate = (HijackerUpdate*)obj->findUpdateModule( key_HijackerUpdate );
 	if ( !hijackerUpdate )
 	{
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 34;
+#endif
 		TheGameLogic->destroyObject( obj );
 		return TRUE;
 	}
@@ -311,6 +314,9 @@ Bool ConvertToHijackedVehicleCrateCollide::executeCrateBehavior( Object *other )
 
 	if ( ! targetCanEject )
 	{
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 35;
+#endif
 		TheGameLogic->destroyObject( obj );
 		return TRUE;
 	}

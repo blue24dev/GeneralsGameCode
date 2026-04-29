@@ -112,6 +112,9 @@ Bool SupplyWarehouseDockUpdate::action( Object* docker, Object *drone )
 	{
 		if( m_boxesStored == 0 && getSupplyWarehouseDockUpdateModuleData()->m_deleteWhenEmpty )
 		{
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource = 62;
+#endif
 			TheGameLogic->destroyObject( getObject() );
 			return FALSE; //Yer done.  And so am I.
 		}
