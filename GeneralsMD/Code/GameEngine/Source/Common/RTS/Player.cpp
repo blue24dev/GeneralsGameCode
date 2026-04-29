@@ -1238,9 +1238,6 @@ struct PlayerObjectFindInfo
 //-------------------------------------------------------------------------------------------------
 static void doFindCommandCenter(Object* obj, void* userData)
 {
-	if (!obj)
-		return;
-
 	PlayerObjectFindInfo* info = (PlayerObjectFindInfo*)userData;
 
 	if (info->obj == nullptr
