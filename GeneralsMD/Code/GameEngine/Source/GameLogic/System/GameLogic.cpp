@@ -3065,7 +3065,7 @@ void GameLogic::processDestroyList()
 		Object* currentObject = (*iterator);
 
 		//MODDD - DEBUG - if anything is referring to this object being deleted... THAT'S BAD!
-		objectContainedByOnDeleteCheck(currentObject, "processDestroyList");
+		objectContainedByOnDeleteCheck(currentObject, 2);
 		
 #ifdef ALLOW_NONSLEEPY_UPDATES
 		for (std::list<UpdateModulePtr>::iterator it = m_normalUpdates.begin(); it != m_normalUpdates.end(); /* nothing */)
@@ -4743,7 +4743,7 @@ void GameLogic::_destroyObject( Object *obj )
 	}
 
 	//MODDD - DEBUG - if anything is referring to this object being deleted... THAT'S BAD!
-	objectContainedByOnDeleteCheck(obj, "destroyObject");
+	objectContainedByOnDeleteCheck(obj, 1);
 
 
 }
