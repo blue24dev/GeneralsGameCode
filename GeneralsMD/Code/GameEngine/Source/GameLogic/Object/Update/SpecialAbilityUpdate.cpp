@@ -1774,6 +1774,9 @@ void SpecialAbilityUpdate::killSpecialObjects()
     if( specialObject )
     {
       //Delete the old one!
+#if EXTRA_DEBUG_HELP
+		  g_destroyObjectSource = 69;
+#endif
       TheGameLogic->destroyObject( specialObject );
     }
   }

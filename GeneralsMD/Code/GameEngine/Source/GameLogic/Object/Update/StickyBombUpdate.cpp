@@ -170,6 +170,9 @@ UpdateSleepTime StickyBombUpdate::update()
 		if( target->isEffectivelyDead() )
 		{
 			//If the target is dead, then
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource = 72;
+#endif
 			TheGameLogic->destroyObject( self );
 			return UPDATE_SLEEP_NONE;
 		}

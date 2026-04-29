@@ -97,6 +97,9 @@ void ReplaceObjectUpgrade::upgradeImplementation()
 		// Remove us first since occupation of cells is apparently not a refcount, but a flag.  If I don't remove, then the new
 		// thing will be placed, and then on deletion I will remove "his" marks.
 		TheAI->pathfinder()->removeObjectFromPathfindMap(me);
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 75;
+#endif
 		TheGameLogic->destroyObject(me);
 	}
 

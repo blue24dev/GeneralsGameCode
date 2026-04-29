@@ -816,7 +816,12 @@ UpdateSleepTime RailroadBehavior::update()
 			m_trailerID = INVALID_ID;// so I will forget about my trailer and designate myself as the caboose
 
 			if ( m_endOfLine )
+			{
+#if EXTRA_DEBUG_HELP
+				g_destroyObjectSource = 55;
+#endif
 				TheGameLogic->destroyObject( getObject() );
+			}
 		}
 	}
 	else if ( m_wantsToBeLeadCarriage <= FRAMES_UNPULLED_LONG_ENOUGH_TO_UNHITCH )// if I am not the lead carriage
@@ -1204,7 +1209,12 @@ void RailroadBehavior::getPulled( PullInfo *info )
 	{
 		m_trailerID = INVALID_ID;// so I will forget about my trailer and designate myself as the caboose
 		if ( m_endOfLine )
+		{
+#if EXTRA_DEBUG_HELP
+				g_destroyObjectSource = 56;
+#endif
 			TheGameLogic->destroyObject( getObject() );
+		}
 
 	}
 
@@ -1340,6 +1350,9 @@ void RailroadBehavior::updatePositionTrackDistance( PullInfo *pullerInfo, PullIn
 //---------------------------------------------------------------------------------
 void RailroadBehavior::destroyTheWholeTrainNow()
 {
+#if EXTRA_DEBUG_HELP
+	g_destroyObjectSource = 57;
+#endif
 	TheGameLogic->destroyObject( getObject());
 
 	Object *trailer = TheGameLogic->findObjectByID( m_trailerID );

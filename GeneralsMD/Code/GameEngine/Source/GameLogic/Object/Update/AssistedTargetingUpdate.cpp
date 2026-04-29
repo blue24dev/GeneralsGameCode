@@ -128,6 +128,9 @@ void AssistedTargetingUpdate::makeFeedbackLaser( const ThingTemplate *laserTempl
 	LaserUpdate *update = (LaserUpdate*)draw->findClientUpdateModule( key_LaserUpdate );
 	if( !update )
 	{
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 58;
+#endif
 		TheGameLogic->destroyObject( laser );
 		return;
 	}

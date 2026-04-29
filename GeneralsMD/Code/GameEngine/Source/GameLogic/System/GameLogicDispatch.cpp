@@ -1954,6 +1954,9 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 						{
 							if (beacon->getControllingPlayer() == msgPlayer)
 							{
+#if EXTRA_DEBUG_HELP
+								g_destroyObjectSource = 87;
+#endif
 								destroyObject(beacon); // the owner is telling it to go away.  such is life.
 
 								TheControlBar->markUIDirty(); // check if we should un-grey out the button

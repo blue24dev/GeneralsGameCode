@@ -67,7 +67,12 @@ UpdateSleepTime ProjectileStreamUpdate::update()
 	// Update the draw module about our points (arrange array so they can read?)
 
 	if( considerDying() )
+	{
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 68;
+#endif
 		TheGameLogic->destroyObject( getObject() );
+	}
 
 	return UPDATE_SLEEP_NONE;
 }

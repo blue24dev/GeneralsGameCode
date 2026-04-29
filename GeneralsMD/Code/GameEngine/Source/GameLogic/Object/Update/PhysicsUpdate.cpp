@@ -681,6 +681,9 @@ UpdateSleepTime PhysicsBehavior::update()
 		if (_isnan(mtx.Get_X_Translation()) || _isnan(mtx.Get_Y_Translation()) ||
 			_isnan(mtx.Get_Z_Translation())) {
 			DEBUG_CRASH(("Object position is NAN, deleting."));
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource = 65;
+#endif
 			TheGameLogic->destroyObject(obj);
 		}
 
@@ -1247,6 +1250,9 @@ void PhysicsBehavior::onCollide( Object *other, const Coord3D *loc, const Coord3
 			//of the infantry to the vehicle... so the designer can control the vehicle with their scripts.
 			TheScriptEngine->transferObjectName( obj->getName(), other );
 
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 66;
+#endif
 			TheGameLogic->destroyObject( obj );
 		}
 		return;
@@ -1406,6 +1412,9 @@ void PhysicsBehavior::onCollide( Object *other, const Coord3D *loc, const Coord3
 					{
 						TheWeaponStore->createAndFireTempWeapon(getPhysicsBehaviorModuleData()->m_vehicleCrashesIntoBuildingWeaponTemplate, obj, obj->getPosition());
 					}
+#if EXTRA_DEBUG_HELP
+					g_destroyObjectSource = 67;
+#endif
 					TheGameLogic->destroyObject(obj);
 					return;
 				}

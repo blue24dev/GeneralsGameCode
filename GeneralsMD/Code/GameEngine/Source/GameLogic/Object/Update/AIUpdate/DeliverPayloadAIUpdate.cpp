@@ -716,6 +716,9 @@ StateReturnType DeliveringState::update() // Kick a dude out every so often
 			pos.y += ai->getDropOffset().y;
 			pos.z += ai->getDropOffset().z;
 			owner->fireCurrentWeapon( &pos );
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource = 49;
+#endif
 			TheGameLogic->destroyObject( item );
 		}
 		else
@@ -1141,6 +1144,9 @@ StateReturnType HeadOffMapState::onEnter() // Give move order out of town
 
 	if ( ai->getData()->m_selfDestructObject ) //Lorenzen... this makes delivery unit pop away like a bubble...
 	{
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 50;
+#endif
 		TheGameLogic->destroyObject( owner );
 		return STATE_CONTINUE;
 	}
@@ -1230,6 +1236,9 @@ StateReturnType CleanUpState::onEnter() // Delete my successful butt
 	}
 
 	Object *owner = getMachineOwner();
+#if EXTRA_DEBUG_HELP
+	g_destroyObjectSource = 51;
+#endif
 	TheGameLogic->destroyObject( owner );
 
 	return STATE_CONTINUE;

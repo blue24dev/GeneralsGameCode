@@ -296,6 +296,9 @@ void RiderChangeContain::onRemoving( Object *rider )
 	//Note if the bike dies, the rider dies too.
 	if( bike->isEffectivelyDead() )
 	{
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 42;
+#endif
 		TheGameLogic->destroyObject( rider );
 		return;
 	}
