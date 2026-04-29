@@ -118,6 +118,9 @@ void CrateCollide::onCollide( Object *other, const Coord3D *, const Coord3D * )
 				FXList::doFXObj( modData->m_executeFX, other );
 			}
 
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource = 36;
+#endif
 			TheGameLogic->destroyObject( getObject() );
 		}
 

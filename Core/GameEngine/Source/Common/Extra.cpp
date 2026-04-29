@@ -1014,9 +1014,7 @@ void printTimeStamp(std::ofstream& outputStream)
 		lt.wHour << ":" <<
 		lt.wMinute << ":" <<
 		lt.wSecond << "." <<
-		std::setw(3) <<
-		std::setfill('0') <<
-		lt.wMilliseconds <<
+		std::setw(3) << std::setfill('0') << lt.wMilliseconds <<
 		" Frame:" <<
 		TheGameLogic->getFrame();
 }
@@ -1162,7 +1160,26 @@ void printItemsInContainedList(std::ofstream& outputStream, const Object* objCon
 	outputStream << "------------" << std::endl;
 }
 
-void objectContainedByOnDeleteCheck(Object* currentObject, const char* callSourceLabel)
+void objectContainedByOnDeleteCheck_printLabel(std::ofstream& outputStream, int callSource)
+{
+	switch(callSource)
+	{
+		case 1:
+		{
+			outputStream << " - " << "destroyObject src#" <<
+				std::setw(3) << std::setfill('0') << g_destroyObjectSource <<
+				std::endl;
+			break;
+		}
+		case 2:
+		{
+			outputStream << " - " << "processDestroyList" << std::endl;
+			break;
+		}
+	}
+}
+
+void objectContainedByOnDeleteCheck(Object* currentObject, int callSource)
 {
 	//MODDD - DEBUG - if anything is referring to this object being deleted... THAT'S BAD!
 	for (Object* objThru = TheGameLogic->getFirstObject(); objThru; objThru = objThru->getNextObject())
@@ -1172,7 +1189,8 @@ void objectContainedByOnDeleteCheck(Object* currentObject, const char* callSourc
 			std::ofstream outputFile;
 			outputFile.open("test_crash_containedByBadMemoryBug.txt", std::ios::out | std::ios::app);
 			printTimeStamp(outputFile);
-			outputFile << " - " << callSourceLabel << std::endl;
+
+			objectContainedByOnDeleteCheck_printLabel(outputFile, callSource);
 
 			printObjectIdentifyingInfo(outputFile, currentObject);
 			outputFile << " is being destroyed but ";

@@ -169,7 +169,9 @@ void InstantDeathBehavior::onDie( const DamageInfo *damageInfo )
 			TheWeaponStore->createAndFireTempWeapon(wt, getObject(), getObject()->getPosition());
 		}
 	}
-
+#if EXTRA_DEBUG_HELP
+	g_destroyObjectSource = 16;
+#endif
 	TheGameLogic->destroyObject(getObject());
 }
 

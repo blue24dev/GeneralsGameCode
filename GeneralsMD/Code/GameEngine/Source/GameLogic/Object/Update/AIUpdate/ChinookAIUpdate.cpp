@@ -199,6 +199,9 @@ public:
 		*/
 		// ---
 		{
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource = 48;
+#endif
 			TheGameLogic->destroyObject(owner);
 			return STATE_SUCCESS;
 		}

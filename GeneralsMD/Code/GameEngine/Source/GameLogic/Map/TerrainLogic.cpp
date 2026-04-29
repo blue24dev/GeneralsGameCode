@@ -2039,7 +2039,12 @@ void TerrainLogic::deleteBridge( Bridge *bridge )
 
 	Object *bridgeObj = TheGameLogic->findObjectByID( bridgeInfo.bridgeObjectID );
 	if( bridgeObj )
+	{
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 8;
+#endif
 		TheGameLogic->destroyObject( bridgeObj );
+	}
 
 	// delete the bridge in question
 	deleteInstance(bridge);

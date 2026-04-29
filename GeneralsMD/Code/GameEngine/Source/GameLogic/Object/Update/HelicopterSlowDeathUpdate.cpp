@@ -485,6 +485,9 @@ UpdateSleepTime HelicopterSlowDeathBehavior::update()
 		}
 
 		// destroy the copter finally
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 63;
+#endif
 		TheGameLogic->destroyObject( copter );
 
 	}

@@ -69,4 +69,4 @@ void printDeletionCriticalInfo(std::ofstream& outputStream, const Object* objToP
 void printDeletionCriticalInfo(std::ofstream& outputStream, const Object* objToPrint, const char* extraHeading);
 void printItemsInContainedList(std::ofstream& outputStream, const Object* objContainer);
 void printItemsInContainedList(std::ofstream& outputStream, const Object* objContainer, const Object* objToLookFor);
-void objectContainedByOnDeleteCheck(Object* currentObject, const char* callSourceLabel);
+void objectContainedByOnDeleteCheck(Object* currentObject, int callSource);

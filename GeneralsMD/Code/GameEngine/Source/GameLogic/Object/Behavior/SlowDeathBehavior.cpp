@@ -237,6 +237,9 @@ void SlowDeathBehavior::beginSlowDeath(const DamageInfo *damageInfo)
 		if (timeScale == 0.0f && !d->hasNonLodEffects())
 		{
 			// Deaths happen instantly so just delete the object and return
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource = 28;
+#endif
 			TheGameLogic->destroyObject(obj);
 			return;
 		}
@@ -392,6 +395,9 @@ UpdateSleepTime SlowDeathBehavior::update()
 		if (timeScale == 0)
 		{
 			// instant death
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource = 29;
+#endif
 			TheGameLogic->destroyObject(obj);
 			return UPDATE_SLEEP_NONE;
 		}
@@ -435,7 +441,12 @@ UpdateSleepTime SlowDeathBehavior::update()
 						obj->setModelConditionFlags(   MAKE_MODELCONDITION_MASK(MODELCONDITION_PARACHUTING) ); //looks like he is snagged in a tree
 						obj->setPositionZ( obj->getPosition()->z - (d->m_sinkRate * 50.0f) );// make him sink faster
 						if ( !obj->isAboveTerrain() )
+						{
+#if EXTRA_DEBUG_HELP
+							g_destroyObjectSource = 30;
+#endif
 							TheGameLogic->destroyObject(obj);
+						}
 
 					}
 				}
@@ -464,6 +475,9 @@ UpdateSleepTime SlowDeathBehavior::update()
 	if (now >= m_destructionFrame)
 	{
 		doPhaseStuff(SDPHASE_FINAL);
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 31;
+#endif
 		TheGameLogic->destroyObject(obj);
 	}
 

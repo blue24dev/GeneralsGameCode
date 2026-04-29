@@ -229,7 +229,12 @@ void HelixContain::onDelete()
 {
   Object *portable = getPortableStructure();
   if ( portable )
+  {
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 37;
+#endif
     TheGameLogic->destroyObject( portable );
+  }
 
   TransportContain::onDelete();
 }
@@ -250,7 +255,12 @@ void HelixContain::addToContainList( Object *obj )
   {
     Object *portable = getPortableStructure();
     if ( portable )
+    {
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 38;
+#endif
       TheGameLogic->destroyObject( portable );
+    }
 
     m_portableStructureID = obj->getID();
     obj->friend_setContainedBy( getObject() );//fool portable into thinking my object is his container
@@ -268,7 +278,12 @@ void HelixContain::addToContain( Object *obj )
   {
     Object *portable = getPortableStructure();
     if ( portable )
+    {
+#if EXTRA_DEBUG_HELP
+		  g_destroyObjectSource = 39;
+#endif
       TheGameLogic->destroyObject( portable );
+    }
 
     m_portableStructureID = obj->getID();
     obj->friend_setContainedBy( getObject() );//fool portable into thinking my object is his container

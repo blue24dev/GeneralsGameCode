@@ -278,7 +278,12 @@ BridgeBehavior::~BridgeBehavior()
 		// get the tower and destroy
 		tower = TheGameLogic->findObjectByID( getTowerID( (BridgeTowerType)i ) );
 		if( tower )
+		{
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource = 9;
+#endif
 			TheGameLogic->destroyObject( tower );
+		}
 
 	}
 

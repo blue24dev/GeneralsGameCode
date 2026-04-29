@@ -363,6 +363,9 @@ Bool MissileAIUpdate::projectileHandleCollision( Object *other )
 					FXList::doFXObj(d->m_garrisonHitKillFX, other, nullptr);
 
 					// don't do the normal explosion; just destroy ourselves & return
+#if EXTRA_DEBUG_HELP
+					g_destroyObjectSource = 52;
+#endif
 					TheGameLogic->destroyObject(obj);
 
 					return true;
@@ -442,9 +445,16 @@ void MissileAIUpdate::doKillSelfState()
 	if (m_detonationWeaponTmpl)
   {
     if ( modData->m_detonateCallsKill )
+		{
       obj->kill(); // kill it (vs destroying it) so that its Die modules are called
+		}
     else
+		{
+#if EXTRA_DEBUG_HELP
+				g_destroyObjectSource = 53;
+#endif
 		  TheGameLogic->destroyObject( obj );
+		}
 	}
 	switchToState(DEAD);
 }
@@ -682,6 +692,9 @@ UpdateSleepTime MissileAIUpdate::update()
 	if (newPos.z < 0)
 	{
 		// we ended up under the world.  go away.
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 54;
+#endif
 		TheGameLogic->destroyObject(getObject());
 		return UPDATE_SLEEP_FOREVER;
 	}

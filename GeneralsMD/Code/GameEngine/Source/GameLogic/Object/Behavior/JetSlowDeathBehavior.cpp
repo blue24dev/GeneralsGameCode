@@ -160,6 +160,9 @@ void JetSlowDeathBehavior::onDie( const DamageInfo *damageInfo )
 		ObjectCreationList::create( modData->m_oclOnGroundDeath, us, nullptr );
 
 		// destroy object
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource = 17;
+#endif
 		TheGameLogic->destroyObject( us );
 
 	}
@@ -328,6 +331,9 @@ UpdateSleepTime JetSlowDeathBehavior::update()
 			ObjectCreationList::create( modData->m_oclFinalBlowUp, us, nullptr );
 
 			// we're all done now
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource = 18;
+#endif
 			TheGameLogic->destroyObject( us );
 
 		}

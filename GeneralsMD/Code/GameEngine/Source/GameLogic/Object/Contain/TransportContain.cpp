@@ -560,7 +560,12 @@ void TransportContain::killRidersWhoAreNotFreeToExit()
 		{
 			// If we cannot exit this guy legally, kill the bastard before removeAllContained forces him out.
 			if (d->m_destroyRidersWhoAreNotFreeToExit)
+			{
+#if EXTRA_DEBUG_HELP
+				g_destroyObjectSource = 43;
+#endif
 				TheGameLogic->destroyObject(obj);
+			}
 			else
 #if RETAIL_COMPATIBLE_CRC
 				obj->kill();
