@@ -26,6 +26,7 @@
 #endif
 #include "GameLogic/Module/MaxHealthUpgrade.h"
 #include "GameLogic/Module/RebuildHoleExposeDie.h"
+#include "GameLogic/Module/StealthUpdate.h"
 #include "GameLogic/Module/StealthDetectorUpdate.h"
 #include "GameLogic/Module/SpecialAbilityUpdate.h"
 #include "GameLogic/Module/ActiveShroudUpgrade.h"
@@ -140,7 +141,7 @@ Int getUpgradedSupplyBoost(const Object* collectingObject, const std::list<upgra
 // A fix is to see if the subdual cap is under 'subdualDamageToDisable + <bare minimum extra, or nothing here>' and if so, enforce a more normal minimum.
 void checkActiveBodyModuleDataSubdualAttributes(ActiveBodyModuleData* _data)
 {
-	if (_data->m_subdualDamageCap <= 0)
+	if (_data->m_subdualDamageCap <= 0 || _data->m_subdualDamageToDisable <= 0)
 	{
 		// not even set / deliberately 0? going to assume this is for a reason - don't touch
 		return;
@@ -149,7 +150,7 @@ void checkActiveBodyModuleDataSubdualAttributes(ActiveBodyModuleData* _data)
 	// First, check to see if the cap matches the sub-damage-to-disable.
 	if (_data->m_subdualDamageCap == _data->m_subdualDamageToDisable)
 	{
-		// Push the cap up a bit so the disabler stopping doesn't instantly go back to normal.
+		// Push the cap up a bit so the disabler stopping doesn't mean the affected object instantly goes back to normal.
 		if (_data->m_subdualDamageCap >= 1000)
 		{
 			_data->m_subdualDamageCap = _data->m_subdualDamageToDisable + 200;
@@ -325,6 +326,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 #endif
 	
 	static NameKeyType SalvageCrateCollideNameKey = NAMEKEY("SalvageCrateCollide");
+	static NameKeyType StealthUpdateNameKey = NAMEKEY("StealthUpdate");
 	static NameKeyType ActiveBodyNameKey = NAMEKEY("ActiveBody");
 	static NameKeyType StructureBodyNameKey = NAMEKEY("StructureBody");
 #if RTS_ZEROHOUR
@@ -377,6 +379,37 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			{
 				_data->m_allowMultiPickup = TRUE;
 			}
+		}
+		else if( modNameKey == StealthUpdateNameKey )
+		{
+			// This change is part of a bugfix for attack cycles becoming stealthed when evacuated.
+			// This was technically possible in retail, but never happened because the 'StealthDelay' from the rider's 'StealthUpdate'
+			// (likely the default from default/Object.ini) was long enough it was never reached before the recently evac'd bike would
+			// self destruct. Currently, the attack bike will use the 'stealthDelay' from the bike itself when immediately evac'd
+			// (has its own 'StealthUpdate'), but because it only defines 'UseRiderStealth' and the default object's 'StealthUpdate'
+			// is wrapped by 'OverrideableByLikeKind', the attack bike's 'StealthUpdate' completely replaces anything unspecified
+			// with hardcoded defaults from here instead of anything specified in the default object's 'StealthUpdate'.
+			// Defaulting 'm_innateStealth' to 'false' instead of 'true' is possible, but it seems like some mod out there could rely
+			// on the original assumption for immediate stealth behavior (intended stealth behavior no longer works as expected).
+			// Going with a more surgical fix: if 'm_innateStealth' is unspecified, imply a default of 'false' for it if
+			// 'UseRiderStealth = Yes' is set.
+			StealthUpdateModuleData* _data = (StealthUpdateModuleData*)data;
+			(void)_data;
+
+#if RTS_ZEROHOUR
+			// check for the new default - set based off 'useRiderStealth'
+			if (_data->m_innateStealth == 0xFF)
+			{
+				if (_data->m_useRiderStealth)
+				{
+					_data->m_innateStealth = FALSE;
+				}
+				else
+				{
+					_data->m_innateStealth = TRUE;
+				}
+			}
+#endif
 		}
 		// For whether it makes sense to apply health changes, checking for 'ActiveBody', 'StructureBody', and 'UndeadBody' should be enough.
 		// Other body subclasses are 'ImmortalBody' and 'HighlanderBody', which don't look to be for normal commandable/attackable things.

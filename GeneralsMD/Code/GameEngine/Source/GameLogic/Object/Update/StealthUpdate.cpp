@@ -64,24 +64,40 @@
 
 StealthUpdateModuleData::StealthUpdateModuleData()
 {
-		m_disguiseFX = nullptr;
-    m_disguiseRevealFX = nullptr;
-    m_stealthDelay		= UINT_MAX;
-    m_stealthLevel		= 0;
-    m_stealthSpeed		= 0.0f;
-    m_friendlyOpacityMin = 0.5f;
-    m_friendlyOpacityMax = 1.0f;
-    m_pulseFrames = 30;
-    m_teamDisguised		= false;
-    m_revealDistanceFromTarget = 0.0f;
-    m_orderIdleEnemiesToAttackMeUponReveal = false;
-    m_innateStealth   = true;
-    m_disguiseTransitionFrames = 0;
-    m_disguiseRevealTransitionFrames = 0;
-    m_blackMarketCheckFrames = 0;
-    m_enemyDetectionEvaEvent = EVA_Invalid;
-    m_ownDetectionEvaEvent = EVA_Invalid;
-    m_grantedBySpecialPower = FALSE;
+	m_disguiseFX = nullptr;
+	m_disguiseRevealFX = nullptr;
+
+	//MODDD - changing the default from 'UINT_MAX' to '0' since this tends to overflow when added to other things
+	// (effectively adding '-1'). See comments in Extra.cpp around the check for 'StealthUpdate' for more info.
+	m_stealthDelay		= 0;
+
+	m_stealthLevel		= 0;
+	m_stealthSpeed		= 0.0f;
+	m_friendlyOpacityMin = 0.5f;
+	m_friendlyOpacityMax = 1.0f;
+	m_pulseFrames = 30;
+	m_teamDisguised		= false;
+	m_revealDistanceFromTarget = 0.0f;
+	m_orderIdleEnemiesToAttackMeUponReveal = false;
+
+	//MODDD - Note - changing this default from 'true' to 'false'... actually, decided against doing this.
+	// See comments in Extra.cpp around the check for 'StealthUpdate' for more info.
+	//MODDD - changing it to a bogus '0xFF' so somewhere else can decide what to do if this default persists (never
+	// defined by the INI module)
+	m_innateStealth   = true;
+	// setting it to '0xff' ('Bool' is a Byte internally) won't cut it, so, memcpy it is to force it.
+	const Byte tempByte = 0xFF;
+	memcpy(&m_innateStealth, &tempByte, sizeof(Byte));
+
+	m_disguiseTransitionFrames = 0;
+	m_disguiseRevealTransitionFrames = 0;
+	m_blackMarketCheckFrames = 0;
+	m_enemyDetectionEvaEvent = EVA_Invalid;
+	m_ownDetectionEvaEvent = EVA_Invalid;
+	m_grantedBySpecialPower = FALSE;
+
+	//MODDD - strangely absent here, though effectively the same as retail (seems initialized memory starts out as 0's -> 'false' falls into place here)
+	m_useRiderStealth = FALSE;
 }
 
 
@@ -202,7 +218,7 @@ void isBlackMarket( Object *obj, void *userData )
 	}
 }
 
-//---------------------------------------------------------------------------------------~-_-~-_-~-
+//-------------------------------------------------------------------------------------------------
 void StealthUpdate::receiveGrant( Bool active, UnsignedInt frames )
 {
   Object *obj = getObject();
