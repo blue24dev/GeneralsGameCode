@@ -3830,7 +3830,7 @@ void Player::processCreateTeamGameMessage(Int hotkeyNum, const GameMessage *msg)
 //-------------------------------------------------------------------------------------------------
 /** Select a hotkey team based on this GameMessage */
 //-------------------------------------------------------------------------------------------------
-void Player::processSelectTeamGameMessage(Int hotkeyNum, GameMessage *msg) {
+void Player::processSelectTeamGameMessage(Int hotkeyNum) {
 	if ((hotkeyNum < 0) || (hotkeyNum >= NUM_HOTKEY_SQUADS)) {
 		DEBUG_CRASH(("processSelectTeamGameMessage got an invalid hotkey number"));
 		return;
@@ -3863,7 +3863,7 @@ void Player::processSelectTeamGameMessage(Int hotkeyNum, GameMessage *msg) {
 //-------------------------------------------------------------------------------------------------
 /** Select a hotkey team based on this GameMessage */
 //-------------------------------------------------------------------------------------------------
-void Player::processAddTeamGameMessage(Int hotkeyNum, GameMessage *msg) {
+void Player::processAddTeamGameMessage(Int hotkeyNum) {
 	if ((hotkeyNum < 0) || (hotkeyNum >= NUM_HOTKEY_SQUADS)) {
 		DEBUG_CRASH(("processAddTeamGameMessage got an invalid hotkey number"));
 		return;
