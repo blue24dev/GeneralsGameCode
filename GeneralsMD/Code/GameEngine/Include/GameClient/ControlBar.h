@@ -700,6 +700,8 @@ public:
 	void hidePurchaseScience();
 	void togglePurchaseScience();
 
+	Bool hasAnyShortcutSelection() const;
+	Bool canShowSpecialPowerShortcut() const;
 	void showSpecialPowerShortcut();
 	void hideSpecialPowerShortcut();
 	void animateSpecialPowerShortcut( Bool isOn );
