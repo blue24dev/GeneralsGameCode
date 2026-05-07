@@ -789,8 +789,6 @@ public:
 
 	void drawSpecialPowerShortcutMultiplierText();
 
-	Bool hasAnyShortcutSelection() const;
-
 	//MODDD
 	friend void previouslyOpen_copy();
 
