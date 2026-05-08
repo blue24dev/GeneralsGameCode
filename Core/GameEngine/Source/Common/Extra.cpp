@@ -201,8 +201,9 @@ void checkActiveBodyModuleDataSubdualAttributes(ActiveBodyModuleData* _data)
 // (ex: 30% more health for all units). The 'CUSTOM_ATTRIBUTE_CHANGES' will decide if latter changes are applied,
 // otherwise, only the minimum bug-fixing changes will be applied.
 // Most of these 'bugs' are from TheSuperHackers changes that cause new undesired behavior in the retail game or
-// mods with macro settings such as 'PRESERVE_RETAIL_BEHAVIOR' set to off. I still want to keep the setting that way
-// because it being off introduces several other fixes & efficiency improvements (pathfinding) that are good to keep.
+// mods with macro settings such as 'PRESERVE_RETAIL_BEHAVIOR' (since split into several more specific settings)
+// set to off. I still want to keep the setting that way because it being off introduces several other fixes &
+// efficiency improvements (pathfinding) that are good to keep.
 // Bug example: the Europe 'field promotion' ability in the 'Rise of the Reds' mod will only work on one unit
 // in the radius even though the support power's tooltip suggests and retail EXE behavior indeed does affect any number
 // of units in the radius. Sometimes it's possible to fix these issues without manual INI edits so existing mods
