@@ -35,9 +35,69 @@
 // Note: Retail compatibility must not be broken before this project officially does.
 // Use RETAIL_COMPATIBLE_CRC and RETAIL_COMPATIBLE_XFER_SAVE to guard breaking changes.
 
-#ifndef PRESERVE_RETAIL_BEHAVIOR
+#ifndef PRESERVE_BUILDING_RESUMPTION_DELAY
+#define PRESERVE_BUILDING_RESUMPTION_DELAY (0) // The fix for this unfavorable behavior was approved by the Game Design Committee.
+#endif
+
+#ifndef PRESERVE_CHINOOK_PASSENGER_DUMPING
 //MODDD - was 1, changed to 0 for more fixes
-#define PRESERVE_RETAIL_BEHAVIOR (0) // Retain behavior present in retail Generals 1.08 and Zero Hour 1.04
+#define PRESERVE_CHINOOK_PASSENGER_DUMPING (0)
+#endif
+
+#ifndef PRESERVE_HARDCODED_BLACK_LOTUS_CASH_HACK
+//MODDD - was 1, changed to 0 for more fixes
+#define PRESERVE_HARDCODED_BLACK_LOTUS_CASH_HACK (0)
+#endif
+
+#ifndef PRESERVE_MULTI_CRATE_PICKUP
+#define PRESERVE_MULTI_CRATE_PICKUP (0) // The fix for this unfavorable behavior was approved by the Game Design Committee.
+#endif
+
+#ifndef PRESERVE_NO_XP_FROM_FLAME_KILLS
+#define PRESERVE_NO_XP_FROM_FLAME_KILLS (0) // The fix for this unfavorable behavior was approved by the Game Design Committee.
+#endif
+
+#ifndef PRESERVE_NO_XP_FROM_OCL_KILLS
+//MODDD - was 1, changed to 0 for more fixes
+#define PRESERVE_NO_XP_FROM_OCL_KILLS (0)
+#endif
+
+#ifndef PRESERVE_NO_XP_FROM_POISON_KILLS
+//MODDD - was 1, changed to 0 for more fixes
+#define PRESERVE_NO_XP_FROM_POISON_KILLS (0)
+#endif
+
+#ifndef PRESERVE_OCCUPANT_DETECTION_VIA_DRAG_SELECTION
+//MODDD - was 1, changed to 0 for more fixes
+#define PRESERVE_OCCUPANT_DETECTION_VIA_DRAG_SELECTION (0)
+#endif
+
+#ifndef PRESERVE_PERPETUAL_HORDE_BONUS
+//MODDD - was 1, changed to 0 for more fixes
+#define PRESERVE_PERPETUAL_HORDE_BONUS (0)
+#endif
+
+#ifndef PRESERVE_PREMATURE_BATTLE_BUS_DEATH
+//MODDD - was 1, changed to 0 for more fixes
+#define PRESERVE_PREMATURE_BATTLE_BUS_DEATH (0)
+#endif
+
+#ifndef PRESERVE_RADAR_WARNING_SUPPRESSION
+//MODDD - was 1, changed to 0 for more fixes
+#define PRESERVE_RADAR_WARNING_SUPPRESSION (0)
+#endif
+
+#ifndef PRESERVE_STRUCTURE_STEALTH_DURING_REPAIR
+#define PRESERVE_STRUCTURE_STEALTH_DURING_REPAIR (0) // The fix for this unfavorable behavior was approved by the Game Design Committee.
+#endif
+
+#ifndef PRESERVE_TUNNEL_HEAL_STACKING
+//MODDD - was 1, changed to 0 for more fixes
+#define PRESERVE_TUNNEL_HEAL_STACKING (0)
+#endif
+
+#ifndef PRESERVE_UNRELIABLE_FIRESTORMS
+#define PRESERVE_UNRELIABLE_FIRESTORMS (0) // The fix for this unfavorable behavior was approved by the Game Design Committee.
 #endif
 
 #ifndef PRESERVE_RETAIL_SCRIPTED_CAMERA
@@ -88,6 +148,10 @@
 
 #ifndef ENABLE_GAMETEXT_SUBSTITUTES
 #define ENABLE_GAMETEXT_SUBSTITUTES (1) // The code can provide substitute texts when labels and strings are missing in the STR or CSF translation file
+#endif
+
+#ifndef ALLOW_MONEY_PER_MINUTE_FOR_PLAYER
+#define ALLOW_MONEY_PER_MINUTE_FOR_PLAYER (0) // When enabled, a money-per-minute stat is calculated and displayed in-game
 #endif
 
 // Previously the configurable shroud sat behind #if defined(RTS_DEBUG)

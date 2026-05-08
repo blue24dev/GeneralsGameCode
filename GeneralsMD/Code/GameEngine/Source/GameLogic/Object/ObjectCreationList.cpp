@@ -1442,7 +1442,7 @@ protected:
 			}
 		}
 
-#if !RETAIL_COMPATIBLE_CRC && !PRESERVE_RETAIL_BEHAVIOR
+#if !RETAIL_COMPATIBLE_CRC && !PRESERVE_NO_XP_FROM_OCL_KILLS
 		//MODDD - added null check. 'firstObject' can be null during the Generals ZH shell map, at least in the ProGen mod.
 		if (firstObject != nullptr)
 		{

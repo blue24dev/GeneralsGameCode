@@ -1552,7 +1552,7 @@ Bool SpecialAbilityUpdate::attemptTriggerAbilityEffect(Bool& okToLoseStealth)
       if( targetMoney && objectMoney )
       {
         UnsignedInt cash = targetMoney->countMoney();
-#if RETAIL_COMPATIBLE_CRC || PRESERVE_RETAIL_BEHAVIOR
+#if RETAIL_COMPATIBLE_CRC || PRESERVE_HARDCODED_BLACK_LOTUS_CASH_HACK
         UnsignedInt desiredAmount = 1000;
 #else
         UnsignedInt desiredAmount = data->m_effectValue;
