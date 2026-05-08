@@ -22,8 +22,8 @@
 
 //MODDD - NOTE - the goal of this fork disagrees with below - enable all fixes regardless.
 // Settings below up to a significant 'MODDD' separator are from TheSuperHackers repo.
-// Changing settings such as 'PRESERVE_RETAIL_BEHAVIOR' back to 1 will no longer guarantee compatibility
-// because of several other changes as of this fork.
+// Changing settings such as 'PRESERVE_RETAIL_BEHAVIOR' (since split into several more specific settings) back to 1
+// will no longer guarantee compatibility because of several other changes as of this fork.
 // For terminology, I'm calling these "Settings" or "Macro settings" most often, but "Macro constants" and
 // "Preprocessor Constants/Settings" may be used interchangably with that.
 // Also - use 0 and 1 instead of FALSE and TRUE to signify turning a setting off/on. VC6 builds (older C++ standard)
