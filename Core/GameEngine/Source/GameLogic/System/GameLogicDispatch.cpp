@@ -1,5 +1,5 @@
 /*
-**	Command & Conquer Generals(tm)
+**	Command & Conquer Generals Zero Hour(tm)
 **	Copyright 2025 Electronic Arts Inc.
 **
 **	This program is free software: you can redistribute it and/or modify
@@ -73,6 +73,7 @@
 #include "GameClient/Drawable.h"
 #include "GameClient/Eva.h"
 #include "GameClient/GameText.h"
+#include "GameClient/GameWindowTransitions.h"
 #include "GameClient/GameWindowManager.h"
 #include "GameClient/GUICallbacks.h"
 #include "GameClient/InGameUI.h"
@@ -244,7 +245,12 @@ void GameLogic::clearGameData( Bool showScoreScreen )
 {
 	if( !isInGame() )
 	{
-		DEBUG_CRASH(("We tried to clear the game data when we weren't in a game"));
+		//MODDD - changing this to just skip to 'reset' instead, so calling is still valid here
+		// ---
+		//DEBUG_CRASH(("We tried to clear the game data when we weren't in a game"));
+		// ---
+		TheGameEngine->reset();
+		// ---
 		return;
 	}
 
@@ -264,8 +270,10 @@ void GameLogic::clearGameData( Bool showScoreScreen )
 	if ((!isInShellGame() || !isInGame()) && showScoreScreen && !TheGlobalData->m_headless)
 	{
 		shellGame = TRUE;
+		TheTransitionHandler->setGroup("FadeWholeScreen");
 		TheShell->push("Menus/ScoreScreen.wnd");
 		TheShell->showShell(FALSE); // by passing in false, we don't want to run the Init on the shell screen we just pushed on
+		TheTransitionHandler->reverse("FadeWholeScreen");
 
 		void FixupScoreScreenMovieWindow();
 		FixupScoreScreenMovieWindow();
@@ -479,7 +487,13 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 #endif
 			}
 			currentlySelectedGroup = nullptr;
-			clearGameData();
+
+			//MODDD - adding this if-then for safety since calling this w/o being in game just skips to
+			// 'GameEngine::reset', didn't before
+			// (MODDD - TODO - verify if this still makes sense, the inner 'TheGameLogic->clearGameData();' was changed to 'clearGameData' since my change)
+			if (TheGameLogic->isInGame()) {
+				clearGameData();
+			}
 			break;
 
 		}
@@ -553,8 +567,15 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			Int maxShotsToFire = msg->getArgument( 1 )->integer;
 
 			// lock it just till the weapon is empty or the attack is "done"
-			if( currentlySelectedGroup && currentlySelectedGroup->setWeaponLockForGroup( weaponSlot, LOCKED_TEMPORARILY ))
+			//MODDD - condition uses 'canSet' instead of 'set' for 'canSetWeaponLockForGroup'
+			//if( currentlySelectedGroup && currentlySelectedGroup->canSetWeaponLockForGroup( weaponSlot, LOCKED_TEMPORARILY ))
+			if( currentlySelectedGroup && currentlySelectedGroup->canSetWeaponLockForGroup( weaponSlot, LOCKED_PERMANENTLY ))
 			{
+				//MODDD - see notes on other calls
+				currentlySelectedGroup->onDoWeaponCommand();
+
+				currentlySelectedGroup->setWeaponLockForGroup( weaponSlot, LOCKED_TEMPORARILY );
+
 				currentlySelectedGroup->groupAttackPosition( nullptr, maxShotsToFire, CMD_FROM_PLAYER );
 			}
 
@@ -628,8 +649,27 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			if( currentlySelectedGroup )
 			{
 					// lock it just till the weapon is empty or the attack is "done"
-				if (currentlySelectedGroup->setWeaponLockForGroup( weaponSlot, LOCKED_TEMPORARILY ))
+				//MODDD - make the check for whether a lock can be applied separate from 'setWeaponLockForGroup'.
+				//MODDD - TODO - Could argue this should be done per individual (each checks for whether it can lock the weapon ->
+				// calls something like 'attackObject' for just itself) instead of
+				// "any in the whole group can" -> "send order to all",
+				// unless the point is to make them all do something at least if anything in the selection can?
+				// ---
+				// Lastly, changed the lock-type in 'canSet' from 'temporary' to 'permanent', so it doesn't fail just for being
+				// permanently locked when 'onDoWeaponCommand' will handle that (unlock & cache the current weapon).
+				//if (currentlySelectedGroup->setWeaponLockForGroup( weaponSlot, LOCKED_TEMPORARILY ))
+				if (currentlySelectedGroup->canSetWeaponLockForGroup( weaponSlot, LOCKED_PERMANENTLY ))
+				{
+					//MODDD - this is a fix for button -> abilities not working if a weapon is selected by permanent lock,
+					// such as a unit having both swappable weapon buttons (scud launcher, ranger) and single-click abilities (click
+					// the button & something in-game to use it, not persistent - burton knife, the ProGen mod's red guard bayonet).
+					currentlySelectedGroup->onDoWeaponCommand();
+
+					//MODDD - since the if condition no longer does this
+					currentlySelectedGroup->setWeaponLockForGroup( weaponSlot, LOCKED_TEMPORARILY );
+
 					currentlySelectedGroup->groupAttackObject( targetObject, maxShotsToFire, CMD_FROM_PLAYER );
+				}
 			}
 			break;
 
@@ -656,6 +696,31 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			break;
 		}
 
+		case GameMessage::MSG_ENABLE_RETALIATION_MODE:
+		{
+#if RETAIL_COMPATIBLE_CRC
+			//Logically turns on or off retaliation mode for a specified player.
+			const Int playerIndex = msg->getArgument( 0 )->integer;
+			const Bool enableRetaliation = msg->getArgument( 1 )->boolean;
+
+			Player *player = ThePlayerList->getNthPlayer( playerIndex );
+			if( player )
+			{
+				DEBUG_ASSERTCRASH(player == msgPlayer,
+					("Retaliation mode of player '%ls' was illegally set by player '%ls'. Before: '%d', after: '%d'.",
+						player->getPlayerDisplayName().str(), msgPlayer->getPlayerDisplayName().str(),
+						player->isLogicalRetaliationModeEnabled(), enableRetaliation) );
+
+				player->setLogicalRetaliationModeEnabled( enableRetaliation );
+			}
+#else
+			// TheSuperHackers @fix stephanmeesters 08/03/2026 Ensure that players can only set their own retaliation mode.
+			const Bool enableRetaliation = msg->getArgument( 0 )->boolean;
+			msgPlayer->setLogicalRetaliationModeEnabled( enableRetaliation );
+#endif
+			break;
+		}
+
 		//---------------------------------------------------------------------------------------------
 		case GameMessage::MSG_DO_WEAPON_AT_LOCATION:
 		{
@@ -667,8 +732,18 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			if( currentlySelectedGroup )
 			{
 					// lock it just till the weapon is empty or the attack is "done"
-				if (currentlySelectedGroup->setWeaponLockForGroup( weaponSlot, LOCKED_TEMPORARILY ))
+				//MODDD - condition uses 'canSet' instead of 'set'
+				//if (currentlySelectedGroup->canSetWeaponLockForGroup( weaponSlot, LOCKED_TEMPORARILY ))
+				if (currentlySelectedGroup->canSetWeaponLockForGroup( weaponSlot, LOCKED_PERMANENTLY ))
+				{
+					//MODDD - see notes on other calls
+					currentlySelectedGroup->onDoWeaponCommand();
+
+					//MODDD - do 'set' here for the lock
+					currentlySelectedGroup->setWeaponLockForGroup( weaponSlot, LOCKED_TEMPORARILY );
+
  					currentlySelectedGroup->groupAttackPosition( &targetLoc, maxShotsToFire, CMD_FROM_PLAYER );
+				}
 
 
 			}
@@ -728,22 +803,28 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 		//---------------------------------------------------------------------------------------------
 		case GameMessage::MSG_DO_SPECIAL_POWER_AT_LOCATION:
 		{
+			const Bool hasAngle = msg->getArgumentCount() >= 6;
+			Int argumentIndex = 0;
+
 			// first argument is the special power ID
-			UnsignedInt specialPowerID = msg->getArgument( 0 )->integer;
+			UnsignedInt specialPowerID = msg->getArgument( argumentIndex++ )->integer;
 
 			// Location argument 2 is destination
-			Coord3D targetCoord = msg->getArgument(1)->location;
+			Coord3D targetCoord = msg->getArgument( argumentIndex++ )->location;
+
+			// Angle argument 3 is the orientation of the special power (if applicable)
+			Real angle = hasAngle ? msg->getArgument( argumentIndex++ )->real : INVALID_ANGLE;
 
 			// Object in way -- if applicable (some specials care, others don't)
-			ObjectID objectID = msg->getArgument( 2 )->objectID;
+			ObjectID objectID = msg->getArgument( argumentIndex++ )->objectID;
 			Object *objectInWay = findObjectByID( objectID );
 
 			// Command button options -- special power may care about variance options
-			UnsignedInt options = msg->getArgument( 3 )->integer;
+			UnsignedInt options = msg->getArgument( argumentIndex++ )->integer;
 
 			// check for possible specific source, ignoring selection.
-			ObjectID sourceID = msg->getArgument(4)->objectID;
-			Object* source = findObjectByID(sourceID);
+			ObjectID sourceID = msg->getArgument( argumentIndex++ )->objectID;
+			Object* source = findObjectByID( sourceID );
 			if (source != nullptr)
 			{
 #if !RETAIL_COMPATIBLE_CRC
@@ -760,7 +841,7 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 
 				AIGroupPtr theGroup = TheAI->createGroup();
 				theGroup->add(source);
-				theGroup->groupDoSpecialPowerAtLocation( specialPowerID, &targetCoord, INVALID_ANGLE, objectInWay, options );
+				theGroup->groupDoSpecialPowerAtLocation( specialPowerID, &targetCoord, angle, objectInWay, options );
 #if RETAIL_COMPATIBLE_AIGROUP
 				TheAI->destroyGroup(theGroup);
 #else
@@ -772,7 +853,7 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 				//Use the selected group!
 				if( currentlySelectedGroup )
 				{
-					currentlySelectedGroup->groupDoSpecialPowerAtLocation( specialPowerID, &targetCoord, INVALID_ANGLE, objectInWay, options );
+					currentlySelectedGroup->groupDoSpecialPowerAtLocation( specialPowerID, &targetCoord, angle, objectInWay, options );
 				}
 			}
 			break;
@@ -900,6 +981,9 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			GuardMode gm = (GuardMode)msg->getArgument( 1 )->integer;
 			if (currentlySelectedGroup)
 			{
+				//MODDD - break temporary locks on player commands
+				currentlySelectedGroup->releaseWeaponLockForGroup(LOCKED_TEMPORARILY);
+
 				currentlySelectedGroup->groupGuardPosition(&loc, gm, CMD_FROM_PLAYER);
 			}
 
@@ -916,6 +1000,10 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			GuardMode gm = (GuardMode)msg->getArgument( 1 )->integer;
 			if (currentlySelectedGroup)
 			{
+				//MODDD - break temporary locks on player commands
+				// (not sure how this command is ever triggered though, all I know is guard button -> clicking in-game registers on the ground always)
+				currentlySelectedGroup->releaseWeaponLockForGroup(LOCKED_TEMPORARILY);
+
 				currentlySelectedGroup->groupGuardObject(obj, gm, CMD_FROM_PLAYER);
 			}
 
@@ -927,6 +1015,9 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 		{
 			if (currentlySelectedGroup)
 			{
+				//MODDD - break temporary locks on player commands
+				currentlySelectedGroup->releaseWeaponLockForGroup(LOCKED_TEMPORARILY);
+
 				currentlySelectedGroup->groupIdle(CMD_FROM_PLAYER);
 			}
 
@@ -938,6 +1029,9 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 		{
 			if (currentlySelectedGroup)
 			{
+				//MODDD - break temporary locks on player commands
+				currentlySelectedGroup->releaseWeaponLockForGroup(LOCKED_TEMPORARILY);
+
 				currentlySelectedGroup->groupScatter(CMD_FROM_PLAYER);
 			}
 
@@ -977,7 +1071,7 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			break;
 		}
 
-#if defined(RTS_DEBUG)
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG || defined (_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 		//---------------------------------------------------------------------------------------------
 		case GameMessage::MSG_DEBUG_KILL_SELECTION:
 		{
@@ -1058,6 +1152,24 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			break;
 
 		}
+		//MODDD - new message
+		case GameMessage::MSG_HIJACK:
+		{
+			Object *enter = findObjectByID( msg->getArgument( 1 )->objectID );
+
+			// sanity
+			if( enter == nullptr )
+				break;
+
+			if( currentlySelectedGroup )
+			{
+				currentlySelectedGroup->releaseWeaponLockForGroup(LOCKED_TEMPORARILY);	// release any temporary locks.
+				currentlySelectedGroup->groupHijack( enter, CMD_FROM_PLAYER );
+			}
+
+			break;
+
+		}
 
 		//---------------------------------------------------------------------------------------------
 		case GameMessage::MSG_EXIT:
@@ -1077,7 +1189,17 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 				break;
 
 			// sanity, the player must actually control this object
-			if( objectWantingToExit->getControllingPlayer() != msgPlayer )
+			//MODDD - instead of the object wanting to exit, check the container for belonging to the correct player.
+			// In a strange scenario, a unit can contain units from another player (ex: if only either the container or things
+			// contained changes ownership by map script - in zero hour campaign mission GLA05, put the rescued POWs in a bus
+			// and take it to the destination - the units inside change ownership, reflected once evacuated they stop responding
+			// to selection/move/etc.).
+			// The as-is way will block clicking the button to evacuate the unit, even though the owner of the container is the
+			// only one that can see the unit buttons to click/evacuate them.
+			// Interestingly enough, the 'evacuate all' button skips this check anyway, and garrisoning any other unit inside will
+			// trigger a check to remove any non-player-owned unit (see 'OpenContain::onCollide').
+			//if( objectWantingToExit->getControllingPlayer() != msgPlayer )
+			if( objectContainingExiter->getControllingPlayer() != msgPlayer )
 				break;
 
 			objectWantingToExit->releaseWeaponLock(LOCKED_TEMPORARILY);	// release any temporary locks.
@@ -1347,6 +1469,8 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 				//      the new lock. In this case, the temp lock attempt will fail whenever
 				//      a permanent lock is in effect, thus fixing the ranger and scud and
 				//      allowing the tox tractor to work as well.
+				//MODDD - it appears the fix mentioned below isn't needed since other changes mostly in WeaponSet.cpp
+				/*
 				Bool forceAttackRequiresPrimaryWeapon = !currentlySelectedGroup->isIdle();
 				if ( forceAttackRequiresPrimaryWeapon )
 				{
@@ -1360,7 +1484,11 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 					currentlySelectedGroup->releaseWeaponLockForGroup(LOCKED_TEMPORARILY);
 					currentlySelectedGroup->groupAttackPosition( pos, NO_MAX_SHOTS_LIMIT, CMD_FROM_PLAYER );
 				}
-
+				*/
+				// ---
+				currentlySelectedGroup->releaseWeaponLockForGroup(LOCKED_TEMPORARILY);
+				currentlySelectedGroup->groupAttackPosition( pos, NO_MAX_SHOTS_LIMIT, CMD_FROM_PLAYER );
+				// ---
 
 			}
 
@@ -1559,8 +1687,25 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			if( !building->testStatus(OBJECT_STATUS_RECONSTRUCTING))
 			{
 				Money *money = msgPlayer->getMoney();
+
+				//MODDD - use the stored refund cost instead (unless it's the default 0 for some reason).
+				// ---
+				/*
 				UnsignedInt amount = building->getTemplate()->calcCostToBuild( msgPlayer );
 				money->deposit( amount, TRUE, FALSE );
+				*/
+				// ---
+				UnsignedInt amount = building->getMoneySpentOnMe();
+				if (amount == 0) {
+					amount = building->getTemplate()->calcCostToBuild( msgPlayer );
+				}
+				money->deposit( amount, TRUE, FALSE );
+				
+				// And, since the money has already been refunded, set its money-spent-on-me to 0 so that the
+				// partial-refund-on-destroyed mechanism doesn't try to double dip & refund again.
+				building->setMoneySpentOnMe(0);
+				// ---
+
 			}
 
 			//
@@ -1810,6 +1955,9 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 						{
 							if (beacon->getControllingPlayer() == msgPlayer)
 							{
+#if EXTRA_DEBUG_HELP
+								g_destroyObjectSource = 87;
+#endif
 								destroyObject(beacon); // the owner is telling it to go away.  such is life.
 
 								TheControlBar->markUIDirty(); // check if we should un-grey out the button
