@@ -1043,14 +1043,15 @@ void printTimeStamp(std::ofstream& outputStream)
 	GetLocalTime(&lt);
 	outputStream <<
 		lt.wYear << "-" <<
-		lt.wMonth << "-" <<
-		lt.wDay << " " <<
-		lt.wHour << ":" <<
-		lt.wMinute << ":" <<
-		lt.wSecond << "." <<
+		std::setw(2) << std::setfill('0') << lt.wMonth << "-" <<
+		std::setw(2) << std::setfill('0') << lt.wDay << " " <<
+		std::setw(2) << std::setfill('0') << lt.wHour << ":" <<
+		std::setw(2) << std::setfill('0') << lt.wMinute << ":" <<
+		std::setw(2) << std::setfill('0') << lt.wSecond << "." <<
 		std::setw(3) << std::setfill('0') << lt.wMilliseconds <<
 		" Frame:" <<
-		TheGameLogic->getFrame();
+		TheGameLogic->getFrame()
+	;
 }
 
 // Print the most basic info to tell what this object is at a glance. That is, template name (americaVehicle-whatever)
