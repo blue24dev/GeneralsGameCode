@@ -5060,10 +5060,9 @@ void Object::xfer( Xfer *xfer )
 
 		//ThePartitionManager->registerObject( this );
 
-
 		//MODDD - version & objetID moved to 'xferPre' so that they can be handled before 'baseConstructor' when
 		// loading a game
-
+		
 	}
 
 	// internal name
