@@ -5055,14 +5055,17 @@ void Object::xfer( Xfer *xfer )
 		//MODDD - would just making the drawable here work out?
 		// Nope! This requires behaviors to be initialized - do this after that
 		Drawable *draw = getDrawable();
-		draw->setID( drawableID );
+		// UPDATE - a TheSuperHackers change suggests a null check for 'draw' here, not sure if that's still necessary
+		if (draw != nullptr)
+		{
+			draw->setID( drawableID );
+		}
 		//TheGameLogic->sendObjectCreated( this, drawableID );
 
 		//ThePartitionManager->registerObject( this );
 
 		//MODDD - version & objetID moved to 'xferPre' so that they can be handled before 'baseConstructor' when
 		// loading a game
-		
 	}
 
 	// internal name
