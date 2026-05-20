@@ -985,9 +985,9 @@ protected:
 		if (!m_particleSysName.isEmpty())
 		{
 			const ParticleSystemTemplate *tmp = TheParticleSystemManager->findTemplate(m_particleSysName);
-			if (tmp)
+			ParticleSystem *sys = TheParticleSystemManager->createParticleSystem(tmp);
+			if (sys)
 			{
-				ParticleSystem *sys = TheParticleSystemManager->createParticleSystem(tmp);
 				sys->attachToObject(obj);
 			}
 		}
@@ -1442,7 +1442,7 @@ protected:
 			}
 		}
 
-#if !RETAIL_COMPATIBLE_CRC && !PRESERVE_NO_XP_FROM_OCL_KILLS
+#if !(RETAIL_COMPATIBLE_CRC || PRESERVE_NO_XP_FROM_OCL_KILLS)
 		//MODDD - added null check. 'firstObject' can be null during the Generals ZH shell map, at least in the ProGen mod.
 		if (firstObject != nullptr)
 		{
