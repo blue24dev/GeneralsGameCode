@@ -3305,13 +3305,14 @@ void Player::removeUpgrade( const UpgradeTemplate *upgradeTemplate )
 	//MODDD - include 'upgradesAffected'
 	if( upgrade->getStatus() == UPGRADE_STATUS_COMPLETE && upgradesAffected )
 		onUpgradeRemoved();
+	
+	deleteInstance(upgrade);
 
 	//MODDD
 	if( ThePlayerList->getLocalPlayer() == this && upgradesAffected )
 	{
 		TheControlBar->markUIDirty();
 	}
-
 }
 
 
