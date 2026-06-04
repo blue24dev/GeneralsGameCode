@@ -4421,7 +4421,15 @@ void GameLogic::update()
 		{
 			UpdateModulePtr u = *it;
 			DisabledMaskType dis = u->friend_getObject()->getDisabledFlags();
+#if RETAIL_COMPATIBLE_CRC
 			if (!dis.any() || dis.anyIntersectionWith(u->getDisabledTypesToProcess()))
+#else
+			// TheSuperHackers @bugfix Stubbjax 15/03/2026 The disabled-types-to-process mask is now exclusive.
+			// Previously, if the disabled mask had any bits in common with the disabled-types-to-process mask,
+			// the update would be processed. Now, if any *other* bits are set in the disabled mask, the update
+			// is no longer processed.
+			if (u->getDisabledTypesToProcess().testForAll(dis))
+#endif
 			{
 				USE_PERF_TIMER(GameLogic_update_normal)
 
@@ -4461,7 +4469,20 @@ void GameLogic::update()
 			UpdateSleepTime sleepLen = UPDATE_SLEEP_NONE;	// default, if it is disabled.
 
 			DisabledMaskType dis = u->friend_getObject()->getDisabledFlags();
-
+#if RETAIL_COMPATIBLE_CRC
+			if (!dis.any() || dis.anyIntersectionWith(u->getDisabledTypesToProcess()))
+#else
+			//MODDD - UPDATE - it appears TheSuperHackers have made a change here too now. Still going with mine until I get
+		  // a chance to compare their approach to mine.
+			// ---
+			/*
+			// TheSuperHackers @bugfix Stubbjax 15/03/2026 The disabled-types-to-process mask is now exclusive.
+			// Previously, if the disabled mask had any bits in common with the disabled-types-to-process mask,
+			// the update would be processed. Now, if any *other* bits are set in the disabled mask, the update
+			// is no longer processed.
+			if (u->getDisabledTypesToProcess().testForAll(dis))
+			*/
+			// ---
 			//MODDD - changing the condition to require lacking any disallowed disabled-types, instead of passing if there is
 			// at least one allowed disabled-type.
 			// This caused some things to unexpectedly work just because they had one type allowed by
@@ -4472,6 +4493,8 @@ void GameLogic::update()
 			// Also, note the order of 'anyInverseIntersectionWith' is important - want the inverse of allowed types, not what this object is currently disabled by ('dis').
 			//if (!dis.any() || dis.anyIntersectionWith(u->getDisabledTypesToProcess()))
 			if (!dis.any() || !u->getDisabledTypesToProcess().anyInverseIntersectionWith(dis))
+			// ---
+#endif
 			{
 				USE_PERF_TIMER(GameLogic_update_sleepy)
 

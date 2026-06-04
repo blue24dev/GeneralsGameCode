@@ -189,9 +189,9 @@ public:
  	virtual void rotateCamera(Real rotations, Int frames, Real easeIn, Real easeOut) override;					///< Rotate camera about current viewpoint.
 	virtual void rotateCameraTowardObject(ObjectID id, Int milliseconds, Int holdMilliseconds, Real easeIn, Real easeOut) override;	///< Rotate camera to face an object, and hold on it
 	virtual void rotateCameraTowardPosition(const Coord3D *pLoc, Int milliseconds, Real easeIn, Real easeOut, Bool reverseRotation) override;	///< Rotate camera to face a location.
-	virtual void cameraModFreezeTime(){ m_freezeTimeForCameraMovement = true;}					///< Freezes time during the next camera movement.
+	virtual void cameraModFreezeTime() override { m_freezeTimeForCameraMovement = true;}					///< Freezes time during the next camera movement.
 	virtual void cameraModFreezeAngle() override;												///< Freezes time during the next camera movement.
-	virtual Bool isTimeFrozen(){ return m_freezeTimeForCameraMovement;}					///< Freezes time during the next camera movement.
+	virtual Bool isTimeFrozen() override { return m_freezeTimeForCameraMovement;}					///< Freezes time during the next camera movement.
 	virtual void cameraModFinalZoom(Real finalZoom, Real easeIn, Real easeOut) override;	///< Final zoom for current camera movement.
 	virtual void cameraModRollingAverage(Int framesToAverage) override;			///< Number of frames to average movement for current camera movement.
 	virtual void cameraModFinalTimeMultiplier(Int finalMultiplier) override; ///< Final time multiplier for current camera movement.
@@ -306,7 +306,7 @@ private:
 	Real getMaxHeight(Real x, Real y) const;
 	Real getMaxZoom(Real x, Real y) const;
 	void updateCameraTransform(); ///< update the transform matrix of m_3DCamera, based on m_pos & m_angle
-	void updateCameraClipPlanes();
+	void updateCameraClipPlanes(const Matrix3D &transform);
 	void setCameraTransform(const Matrix3D &transform);
 	void buildCameraPosition(Vector3 &sourcePos, Vector3 &targetPos);
 	void buildCameraTransform(Matrix3D *transform, const Vector3 &sourcePos, const Vector3 &targetPos); ///< calculate (but do not set) the transform matrix of m_3DCamera, based on m_pos & m_angle
@@ -318,7 +318,7 @@ private:
 	void clipCameraIntoAreaConstraints();
 	Bool isWithinCameraAreaConstraints() const;
 	Bool isWithinCameraHeightConstraints() const;
-	virtual void setUserControlled(Bool value);
+	virtual void setUserControlled(Bool value) override;
 	Bool hasScriptedState(ScriptedState state) const;
 	void addScriptedState(ScriptedState state);
 	void removeScriptedState(ScriptedState state);

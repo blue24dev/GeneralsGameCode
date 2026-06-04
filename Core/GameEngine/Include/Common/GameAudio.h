@@ -177,11 +177,10 @@ class AudioManager : public SubsystemInterface
 		AsciiString prevTrackName(const AsciiString& currentTrack );
 
 		// changing music tracks
-		virtual void nextMusicTrack() = 0;
-		virtual void prevMusicTrack() = 0;
+		virtual AsciiString nextMusicTrack() = 0;
+		virtual AsciiString prevMusicTrack() = 0;
 		virtual Bool isMusicPlaying() const = 0;
 		virtual Bool hasMusicTrackCompleted( const AsciiString& trackName, Int numberOfTimes ) const = 0;
-		virtual AsciiString getMusicTrackName() const = 0;
 
 		virtual void setAudioEventEnabled( AsciiString eventToAffect, Bool enable );
 		virtual void setAudioEventVolumeOverride( AsciiString eventToAffect, Real newVolume );
@@ -295,8 +294,6 @@ class AudioManager : public SubsystemInterface
 
 		// For the file cache to know when to remove files.
 		virtual void closeAnySamplesUsingFile( const void *fileToClose ) = 0;
-
-		virtual Bool isMusicAlreadyLoaded() const;
 
 		Bool getDisallowSpeech() const { return m_disallowSpeech; }
 		void setDisallowSpeech( Bool disallowSpeech ) { m_disallowSpeech = disallowSpeech; }

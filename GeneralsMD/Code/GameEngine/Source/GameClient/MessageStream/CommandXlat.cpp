@@ -3800,26 +3800,6 @@ GameMessageDisposition CommandTranslator::translateGameMessage(const GameMessage
 		}
 
 		// --------------------------------------------------------------------------------------------
-		case GameMessage::MSG_CREATE_TEAM0:
-		case GameMessage::MSG_CREATE_TEAM1:
-		case GameMessage::MSG_CREATE_TEAM2:
-		case GameMessage::MSG_CREATE_TEAM3:
-		case GameMessage::MSG_CREATE_TEAM4:
-		case GameMessage::MSG_CREATE_TEAM5:
-		case GameMessage::MSG_CREATE_TEAM6:
-		case GameMessage::MSG_CREATE_TEAM7:
-		case GameMessage::MSG_CREATE_TEAM8:
-		case GameMessage::MSG_CREATE_TEAM9:
-		{
-			Int playerIndex = msg->getPlayerIndex();
-			Player* player = ThePlayerList->getNthPlayer(playerIndex);
-			if (player && player->isLocalPlayer())
-				player->processCreateTeamGameMessage(t - GameMessage::MSG_CREATE_TEAM0, msg);
-
-			break;
-		}
-
-		// --------------------------------------------------------------------------------------------
 		case GameMessage::MSG_CREATE_SELECTED_GROUP:
 		case GameMessage::MSG_SELECT_TEAM0:
 		case GameMessage::MSG_SELECT_TEAM1:
@@ -4980,8 +4960,8 @@ GameMessageDisposition CommandTranslator::translateGameMessage(const GameMessage
 		//-----------------------------------------------------------------------------------------
 		case GameMessage::MSG_META_DEMO_MUSIC_NEXT_TRACK:
 		{
-			TheAudio->nextMusicTrack();
-			TheInGameUI->message( TheGameText->FETCH_OR_SUBSTITUTE_FORMAT("GUI:DebugMusicTrack", L"Playing Track: %hs", TheAudio->getMusicTrackName().str()) );
+			AsciiString trackName = TheAudio->nextMusicTrack();
+			TheInGameUI->message( TheGameText->FETCH_OR_SUBSTITUTE_FORMAT("GUI:DebugMusicTrack", L"Playing Track: %hs", trackName.str()) );
 			disp = DESTROY_MESSAGE;
 			break;
 		}
@@ -4990,8 +4970,8 @@ GameMessageDisposition CommandTranslator::translateGameMessage(const GameMessage
 		//-----------------------------------------------------------------------------------------
 		case GameMessage::MSG_META_DEMO_MUSIC_PREV_TRACK:
 		{
-			TheAudio->prevMusicTrack();
-			TheInGameUI->message( TheGameText->FETCH_OR_SUBSTITUTE_FORMAT("GUI:DebugMusicTrack", L"Playing Track: %hs", TheAudio->getMusicTrackName().str()) );
+			AsciiString trackName = TheAudio->prevMusicTrack();
+			TheInGameUI->message( TheGameText->FETCH_OR_SUBSTITUTE_FORMAT("GUI:DebugMusicTrack", L"Playing Track: %hs", trackName.str()) );
 			disp = DESTROY_MESSAGE;
 			break;
 		}

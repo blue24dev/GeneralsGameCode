@@ -277,6 +277,8 @@ void GameLogic::clearGameData( Bool showScoreScreen )
 
 		void FixupScoreScreenMovieWindow();
 		FixupScoreScreenMovieWindow();
+
+		destroyQuitMenu();
 	}
 
 	TheGameEngine->reset();
@@ -803,25 +805,28 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 		//---------------------------------------------------------------------------------------------
 		case GameMessage::MSG_DO_SPECIAL_POWER_AT_LOCATION:
 		{
+			const Bool hasAngle = msg->getArgumentCount() >= 6;
+			Int argumentIndex = 0;
+
 			// first argument is the special power ID
-			UnsignedInt specialPowerID = msg->getArgument( 0 )->integer;
+			UnsignedInt specialPowerID = msg->getArgument( argumentIndex++ )->integer;
 
 			// Location argument 2 is destination
-			Coord3D targetCoord = msg->getArgument(1)->location;
+			Coord3D targetCoord = msg->getArgument( argumentIndex++ )->location;
 
 			// Angle argument 3 is the orientation of the special power (if applicable)
-			Real angle = msg->getArgument(2)->real;
+			Real angle = hasAngle ? msg->getArgument( argumentIndex++ )->real : INVALID_ANGLE;
 
 			// Object in way -- if applicable (some specials care, others don't)
-			ObjectID objectID = msg->getArgument( 3 )->objectID;
+			ObjectID objectID = msg->getArgument( argumentIndex++ )->objectID;
 			Object *objectInWay = findObjectByID( objectID );
 
 			// Command button options -- special power may care about variance options
-			UnsignedInt options = msg->getArgument( 4 )->integer;
+			UnsignedInt options = msg->getArgument( argumentIndex++ )->integer;
 
 			// check for possible specific source, ignoring selection.
-			ObjectID sourceID = msg->getArgument(5)->objectID;
-			Object* source = findObjectByID(sourceID);
+			ObjectID sourceID = msg->getArgument( argumentIndex++ )->objectID;
+			Object* source = findObjectByID( sourceID );
 			if (source != nullptr)
 			{
 #if !RETAIL_COMPATIBLE_CRC
@@ -1087,6 +1092,7 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			}
 			break;
 		}
+
 		//---------------------------------------------------------------------------------------------
 		case GameMessage::MSG_DEBUG_HURT_OBJECT:
 		{
@@ -1114,9 +1120,6 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 			break;
 		}
 #endif
-
-
-
 
 #ifdef ALLOW_SURRENDER
 		//---------------------------------------------------------------------------------------------
@@ -2132,10 +2135,7 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 		case GameMessage::MSG_CREATE_TEAM8:
 		case GameMessage::MSG_CREATE_TEAM9:
 		{
-			// TheSuperHackers @tweak Stubbjax 17/08/2025 The local player processes this message in CommandXlat for immediate assignment.
-			if (!msgPlayer->isLocalPlayer())
-				msgPlayer->processCreateTeamGameMessage(msg->getType() - GameMessage::MSG_CREATE_TEAM0, msg);
-
+			msgPlayer->processCreateTeamGameMessage(msg->getType() - GameMessage::MSG_CREATE_TEAM0, msg);
 			break;
 		}
 
@@ -2150,7 +2150,7 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 		case GameMessage::MSG_SELECT_TEAM8:
 		case GameMessage::MSG_SELECT_TEAM9:
 		{
-			msgPlayer->processSelectTeamGameMessage(msg->getType() - GameMessage::MSG_SELECT_TEAM0, msg);
+			msgPlayer->processSelectTeamGameMessage(msg->getType() - GameMessage::MSG_SELECT_TEAM0);
 			break;
 		}
 
@@ -2165,7 +2165,7 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 		case GameMessage::MSG_ADD_TEAM8:
 		case GameMessage::MSG_ADD_TEAM9:
 		{
-			msgPlayer->processAddTeamGameMessage(msg->getType() - GameMessage::MSG_ADD_TEAM0, msg);
+			msgPlayer->processAddTeamGameMessage(msg->getType() - GameMessage::MSG_ADD_TEAM0);
 			break;
 		}
 
@@ -2236,10 +2236,9 @@ void GameLogic::logicMessageDispatcher( GameMessage *msg, void *userData )
 	}
 
 #if RETAIL_COMPATIBLE_AIGROUP
-	// TheSuperHackers @bugfix xezon 28/06/2025 This hack avoids crashing when players are selected during Replay playback.
-	// It can read data from an already deleted AIGroup and return this function when its member size is 0, signifying that
-	// it is indeed deleted.
-	if (currentlySelectedGroup && currentlySelectedGroup->getCount() == 0)
+	// TheSuperHackers @bugfix xezon/Caball009 14/05/2026 This fix avoids crashing when players are selected during Replay playback.
+	// The current AI group may have been destroyed, and its memory deallocated, in which case it shouldn't be used.
+	if (currentlySelectedGroup && !TheAI->doesGroupExist(currentlySelectedGroup))
 		return;
 #endif
 
