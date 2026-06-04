@@ -620,10 +620,10 @@ public:
 	void processCreateTeamGameMessage(Int hotkeyNum, const GameMessage *msg);
 
 	/// time to select a hotkey team based on this GameMessage
-	void processSelectTeamGameMessage(Int hotkeyNum, GameMessage *msg);
+	void processSelectTeamGameMessage(Int hotkeyNum);
 
 	// add to the player's current selection this hotkey team.
-	void processAddTeamGameMessage(Int hotkeyNum, GameMessage *msg);
+	void processAddTeamGameMessage(Int hotkeyNum);
 
 	// fills an AIGroup object that is the currently selected group.
 	void getCurrentSelectionAsAIGroup(AIGroup *group);
@@ -650,6 +650,11 @@ public:
 	Real getCashBounty() const { return m_cashBountyPercent; }
 	void setCashBounty(Real percentage) { m_cashBountyPercent = percentage; }
 	void doBountyForKill(const Object* killer, const Object* victim);
+
+	//Set via logical message. Options menu sets the client value in global data. Player::update()
+	//detects a change, and posts a message. When the message gets processed, this value gets set.
+	Bool isLogicalRetaliationModeEnabled() const { return m_logicalRetaliationModeEnabled; }
+	void setLogicalRetaliationModeEnabled( Bool set ) { m_logicalRetaliationModeEnabled = set; }
 
 private:
 
@@ -805,7 +810,8 @@ private:
 	Squad									*m_currentSelection;		///< This player's currently selected group
 
 	Bool									m_isPlayerDead;
-	
+	Bool									m_logicalRetaliationModeEnabled;
+
 	//MODDD - convenience feature: index of the slot this player is for.
 	// Can be -1 to mean player side isn't associated with a slot (neutral, civilian, or from a side otherwise baked into the map).
 public: Int slotIndex;
