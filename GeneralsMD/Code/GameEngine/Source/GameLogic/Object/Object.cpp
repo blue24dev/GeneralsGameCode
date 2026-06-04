@@ -339,7 +339,7 @@ Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& 
 	m_physics(nullptr),
 	m_geometryInfo(tt->getTemplateGeometryInfo()),
 	m_containedBy(nullptr),
-	m_xferContainedByID(INVALID_ID),
+	m_containedByID(INVALID_ID),
 	m_containedByFrame(0),
 	m_behaviors(nullptr),
 	m_body(nullptr),

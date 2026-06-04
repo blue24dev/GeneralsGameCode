@@ -22,14 +22,11 @@
 
 #include "Common/AsciiString.h"
 #include "Common/GameAudio.h"
+#include "mss/mss.h"
+#include "mutex.h"
 
 //MODDD
 #include "Common/AudioEventInfo.h"
-//MODDD - no mutex? how could you
-#include "mutex.h"
-
-#include "mss/mss.h"
-#include "mutex.h"
 
 class AudioEventRTS;
 
@@ -112,7 +109,8 @@ struct OpenAudioFile
 typedef std::hash_map< AsciiString, OpenAudioFile, rts::hash<AsciiString>, rts::equal_to<AsciiString> > OpenFilesHash;
 typedef OpenFilesHash::iterator OpenFilesHashIt;
 
-//MODDD
+//MODDD - my multithread MilesAudioManager crash fix (since fixed by TheSuperHackers, removing mine)
+/*
 struct AILCallbackCall
 {
 	// Note that in VC6, there aren't automatic constructors out of all the member fields - this has to be defined to be used
@@ -125,6 +123,7 @@ struct AILCallbackCall
 	UnsignedInt m_audioCompleted;
 	UnsignedInt m_flags;
 };
+*/
 
 class AudioFileCache
 {
@@ -234,8 +233,8 @@ class MilesAudioManager : public AudioManager
 		virtual void processPlayingList();
 		virtual void processFadingList();
 
-		//MODDD
-		void processAILCallbackList();
+		//MODDD - my multithread MilesAudioManager crash fix
+		//void processAILCallbackList();
 
 		Bool shouldProcessRequestThisFrame( AudioRequest *req ) const;
 		void adjustRequest( AudioRequest *req );
@@ -352,9 +351,9 @@ class MilesAudioManager : public AudioManager
 		UnsignedInt m_num3DSamples;
 		UnsignedInt m_numStreams;
 
-		//MODDD
-		public: std::list<AILCallbackCall> AILCallbackList;
-		public: MutexClass AILCallbackListMutex;
+		//MODDD - my multithread MilesAudioManager crash fix
+		//public: std::list<AILCallbackCall> AILCallbackList;
+		//public: MutexClass AILCallbackListMutex;
 	protected:
 
 #if defined(RTS_DEBUG)

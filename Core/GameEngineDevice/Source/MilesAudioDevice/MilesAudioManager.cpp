@@ -98,9 +98,9 @@ MilesAudioManager::MilesAudioManager() :
 	m_delayFilter(nullptr),
 	m_binkHandle(nullptr),
 	m_pref3DProvider(AsciiString::TheEmptyString),
-	m_prefSpeaker(AsciiString::TheEmptyString),
-	//MODDD
-	AILCallbackListMutex()
+	m_prefSpeaker(AsciiString::TheEmptyString)
+	//MODDD - my multithread MilesAudioManager crash fix
+	//AILCallbackListMutex()
 {
 	m_audioCache = NEW AudioFileCache;
 }
@@ -477,8 +477,8 @@ void MilesAudioManager::update()
 	AudioManager::update();
 	setDeviceListenerPosition();
 
-	//MODDD - new
-	processAILCallbackList();
+	//MODDD - my multithread MilesAudioManager crash fix
+	//processAILCallbackList();
 
 	processRequestList();
 	processPlayingList();
@@ -2389,7 +2389,8 @@ void MilesAudioManager::processFadingList()
 	releasePlayingAudioInListIfStopped(m_fadingAudio, m_fadingAudioCS);
 }
 
-//MODDD
+//MODDD - my multithread MilesAudioManager crash fix
+/*
 //-------------------------------------------------------------------------------------------------
 void MilesAudioManager::processAILCallbackList()
 {
@@ -2414,6 +2415,7 @@ void MilesAudioManager::processAILCallbackList()
 		// That works out.
 	}
 }
+*/
 
 //-------------------------------------------------------------------------------------------------
 Bool MilesAudioManager::shouldProcessRequestThisFrame( AudioRequest *req ) const
@@ -2529,10 +2531,6 @@ Real MilesAudioManager::getFileLengthMS( AsciiString strToLoad ) const
 
 	return INT_TO_REAL(retVal);
 }
-
-//MODDD - debugging
-#include <fstream>
-#include <iomanip>
 
 //-------------------------------------------------------------------------------------------------
 void MilesAudioManager::closeAnySamplesUsingFile( const void *fileToClose )
@@ -2963,28 +2961,55 @@ void MilesAudioManager::friend_forcePlayAudioEventRTS(const AudioEventRTS* event
 //-------------------------------------------------------------------------------------------------
 void AILCALLBACK setSampleCompleted( HSAMPLE sampleCompleted )
 {
-	//MODDD - queue a call for the main thread to handle this instead of risking a rare conflict, possibly caused
+	//MODDD - my multithread MilesAudioManager crash fix
+	// Queue a call for the main thread to handle this instead of risking a rare conflict, possibly caused
 	// by this callback running at the same time a 'm_playingSounds'/etc. list is being read while it's being
 	// edited (ex: deletions) by the main thread.
-	//TheAudio->notifyOfAudioCompletion((UnsignedInt) sampleCompleted, PAT_Sample);
+	// Original:
+	// ---
+	TheAudio->notifyOfAudioCompletion((UnsignedInt) sampleCompleted, PAT_Sample);
+	// ---
+	// My change:
+	// ---
+	/*
 	MutexClass::LockClass lock(((MilesAudioManager*)TheAudio)->AILCallbackListMutex);
 	((MilesAudioManager*)TheAudio)->AILCallbackList.push_back(AILCallbackCall((UnsignedInt) sampleCompleted, PAT_Sample));
+	*/
+	// ---
 }
 
 //-------------------------------------------------------------------------------------------------
 void AILCALLBACK set3DSampleCompleted( H3DSAMPLE sample3DCompleted )
 {
-	//TheAudio->notifyOfAudioCompletion((UnsignedInt) sample3DCompleted, PAT_3DSample);
+	//MODDD - my multithread MilesAudioManager crash fix
+	// Original:
+	// ---
+	TheAudio->notifyOfAudioCompletion((UnsignedInt) sample3DCompleted, PAT_3DSample);
+	// ---
+	// My approach:
+	// ---
+	/*
 	MutexClass::LockClass lock(((MilesAudioManager*)TheAudio)->AILCallbackListMutex);
 	((MilesAudioManager*)TheAudio)->AILCallbackList.push_back(AILCallbackCall((UnsignedInt) sample3DCompleted, PAT_3DSample));
+	*/
+	// ---
 }
 
 //-------------------------------------------------------------------------------------------------
 void AILCALLBACK setStreamCompleted( HSTREAM streamCompleted )
 {
-	//TheAudio->notifyOfAudioCompletion((UnsignedInt) streamCompleted, PAT_Stream);
+	//MODDD - my multithread MilesAudioManager crash fix
+	// Original:
+	// ---
+	TheAudio->notifyOfAudioCompletion((UnsignedInt) streamCompleted, PAT_Stream);
+	// ---
+	// My approach:
+	// ---
+	/*
 	MutexClass::LockClass lock(((MilesAudioManager*)TheAudio)->AILCallbackListMutex);
 	((MilesAudioManager*)TheAudio)->AILCallbackList.push_back(AILCallbackCall((UnsignedInt) streamCompleted, PAT_Stream));
+	*/
+	// ---
 }
 
 //-------------------------------------------------------------------------------------------------
