@@ -874,6 +874,9 @@ void automaticGlobalDataChanges()
 	}
 	// yes, a whole hour. I want to stare at my breakpoints during a network game maybe.
 	TheWritableGlobalData->m_networkPlayerTimeoutTime = 60000 * 60;
+
+	// performance issues when on - forcing off
+	TheWritableGlobalData->m_drawEntireTerrain = FALSE;
 }
 #endif // CUSTOM_GAME_DATA_CHANGES
 
