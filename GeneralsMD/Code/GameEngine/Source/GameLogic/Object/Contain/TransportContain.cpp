@@ -491,8 +491,19 @@ UpdateSleepTime TransportContain::update()
 
 	//MODDD - TODO - is this ever needed now that 'onObjectCreated' should always handle this?
 	// see if this condition ever passes anymore
-	if( m_payloadCreated == FALSE )
+	if (m_payloadCreated == FALSE)
+	{
+#if RETAIL_COMPATIBLE_CRC
 		createPayload();
+#else
+		// TheSuperHackers @bugfix Caball009 25/05/2026 Don't create payload
+		// for destroyed object to avoid leaving the payload in an invalid state.
+		if (!getObject()->isDestroyed())
+		{
+			createPayload();
+		}
+#endif
+	}
 
 	if( moduleData && moduleData->m_healthRegen )
 	{
