@@ -373,6 +373,8 @@ private:
 	bool onDebugKillObject(GameMessage *msg);
 #endif
 	bool onEnter(GameMessage *msg, AIGroupPtr &currentlySelectedGroup);
+	//MODDD - for a new message
+	bool onHijack(GameMessage *msg, AIGroupPtr &currentlySelectedGroup);
 	bool onExit(GameMessage *msg, AIGroupPtr &currentlySelectedGroup);
 	bool onEvacuate(GameMessage *msg, AIGroupPtr &currentlySelectedGroup);
 	bool onExecuteRailedTransport(GameMessage *msg, AIGroupPtr &currentlySelectedGroup);
