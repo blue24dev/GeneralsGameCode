@@ -482,7 +482,7 @@
 #endif
 
 // '_ALLOW_DEBUG_CHEATS_IN_DEBUG' is used elsewhere.
-// This means only checks on '_ALLOW_DEBUG_CHEATS_IN_DEBUG' needed without having to check 'RTS_DEBUG' everytime.
+// This means only checks on '_ALLOW_DEBUG_CHEATS_IN_DEBUG' are needed without having to check 'RTS_DEBUG' everytime.
 #if defined(RTS_DEBUG)
 #define _ALLOW_DEBUG_CHEATS_IN_DEBUG !BLOCK_DEBUG_DEMO_MESSAGE_INPUTS
 #else
