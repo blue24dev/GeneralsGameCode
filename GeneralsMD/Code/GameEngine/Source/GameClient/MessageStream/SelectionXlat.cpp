@@ -865,7 +865,7 @@ GameMessageDisposition SelectionTranslator::translateGameMessage(const GameMessa
 						}
 					}
 #endif // DEBUG_OBJECT_ID_EXISTS
-#endif // RTS_DEBUG
+#endif // _ALLOW_DEBUG_CHEATS_IN_DEBUG
 				}
 			}
 
