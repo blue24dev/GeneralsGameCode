@@ -817,7 +817,6 @@ Bool WouldMapTransfer( const AsciiString& mapName )
 
 //-------------------------------------------------------------------------------------------------
 typedef std::set<UnicodeString, rts::less_than_nocase<UnicodeString>/**/> MapNameList;
-typedef std::map<UnicodeString, AsciiString> MapDisplayToFileNameList;
 
 //MODDD - replacing this
 //typedef std::map<UnicodeString, AsciiString> MapDisplayToFileNameList;
