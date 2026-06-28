@@ -207,7 +207,7 @@ void OCLSpecialPower::doSpecialPowerAtLocation( const Coord3D *loc, Real angle, 
 			ObjectCreationList::create( ocl, getObject(), &creationCoord, &targetCoord, angle );
 			break;
 		case USE_OWNER_OBJECT:
-			creationCoord.set( &targetCoord );
+			creationCoord.set( targetCoord );
 			//MODDD - why 'false' as the last param? It expects a number for 'lifetimeFrames', not a bool
 			// Just rely on the default '0' from not sending a param
 			//ObjectCreationList::create( ocl, getObject(), &creationCoord, &targetCoord, angle, false );
@@ -242,7 +242,7 @@ void OCLSpecialPower::doSpecialPower( UnsignedInt commandOptions )
 		return;
 
 	Coord3D creationCoord;
-	creationCoord.set( getObject()->getPosition() );
+	creationCoord.set( *getObject()->getPosition() );
 
 	// call the base class action cause we are *EXTENDING* functionality
 	SpecialPowerModule::doSpecialPowerAtLocation( &creationCoord, INVALID_ANGLE, commandOptions );
