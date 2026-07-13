@@ -636,8 +636,10 @@ public:
 
 	GameMessage( Type type );
 
-	GameMessage *next() { return m_next; }		///< Return next message in the stream
-	GameMessage *prev() { return m_prev; }		///< Return prev message in the stream
+	GameMessage *next() { return m_next; }             ///< Return next message in the stream
+	const GameMessage *next() const { return m_next; } ///< Return next message in the stream
+	GameMessage *prev() { return m_prev; }             ///< Return prev message in the stream
+	const GameMessage *prev() const { return m_prev; } ///< Return prev message in the stream
 
 	Type getType() const { return m_type; }					///< Return the message type
 
@@ -771,6 +773,8 @@ public:
 	void removeTranslator( TranslatorID );				///< Remove a previously attached translator
 
 protected:
+
+	Bool isRedundantMessage(const GameMessage *msg) const;
 
 	struct TranslatorData
 	{
