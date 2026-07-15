@@ -985,7 +985,6 @@ GlobalData::GlobalData()
 #if !SKIP_INTRO_MOVIES
 	m_playIntro = TRUE;
 	m_playSizzle = TRUE;
-	m_afterIntro = FALSE;
 	m_allowExitOutOfMovies = FALSE;
 #else
 	m_playIntro = FALSE;
