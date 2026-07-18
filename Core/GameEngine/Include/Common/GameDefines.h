@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "WWDefines.h"
+#include "WWLib/WWDefines.h"
 
 //MODDD - NOTE - the goal of this fork disagrees with below - enable all fixes regardless.
 // Settings below up to a significant 'MODDD' separator are from TheSuperHackers repo.

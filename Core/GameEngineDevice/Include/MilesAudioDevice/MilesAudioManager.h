@@ -23,7 +23,7 @@
 #include "Common/AsciiString.h"
 #include "Common/GameAudio.h"
 #include "mss/mss.h"
-#include "mutex.h"
+#include "WWLib/mutex.h"
 
 //MODDD
 #include "Common/AudioEventInfo.h"
