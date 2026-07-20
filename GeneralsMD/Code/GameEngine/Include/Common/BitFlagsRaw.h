@@ -18,7 +18,7 @@
 class Xfer;
 
 // Note: 'NUMBITS' should always be divisible by 8 (a byte)
-template <size_t NUMBITS>
+template <size_t NUMBITS, typename TAG>
 class BitFlagsRaw
 {
 private:
