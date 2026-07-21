@@ -30,8 +30,8 @@
 #pragma once
 
 #include "Lib/BaseType.h"
-#include "dx8vertexbuffer.h"
-#include "dx8indexbuffer.h"
+#include "WW3D2/dx8vertexbuffer.h"
+#include "WW3D2/dx8indexbuffer.h"
 
 //MODDD - original (as of TheSuperHackers changes)
 // ---

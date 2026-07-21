@@ -36,8 +36,8 @@
 #include "Common/BitFlagsRaw.h"
 #include "Common/BitFlagsRawIO.h"
 
-typedef BitFlags<SPECIALPOWER_COUNT>	SpecialPowerMaskType;
+typedef BitFlags<SPECIALPOWER_COUNT, struct SpecialPowerMaskTypeTag>	SpecialPowerMaskType;
 
 #if SIDEBAR_ENUM_CONFLICT_FIX
-typedef BitFlagsRaw<SPECIALPOWER_MAX_COUNT>	SpecialPowerIDMaskType;
+typedef BitFlagsRaw<SPECIALPOWER_MAX_COUNT, struct SpecialPowerIDMaskTypeTag>	SpecialPowerIDMaskType;
 #endif

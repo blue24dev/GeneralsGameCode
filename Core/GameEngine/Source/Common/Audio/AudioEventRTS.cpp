@@ -219,7 +219,7 @@ AudioEventRTS::AudioEventRTS( const AsciiString& eventName, const Coord3D *posit
 										//MODDD - bugfix for particle cannon sound hit sound effect volume being too low
 										m_playSoundFromGround(FALSE)
 {
-	m_positionOfAudio.set( positionOfAudio );
+	m_positionOfAudio.set( *positionOfAudio );
 	m_attackName.clear();
 	m_decayName.clear();
 }
@@ -252,7 +252,7 @@ AudioEventRTS::AudioEventRTS( const AudioEventRTS& right )
 
 	if( m_ownerType == OT_Positional || m_ownerType == OT_Dead )
 	{
-		m_positionOfAudio.set( &right.m_positionOfAudio );
+		m_positionOfAudio.set( right.m_positionOfAudio );
 	}
 	else if( m_ownerType == OT_Drawable )
 	{
@@ -296,7 +296,7 @@ AudioEventRTS& AudioEventRTS::operator=( const AudioEventRTS& right )
 
 	if( m_ownerType == OT_Positional || m_ownerType == OT_Dead )
 	{
-		m_positionOfAudio.set( &right.m_positionOfAudio );
+		m_positionOfAudio.set( right.m_positionOfAudio );
 	}
 	else if( m_ownerType == OT_Drawable )
 	{
@@ -765,7 +765,7 @@ const Coord3D *AudioEventRTS::getCurrentPosition()
 	case OT_Object:
 		if (Object *obj = TheGameLogic->findObjectByID(m_objectID))
 		{
-			m_positionOfAudio.set( obj->getPosition() );
+			m_positionOfAudio.set( *obj->getPosition() );
 		}
 		else
 		{
@@ -781,7 +781,7 @@ const Coord3D *AudioEventRTS::getCurrentPosition()
 			// ------
 			if (!m_playSoundFromGround) {
 			// ------ (original)
-				m_positionOfAudio.set( draw->getPosition() );
+				m_positionOfAudio.set( *draw->getPosition() );
 			// ------ (/original)
 			} else {
 				// This really should just be able to be given straight to this sound by setting 'm_positionOfAudio' either
@@ -789,7 +789,7 @@ const Coord3D *AudioEventRTS::getCurrentPosition()
 				// But when I tried to do that, the sound was stuck playing at the initial position (did not move with a
 				// moving particle cannon hit location).
 				// Computing this from the terrain from sound logic instead of it being supplied from elsewhere just feels weird.
-				m_positionOfAudio.set( draw->getPosition() );
+				m_positionOfAudio.set( *draw->getPosition() );
 				m_positionOfAudio.z = TheTerrainLogic->getGroundHeight( m_positionOfAudio.x, m_positionOfAudio.y );
 			}
 			// ------

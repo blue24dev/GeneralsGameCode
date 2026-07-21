@@ -5,8 +5,8 @@
 #include "Common/BitFlagsRaw.h"
 #include "Common/Xfer.h"
 
-template <size_t NUMBITS>
-void BitFlagsRaw<NUMBITS>::xfer(Xfer* xfer)
+template <size_t NUMBITS, typename TAG>
+void BitFlagsRaw<NUMBITS, TAG>::xfer(Xfer* xfer)
 {
 	// This is primitive enough I don't think it warrants a version, and entirely new to the as-is state of
 	// this codebase anyway.
