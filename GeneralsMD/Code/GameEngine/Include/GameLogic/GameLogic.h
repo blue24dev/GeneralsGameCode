@@ -367,7 +367,7 @@ private:
 	bool onCreateFormation(GameMessage *msg, AIGroupPtr &currentlySelectedGroup);
 	bool onClearIngamePopupMessage(GameMessage *msg);
 	bool onDoCheer(GameMessage *msg, AIGroupPtr &currentlySelectedGroup);
-#if defined(RTS_DEBUG) || defined (_ALLOW_DEBUG_CHEATS_IN_RELEASE)
+#if _ALLOW_DEBUG_CHEATS_IN_DEBUG || defined (_ALLOW_DEBUG_CHEATS_IN_RELEASE)
 	bool onDebugKillSelection(GameMessage *msg, AIGroupPtr &currentlySelectedGroup);
 	bool onDebugHurtObject(GameMessage *msg);
 	bool onDebugKillObject(GameMessage *msg);
@@ -423,13 +423,13 @@ private:
 		overrides to thing template buildable status. doesn't really belong here,
 		but has to go somewhere. (srj)
 	*/
-	typedef std::hash_map< AsciiString, BuildableStatus, rts::hash<AsciiString>, rts::equal_to<AsciiString> > BuildableMap;
+	typedef std::hash_map< AsciiString, BuildableStatus, rts::hash<AsciiString>, rts::equal_to<AsciiString>/**/> BuildableMap;
 	BuildableMap m_thingTemplateBuildableOverrides;
 
 	/**
 		overrides to control bars. doesn't really belong here, but has to go somewhere. (srj)
 	*/
-	typedef std::hash_map< AsciiString, ConstCommandButtonPtr, rts::hash<AsciiString>, rts::equal_to<AsciiString> > ControlBarOverrideMap;
+	typedef std::hash_map< AsciiString, ConstCommandButtonPtr, rts::hash<AsciiString>, rts::equal_to<AsciiString>/**/> ControlBarOverrideMap;
 	ControlBarOverrideMap m_controlBarOverrides;
 
 	Real m_width, m_height;																	///< Dimensions of the world
@@ -437,7 +437,8 @@ private:
 
 	// CRC cache system -----------------------------------------------------------------------------
 	UnsignedInt	m_CRC;																			///< Cache of previous CRC value
-	std::map<Int, UnsignedInt> m_cachedCRCs;								///< CRCs we've seen this frame
+	typedef std::map<Int, UnsignedInt> CachedCRCMap;
+	CachedCRCMap m_cachedCRCs;															///< CRCs we've seen this frame
 	Bool m_shouldValidateCRCs;															///< Should we validate CRCs this frame?
 	//-----------------------------------------------------------------------------------------------
 	//Bool m_loadingScene;

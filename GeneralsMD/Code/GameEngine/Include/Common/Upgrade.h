@@ -60,7 +60,7 @@ enum UpgradeStatusType CPP_11(: Int)
 //#define UPGRADE_MAX_COUNT 512
 #define UPGRADE_MAX_COUNT 1024
 
-typedef BitFlags<UPGRADE_MAX_COUNT>	UpgradeMaskType;
+typedef BitFlags<UPGRADE_MAX_COUNT, struct UpgradeMaskTypeTag>	UpgradeMaskType;
 
 #define MAKE_UPGRADE_MASK(k) UpgradeMaskType(UpgradeMaskType::kInit, (k))
 #define MAKE_UPGRADE_MASK2(k,a) UpgradeMaskType(UpgradeMaskType::kInit, (k), (a))

@@ -74,8 +74,8 @@
 #include "WWDownload/Registry.h"
 #include "GameClient/MessageBox.h"
 
-#include "ww3d.h"
-#include "texturefilter.h"
+#include "WW3D2/ww3d.h"
+#include "WW3D2/texturefilter.h"
 
 // This is for non-RC builds only!!!
 #define VERBOSE_VERSION L"Release"
@@ -842,6 +842,26 @@ static void saveOptions()
 		prefString = show ? "yes" : "no";
 		(*pref)["ShowMoneyPerMinute"] = prefString;
 		TheWritableGlobalData->m_showMoneyPerMinute = show;
+	}
+
+	//-------------------------------------------------------------------------------------------------
+	// Set Game Window Transition Speed Multiplier
+	{
+		Real speed = pref->getGameWindowTransitionSpeedMultiplier();
+		AsciiString prefString;
+		prefString.format("%g", speed);
+		(*pref)["GameWindowTransitionSpeedMultiplier"] = prefString;
+		TheWritableGlobalData->m_gameWindowTransitionSpeedMultiplier = speed;
+	}
+
+	//-------------------------------------------------------------------------------------------------
+	// Set JPEG screenshot quality
+	{
+		Int quality = pref->getJpegQuality();
+		AsciiString prefString;
+		prefString.format("%d", quality);
+		(*pref)["JpegQuality"] = prefString;
+		TheWritableGlobalData->m_jpegQuality = quality;
 	}
 
 	//-------------------------------------------------------------------------------------------------
