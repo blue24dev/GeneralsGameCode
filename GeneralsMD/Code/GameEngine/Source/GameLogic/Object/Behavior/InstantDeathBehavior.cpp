@@ -178,9 +178,6 @@ void InstantDeathBehavior::onDie( const DamageInfo *damageInfo )
 			}
 		}
 	}
-#if EXTRA_DEBUG_HELP
-	g_destroyObjectSource = 16;
-#endif
 
 #if !RETAIL_COMPATIBLE_CRC
 	// TheSuperHackers @bugfix Stubbjax 21/07/2026 Allow multiple InstantDeathBehaviors to be processed.
@@ -193,6 +190,10 @@ void InstantDeathBehavior::onDie( const DamageInfo *damageInfo )
 			return;
 		ai->markAsDead();
 	}
+#endif
+
+#if EXTRA_DEBUG_HELP
+	g_destroyObjectSource = 16;
 #endif
 
 	TheGameLogic->destroyObject(getObject());
