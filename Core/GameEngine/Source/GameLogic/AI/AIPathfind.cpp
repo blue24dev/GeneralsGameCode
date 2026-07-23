@@ -61,6 +61,9 @@
 
 #include "Common/UnitTimings.h" //Contains the DO_UNIT_TIMINGS define jba.
 
+//MODDD
+#include "Common/Extra.h"
+
 #define no_INTENSE_DEBUG
 
 #define DEBUG_QPF
