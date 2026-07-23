@@ -1044,7 +1044,8 @@ void printTimeStamp(FILE* outputFile)
 {
 	SYSTEMTIME lt;
 	GetLocalTime(&lt);
-	fprintf(
+	fprintf
+	(
 		outputFile,
 		"%u-%2u-%2u %2u:%2u:%2u.%3u Frame: %u",
 		lt.wYear,
