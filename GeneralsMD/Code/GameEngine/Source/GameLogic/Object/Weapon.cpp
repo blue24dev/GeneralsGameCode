@@ -2054,13 +2054,13 @@ void Weapon::computeBonus(const Object *source, WeaponBonusConditionFlags extraB
 			{
 				emergencyStop = TRUE;
 
-				std::ofstream outputFile;
-				outputFile.open("test_crash_containedByBadMemoryBug.txt", std::ios::out | std::ios::app);
+				FILE* outputFile;
+				outputFile = fopen("test_crash_containedByBadMemoryBug.txt", "a");
 				printTimeStamp(outputFile);
-				outputFile << " - " << "Weapon::computeBonus - CRASH AVOIDED - 'source->getContainedBy()' is 0xDEADBEEF" << std::endl;
+				fputs(" - Weapon::computeBonus - CRASH AVOIDED - 'source->getContainedBy()' is 0xDEADBEEF\n", outputFile);
 
 				printDeletionCriticalInfo(outputFile, source, "source obj");
-				outputFile.close();
+				fclose(outputFile);
 			}
 			/*
 			else

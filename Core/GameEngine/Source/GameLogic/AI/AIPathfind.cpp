@@ -56,6 +56,9 @@
 #include "Common/MiscAudio.h"
 #endif
 
+//MODDD
+#include "Common/Extra.h"
+
 #include "Common/UnitTimings.h" //Contains the DO_UNIT_TIMINGS define jba.
 
 #define no_INTENSE_DEBUG
@@ -9201,25 +9204,24 @@ void Pathfinder::prependCells( Path *path, const Coord3D *fromPos,
 	// Taking inspiration from the 'RETAIL_COMPATIBLE_PATHFINDING' fix below, hopefully this is ok in a pinch?
 	if (!cell)
 	{
-		SYSTEMTIME lt;
-		std::ofstream outputFile;
-		GetLocalTime(&lt);
-		outputFile.open("test_crash_AIPathfind.txt", std::ios::out | std::ios::app);
-		outputFile << lt.wYear << "-" << lt.wMonth << "-" << lt.wDay << " " << lt.wHour << ":" << lt.wMinute << ":" << lt.wSecond << "." << std::setw(3) << std::setfill('0') << lt.wMilliseconds << " - ";
-		outputFile << "'cell' is unexpectedly 'nullptr' in 'Pathfinder::prependCells'!" << std::endl;
+		FILE* outputFile;
+		outputFile = fopen("test_crash_AIPathfind.txt", "a");
+		printTimeStamp(outputFile);
+		fputs(" - 'cell' is unexpectedly 'nullptr' in 'Pathfinder::prependCells'!\n", outputFile);
 		
 		// Try 'prevCell'.
 		cell = prevCell;
 
 		// Probably paranoid, but just in case.
-		if (!cell) {
-			outputFile << "* 'cell = prevCell' quickfix did not work - 'cell' is still 'nullptr'! 'prependCells' call terminated." << std::endl;
-			outputFile.close();
+		if (cell == nullptr)
+		{
+			fputs("* 'cell = prevCell' quickfix did not work - 'cell' is still 'nullptr'! 'prependCells' call terminated.\n", outputFile);
+			fclose(outputFile);
 			return;
 		}
 		
-		outputFile << "* 'cell = prevCell' quickfix resulted in a non-null 'cell' - proceeding..." << std::endl;
-		outputFile.close();
+		fputs("* 'cell = prevCell' quickfix resulted in a non-null 'cell' - proceeding...\n", outputFile);
+		fclose(outputFile);
 
 		// If the cell from 'cell = prevCell' isn't null, should be fine to proceed.
 		// Whether the method should just return here at this point instead, I have no idea.
