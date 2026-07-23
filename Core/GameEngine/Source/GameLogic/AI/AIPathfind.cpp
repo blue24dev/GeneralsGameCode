@@ -56,9 +56,6 @@
 #include "Common/MiscAudio.h"
 #endif
 
-//MODDD
-#include "Common/Extra.h"
-
 #include "Common/UnitTimings.h" //Contains the DO_UNIT_TIMINGS define jba.
 
 //MODDD
