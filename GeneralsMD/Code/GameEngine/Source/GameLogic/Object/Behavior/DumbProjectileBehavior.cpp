@@ -392,7 +392,7 @@ void DumbProjectileBehavior::projectileFireAtObjectOrPosition( const Object *vic
 	{
 		//Can only fail if wildly incorrect points
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 11;
+		g_destroyObjectSource.push_back(11);
 #endif
 		TheGameLogic->destroyObject( projectile );
 		return;
@@ -559,7 +559,7 @@ Bool DumbProjectileBehavior::projectileHandleCollision( Object *other )
 
 					// don't do the normal explosion; just destroy ourselves & return
 #if EXTRA_DEBUG_HELP
-					g_destroyObjectSource = 12;
+					g_destroyObjectSource.push_back(12);
 #endif
 					TheGameLogic->destroyObject(getObject());
 
@@ -602,7 +602,7 @@ void DumbProjectileBehavior::detonate()
 		else
 		{
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource = 13;
+			g_destroyObjectSource.push_back(13);
 #endif
 			TheGameLogic->destroyObject( obj );
 		}

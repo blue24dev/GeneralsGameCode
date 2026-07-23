@@ -267,7 +267,7 @@ void BuildAssistant::update()
 
 			// destroy the object
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource = 3;
+			g_destroyObjectSource.push_back(3);
 #endif
 			TheGameLogic->destroyObject( obj );
 
@@ -1441,7 +1441,7 @@ void BuildAssistant::clearRemovableForConstruction( const ThingTemplate *whatToB
 		if( isRemovableForConstruction( them ) == TRUE && !them->isKindOf( KINDOF_ALWAYS_SELECTABLE ) )
 		{
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource = 4;
+			g_destroyObjectSource.push_back(4);
 #endif
 			TheGameLogic->destroyObject( them );
 		}
@@ -1651,7 +1651,7 @@ void BuildAssistant::sellObject( Object *obj )
 			if (mine->getProducerID() == obj->getID())
 			{
 #if EXTRA_DEBUG_HELP
-				g_destroyObjectSource = 5;
+				g_destroyObjectSource.push_back(5);
 #endif
 				TheGameLogic->destroyObject(mine);
 			}

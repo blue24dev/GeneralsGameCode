@@ -2304,7 +2304,7 @@ bool GameLogic::onRemoveBeacon(MAYBE_UNUSED GameMessage *msg)
 					if (beacon->getControllingPlayer() == msgPlayer)
 					{
 #if EXTRA_DEBUG_HELP
-						g_destroyObjectSource = 87;
+						g_destroyObjectSource.push_back(87);
 #endif
 						destroyObject(beacon); // the owner is telling it to go away.  such is life.
 

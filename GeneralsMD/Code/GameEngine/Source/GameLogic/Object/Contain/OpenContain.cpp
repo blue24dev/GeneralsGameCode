@@ -943,7 +943,7 @@ void OpenContain::onDelete()	///< Last possible moment cleanup
 		Object* rider = *it;
 		++it;
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 40;
+		g_destroyObjectSource.push_back(40);
 #endif
 		TheGameLogic->destroyObject( rider );
 	}
@@ -1839,7 +1839,7 @@ void OpenContain::xfer( Xfer *xfer )
 				Object* tmp = *it;
 				it = m_containList.erase(it);
 #if EXTRA_DEBUG_HELP
-				g_destroyObjectSource = 41;
+				g_destroyObjectSource.push_back(41);
 #endif
 				TheGameLogic->destroyObject(tmp);
 			}

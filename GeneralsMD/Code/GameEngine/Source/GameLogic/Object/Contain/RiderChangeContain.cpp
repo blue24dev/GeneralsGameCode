@@ -297,7 +297,7 @@ void RiderChangeContain::onRemoving( Object *rider )
 	if( bike->isEffectivelyDead() )
 	{
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 42;
+		g_destroyObjectSource.push_back(42);
 #endif
 		TheGameLogic->destroyObject( rider );
 		return;

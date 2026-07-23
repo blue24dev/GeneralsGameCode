@@ -1671,7 +1671,7 @@ void Object::setStatus( ObjectStatusMaskType objectStatus, Bool set )
 				else
 				{
 #if EXTRA_DEBUG_HELP
-					g_destroyObjectSource = 45;
+					g_destroyObjectSource.push_back(45);
 #endif
 					TheGameLogic->destroyObject(them);
 				}
@@ -2483,7 +2483,7 @@ void Object::reactToTransformChange(const Matrix3D* oldMtx, const Coord3D* oldPo
 	if(_isnan(getPosition()->x) || _isnan(getPosition()->y) || _isnan(getPosition()->z)) {
 		DEBUG_CRASH(("Object pos is nan."));
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 46;
+		g_destroyObjectSource.push_back(46);
 #endif
 		TheGameLogic->destroyObject(this);
 	}

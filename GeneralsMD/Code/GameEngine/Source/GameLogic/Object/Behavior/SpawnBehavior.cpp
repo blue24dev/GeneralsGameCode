@@ -124,7 +124,7 @@ void SpawnBehavior::onDelete()
 			if( obj && obj->isEffectivelyDead() == FALSE )
 			{
 #if EXTRA_DEBUG_HELP
-				g_destroyObjectSource = 32;
+				g_destroyObjectSource.push_back(32);
 #endif
 				TheGameLogic->destroyObject( obj );
 			}
@@ -783,7 +783,7 @@ void SpawnBehavior::onSpawnDeath( ObjectID deadSpawn, DamageInfo *damageInfo )
 			killer->scoreTheKill(getObject());
 		}
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 33;
+		g_destroyObjectSource.push_back(33);
 #endif
 		TheGameLogic->destroyObject(getObject());
 		//getObject()->kill();

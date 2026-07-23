@@ -238,7 +238,7 @@ void SlowDeathBehavior::beginSlowDeath(const DamageInfo *damageInfo)
 		{
 			// Deaths happen instantly so just delete the object and return
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource = 28;
+			g_destroyObjectSource.push_back(28);
 #endif
 			TheGameLogic->destroyObject(obj);
 			return;
@@ -396,7 +396,7 @@ UpdateSleepTime SlowDeathBehavior::update()
 		{
 			// instant death
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource = 29;
+			g_destroyObjectSource.push_back(29);
 #endif
 			TheGameLogic->destroyObject(obj);
 			return UPDATE_SLEEP_NONE;
@@ -443,7 +443,7 @@ UpdateSleepTime SlowDeathBehavior::update()
 						if ( !obj->isAboveTerrain() )
 						{
 #if EXTRA_DEBUG_HELP
-							g_destroyObjectSource = 30;
+							g_destroyObjectSource.push_back(30);
 #endif
 							TheGameLogic->destroyObject(obj);
 						}
@@ -476,7 +476,7 @@ UpdateSleepTime SlowDeathBehavior::update()
 	{
 		doPhaseStuff(SDPHASE_FINAL);
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 31;
+		g_destroyObjectSource.push_back(31);
 #endif
 		TheGameLogic->destroyObject(obj);
 	}

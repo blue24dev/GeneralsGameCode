@@ -573,7 +573,7 @@ void TransportContain::killRidersWhoAreNotFreeToExit()
 			if (d->m_destroyRidersWhoAreNotFreeToExit)
 			{
 #if EXTRA_DEBUG_HELP
-				g_destroyObjectSource = 43;
+				g_destroyObjectSource.push_back(43);
 #endif
 				TheGameLogic->destroyObject(obj);
 			}

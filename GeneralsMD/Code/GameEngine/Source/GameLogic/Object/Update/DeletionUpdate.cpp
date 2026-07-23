@@ -95,7 +95,7 @@ UpdateSleepTime DeletionUpdate::update()
 	if (TheGameLogic->getFrame() > m_dieFrame)
 	{
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 60;
+		g_destroyObjectSource.push_back(60);
 #endif
 		TheGameLogic->destroyObject( getObject() );
 		return UPDATE_SLEEP_FOREVER;
@@ -105,7 +105,7 @@ UpdateSleepTime DeletionUpdate::update()
 	return UPDATE_SLEEP(2);
 #else
 #if EXTRA_DEBUG_HELP
-	g_destroyObjectSource = 61;
+	g_destroyObjectSource.push_back(61);
 #endif
 	TheGameLogic->destroyObject( getObject() );
 	return UPDATE_SLEEP_FOREVER;
