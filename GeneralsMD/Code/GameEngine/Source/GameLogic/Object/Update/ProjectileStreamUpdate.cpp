@@ -69,7 +69,7 @@ UpdateSleepTime ProjectileStreamUpdate::update()
 	if( considerDying() )
 	{
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 68;
+		g_destroyObjectSource.push_back(68);
 #endif
 		TheGameLogic->destroyObject( getObject() );
 	}

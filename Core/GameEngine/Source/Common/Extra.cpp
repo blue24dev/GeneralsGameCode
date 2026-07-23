@@ -46,7 +46,7 @@
 int g_dummy = 0;
 
 #if EXTRA_DEBUG_HELP
-int g_destroyObjectSource = 0;
+std::vector<int> g_destroyObjectSource;
 #endif
 
 //MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
@@ -1054,29 +1054,30 @@ Bool checkIfObjInDestroyList(const Object* objCheck)
 }
 
 // Note that this doesn't end in a newline character.
-void printTimeStamp(std::ofstream& outputStream)
+void printTimeStamp(FILE* outputFile)
 {
 	SYSTEMTIME lt;
 	GetLocalTime(&lt);
-	outputStream <<
-		lt.wYear << "-" <<
-		std::setw(2) << std::setfill('0') << lt.wMonth << "-" <<
-		std::setw(2) << std::setfill('0') << lt.wDay << " " <<
-		std::setw(2) << std::setfill('0') << lt.wHour << ":" <<
-		std::setw(2) << std::setfill('0') << lt.wMinute << ":" <<
-		std::setw(2) << std::setfill('0') << lt.wSecond << "." <<
-		std::setw(3) << std::setfill('0') << lt.wMilliseconds <<
-		" Frame:" <<
+	fprintf(
+		outputFile,
+		"%u-%2u-%2u %2u:%2u:%2u.%3u Frame: %u",
+		lt.wYear,
+		lt.wMonth,
+		lt.wDay,
+		lt.wHour,
+		lt.wMinute,
+		lt.wSecond,
+		lt.wMilliseconds,
 		TheGameLogic->getFrame()
-	;
+	);
 }
 
 // Print the most basic info to tell what this object is at a glance. That is, template name (americaVehicle-whatever)
 // with ID to tell if other places are referring to the exact same object.
 // Note that this doesn't end in a newline character.
-void printObjectIdentifyingInfo(std::ofstream& outputStream, const Object* objToPrint)
+void printObjectIdentifyingInfo(FILE* outputFile, const Object* objToPrint)
 {
-	outputStream << objToPrint->getTemplate()->getName().str() << ":" << objToPrint->getID();
+	fprintf(outputFile, "%s:%d", objToPrint->getTemplate()->getName().str(), objToPrint->getID());
 }
 
 // really, may as well turn that into a utility that gives the string directly
@@ -1087,145 +1088,151 @@ AsciiString getObjectIdentifyingInfoString(const Object* objToPrint)
 	return identifier;
 }
 
-void printDeletionCriticalInfo(std::ofstream& outputStream, const Object* objToPrint)
+void printDeletionCriticalInfo(FILE* outputFile, const Object* objToPrint)
+{
+	printDeletionCriticalInfo(outputFile, objToPrint, nullptr);
+}
+
+void printDeletionCriticalInfo(FILE* outputFile, const Object* objToPrint, const char* extraHeading)
 {
 	Bool isDestroyed = objToPrint->testStatus(OBJECT_STATUS_DESTROYED);
 	Bool isEffectivelyDead = objToPrint->isEffectivelyDead();
 	Bool isObjThruInDestroyedList = checkIfObjInDestroyList(objToPrint);
 
-	outputStream << "printDeletionCriticalInfo - ";
-	printObjectIdentifyingInfo(outputStream, objToPrint);
-	outputStream << " isDestroyed: " << isDestroyed;
-	outputStream << " isEffectivelyDead: " << isEffectivelyDead;
-	outputStream << " isObjThruInDestroyedList: " << isObjThruInDestroyedList;
-	if (objToPrint->getBodyModule())
+	if (extraHeading != nullptr)
 	{
-		outputStream << " health: " << objToPrint->getBodyModule()->getHealth();
+		fprintf(outputFile, "printDeletionCriticalInfo - %s:", extraHeading);
 	}
 	else
 	{
-		outputStream << " health: N/A (no body module)";
+		fprintf(outputFile, "printDeletionCriticalInfo - ");
 	}
-	outputStream << std::endl;
-}
 
-void printDeletionCriticalInfo(std::ofstream& outputStream, const Object* objToPrint, const char* extraHeading)
-{
-	Bool isDestroyed = objToPrint->testStatus(OBJECT_STATUS_DESTROYED);
-	Bool isEffectivelyDead = objToPrint->isEffectivelyDead();
-	Bool isObjThruInDestroyedList = checkIfObjInDestroyList(objToPrint);
-
-	outputStream << "printDeletionCriticalInfo - ";
-	outputStream << extraHeading << ":";
-	printObjectIdentifyingInfo(outputStream, objToPrint);
-	outputStream << " isDestroyed: " << isDestroyed;
-	outputStream << " isEffectivelyDead: " << isEffectivelyDead;
-	outputStream << " isObjThruInDestroyedList: " << isObjThruInDestroyedList;
+	printObjectIdentifyingInfo(outputFile, objToPrint);
+	fprintf(outputFile, " isDestroyed: %d isEffectivelyDead: %d isObjThruInDestroyedList: %d", isDestroyed, isEffectivelyDead, isObjThruInDestroyedList);
 	if (objToPrint->getBodyModule())
 	{
-		outputStream << " health: " << objToPrint->getBodyModule()->getHealth();
+		fprintf(outputFile, " health: %.2f", objToPrint->getBodyModule()->getHealth());
 	}
 	else
 	{
-		outputStream << " health: N/A (no body module)";
+		fprintf(outputFile, " health: N/A (no body module)");
 	}
-	outputStream << std::endl;
+	fputs("\n", outputFile);
 }
 
-void printItemsInContainedList(std::ofstream& outputStream, const Object* objContainer)
+void printItemsInContainedList(FILE* outputFile, const Object* objContainer)
 {
 	const ContainedItemsList* conList = nullptr;
 	ContainModuleInterface* contain = objContainer->getContain();
 	if (contain == nullptr)
 	{
-		outputStream << "printItemsInContainedList - ERROR - 'objContainer' ";
-		printObjectIdentifyingInfo(outputStream, objContainer);
-		outputStream << " has no 'contain' module" << std::endl;
+		fputs("printItemsInContainedList - ERROR - 'objContainer' ", outputFile);
+		printObjectIdentifyingInfo(outputFile, objContainer);
+		fputs(" has no 'contain' module\n", outputFile);
 		return;
 	}
 
-	outputStream << "printItemsInContainedList - ";
-	printObjectIdentifyingInfo(outputStream, objContainer);
-	outputStream << std::endl;
-	outputStream << "------------" << std::endl;
+	fputs("printItemsInContainedList - ", outputFile);
+	printObjectIdentifyingInfo(outputFile, objContainer);
+	fputs("\n", outputFile);
+	fputs("------------\n", outputFile);
 
 	conList = objContainer->getContain()->getContainedItemsList();
 	if (conList->empty())
 	{
 		// just say that?
-		outputStream << " (empty)" << std::endl;
+		fputs(" (empty)\n", outputFile);
 	}
 	else
 	{
 		for(ContainedItemsList::const_iterator it = conList->begin(); it != conList->end(); ++it)
 		{
 			Object* containedObj = *it;
-			printDeletionCriticalInfo(outputStream, containedObj);
+			printDeletionCriticalInfo(outputFile, containedObj);
 		}
 	}
-	outputStream << "------------" << std::endl;
+	fputs("------------\n", outputFile);
 }
 
-void printItemsInContainedList(std::ofstream& outputStream, const Object* objContainer, const Object* objToLookFor)
+void printItemsInContainedList(FILE* outputFile, const Object* objContainer, const Object* objToLookFor)
 {
 	const ContainedItemsList* conList = nullptr;
 	ContainModuleInterface* contain = objContainer->getContain();
 	if (contain == nullptr)
 	{
-		outputStream << "printItemsInContainedList - ERROR - 'objContainer' ";
-		printObjectIdentifyingInfo(outputStream, objContainer);
-		outputStream << " has no 'contain' module" << std::endl;
+		fputs("printItemsInContainedList - ERROR - 'objContainer' ", outputFile);
+		printObjectIdentifyingInfo(outputFile, objContainer);
+		fputs(" has no 'contain' module\n", outputFile);
 		return;
 	}
 	
-	outputStream << "printItemsInContainedList - ";
-	printObjectIdentifyingInfo(outputStream, objContainer);
-	outputStream << std::endl;
-	outputStream << "------------" << std::endl;
+	fputs("printItemsInContainedList - ", outputFile);
+	printObjectIdentifyingInfo(outputFile, objContainer);
+	fputs("\n", outputFile);
+	fputs("------------\n", outputFile);
 	
 	Bool objToLookForFound = FALSE;
 	conList = objContainer->getContain()->getContainedItemsList();
 	if (conList->empty())
 	{
 		// just say that?
-		outputStream << " (empty)" << std::endl;
+		fputs(" (empty)\n", outputFile);
 	}
 	else
 	{
 		for(ContainedItemsList::const_iterator it = conList->begin(); it != conList->end(); ++it)
 		{
 			Object* containedObj = *it;
-			printDeletionCriticalInfo(outputStream, containedObj);
+			printDeletionCriticalInfo(outputFile, containedObj);
 			if (containedObj->getID() == objToLookFor->getID())
 			{
-				outputStream << "^^^ piicl_OBJTOLOOKFOR ^^^";
+				fputs("^^^ piicl_OBJTOLOOKFOR ^^^", outputFile);
 				objToLookForFound = TRUE;
 			}
 		}
 	}
 	if (!objToLookForFound)
 	{
-		outputStream << "--- WARNING - 'objToLookFor' ";
-		printObjectIdentifyingInfo(outputStream, objToLookFor);
-		outputStream << " provided but not found" << std::endl;
+		fputs("--- WARNING - 'objToLookFor' ", outputFile);
+		printObjectIdentifyingInfo(outputFile, objToLookFor);
+		fputs(" provided but not found\n", outputFile);
 	}
-	outputStream << "------------" << std::endl;
+	fputs("------------\n", outputFile);
 }
 
-void objectContainedByOnDeleteCheck_printLabel(std::ofstream& outputStream, int callSource)
+void objectContainedByOnDeleteCheck_printLabel(FILE* outputFile, int callSource)
 {
 	switch(callSource)
 	{
 		case 1:
 		{
-			outputStream << " - " << "destroyObject src#" <<
-				std::setw(3) << std::setfill('0') << g_destroyObjectSource <<
-				std::endl;
+			fputs(" - destroyObject src: ", outputFile);
+			// print each member of 'g_destroyObjectSource' to show each layer in case this is a nested call
+			// (external 'destroyObject' call triggering a 'destroyObject' call)
+
+			if (g_destroyObjectSource.empty())
+			{
+				fprintf(outputFile, "<no source - should not be possible!>\n");
+				return;
+			}
+
+			std::vector<int>::const_iterator it = g_destroyObjectSource.cbegin();
+			// first item, handle separately to not prepend a separator
+			fprintf(outputFile, "%03d", *it);
+			// advance
+			++it;
+
+			for (; it != g_destroyObjectSource.cend(); ++it)
+			{
+				fprintf(outputFile, " -> %03d", *it);
+			}
+			fprintf(outputFile, "\n");
 			break;
 		}
 		case 2:
 		{
-			outputStream << " - " << "processDestroyList" << std::endl;
+			fputs(" - processDestroyList\n", outputFile);
 			break;
 		}
 	}
@@ -1238,26 +1245,26 @@ void objectContainedByOnDeleteCheck(Object* currentObject, int callSource)
 	{
 		if (objThru->getContainedBy() != nullptr && objThru->getContainedBy() == currentObject)
 		{
-			std::ofstream outputFile;
-			outputFile.open("test_crash_containedByBadMemoryBug.txt", std::ios::out | std::ios::app);
+			FILE* outputFile;
+			outputFile = fopen("test_crash_containedByBadMemoryBug.txt", "a");
 			printTimeStamp(outputFile);
 
 			objectContainedByOnDeleteCheck_printLabel(outputFile, callSource);
 
 			printObjectIdentifyingInfo(outputFile, currentObject);
-			outputFile << " is being destroyed but ";
+			fputs(" is being destroyed but ", outputFile);
 			printObjectIdentifyingInfo(outputFile, objThru);
-			outputFile << "->getContainedBy() still refers to it" << std::endl;
+			fputs("->getContainedBy() still refers to it\n", outputFile);
 				
 			if (objThru->getID() == currentObject->getID())
 			{
-				outputFile << "WARNING - they match?" << std::endl;
+				fputs("WARNING - they match?\n", outputFile);
 			}
 				
 			printDeletionCriticalInfo(outputFile, currentObject, "obj being deleted");
 			printDeletionCriticalInfo(outputFile, objThru, "obj w/ 'getContainedBy' pointing at that");
 			printItemsInContainedList(outputFile, currentObject, objThru);
-			outputFile.close();
+			fclose(outputFile);
 
 			// nope!  need to undersatnd the issue as it happens right now, don't interfere with possible fixes yet
 			// (trying it this time)

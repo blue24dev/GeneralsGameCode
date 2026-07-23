@@ -671,7 +671,7 @@ UpdateSleepTime SpectreGunshipUpdate::update()
         if ( isPointOffMap( *gunship->getPosition() ) )
         {
 #if EXTRA_DEBUG_HELP
-		      g_destroyObjectSource = 70;
+		      g_destroyObjectSource.push_back(70);
 #endif
           TheGameLogic->destroyObject( gunship );
           setLogicalStatus( GUNSHIP_STATUS_IDLE );
@@ -770,7 +770,7 @@ void SpectreGunshipUpdate::cleanUp()
   if ( gattling )
   {
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 71;
+		g_destroyObjectSource.push_back(71);
 #endif
     TheGameLogic->destroyObject( gattling );
   }

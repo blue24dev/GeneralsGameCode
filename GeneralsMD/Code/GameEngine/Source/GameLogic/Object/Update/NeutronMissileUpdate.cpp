@@ -208,7 +208,7 @@ void NeutronMissileUpdate::doLaunch()
 		{
 			m_launcherID = INVALID_ID;
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource = 64;
+			g_destroyObjectSource.push_back(64);
 #endif
 			TheGameLogic->destroyObject( getObject() );
 			return;

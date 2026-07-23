@@ -2439,7 +2439,7 @@ void ScriptActions::doNamedDelete(const AsciiString& unitName)
 	}
 
 #if EXTRA_DEBUG_HELP
-	g_destroyObjectSource = 78;
+	g_destroyObjectSource.push_back(78);
 #endif
 	TheGameLogic->destroyObject(theUnit);
 }
@@ -6820,7 +6820,7 @@ void ScriptActions::deleteAllUnmanned()
 		if (obj->isDisabledByType(DISABLED_UNMANNED))
 		{
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource = 79;
+			g_destroyObjectSource.push_back(79);
 #endif
 			TheGameLogic->destroyObject(obj);
 		}

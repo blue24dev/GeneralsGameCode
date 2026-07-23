@@ -405,7 +405,7 @@ void GameLogic::destroyAllObjectsImmediate()
 	{
 		nextObj = obj->getNextObject();
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 80;
+		g_destroyObjectSource.push_back(80);
 #endif
 		destroyObject( obj );
 	}
@@ -3850,7 +3850,7 @@ static void unitTimings()
 			while (obj) {
 				if (obj->getTemplate() != g_UT_curThing) {
 #if EXTRA_DEBUG_HELP
-					g_destroyObjectSource = 81;
+					g_destroyObjectSource.push_back(81);
 #endif
 					TheGameLogic->destroyObject(obj);
 					gotSpawn = true;
@@ -3981,7 +3981,7 @@ static void unitTimings()
 	Object *obj = TheGameLogic->getFirstObject();
 	while (obj) {
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 82;
+		g_destroyObjectSource.push_back(82);
 #endif
 		TheGameLogic->destroyObject(obj);
 		obj = obj->getNextObject();
@@ -4164,7 +4164,7 @@ static void unitTimings()
 #define dont_DO_TREE	1
 #ifdef DO_TREE
 #if EXTRA_DEBUG_HELP
-					g_destroyObjectSource = 83;
+					g_destroyObjectSource.push_back(83);
 #endif
 					TheGameLogic->destroyObject(obj);
 					externalAddTree(pos, 1.0f, 0.0f, "TreeOakFall1");
@@ -4725,8 +4725,8 @@ void GameLogic::destroyObject( Object *obj )
 {
 	_destroyObject(obj);
 #if EXTRA_DEBUG_HELP
-	// reset (just in case, should never be needed)
-	g_destroyObjectSource = 0;
+	// remove the most recent item in the stack
+	g_destroyObjectSource.erase(g_destroyObjectSource.end() - 1);
 #endif
 }
 
@@ -5614,7 +5614,7 @@ void GameLogic::prepareLogicForObjectLoad()
 				oldTower = findObjectByID( bridgeInfo->towerObjectID[ i ] );
 				if (oldTower) {
 #if EXTRA_DEBUG_HELP
-					g_destroyObjectSource = 84;
+					g_destroyObjectSource.push_back(84);
 #endif
 					destroyObject( oldTower );
 				}
@@ -5622,7 +5622,7 @@ void GameLogic::prepareLogicForObjectLoad()
 			}
 
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 85;
+		g_destroyObjectSource.push_back(85);
 #endif
 			// destroy the old bridge object
 			destroyObject( oldObject );
@@ -5632,7 +5632,7 @@ void GameLogic::prepareLogicForObjectLoad()
 		{
 
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 86;
+		g_destroyObjectSource.push_back(86);
 #endif
 			// destroy walk on top of wall things too
 			destroyObject( obj );

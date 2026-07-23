@@ -103,7 +103,7 @@ RebuildHoleBehavior::~RebuildHoleBehavior()
 		if( worker )
 		{
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource = 22;
+			g_destroyObjectSource.push_back(22);
 #endif
 			TheGameLogic->destroyObject(worker);
 			m_workerID = INVALID_ID;
@@ -124,7 +124,7 @@ void RebuildHoleBehavior::newWorkerRespawnProcess( Object *existingWorker )
 	{
 		DEBUG_ASSERTCRASH(existingWorker->getID() == m_workerID, ("m_workerID mismatch in RebuildHole"));
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 23;
+		g_destroyObjectSource.push_back(23);
 #endif
 		TheGameLogic->destroyObject( existingWorker );
 	}
@@ -330,14 +330,14 @@ UpdateSleepTime RebuildHoleBehavior::update()
 		if( worker )
 		{
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource = 24;
+			g_destroyObjectSource.push_back(24);
 #endif
 			TheGameLogic->destroyObject( worker );
 		}
 
 		// make the hole go away
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 25;
+		g_destroyObjectSource.push_back(25);
 #endif
 		TheGameLogic->destroyObject( hole );
 
@@ -359,7 +359,7 @@ void RebuildHoleBehavior::onDie( const DamageInfo *damageInfo )
 		if( worker )
 		{
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource = 26;
+			g_destroyObjectSource.push_back(26);
 #endif
 			TheGameLogic->destroyObject(worker);
 			m_workerID = INVALID_ID;
@@ -370,7 +370,7 @@ void RebuildHoleBehavior::onDie( const DamageInfo *damageInfo )
 
 	// destroy us
 #if EXTRA_DEBUG_HELP
-	g_destroyObjectSource = 27;
+	g_destroyObjectSource.push_back(27);
 #endif
 	TheGameLogic->destroyObject( obj );
 

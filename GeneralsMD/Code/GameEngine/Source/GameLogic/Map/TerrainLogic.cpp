@@ -2041,7 +2041,7 @@ void TerrainLogic::deleteBridge( Bridge *bridge )
 	if( bridgeObj )
 	{
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 8;
+		g_destroyObjectSource.push_back(8);
 #endif
 		TheGameLogic->destroyObject( bridgeObj );
 	}

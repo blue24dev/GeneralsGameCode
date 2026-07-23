@@ -119,7 +119,7 @@ void CrateCollide::onCollide( Object *other, const Coord3D *, const Coord3D * )
 			}
 
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource = 36;
+			g_destroyObjectSource.push_back(36);
 #endif
 			TheGameLogic->destroyObject( getObject() );
 		}
