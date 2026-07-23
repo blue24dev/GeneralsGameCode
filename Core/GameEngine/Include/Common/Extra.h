@@ -25,7 +25,7 @@ extern int g_dummy;
 
 #if EXTRA_DEBUG_HELP
 // Use this to determine the source of a 'destroyObject' call (I don't think an enum is necessary)
-extern int g_destroyObjectSource;
+extern std::vector<int> g_destroyObjectSource;
 #endif
 
 //MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
@@ -62,11 +62,11 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 
 //MODDD - DEBUG
 Bool checkIfObjInDestroyList(const Object* objCheck);
-void printTimeStamp(std::ofstream& outputStream);
-void printObjectIdentifyingInfo(std::ofstream& outputStream, const Object* objToPrint);
+void printTimeStamp(FILE* outputFile);
+void printObjectIdentifyingInfo(FILE* outputFile, const Object* objToPrint);
 AsciiString getObjectIdentifyingInfoString(Object* objToPrint);
-void printDeletionCriticalInfo(std::ofstream& outputStream, const Object* objToPrint);
-void printDeletionCriticalInfo(std::ofstream& outputStream, const Object* objToPrint, const char* extraHeading);
-void printItemsInContainedList(std::ofstream& outputStream, const Object* objContainer);
-void printItemsInContainedList(std::ofstream& outputStream, const Object* objContainer, const Object* objToLookFor);
+void printDeletionCriticalInfo(FILE* outputFile, const Object* objToPrint);
+void printDeletionCriticalInfo(FILE* outputFile, const Object* objToPrint, const char* extraHeading);
+void printItemsInContainedList(FILE* outputFile, const Object* objContainer);
+void printItemsInContainedList(FILE* outputFile, const Object* objContainer, const Object* objToLookFor);
 void objectContainedByOnDeleteCheck(Object* currentObject, int callSource);

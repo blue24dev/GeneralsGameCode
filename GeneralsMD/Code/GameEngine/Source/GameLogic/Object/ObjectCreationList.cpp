@@ -1261,7 +1261,7 @@ protected:
 				DEBUG_CRASH(("A OCL with ContainInsideSourceObject failed the contain and is killing the new object."));
 				// If we fail to contain it, we can't just leave it.  Stillborn it.
 #if EXTRA_DEBUG_HELP
-				g_destroyObjectSource = 47;
+				g_destroyObjectSource.push_back(47);
 #endif
 				TheGameLogic->destroyObject(obj);
 			}

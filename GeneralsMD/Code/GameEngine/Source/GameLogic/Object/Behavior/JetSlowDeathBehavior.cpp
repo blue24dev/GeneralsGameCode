@@ -161,7 +161,7 @@ void JetSlowDeathBehavior::onDie( const DamageInfo *damageInfo )
 
 		// destroy object
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 17;
+		g_destroyObjectSource.push_back(17);
 #endif
 		TheGameLogic->destroyObject( us );
 
@@ -332,7 +332,7 @@ UpdateSleepTime JetSlowDeathBehavior::update()
 
 			// we're all done now
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource = 18;
+			g_destroyObjectSource.push_back(18);
 #endif
 			TheGameLogic->destroyObject( us );
 

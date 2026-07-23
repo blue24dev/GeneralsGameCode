@@ -260,7 +260,7 @@ UpdateSleepTime BridgeScaffoldBehavior::update()
 
 				// we are done with a sinking motion, destroy the scaffold object as our job is done
 #if EXTRA_DEBUG_HELP
-				g_destroyObjectSource = 10;
+				g_destroyObjectSource.push_back(10);
 #endif
 				TheGameLogic->destroyObject( us );
 				break;

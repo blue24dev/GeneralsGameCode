@@ -274,7 +274,7 @@ void TunnelTracker::destroyObject( Object *obj, void * )
 	// like other contain types so they don't look us up on their deletion and crash
 	obj->onRemovedFrom( obj->getContainedBy() );
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 2;
+		g_destroyObjectSource.push_back(2);
 #endif
 	TheGameLogic->destroyObject( obj );
 }

@@ -3797,7 +3797,7 @@ StateReturnType AIMoveAndDeleteState::update()
 	{
 		Object *obj = getMachineOwner();
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 7;
+		g_destroyObjectSource.push_back(7);
 #endif
 		TheGameLogic->destroyObject(obj);
 	}

@@ -282,7 +282,7 @@ void MinefieldBehavior::detonateOnce(const Coord3D& position)
 	if (!m_regenerates && m_virtualMinesRemaining == 0)
 	{
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 19;
+		g_destroyObjectSource.push_back(19);
 #endif
 		TheGameLogic->destroyObject(getObject());
 	}
@@ -580,7 +580,7 @@ void MinefieldBehavior::onHealing( DamageInfo *damageInfo )
 void MinefieldBehavior::onDie( const DamageInfo *damageInfo )
 {
 #if EXTRA_DEBUG_HELP
-	g_destroyObjectSource = 20;
+	g_destroyObjectSource.push_back(20);
 #endif
 	TheGameLogic->destroyObject(getObject());
 }
@@ -592,7 +592,7 @@ void MinefieldBehavior::disarm()
 	if (!m_regenerates)
 	{
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 21;
+		g_destroyObjectSource.push_back(21);
 #endif
 		TheGameLogic->destroyObject(getObject());
 		return;

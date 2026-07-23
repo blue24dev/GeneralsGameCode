@@ -193,7 +193,7 @@ void InstantDeathBehavior::onDie( const DamageInfo *damageInfo )
 #endif
 
 #if EXTRA_DEBUG_HELP
-	g_destroyObjectSource = 16;
+	g_destroyObjectSource.push_back(16);
 #endif
 
 	TheGameLogic->destroyObject(getObject());

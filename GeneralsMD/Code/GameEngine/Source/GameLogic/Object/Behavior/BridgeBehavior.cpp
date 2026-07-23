@@ -280,7 +280,7 @@ BridgeBehavior::~BridgeBehavior()
 		if( tower )
 		{
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource = 9;
+			g_destroyObjectSource.push_back(9);
 #endif
 			TheGameLogic->destroyObject( tower );
 		}

@@ -231,7 +231,7 @@ void HelixContain::onDelete()
   if ( portable )
   {
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 37;
+		g_destroyObjectSource.push_back(37);
 #endif
     TheGameLogic->destroyObject( portable );
   }
@@ -257,7 +257,7 @@ void HelixContain::addToContainList( Object *obj )
     if ( portable )
     {
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource = 38;
+		g_destroyObjectSource.push_back(38);
 #endif
       TheGameLogic->destroyObject( portable );
     }
@@ -280,7 +280,7 @@ void HelixContain::addToContain( Object *obj )
     if ( portable )
     {
 #if EXTRA_DEBUG_HELP
-		  g_destroyObjectSource = 39;
+		  g_destroyObjectSource.push_back(39);
 #endif
       TheGameLogic->destroyObject( portable );
     }
