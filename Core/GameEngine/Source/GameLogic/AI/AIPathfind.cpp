@@ -58,9 +58,6 @@
 
 #include "Common/UnitTimings.h" //Contains the DO_UNIT_TIMINGS define jba.
 
-//MODDD
-#include "Common/Extra.h"
-
 #define no_INTENSE_DEBUG
 
 #define DEBUG_QPF
@@ -76,6 +73,9 @@
 #include "Common/PerfMetrics.h"
 
 //-------------------------------------------------------------------------------------------------
+
+//MODDD
+#include "Common/Extra.h"
 
 
 static inline Bool IS_IMPASSABLE(PathfindCell::CellType type) {
