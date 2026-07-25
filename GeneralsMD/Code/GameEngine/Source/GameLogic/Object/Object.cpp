@@ -1219,10 +1219,13 @@ Int Object::getTransportSlotCount() const
 	return count;
 }
 
-//MODDD - implementation moved from .cpp for easier debugging checks if needed
 void Object::friend_setContainedBy( Object *containedBy )
 {
 	m_containedBy = containedBy;
+
+#if !RETAIL_COMPATIBLE_CRC
+	m_containedByFrame = containedBy ? TheGameLogic->getFrame() : 0;
+#endif
 }
 
 const Object* Object::getEnclosingContainedBy() const
@@ -5257,8 +5260,9 @@ void Object::xfer( Xfer *xfer )
 		// No, the contain module is just going to friend_ reach in and set this for us.
 		// Containers more complicated than Open (like Tunnel) can't do that.  Our variable,
 		// our responsibility.
-#if !RETAIL_COMPATIBLE_CRC
+#if RETAIL_COMPATIBLE_CRC
 		// TheSuperHackers @tweak Contained by ID is already set with retail compatibility; don't overwrite it.
+#else
 		if( xfer->getXferMode() == XFER_SAVE )
 		{
 			if( m_containedBy != nullptr )

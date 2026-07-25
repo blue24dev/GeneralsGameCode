@@ -1241,7 +1241,7 @@ void HeightMapRenderObjClass::setTerrainDrawSize(Int width, Int height)
 	//delete m_shroud;
 	//m_shroud = nullptr;
 	initHeightData(m_map->getDrawWidth(), m_map->getDrawHeight(), m_map, nullptr, FALSE);
-	m_needFullUpdate = true;
+	scheduleFullUpdate();
 }
 
 
@@ -1308,7 +1308,7 @@ Int HeightMapRenderObjClass::initHeightData(Int x, Int y, WorldHeightMap *pMap, 
 
 	m_originX = 0;
 	m_originY = 0;
-	m_needFullUpdate = true;
+	scheduleFullUpdate();
 
 	// If the size changed, we need to allocate.
 	Bool needToAllocate = (x != m_x || y != m_y);
