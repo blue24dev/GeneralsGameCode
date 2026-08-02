@@ -181,7 +181,7 @@ enum KindOfType CPP_11(: Int)
 	// ---
 	KINDOF_FS_NAVALFACTORY,         ///< A production structure for naval units, likely placed on water or a coast (does not affect placement requirements - see next flag)
 	                                //   (also, this flag has no effect yet, just bookkeeping)
-	KINDOF_FACTORY_EXIT_IN_WATER,///< Requires the exit to lead to water, so placing this (presumably) naval-unit-producing structure is guaranteed to place naval units
+	KINDOF_FACTORY_EXIT_IN_WATER,		///< Requires the exit to lead to water, so placing this (presumably) naval-unit-producing structure is guaranteed to place naval units
 	                                //   in water. Placing the structure on a coast facing the water or in the water not existing on land should work. Whether the dozer can
 																	//   actually get there in the latter case is another question.
 																	//   Accuracy of this requirement isn't guaranteed since mods aren't expected to use this new feature too often.
