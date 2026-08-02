@@ -12,8 +12,8 @@ set(GAMEENGINE_SRC
 #    Include/Common/AudioRequest.h
 #    Include/Common/AudioSettings.h
     Include/Common/BattleHonors.h
-    Include/Common/BezFwdIterator.h
-    Include/Common/BezierSegment.h
+#    Include/Common/BezFwdIterator.h
+#    Include/Common/BezierSegment.h
     Include/Common/BitFlags.h
     Include/Common/BitFlagsIO.h
     #MODDD - new
@@ -562,8 +562,8 @@ set(GAMEENGINE_SRC
 #    Source/Common/Audio/GameSounds.cpp
     #Source/Common/Audio/simpleplayer.cpp # unused
     #Source/Common/Audio/urllaunch.cpp # unused
-    Source/Common/Bezier/BezFwdIterator.cpp
-    Source/Common/Bezier/BezierSegment.cpp
+#    Source/Common/Bezier/BezFwdIterator.cpp
+#    Source/Common/Bezier/BezierSegment.cpp
     Source/Common/BitFlags.cpp
     #MODDD - new. but why is BitFlags.cpp included here instead of in 'Core/GameEngine/CmakeLists.txt' if this file is included in the 'CMakeLists.txt' for 'Generals' and 'GeneralsMD'?
     Source/Common/BitFlagsRaw.cpp

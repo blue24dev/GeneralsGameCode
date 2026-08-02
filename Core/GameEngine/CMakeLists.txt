@@ -13,8 +13,8 @@ set(GAMEENGINE_SRC
     Include/Common/AudioRequest.h
     Include/Common/AudioSettings.h
 #    Include/Common/BattleHonors.h
-#    Include/Common/BezFwdIterator.h
-#    Include/Common/BezierSegment.h
+    Include/Common/BezFwdIterator.h
+    Include/Common/BezierSegment.h
 #    Include/Common/BitFlags.h
 #    Include/Common/BitFlagsIO.h
 #    Include/Common/BorderColors.h
@@ -569,8 +569,8 @@ set(GAMEENGINE_SRC
     Source/Common/Audio/GameSounds.cpp
     #Source/Common/Audio/simpleplayer.cpp # unused
     #Source/Common/Audio/urllaunch.cpp # unused
-#    Source/Common/Bezier/BezFwdIterator.cpp
-#    Source/Common/Bezier/BezierSegment.cpp
+    Source/Common/Bezier/BezFwdIterator.cpp
+    Source/Common/Bezier/BezierSegment.cpp
 #    Source/Common/BitFlags.cpp
 #MODDD - new. including commented out here as well in case this gets enabled for here instead of the 'CMakeLists' for 'GeneralsMD' and/or 'Generals'.
 #    Source/Common/BitFlagsRaw.cpp
