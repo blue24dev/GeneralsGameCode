@@ -63,7 +63,6 @@ private:
 	GameMessage::Type _createEnterMessage( Drawable *enter, CommandEvaluateType commandType, GameMessage::Type msgType );
 	//MODDD - new
 	// ---
-	//GameMessage::Type createHijackMessageDeep( Drawable *enter, CommandEvaluateType commandType );
 	GameMessage::Type createEnterMessage( Drawable *enter, CommandEvaluateType commandType );
 	GameMessage::Type createHijackMessage( Drawable *enter, CommandEvaluateType commandType );
 	// ---

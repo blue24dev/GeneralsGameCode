@@ -572,6 +572,8 @@ set(GAMEENGINE_SRC
 #    Source/Common/Bezier/BezFwdIterator.cpp
 #    Source/Common/Bezier/BezierSegment.cpp
 #    Source/Common/BitFlags.cpp
+#MODDD - new. including commented out here as well in case this gets enabled for here instead of the 'CMakeLists' for 'GeneralsMD' and/or 'Generals'.
+#    Source/Common/BitFlagsRaw.cpp
     Source/Common/CommandLine.cpp
     Source/Common/crc.cpp
     Source/Common/CRCDebug.cpp

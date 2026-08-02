@@ -1737,7 +1737,7 @@ GameMessage::Type CommandTranslator::handleGuiCommand( const CommandButton *comm
 #endif
 		case GUI_COMMAND_SPECIAL_POWER_FROM_SHORTCUT:
 		{
-			Object* unit = ThePlayerList->getLocalPlayer()->findMostReadyShortcutSpecialPowerOfType( command->getSpecialPowerTemplate()->getSpecialPowerType() );
+			Object* unit = ThePlayerList->getLocalPlayer()->findMostReadyShortcutSpecialPowerOfType( command->getSpecialPowerTemplate()->getSpecialPowerTypeUnique() );
 			if( unit )
 				currentlyValid = TheInGameUI->canSelectedObjectsDoSpecialPower( command, obj, pos, InGameUI::SELECTION_ANY, command->getOptions(), unit );
 			else
@@ -1761,8 +1761,18 @@ GameMessage::Type CommandTranslator::handleGuiCommand( const CommandButton *comm
 		{
 			switch( command->getCommandType() )
 			{
+				//MODDD - custom message for hijack
+				// ---
+				/*
 				case GUICOMMANDMODE_CONVERT_TO_CARBOMB:
 				case GUICOMMANDMODE_HIJACK_VEHICLE:
+				*/
+				// ---
+				case GUICOMMANDMODE_HIJACK_VEHICLE:
+					msgType = createHijackMessage( draw, type );
+					break;
+				case GUICOMMANDMODE_CONVERT_TO_CARBOMB:
+				// ---
 				case GUICOMMANDMODE_SABOTAGE_BUILDING:
 					msgType = createEnterMessage( draw, type );
 					break;
@@ -1773,7 +1783,7 @@ GameMessage::Type CommandTranslator::handleGuiCommand( const CommandButton *comm
 #endif
 				case GUI_COMMAND_SPECIAL_POWER_FROM_SHORTCUT:
 				{
-					Object* unit = ThePlayerList->getLocalPlayer()->findMostReadyShortcutSpecialPowerOfType( command->getSpecialPowerTemplate()->getSpecialPowerType() );
+					Object* unit = ThePlayerList->getLocalPlayer()->findMostReadyShortcutSpecialPowerOfType( command->getSpecialPowerTemplate()->getSpecialPowerTypeUnique() );
 					if( unit )
 						msgType = issueSpecialPowerCommand( command, type, draw, pos, unit );
 					break;
@@ -1827,7 +1837,7 @@ GameMessage::Type CommandTranslator::handleSpecialPowerConstructCommand( const C
 		{
 			case GUI_COMMAND_SPECIAL_POWER_FROM_SHORTCUT:
 			{
-				Object* unit = ThePlayerList->getLocalPlayer()->findMostReadyShortcutSpecialPowerOfType( command->getSpecialPowerTemplate()->getSpecialPowerType() );
+				Object* unit = ThePlayerList->getLocalPlayer()->findMostReadyShortcutSpecialPowerOfType( command->getSpecialPowerTemplate()->getSpecialPowerTypeUnique() );
 				if( unit )
 					msgType = issueSpecialPowerCommand( command, type, draw, pos, unit );
 				break;
@@ -2053,7 +2063,12 @@ GameMessage::Type CommandTranslator::handleHijackVehicleCommand( Drawable *draw,
 
 		// Now, this just tricks the AI  into making the hijacker run towards the target vehicle
 		// I must add a test to keep him from actually entering an enemy vehicle (contained)... Lorenzen
-		msgType = createEnterMessage( draw, type );
+		//MODDD - custom message for hijack
+		// ---
+		//msgType = createEnterMessage( draw, type );
+		// ---
+		msgType = createHijackMessage( draw, type );
+		// ---
 
 	}
 	else
