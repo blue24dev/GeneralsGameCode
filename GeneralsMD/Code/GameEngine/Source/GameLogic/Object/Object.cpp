@@ -2587,7 +2587,8 @@ void Object::attemptDamage( DamageInfo *damageInfo )
 			getControllingPlayer() &&
 			!BitIsSet(damageInfo->in.m_sourcePlayerMask, getControllingPlayer()->getPlayerMask()) &&
 			m_radarData != nullptr &&
-			isLocallyControlled() )
+			isLocallyControlled() &&
+			!isKindOf( KINDOF_NO_ATTACK_WARNING ) )
 		TheRadar->tryUnderAttackEvent( this );
 
 }
@@ -7940,7 +7941,7 @@ void Object::enterGroup( AIGroup *group )
 #if RETAIL_COMPATIBLE_AIGROUP
 	m_group = group;
 #else
-	m_group = AIGroupPtr::Create_AddRef(group);
+	m_group.Assign_Add_Ref(group);
 #endif
 }
 
