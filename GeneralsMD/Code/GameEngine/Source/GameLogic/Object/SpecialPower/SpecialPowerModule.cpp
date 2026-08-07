@@ -439,6 +439,10 @@ void SpecialPowerModule::startPowerRechargeInit(Bool fromOnSpecialPowerCreation)
 		// that for now.
 		startPowerRecharge();
 
+		//MODDD - NOTE - should this route also have the 'if (startsReady())' check?
+		// looks to me like this route shouldn't be used for non-shared powers anyway.
+		// This is a TheSuperHackers introduced change & not being here preserves the way they have it, for now.
+
 		// Dustin wants these special powers to start ready to fire,
 		// so here (and only here) we will expressly set them to ready-now.
 		if ( getSpecialPowerTemplate()->isSharedNSync())
