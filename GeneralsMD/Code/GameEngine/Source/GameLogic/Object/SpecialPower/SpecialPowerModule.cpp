@@ -64,6 +64,7 @@ SpecialPowerModuleData::SpecialPowerModuleData()
 	m_specialPowerTemplate = nullptr;
 	m_updateModuleStartsAttack = false;
 	m_startsPaused = FALSE;
+	m_startsReady = FALSE;
 	m_scriptedSpecialPowerOnly = FALSE;
 
 }
@@ -79,6 +80,7 @@ SpecialPowerModuleData::SpecialPowerModuleData()
 		{ "SpecialPowerTemplate",			INI::parseSpecialPowerTemplate, nullptr, offsetof( SpecialPowerModuleData, m_specialPowerTemplate ) },
 		{ "UpdateModuleStartsAttack", INI::parseBool,									nullptr, offsetof( SpecialPowerModuleData, m_updateModuleStartsAttack ) },
 		{ "StartsPaused",							INI::parseBool,									nullptr, offsetof( SpecialPowerModuleData, m_startsPaused ) },
+		{ "StartsReady",							INI::parseBool,									nullptr, offsetof( SpecialPowerModuleData, m_startsReady ) },
 		{ "InitiateSound",						INI::parseAudioEventRTS,				nullptr, offsetof( SpecialPowerModuleData, m_initiateSound ) },
 		{ "ScriptedSpecialPowerOnly", INI::parseBool,									nullptr, offsetof( SpecialPowerModuleData, m_scriptedSpecialPowerOnly ) },
 		{ nullptr, nullptr, nullptr, 0 }
@@ -389,6 +391,16 @@ Real SpecialPowerModule::getPercentReady() const
 	return percent;
 }
 
+Bool SpecialPowerModule::startsReady() const
+{
+#if RETAIL_COMPATIBLE_CRC
+	return false;
+#endif
+
+	const SpecialPowerModuleData* modData = getSpecialPowerModuleData();
+	return modData->m_startsReady;
+}
+
 //-------------------------------------------------------------------------------------------------
 // A special power module that is only supposed to be fired via scripts. An example of this
 // are the various cargo plane units we have. Scripters can launch specials from them after
@@ -405,7 +417,8 @@ Bool SpecialPowerModule::isScriptOnly() const
 void SpecialPowerModule::startPowerRechargeInit(Bool fromOnSpecialPowerCreation)
 {
 	// There were two ways initialization was handled as of retail, preserved here by 'fromOnSpecialPowerCreation'.
-	if (!fromOnSpecialPowerCreation) {
+	if (!fromOnSpecialPowerCreation)
+	{
 		// Non-shared powers start charging when a unit is created, or a building finishes construction
 		// ---
 		// A sharedNSync special only startPowerRecharges when first scienced or when executed,
@@ -413,8 +426,13 @@ void SpecialPowerModule::startPowerRechargeInit(Bool fromOnSpecialPowerCreation)
 		if ( getSpecialPowerTemplate()->isSharedNSync() == FALSE )
 		{
 			startPowerRecharge();
+
+			if (startsReady())
+				m_availableOnFrame = TheGameLogic->getFrame();
 		}
-	} else {
+	}
+	else
+	{
 		// Shared special powers start charging when 'OnSpecialPowerCreation' is called by an object having a
 		// 'SpecialPowerCreate' module, or spending a promotion point that ties to the special power.
 		// In retail, a non-shared special power that reached this path would still make these calls, so preserving

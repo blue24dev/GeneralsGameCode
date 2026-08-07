@@ -63,13 +63,11 @@
 #endif
 
 #ifndef PRESERVE_NO_XP_FROM_POISON_KILLS
-//MODDD - was 1, changed to 0 for more fixes
-#define PRESERVE_NO_XP_FROM_POISON_KILLS (0)
+#define PRESERVE_NO_XP_FROM_POISON_KILLS (0) // The fix for this unfavorable behavior was approved by the Game Design Committee.
 #endif
 
 #ifndef PRESERVE_OCCUPANT_DETECTION_VIA_DRAG_SELECTION
-//MODDD - was 1, changed to 0 for more fixes
-#define PRESERVE_OCCUPANT_DETECTION_VIA_DRAG_SELECTION (0)
+#define PRESERVE_OCCUPANT_DETECTION_VIA_DRAG_SELECTION (0) // The fix for this unfavorable behavior was approved by the Game Design Committee.
 #endif
 
 #ifndef PRESERVE_PERPETUAL_HORDE_BONUS
@@ -78,8 +76,7 @@
 #endif
 
 #ifndef PRESERVE_PREMATURE_BATTLE_BUS_DEATH
-//MODDD - was 1, changed to 0 for more fixes
-#define PRESERVE_PREMATURE_BATTLE_BUS_DEATH (0)
+#define PRESERVE_PREMATURE_BATTLE_BUS_DEATH (0) // The fix for this unfavorable behavior was approved by the Game Design Committee.
 #endif
 
 #ifndef PRESERVE_RADAR_WARNING_SUPPRESSION
