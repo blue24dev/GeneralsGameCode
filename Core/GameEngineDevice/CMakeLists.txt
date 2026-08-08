@@ -1,11 +1,11 @@
 set(GAMEENGINEDEVICE_SRC
     Include/MilesAudioDevice/MilesAudioManager.h
     Include/VideoDevice/Bink/BinkVideoPlayer.h
-#    Include/W3DDevice/Common/W3DConvert.h
-#    Include/W3DDevice/Common/W3DFunctionLexicon.h
-#    Include/W3DDevice/Common/W3DModuleFactory.h
+    Include/W3DDevice/Common/W3DConvert.h
+    Include/W3DDevice/Common/W3DFunctionLexicon.h
+    Include/W3DDevice/Common/W3DModuleFactory.h
     Include/W3DDevice/Common/W3DRadar.h
-#    Include/W3DDevice/Common/W3DThingFactory.h
+    Include/W3DDevice/Common/W3DThingFactory.h
     Include/W3DDevice/GameClient/BaseHeightMap.h
 #    Include/W3DDevice/GameClient/camerashakesystem.h
     Include/W3DDevice/GameClient/FlatHeightMap.h
@@ -47,10 +47,10 @@ set(GAMEENGINEDEVICE_SRC
 #    Include/W3DDevice/GameClient/W3DFileSystem.h
     Include/W3DDevice/GameClient/W3DGadget.h
 #    Include/W3DDevice/GameClient/W3DGameClient.h
-#    Include/W3DDevice/GameClient/W3DGameFont.h
-#    Include/W3DDevice/GameClient/W3DGameWindow.h
-#    Include/W3DDevice/GameClient/W3DGameWindowManager.h
-#    Include/W3DDevice/GameClient/W3DGUICallbacks.h
+    Include/W3DDevice/GameClient/W3DGameFont.h
+    Include/W3DDevice/GameClient/W3DGameWindow.h
+    Include/W3DDevice/GameClient/W3DGameWindowManager.h
+    Include/W3DDevice/GameClient/W3DGUICallbacks.h
 #    Include/W3DDevice/GameClient/W3DInGameUI.h
 #    Include/W3DDevice/GameClient/W3DMirror.h
     Include/W3DDevice/GameClient/W3DMouse.h
@@ -93,11 +93,11 @@ set(GAMEENGINEDEVICE_SRC
     Include/Win32Device/GameClient/Win32Mouse.h
     Source/MilesAudioDevice/MilesAudioManager.cpp
     Source/VideoDevice/Bink/BinkVideoPlayer.cpp
-#    Source/W3DDevice/Common/System/W3DFunctionLexicon.cpp
+    Source/W3DDevice/Common/System/W3DFunctionLexicon.cpp
     Source/W3DDevice/Common/System/W3DRadar.cpp
-#    Source/W3DDevice/Common/Thing/W3DModuleFactory.cpp
-#    Source/W3DDevice/Common/Thing/W3DThingFactory.cpp
-#    Source/W3DDevice/Common/W3DConvert.cpp
+    Source/W3DDevice/Common/Thing/W3DModuleFactory.cpp
+    Source/W3DDevice/Common/Thing/W3DThingFactory.cpp
+    Source/W3DDevice/Common/W3DConvert.cpp
     Source/W3DDevice/GameClient/BaseHeightMap.cpp
     Source/W3DDevice/GameClient/CameraShakeSystem.cpp
     Source/W3DDevice/GameClient/Drawable/Draw/W3DDebrisDraw.cpp
@@ -132,11 +132,11 @@ set(GAMEENGINEDEVICE_SRC
     Source/W3DDevice/GameClient/GUI/Gadget/W3DTextEntry.cpp
     Source/W3DDevice/GameClient/GUI/Gadget/W3DVerticalSlider.cpp
     Source/W3DDevice/GameClient/GUI/GUICallbacks/W3DControlBar.cpp
-#    Source/W3DDevice/GameClient/GUI/GUICallbacks/W3DMainMenu.cpp
-#    Source/W3DDevice/GameClient/GUI/GUICallbacks/W3DMOTD.cpp
-#    Source/W3DDevice/GameClient/GUI/W3DGameFont.cpp
-#    Source/W3DDevice/GameClient/GUI/W3DGameWindow.cpp
-#    Source/W3DDevice/GameClient/GUI/W3DGameWindowManager.cpp
+    Source/W3DDevice/GameClient/GUI/GUICallbacks/W3DMainMenu.cpp
+    Source/W3DDevice/GameClient/GUI/GUICallbacks/W3DMOTD.cpp
+    Source/W3DDevice/GameClient/GUI/W3DGameFont.cpp
+    Source/W3DDevice/GameClient/GUI/W3DGameWindow.cpp
+    Source/W3DDevice/GameClient/GUI/W3DGameWindowManager.cpp
     Source/W3DDevice/GameClient/HeightMap.cpp
 #    Source/W3DDevice/GameClient/Shadow/W3DBufferManager.cpp
 #    Source/W3DDevice/GameClient/Shadow/W3DProjectedShadow.cpp
