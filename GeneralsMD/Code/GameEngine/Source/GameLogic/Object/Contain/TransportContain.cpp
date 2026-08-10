@@ -606,6 +606,10 @@ Bool TransportContain::isSpecificRiderFreeToExit(Object* specificObject)
 		return FALSE;
 
 #if !RETAIL_COMPATIBLE_CRC
+	//MODDD - UPDATE - the original script commented out at the very bottom ("TheSuperHackers" label) has since been updated
+	// since the elaborate description below was made. The original has been left in-tact so this explanation doesn't seem
+	// completely insane. In fact, going to leave the new version enabled in case this is no longer an issue anywhere anymore.
+	// ------------
 	//MODDD - I disagree with this change, I think it should be handled differently.
 	// I think the intent is to disallow evacuating something if it's already contained by something else
 	// Ex: a humvee in a chinook shouldn't be able to evacuate infantry -> require the humvee to be outside the chinook first.
@@ -637,6 +641,7 @@ Bool TransportContain::isSpecificRiderFreeToExit(Object* specificObject)
 	// module) in case of the scenario above, though I added a sanity check to 'AIExitState::onEnter' (stop if the hacker
 	// doesn't have a 'contained-by').
 	// It would be helpful to know where the original fix made an (intentional) difference.
+	// --- TheSuperHackers - as of the time of my explanation above ---
 	/*
 	// TheSuperHackers @bugfix Stubbjax 02/03/2026 If our parent container is held, then we
 	// are not free to exit.
@@ -644,6 +649,13 @@ Bool TransportContain::isSpecificRiderFreeToExit(Object* specificObject)
 	if (specificObject->getContainedBy()->isDisabledByType(DISABLED_HELD))
 		return FALSE;
 	*/
+	// --- TheSuperHackers - current version ---
+	// TheSuperHackers @bugfix Stubbjax/bobtista 01/08/2026 If our container is itself contained,
+	// then we are not free to exit.
+	if (me->isContained())
+	{
+		return FALSE;
+	}
 #endif
 
   // I can always kick people out if I am in the air, I know what I'm doing
