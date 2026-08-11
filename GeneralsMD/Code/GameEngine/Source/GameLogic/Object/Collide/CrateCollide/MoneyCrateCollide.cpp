@@ -63,6 +63,13 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 	// Otherwise, would need to make a specific field/KindOf-value for Objects in the INI to tell the difference.
 	if (!getMoneyCrateCollideModuleData()->m_upgradeBoost.empty())
 	{
+		// TODO - is there a way to add this adjustments to crates known only to be spawned by a player-built structure at startup?
+		// if the same crate can be spawned by multiple sources (ex: gifting to other players, on-demand in a campaign/script), that
+		// won't be feasible.
+#if RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE
+		money /= 2;
+#endif
+
 		APPLY_MONEY_CHEAT(other->getControllingPlayer(), money)
 	}
 

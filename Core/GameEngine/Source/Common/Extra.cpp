@@ -14,6 +14,7 @@
 #include "GameLogic/Object.h"
 #include "GameLogic/GameLogic.h"
 #include "GameLogic/Module/AutoDepositUpdate.h"
+#include "GameLogic/Module/HackInternetAIUpdate.h"
 #include "GameLogic/Module/BodyModule.h"
 #include "GameLogic/Module/CreateModule.h"
 #include "GameLogic/Module/SpecialPowerModule.h"
@@ -333,6 +334,10 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 #if RTS_ZEROHOUR
 	static NameKeyType UndeadBodyNameKey = NAMEKEY("UndeadBody");
 #endif
+#if RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE
+	static NameKeyType AutoDepositUpdateNameKey = NAMEKEY("AutoDepositUpdate");
+	static NameKeyType HackInternetAIUpdateNameKey = NAMEKEY("HackInternetAIUpdate");
+#endif
 #if CUSTOM_ATTRIBUTE_CHANGES
 	static NameKeyType RebuildHoleExposeDieNameKey = NAMEKEY("RebuildHoleExposeDie");
 	static NameKeyType MaxHealthUpgradeNameKey = NAMEKEY("MaxHealthUpgrade");
@@ -478,6 +483,19 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 				}
 			}
 #endif
+		}
+#endif
+#if RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE
+		else if( modNameKey == AutoDepositUpdateNameKey )
+		{
+			AutoDepositUpdateModuleData* _data = (AutoDepositUpdateModuleData*)data;
+			_data->m_depositFrame *= 2;
+		}
+		else if( modNameKey == HackInternetAIUpdateNameKey )
+		{
+			HackInternetAIUpdateModuleData* _data = (HackInternetAIUpdateModuleData*)data;
+			_data->m_cashUpdateDelay *= 2;
+			_data->m_cashUpdateDelayFast *= 2;
 		}
 #endif
 #if CUSTOM_ATTRIBUTE_CHANGES
