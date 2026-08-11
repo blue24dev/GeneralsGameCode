@@ -276,6 +276,11 @@
 // This doesn't affect start moeny set by the skirmish menu.
 //#define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS 1
 
+// Makes player-built renewable sources of income (hackers, black markets, supply drop zones) half as effective.
+// This coincides with other possible edits to slow down the pace of the entire game - easy to end up with far more money than you
+// could possibly spend even with an absurd number of factories
+//#define RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE 1
+
 // Disable the fog-of-war mechanic entirely. Debugger's dream. Or to watch the AI duke it out without
 // having to be a replay.
 // Hey, you know AI players were already playing without it anyway.
@@ -498,6 +503,7 @@
 
 #define FORCE_HUMAN_PLAYER_START_MONEY 0
 #define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS 1
+#define RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE 1
 
 #define REMOVE_FOG_OF_WAR 0
 #define REMOVE_FOG_OF_WAR_ALT 0
