@@ -768,17 +768,30 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 	//MODDD
 	if (broadCheck)
 	{
-		first = WEAPONSLOT_COUNT - 1;
-		last = PRIMARY_WEAPON;
-		if( specificSlot != (WeaponSlotType)-1 )
+		// note that 'checkCmdSource' is always on for this route.
+		// 'weaponToSkipCmdSourceCheck' can still specify a weapon to skip the 'commandSource' check for.
+		if (m_curWeaponLockedStatus == LOCKED_PERMANENTLY)
 		{
-			// exclude checks for the given specific slot
-			weaponToSkipCmdSourceCheck = specificSlot;
-		}
-		else if (isCurWeaponLocked())
-		{
-			// if the weapon is locked at all, skip the CMD check to work as usual for locked weapons
+			// if this weapon is permanently locked, it will be the only thing checked even for a broad check
+			first = m_curWeapon;
+			last = m_curWeapon;
 			weaponToSkipCmdSourceCheck = m_curWeapon;
+		}
+		else
+		{
+			// otherwise, a typical broad 'do I have some weapon that would work' check
+			first = WEAPONSLOT_COUNT - 1;
+			last = PRIMARY_WEAPON;
+			if( specificSlot != (WeaponSlotType)-1 )
+			{
+				// exclude checks for the given specific slot
+				weaponToSkipCmdSourceCheck = specificSlot;
+			}
+			else if (isCurWeaponLocked())
+			{
+				// if the weapon is locked at all, skip the CMD check to work as usual for locked weapons
+				weaponToSkipCmdSourceCheck = m_curWeapon;
+			}
 		}
 	}
 	else
@@ -801,6 +814,7 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 		}
 		else
 		{
+			// inspecific and not locked - check everything, and the 'commandSource' check runs for each
 			first = WEAPONSLOT_COUNT - 1;
 			last = PRIMARY_WEAPON;
 		}

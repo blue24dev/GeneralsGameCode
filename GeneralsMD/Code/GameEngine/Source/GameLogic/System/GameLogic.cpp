@@ -1564,14 +1564,7 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 
 	checkForDuplicateColors( TheGameInfo );
 
-	Bool isSkirmishOrSkirmishReplay;
-	//MODDD - new. Variable added in place of 'isMultiplayerSession && isSkirmishOrSkirmishReplay' checks
-	// to easily be decided by macro setting.
-	Bool isStandardSlotGameOrReplay;
-
-#if FORCE_GAME_CONTEXT == FGC_NONE
-	// retail
-	isSkirmishOrSkirmishReplay = FALSE;
+	Bool isSkirmishOrSkirmishReplay = FALSE;
 	if (TheGameInfo)
 	{
 		for (Int i=0; i<MAX_SLOTS; ++i)
@@ -1593,37 +1586,27 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 					slot->saveOriginalSetup();
 				}
 			}
+#if FORCE_GAME_CONTEXT == FGC_NONE
 			if (slot->isAI())
 			{
 				isSkirmishOrSkirmishReplay = TRUE;
 			}
+#endif
+		}
+	} else {
+		if (m_gameMode == GAME_SINGLE_PLAYER)	{
+			delete TheSkirmishGameInfo;
+			TheSkirmishGameInfo = nullptr;
 		}
 	}
+	
+	//MODDD - new. Variable added in place of 'isMultiplayerSession && isSkirmishOrSkirmishReplay' checks
+	// to easily be decided by macro setting.
+	Bool isStandardSlotGameOrReplay;
+#if FORCE_GAME_CONTEXT == FGC_NONE
 	isStandardSlotGameOrReplay = (TheGameEngine->isMultiplayerSession() || isSkirmishOrSkirmishReplay);
 #else
-	//MODDD - UPDATE - the explanation below is for before 'saveOffOriginalInfo' was removed/renamed/split into
-	// different functions / handled however differently.
-	// ---
-	//MODDD - simpler version of the above loop just to call 'saveOffOriginalInfo', mainly to get some small
-	// details correct for the load screen in some circumstances.
-	// Note that for FGC_CAMPAIGN, slot info (anything specified in the skirmish/network menu) is ignored as
-	// everything about who a connected user plays as is decided by the map.
-	if (TheGameInfo)
-	{
-		if (!loadingSaveGame)
-		{
-			for (Int i=0; i<MAX_SLOTS; ++i)
-			{
-				GameSlot *slot = TheGameInfo->getSlot(i);
-				// TODO - is this even needed? verify
-				if (slot->hasSavedOriginalSetup())
-				{
-					slot->saveOriginalSetup();
-				}
-			}
-		}
-	}
-	isSkirmishOrSkirmishReplay = FALSE;
+	// hardcoded instead
 	isStandardSlotGameOrReplay = FALSE;
 #endif
 
@@ -1635,15 +1618,6 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 #else
 	doAutomaticPostGamePlayerSetup = (TheGameInfo != nullptr);
 #endif
-
-	//MODDD - split from above as an 'else' for more control over above
-	if (TheGameInfo == nullptr)
-	{
-		if (m_gameMode == GAME_SINGLE_PLAYER)	{
-			delete TheSkirmishGameInfo;
-			TheSkirmishGameInfo = nullptr;
-		}
-	}
 
 	populateRandomSideAndColor( TheGameInfo );
 	populateRandomStartPosition( TheGameInfo );
