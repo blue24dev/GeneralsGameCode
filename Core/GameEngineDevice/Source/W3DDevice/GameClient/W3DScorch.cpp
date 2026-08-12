@@ -44,6 +44,11 @@ void W3DScorch::allocateBuffers()
 	m_indexScorch = NEW_REF(DX8IndexBufferClass, (MAX_SCORCH_INDEX));
 	m_scorchTexture = NEW ScorchTextureClass;
 	invalidateBuffers();
+
+	//MODDD - removing this. Looks like a leftover test to put a few scorches an arbitrary distance from the origin
+	// (bottom-left corner of the map).
+	// Showing up on the first map played in quickstart (no shell map) is jarring without being aware of this.
+	/*
 #ifdef RTS_DEBUG
 	Vector3 loc(4 * MAP_XY_FACTOR, 4 * MAP_XY_FACTOR, 0);
 	addScorch(loc, 1 * MAP_XY_FACTOR, SCORCH_1);
@@ -51,6 +56,7 @@ void W3DScorch::allocateBuffers()
 	loc.X += 5 * MAP_XY_FACTOR;
 	addScorch(loc, 3 * MAP_XY_FACTOR, SCORCH_1);
 #endif
+	*/
 }
 
 void W3DScorch::freeBuffers()
