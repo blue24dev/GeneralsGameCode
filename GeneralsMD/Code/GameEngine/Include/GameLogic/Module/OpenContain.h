@@ -233,6 +233,9 @@ public:
 
   virtual void setEvacDisposition( EvacDisposition disp ) override {};
 
+	//MODDD - new, for moved override
+	virtual ContainModuleInterface *getRedirectedContain() const override { return nullptr; }
+
 	//MODDD - new
 	virtual Team* getGarrisonTeamWhenEmpty() const override { return nullptr; }
 	virtual void setGarrisonTeamWhenEmpty( Team* team ) override {}

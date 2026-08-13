@@ -516,6 +516,17 @@ void SpecialPowerModule::startPowerRecharge()
 		m_availableOnFrame = TheGameLogic->getFrame() + reloadTime;
 		// ---------
 	}
+
+	//MODDD - BUGFIX.
+	// Reset 'pausedOnFrame' in case of sabotage while it was set for any other reason.
+	// This stops the countdown timer of sabotaged superweapons & likely support powers (if pausing is possible there?)
+	// from being set to beyond their original recharge time if sabotaged during low power or any other reason for being
+	// paused. I doubt there are any side effects to this but try with this disabled if that is suspected.
+	// I could see 'setReadyFrame' being called instead of setting 'm_availableOnFrame' directly too, in case of external
+	// changes doing that some day.
+	// Also, not sure if this should only be done for object-local powers or shared ('isSharedNSync') ones too.
+	// Pause logic doesn't seem to check for which type, so assuming doing this for everything is ok.
+	m_pausedOnFrame = TheGameLogic->getFrame();
 }
 
 //-------------------------------------------------------------------------------------------------
