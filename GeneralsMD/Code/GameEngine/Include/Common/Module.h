@@ -258,9 +258,13 @@ public:
 	virtual void onCapture( Player *oldOwner, Player *newOwner ) { }
 	virtual void onDisabledEdge( Bool nowDisabled ) { }
 
+	//MODDD - moved from below, public
+	Object *getObject() { return m_object; }
+
 protected:
 
-	Object *getObject() { return m_object; }
+	//MODDD - moving to be public instead for rare cases, though even external use of the getter should be avoided in general
+	//Object *getObject() { return m_object; }
 	const Object *getObject() const { return m_object; }
 
 	virtual void crc( Xfer *xfer ) override;
