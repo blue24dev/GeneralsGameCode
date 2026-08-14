@@ -511,11 +511,16 @@ void pickAndPlayUnitVoiceResponse( const DrawableList *list, GameMessage::Type m
 				skip = true;
 				break;
 			case GameMessage::MSG_ENTER:
+				//MODDD - moving this check to after the relationship check so that a command to sabotage an enemy barracks
+				// doesn't play a less deliberate quote (not going to an enemy barracks to heal).
+				// Could argue a unqiue message for sabotage/infiltration makes sense like the since-added 'MSG_HIJACK'.
+				/*
 				if( target && target->isKindOf( KINDOF_HEAL_PAD ) )
 				{
 					soundToPlayPtr = templ->getPerUnitSound( "VoiceGetHealed" );
 				}
-				else if( target && target->isKindOf( KINDOF_STRUCTURE ) )
+				else*/
+				if( target && target->isKindOf( KINDOF_STRUCTURE ) )
 				{
 					if( obj->getRelationship( target ) == ENEMIES )
 					{
@@ -524,7 +529,17 @@ void pickAndPlayUnitVoiceResponse( const DrawableList *list, GameMessage::Type m
 					}
 					else
 					{
-						soundToPlayPtr = templ->getPerUnitSound( "VoiceGarrison" );
+						// not enemies
+						//MODDD - check moved to here (1 of 2 places)
+						if( target && target->isKindOf( KINDOF_HEAL_PAD ) )
+						{
+							soundToPlayPtr = templ->getPerUnitSound( "VoiceGetHealed" );
+						}
+						else
+						{
+							//MODDD - original line here
+							soundToPlayPtr = templ->getPerUnitSound( "VoiceGarrison" );
+						}
 					}
 				}
 				// order matters: we want to know if I consider it to be an ally, not vice versa
@@ -550,7 +565,17 @@ void pickAndPlayUnitVoiceResponse( const DrawableList *list, GameMessage::Type m
 					}
 					else
 					{
-						soundToPlayPtr = templ->getPerUnitSound( "VoiceEnter" );
+						// not enemies
+						//MODDD - check moved to here (1 of 2 places)
+						if( target && target->isKindOf( KINDOF_HEAL_PAD ) )
+						{
+							soundToPlayPtr = templ->getPerUnitSound( "VoiceGetHealed" );
+						}
+						else
+						{
+							//MODDD - original line here
+							soundToPlayPtr = templ->getPerUnitSound( "VoiceEnter" );
+						}
 					}
 				}
 				// ---

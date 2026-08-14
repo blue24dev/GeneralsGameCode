@@ -71,6 +71,9 @@
 #include "GameLogic/Weapon.h"
 #include "Common/Radar.h"									// For TheRadar
 
+//MODDD
+#include "GameLogic/Module/OpenContain.h"
+
 #define SLEEPY_AI
 
 
@@ -3966,6 +3969,53 @@ void AIUpdateInterface::privateCombatDrop( Object *target, const Coord3D& pos, C
 	}
 }
 
+//MODDD - helper for below
+// Includes an extra check for the object to exit's contain module having a redirect object.
+// Ex: 'objectToExit' is an overlord with a battlebunker -> overlord's contain module refers to there.
+// '_expected' is what's logically expected to contain this object (the overlord), '_actual' is what actually(physically)
+// contains it (the bunker add-on, a separate object).
+#if !RETAIL_COMPATIBLE_CRC
+Bool isExitAllowedHelper(Object* objectContainedBy_expected, Object* objectContainedBy_actual)
+{
+	// first check - preserves the intent from the original TheSuperHackers addition
+	if (objectContainedBy_expected == objectContainedBy_actual)
+	{
+		return TRUE;
+	}
+
+	//MODDD - NOTE - rest added by me (equivalent to the original would be to 'return FALSE' at this point)
+	ContainModuleInterface* contain = objectContainedBy_expected->getContain();
+	if (contain != nullptr)
+	{
+		/*
+		Object* redirectedContainObject = contain->getRedirectedContainObject();
+		if (redirectedContainObject != nullptr && redirectedContainObject == objectContainedBy_actual)
+		{
+			return TRUE;
+		}
+		*/
+		// alternate approach
+		ContainModuleInterface* redirectedContain = contain->getRedirectedContain();
+		if (redirectedContain != nullptr)
+		{
+			OpenContain* redirectedOpenContain = redirectedContain->asOpenContain();
+			if (redirectedOpenContain != nullptr)
+			{
+				Object* redirectedContainObject = redirectedOpenContain->getObject();
+				if (redirectedContainObject != nullptr && redirectedContainObject == objectContainedBy_actual)
+				{
+					// allow as well then
+					return TRUE;
+				}
+			}
+		}
+	}
+
+	// somewhere the fallback above didn't work - deny
+	return FALSE;
+}
+#endif
+
 //----------------------------------------------------------------------------------------
 /**
  * Get out of whatever it is inside of
@@ -3987,7 +4037,9 @@ void AIUpdateInterface::privateExit( Object *objectToExit, CommandSourceType cmd
 #if !RETAIL_COMPATIBLE_CRC
 		// @todo Remove function parameter 'objectToExit' because it's become obsolete.
 
-		if (us->getContainedBy() != objectToExit)
+		//MODDD - replaced, see helper further above
+		//if (us->getContainedBy() != objectToExit)
+		if (!isExitAllowedHelper(objectToExit, us->getContainedBy()))
 			return;
 #endif
 	}
@@ -4025,8 +4077,10 @@ void AIUpdateInterface::privateExitInstantly( Object *objectToExit, CommandSourc
 		// because an object should not attempt to exit something it's not contained by.
 #if !RETAIL_COMPATIBLE_CRC
 		// @todo Remove function parameter 'objectToExit' because it's become obsolete.
-
-		if (us->getContainedBy() != objectToExit)
+		
+		//MODDD - replaced, see helper further above
+		//if (us->getContainedBy() != objectToExit)
+		if (!isExitAllowedHelper(objectToExit, us->getContainedBy()))
 			return;
 #endif
 	}

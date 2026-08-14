@@ -609,6 +609,7 @@ Bool TransportContain::isSpecificRiderFreeToExit(Object* specificObject)
 	//MODDD - UPDATE - the original script commented out at the very bottom ("TheSuperHackers" label) has since been updated
 	// since the elaborate description below was made. The original has been left in-tact so this explanation doesn't seem
 	// completely insane. In fact, going to leave the new version enabled in case this is no longer an issue anywhere anymore.
+	// Also, a point at an earlier stage with another TheSuperHackers change has needed another fix - see AIUpdate.cpp, 'isExitAllowedHelper'.
 	// ------------
 	//MODDD - I disagree with this change, I think it should be handled differently.
 	// I think the intent is to disallow evacuating something if it's already contained by something else

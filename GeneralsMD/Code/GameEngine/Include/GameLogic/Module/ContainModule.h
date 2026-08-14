@@ -207,6 +207,9 @@ public:
 		return true;
 	}
 
+	//MODDD - moved to here from OverlordContain (available in a broader context, even if dummied out where not implemented)
+	virtual ContainModuleInterface *getRedirectedContain() const = 0;
+
 	//MODDD - new. To easily tell if something is a GarrisonContain and has a team that the object will be reverted
 	// to when empty.
 	virtual Team* getGarrisonTeamWhenEmpty() const = 0;
