@@ -136,6 +136,20 @@ void HackInternetAIUpdate::aiDoCommand(const AICommandParms* parms)
 	}
 #endif
 
+	//MODDD - bugfix - 'Contra' game mod.
+	// For hackers suddenly dying if at the end of the unpacking animation if blitz is used on them while hacking (money).
+	// Could argue this could be a finite list of reasons to bother unpacking (below) instead, unless that would be too large.
+	// This happens because hackers use attack-cycle logic (RiderChangeContain) to contain a different dummy rider per kind
+	// of variant of the bliz support power (temporarily different locomotor for the speed boost).
+	// An infantry unit "evacuating" evacuates its rider (strange as that sounds), it doesn't evacuate this unit from a container,
+	// so it's fine to do this in the middle of hacking - delaying the evacate to after the anim makes the attack bike run scuttle logic
+	// for having a moment where it has no 'rider'.
+	if (parms->m_cmd == AICMD_EVACUATE || parms->m_cmd == AICMD_EVACUATE_INSTANTLY)
+	{
+		AIUpdateInterface::aiDoCommand(parms);
+		return;
+	}
+
 	//If our hacker is currently packing up his gear, we need to prevent him
 	//from moving until completed. In order to accomplish this, we'll detect,
 	//then

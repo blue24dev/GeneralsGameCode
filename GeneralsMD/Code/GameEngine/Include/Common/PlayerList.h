@@ -48,6 +48,7 @@
 #include "Common/GameCommon.h"
 #include "Common/NameKeyGenerator.h"
 #include "Common/Snapshot.h"
+#include "GameNetwork/NetworkDefs.h"
 
 class DataChunkInput;
 struct DataChunkInfo;
@@ -173,6 +174,7 @@ public:
 	PlayerMaskType getPlayersWithRelationship( Int srcPlayerIndex, UnsignedInt allowedRelationships );
 
 	Int getSlotIndex(Int playerIndex) const;
+	Player *getPlayerFromSlotIndex(Int slotIndex) const;
 
 protected:
 
@@ -180,6 +182,8 @@ protected:
 	virtual void crc( Xfer *xfer ) override;
 	virtual void xfer( Xfer *xfer ) override;
 	virtual void loadPostProcess() override;
+
+	Int getPlayerIndexFromSlotIndex(Int slotIndex) const;
 
 private:
 	void assignSlotIndices(const GameInfo& gameInfo);
@@ -189,6 +193,7 @@ private:
 	Int						m_playerCount;
 	Player				*m_players[MAX_PLAYER_COUNT];
 	Int						m_slotIndices[MAX_PLAYER_COUNT];
+	Int						m_slotToPlayerIndices[MAX_SLOTS];
 
 	//MODDD
 	Player* m_neutralPlayer;
@@ -201,10 +206,12 @@ private:
 // May as well have hard links to any players in case these have special signifiance elsewhere than having
 // to do "player#" string lookups so often (not purposefully replacing all of them for now, though).
 // (public for now for laziness)
+//MODDD - UPDATE - since this, 'getPlayerFromSlotIndex' has been added by TheSuperHackers - phasing
+// my way out ( keeping the 'slotPlayerRefsSoftCount' for now)
 public:
 	Int						m_slotPlayerRefsSoftCount;
 	// capacity comes from MAX_SLOTS
-	Player				*m_slotPlayerRefs[8];
+	//Player				*m_slotPlayerRefs[8];
 
 };
 

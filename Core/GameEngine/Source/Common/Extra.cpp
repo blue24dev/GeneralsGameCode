@@ -4,6 +4,7 @@
 
 #include "Common/Extra.h"
 #include "Common/Player.h"
+#include "Common/PlayerList.h"
 #include "Common/KindOf.h"
 #include "Common/ThingFactory.h"
 #include "Common/ThingTemplate.h"
@@ -490,13 +491,24 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		else if( modNameKey == AutoDepositUpdateNameKey )
 		{
 			AutoDepositUpdateModuleData* _data = (AutoDepositUpdateModuleData*)data;
-			_data->m_depositFrame *= 2;
+			// if the delay is less than 5 seconds, go ahead and double it
+			if (_data->m_depositFrame / LOGICFRAMES_PER_SECOND < 5)
+			{
+				_data->m_depositFrame *= 2;
+			}
+			else
+			{
+				// otherwise, leave the rate unaffected but half the amount instead
+				_data->m_depositAmount /= 2;
+			}
 		}
 		else if( modNameKey == HackInternetAIUpdateNameKey )
 		{
 			HackInternetAIUpdateModuleData* _data = (HackInternetAIUpdateModuleData*)data;
 			_data->m_cashUpdateDelay *= 2;
 			_data->m_cashUpdateDelayFast *= 2;
+			// increase the XP per hack to rank up in the same amount of time
+			_data->m_xpPerCashUpdate *= 2;
 		}
 #endif
 #if CUSTOM_ATTRIBUTE_CHANGES
@@ -942,7 +954,7 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 	#endif
 
 	#if NOOB_MODE
-	if (player->getPlayerType() == PLAYER_HUMAN && player->slotIndex == 1)
+	if (player->getPlayerType() == PLAYER_HUMAN && ThePlayerList->getSlotIndex(player->getPlayerIndex()) == 1)
 	{
 		scalar *= (Real)NOOB_INCOME_MONEY_SCALAR;
 		return scalar;
@@ -1040,7 +1052,7 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 	#endif
 
 	#if NOOB_MODE
-	if (player->getPlayerType() == PLAYER_HUMAN && player->slotIndex == 1)
+	if (player->getPlayerType() == PLAYER_HUMAN && ThePlayerList->getSlotIndex(player->getPlayerIndex()) == 1)
 	{
 		_expRateModifier *= (Real)NOOB_PLAYER_PROMOTION_EXPERIENCE_RATE_SCALAR;
 		return _expRateModifier;

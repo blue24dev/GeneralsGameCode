@@ -6781,13 +6781,14 @@ void ScriptActions::doAffectSkillPointsModifier(const AsciiString& playerName, R
 	//MODDD - if this is generals challenge co-op and this is a promotion experience rate change for the 1st
 	// slot player, apply it to all other slot players. It's fine if this is overridden by other scripts
 	// using this same method, some may already set the experience rate for players other than the 1st.
+	
 #if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
-	if (playerDst->getPlayerType() == PLAYER_HUMAN && playerDst->slotIndex == 0)
+	if (ThePlayerList->getSlotIndex(playerDst->getPlayerIndex()) == 0 && playerDst->getPlayerType() == PLAYER_HUMAN)
 	{
 		// skip player #0 since that experience rate has already been set and is the basis for everyone else
 		for (int i=1; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 		{
-			Player* player = ThePlayerList->m_slotPlayerRefs[i];
+			Player* player = ThePlayerList->getPlayerFromSlotIndex(i);
 			if (TheGameInfo != nullptr)
 			{
 				GameSlot *slot = TheGameInfo->getSlot(i);

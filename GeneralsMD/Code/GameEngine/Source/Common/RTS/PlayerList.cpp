@@ -297,13 +297,14 @@ void PlayerList::populateSlotPlayerRefs()
 	{
 		// Shell map: find the first human-marked player, add to the list of slot player refs. That's it.
 		int i;
-		for (i = 0; i < this->getPlayerCount(); i++)
+		for (i = 0; i < this->getPlayerCount(); ++i)
 		{
 			Player* playerRef = getNthPlayer(i);
 			if (playerRef->getPlayerType() == PLAYER_HUMAN)
 			{
-				playerRef->slotIndex = 0;
-				m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
+				//playerRef->slotIndex = 0;
+				//m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
+				setSlotIndex(playerRef->getPlayerIndex(), 0);
 				++m_slotPlayerRefsSoftCount;
 				break;
 			}
@@ -341,55 +342,45 @@ void PlayerList::populateSlotPlayerRefs()
 	}
 #endif
 
+	AsciiString targetPlayerName;
+	Player* playerRef;
+	int standardSlotPlayerSearch_firstSlotIndex;
+
 	if (isCampaignMap)
 	{
 		// Campaign map - special handling to find the first player, the rest are expected to be named "player#" if
 		// provided by the map (named that way) for co-op support
-		AsciiString targetPlayerName;
-		Player* playerRef;
 
 		// This can't possibly be null or else a similar earlier check (GameLogic.cpp: getMultiplayerLocalSide)
 		// would have already crashed.
 		playerRef = findFirstSlotPlayer();
-		playerRef->slotIndex = 0;
-		m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
+		//playerRef->slotIndex = 0;
+		//m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
+		setSlotIndex(playerRef->getPlayerIndex(), 0);
 		++m_slotPlayerRefsSoftCount;
 		
 		// For the remaining possible users, search for the expected name: "player<1-7>".
-		int i;
-		for (i = 1; i < 8; i++)
-		{
-			targetPlayerName.format("player%d", i);
-			playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
-			if (playerRef != nullptr)
-			{
-				playerRef->slotIndex = i;
-				// Add to the list and keep searching
-				m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
-				++m_slotPlayerRefsSoftCount;
-			}
-			else
-			{
-				// Not found? Stop searching
-				break;
-			}
-		}
+		standardSlotPlayerSearch_firstSlotIndex = 1;
 	}
 	else
 	{
 		// GC or Skirmish map - simple: "player#" for all players.
-		AsciiString targetPlayerName;
-		Player* playerRef;
+		standardSlotPlayerSearch_firstSlotIndex = 0;
+	}
+
+	// for the remaining slots to figure out (in a new scope for old VC safety, may be unnecessary)
+	{
 		int i;
-		for (i = 0; i < 8; i++)
+		for (i = standardSlotPlayerSearch_firstSlotIndex; i < MAX_SLOTS; ++i)
 		{
 			targetPlayerName.format("player%d", i);
 			playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
 			if (playerRef != nullptr)
 			{
-				playerRef->slotIndex = i;
-				// Add to the list and keep searching
-				m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
+				//playerRef->slotIndex = i;
+				//// Add to the list and keep searching
+				//m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
+				setSlotIndex(playerRef->getPlayerIndex(), i);
 				++m_slotPlayerRefsSoftCount;
 			}
 			else
@@ -410,9 +401,10 @@ void PlayerList::postPlayersInit()
 		Player* player = ThePlayerList->getNthPlayer(i);
 
 		// If this is a slot player and there is game info to check, see if this slot is unoccupied (skip if so)
-		if (player->slotIndex != -1 && TheGameInfo)
+		int slotIndex = getSlotIndex(player->getPlayerIndex());
+		if (TheGameInfo && slotIndex != -1)
 		{
-			GameSlot *slot = TheGameInfo->getSlot(player->slotIndex);
+			GameSlot *slot = TheGameInfo->getSlot(slotIndex);
 			if (!slot->isOccupied())
 			{
 				continue;
@@ -426,7 +418,7 @@ void PlayerList::postPlayersInit()
 		// worth it to decide what-player-belongs-to-what-slot so far in advance for only this cheap hack.
 		// So, decide who gets the n00b bonus here instead.
 #if NOOB_MODE
-		if (player->getPlayerType() == PLAYER_HUMAN && player->slotIndex == 1)
+		if (slotIndex == 1 && player->getPlayerType() == PLAYER_HUMAN)
 		{
 			// get the current amount of money, remove it from the player, add it back with a scalar applied
 			Money* moneyRef = player->getMoney();
@@ -507,7 +499,8 @@ void PlayerList::newGame()
 		/*
 		if (d->getBool(TheKey_playerIsHuman))
 		{
-			m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = p;
+			//m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = p;
+			setSlotIndex(p->getPlayerIndex(), 0);
 			++m_slotPlayerRefsSoftCount;
 		}
 		*/
@@ -524,11 +517,6 @@ void PlayerList::newGame()
 	m_neutralPlayer = findNeutralPlayer();
 	m_civilianPlayer = findCivilianPlayer();
 	
-	populateSlotPlayerRefs();
-
-	//MODDD
-	postPlayersInit();
-
 	//MODDD
 	//if (!setLocal)
 	if (!isLocalPlayerSet())
@@ -595,10 +583,21 @@ void PlayerList::newGame()
 		p->setDefaultTeam();
 	}
 
+	//MODDD - I'm going to replace this completey with the 'populateSlotPlayerRefs' I've already created before the change,
+	// but changing assignments to my 'm_slotPlayerRefs' to use TheSuperHackers addition 'm_slotToPlayerIndices' instead.
+	// Also, this was below the first loop through 'getNumSides()' at the start of this method (right below where
+	// 'm_civilianPlayer = findCivilianPlayer();' is), but here should be fine too.
+	/*
 	if (TheGameInfo)
 	{
 		assignSlotIndices(*TheGameInfo);
 	}
+	*/
+	// ---
+	populateSlotPlayerRefs();
+	postPlayersInit();
+	// ---
+
 }
 
 //-----------------------------------------------------------------------------
@@ -623,6 +622,7 @@ void PlayerList::init()
 		m_players[i]->init(nullptr);
 
 	std::fill(m_slotIndices, m_slotIndices + ARRAY_SIZE(m_slotIndices), -1);
+	std::fill(m_slotToPlayerIndices, m_slotToPlayerIndices + ARRAY_SIZE(m_slotToPlayerIndices), -1);
 
 	// call setLocalPlayer so that becomingLocalPlayer() gets called appropriately
 	//MODDD - don't think this is needed, replacing with a null assignment
@@ -888,7 +888,18 @@ void PlayerList::setSlotIndex(Int playerIndex, Int slotIndex)
 {
 	if (playerIndex >= 0 && playerIndex < ARRAY_SIZE(m_slotIndices))
 	{
+		const Int oldSlotIndex = m_slotIndices[playerIndex];
+		if (oldSlotIndex >= 0 && oldSlotIndex < ARRAY_SIZE(m_slotToPlayerIndices))
+		{
+			m_slotToPlayerIndices[oldSlotIndex] = -1;
+		}
+
 		m_slotIndices[playerIndex] = slotIndex;
+
+		if (slotIndex >= 0 && slotIndex < ARRAY_SIZE(m_slotToPlayerIndices))
+		{
+			m_slotToPlayerIndices[slotIndex] = playerIndex;
+		}
 	}
 }
 
@@ -901,6 +912,29 @@ Int PlayerList::getSlotIndex(Int playerIndex) const
 	}
 
 	return -1;
+}
+
+//-----------------------------------------------------------------------------
+Int PlayerList::getPlayerIndexFromSlotIndex(Int slotIndex) const
+{
+	if (slotIndex >= 0 && slotIndex < ARRAY_SIZE(m_slotToPlayerIndices))
+	{
+		return m_slotToPlayerIndices[slotIndex];
+	}
+
+	return -1;
+}
+
+//-----------------------------------------------------------------------------
+Player *PlayerList::getPlayerFromSlotIndex(Int slotIndex) const
+{
+	const Int playerIndex = getPlayerIndexFromSlotIndex(slotIndex);
+	if (playerIndex >= 0 && playerIndex < m_playerCount)
+	{
+		return m_players[playerIndex];
+	}
+
+	return nullptr;
 }
 
 //-----------------------------------------------------------------------------
