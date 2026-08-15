@@ -163,7 +163,7 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 	// so it's gracefully left out of this run-through.
 	for (i=0; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 	{
-		Player* player = ThePlayerList->m_slotPlayerRefs[i];
+		Player* player = ThePlayerList->getPlayerFromSlotIndex(i);
 
 		if (player == currentPlayer) {
 			// Don't pick yourself to be the enemy
@@ -256,7 +256,7 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 		{
 			Player* player = ThePlayerList->getNthPlayer(i);
 			if (player == currentPlayer) continue; // again, not enemies with 'me' ('currentPlayer' may not be a slot player themselves)
-			if (player->slotIndex != -1) continue; // if this player is already associated with a slot, already handled above - don't do it again
+			if (ThePlayerList->getSlotIndex(player->getPlayerIndex()) != -1) continue; // if this player is already associated with a slot, already handled above - don't do it again
 			if (!player->isPlayerActive()) continue;
 			if (currentPlayer->getRelationship( player->getDefaultTeam() ) != ENEMIES) continue;
 			if (player->getPlayerType() != PLAYER_COMPUTER) continue; // must be a computer player (extra human-marked players are mistakes or meant to be AI-dead I guess?)
@@ -292,7 +292,7 @@ Player* getFirstSlotPlayer()
 	int i;
 	for (i=0; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 	{
-		Player* player = ThePlayerList->m_slotPlayerRefs[i];
+		Player* player = ThePlayerList->getPlayerFromSlotIndex(i);
 		if (!player->isPlayerActive())
 		{
 			continue;

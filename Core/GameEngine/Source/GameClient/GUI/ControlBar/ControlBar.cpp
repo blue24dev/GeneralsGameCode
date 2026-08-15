@@ -2250,6 +2250,22 @@ void ControlBar::switchToContext( ControlBarContext context, Drawable *draw )
 		TheWindowManager->winSetFocus( nullptr );
 	}
 
+	//MODDD - bugfix - reset all button overlays on changing contexts, ex: selecting a different object.
+	// This fixes the issue of leftover rank overlay icons on buttons form a previous selection.
+	// Ex: in the 'Contra' game mod, select an infantry general barracks with training sciences purchased.
+	// Then select a civilian building - the stop/evacuate buttons will have irrelevant rank overlay icons.
+	// It would also be possible to add a more acute fix to 'populateStructureInventory', but this fix should have broader
+	// coverage here and seems like the proper thing to do for UI (reset for a better default each time).
+	// ------------
+	Int i;
+	for( i = 0; i < MAX_COMMANDS_PER_SET; i++ )
+	{
+		GameWindow *win;
+		win = m_commandWindows[ i ];
+		GadgetButtonDrawOverlayImage( win, nullptr );
+	}
+	// ------------
+
 	// hide/un-hide the appropriate windows for the context
 	switch( context )
 	{

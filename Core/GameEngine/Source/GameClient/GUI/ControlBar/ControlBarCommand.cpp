@@ -867,7 +867,21 @@ void ControlBar::updateContextCommand()
 
 		//Determine by the production type of this button, whether or not the created object
 		//will have a veterancy rank
-		if( command->getCommandType() != GUI_COMMAND_EXIT_CONTAINER )
+		//MODDD - Wouldn't it make more sense for only produciton-type (build a unit) buttons to do real-time
+		// checks like this? Other button-types like stop/evacuate buttons never use rank overlays so re-doing this check
+		// for them doesn't have a point, that could be left to 'populate' methods to blank out all rank overlays to avoid
+		// residual ones from showing up (ex: garrisonable buildings in contra sometimes).
+		// Done! See the bugfix for the better default overlay icon reset in 'ControlBar::switchToContext'.
+		// (original)
+		// ---
+		//if( command->getCommandType() != GUI_COMMAND_EXIT_CONTAINER )
+		// ---
+		// Instead of checking for explicit command types like 'GUI_COMMAND_UNIT_BUILD' (too many choices to check defeats
+		// the purpose of being convenient), just add a check for having an associated thing template.
+		// If this is non-applicable, the default overlay of 'none' in the aforementioned fix will persist - this won't need
+		// to run for say, stop/evac buttons.
+		if( command->getCommandType() != GUI_COMMAND_EXIT_CONTAINER && command->getThingTemplate() != nullptr )
+		// ---
 		{
 			//Already handled for contained members -- see ControlBar::populateButtonProc()
 			const Image *image = calculateVeterancyOverlayForThing( command->getThingTemplate() );
