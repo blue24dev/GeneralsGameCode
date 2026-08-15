@@ -1813,10 +1813,6 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 			}
 			TheSidesList->addSide(&d);
 
-			//MODDD - quick hack. Get the most recently added side and let it be aware of what slot number it is for.
-			// UPDATE - handled elsewhere now
-			//TheSidesList->getSideInfo(TheSidesList->getNumSides() - 1)->slotIndex = i;
-
 			AsciiString playerTeamName;
 			playerTeamName.set("team");
 			playerTeamName.concat(playerName);
@@ -2576,7 +2572,7 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 						continue;
 					}
 					
-					Player *player = ThePlayerList->m_slotPlayerRefs[i];
+					Player *player = ThePlayerList->getPlayerFromSlotIndex(i);
 					thePlayerEnemy->setPlayerRelationship(player, ENEMIES);
 					player->setPlayerRelationship(thePlayerEnemy, ENEMIES);
 				}
@@ -2623,8 +2619,8 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 					continue;
 				}
 
-				Player *player = ThePlayerList->m_slotPlayerRefs[i];
-				for (Int i2 = 0; i2 < ThePlayerList->getPlayerCount(); i2++)
+				Player *player = ThePlayerList->getPlayerFromSlotIndex(i);
+				for (Int i2 = 0; i2 < ThePlayerList->getPlayerCount(); ++i2)
 				{
 					Player *thatPlayer = ThePlayerList->getNthPlayer(i2);
 					if (thatPlayer == player)
@@ -2640,7 +2636,7 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 						rel = NEUTRAL;
 					}
 					// If the other player isn't neutral/civilian, decide if we're going to force them to be enemies.
-					else if (thatPlayer->slotIndex == -1)
+					else if (ThePlayerList->getSlotIndex(thatPlayer->getPlayerIndex()) == -1)
 					{
 						// other player isn't a slot player - enemies
 						rel = ENEMIES;

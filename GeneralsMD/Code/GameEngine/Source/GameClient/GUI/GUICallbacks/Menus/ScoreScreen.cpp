@@ -2072,7 +2072,7 @@ void grabMultiPlayerInfo()
 	for( Int i = 0; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 	{
 		Player *player = ThePlayerList->getPlayerFromSlotIndex(i);
-		if(player)
+		if (player)
 		{
 			Int score = player->getScoreKeeper()->calculateScore();
 			it = scores.find( score );
@@ -2120,7 +2120,7 @@ void grabMultiPlayerInfo()
 		// Look to there for inspiration I suppose.
 		Player* player = ThePlayerList->getNthPlayer(i);
 		// Exclude slot players - already added by the loop above
-		if (player->slotIndex != -1)
+		if (ThePlayerList->getSlotIndex(player->getPlayerIndex()) != -1)
 		{
 			continue;
 		}

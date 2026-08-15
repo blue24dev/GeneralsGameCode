@@ -406,9 +406,6 @@ void Player::init(const PlayerTemplate* pt)
 
 	m_unitsShouldHunt = FALSE;
 	
-	//MODDD
-	slotIndex = -1;
-
 #if _ALLOW_DEBUG_CHEATS_IN_DEBUG
 	m_DEMO_ignorePrereqs = FALSE;
 	m_DEMO_freeBuild = FALSE;
@@ -3029,15 +3026,15 @@ Bool Player::canBuild(const ThingTemplate *tmplate) const
 
 	// else BSTATUS tmplate->getBuildable() == BSTATUS_YES
 
-	//MODDD - forcing this new section in, just a personal preference over INI edits
+	//MODDD - new section to re-enable if you want, just a personal preference over INI edits
 	// -----------------------------------------------------------------------------
 #if NOOB_MODE
 	/*
-	if (slotIndex == 1 && tmplate->getName().startsWithNoCase("boss")) {
+	if (ThePlayerList->getSlotIndex(this->getPlayerIndex()) == 1 && tmplate->getName().startsWithNoCase("boss")) {
 		// proceed - skip prereqs check
 	} else
 	*/
-	//MODDD STUPID HACK
+	//MODDD - STUPID HACK
 	//if (FALSE)
 #endif
 	// -----------------------------------------------------------------------------

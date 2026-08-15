@@ -206,10 +206,12 @@ private:
 // May as well have hard links to any players in case these have special signifiance elsewhere than having
 // to do "player#" string lookups so often (not purposefully replacing all of them for now, though).
 // (public for now for laziness)
+//MODDD - UPDATE - since this, 'getPlayerFromSlotIndex' has been added by TheSuperHackers - phasing
+// my way out ( keeping the 'slotPlayerRefsSoftCount' for now)
 public:
 	Int						m_slotPlayerRefsSoftCount;
 	// capacity comes from MAX_SLOTS
-	Player				*m_slotPlayerRefs[8];
+	//Player				*m_slotPlayerRefs[8];
 
 };
 
