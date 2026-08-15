@@ -2045,15 +2045,13 @@ void grabMultiPlayerInfo()
 	typedef ScoreMap::reverse_iterator RevScoreMapIt;
 
 	Int playerCount = 0;
-	AsciiString playerName;
-	Player *player;
 	ScoreMap scores;
 	ScoreMapIt it;
 	scores.clear();
 	Int adder = 1; // Varible used to add on an offset to the score to make sure we don't add people to the same map
 
-	player = ThePlayerList->getLocalPlayer();
-	if (player)
+	Player *localPlayer = ThePlayerList->getLocalPlayer();
+	if (localPlayer)
 	{
 		const Image *image = TheMappedImageCollection->findImageByName("MutiPlayer_ScoreScreen");
 		if(image)
@@ -2067,23 +2065,22 @@ void grabMultiPlayerInfo()
 	//MODDD - use the new 'm_slotPlayerRefs' instead so 'FGC_CAMPAIGN' can correctly get the first player.
 	// Its name wasn't standardized so it isn't necessarily "player0" for campaign maps, nor are players
 	// generated per slots in that case unlike for skirmish / generals challenge maps.
+	//MODDD - UPDATE - there has since been a 'getPlayerFromSlotIndex' method added by TheSuperHackers,
+	// fine to rely on that too. Probably reverting the 'm_slotPlayerRefsSoftCount' for loop header change
+	// below after I understand things better.
 	//for( Int i = 0; i < MAX_SLOTS; ++i)
 	for( Int i = 0; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
 	{
-		//MODDD - per above
-		//playerName.format("player%d",i);
-		//player = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(playerName));
-		Player *player = ThePlayerList->m_slotPlayerRefs[i];
-		//MODDD - no need for null check on this
-		//if(player)
-		//{
+		Player *player = ThePlayerList->getPlayerFromSlotIndex(i);
+		if(player)
+		{
 			Int score = player->getScoreKeeper()->calculateScore();
 			it = scores.find( score );
 			if (it != scores.end())
 			score += adder++;
 			scores[score] = player;
 			++playerCount;
-		//}
+		}
 	}
 	//MODDD - TODO - what is the significance of 'hideWindows' above? Seems I can add additional rows past that just fine?
 	hideWindows(playerCount);

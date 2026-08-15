@@ -475,19 +475,7 @@ void PopulateInGameDiplomacyPopup()
 			}
 			if (slot->isAI())
 				isInGame = true;
-
-			//MODDD - using the new 'slotPlayerRefs' instead in case of games that use map-provided players instead of
-			// generating them by "player#"
-			// ---
-			/*
-			AsciiString playerName;
-			playerName.format("player%d", slotNum);
-			Player *player = ThePlayerList->findPlayerWithNameKey(NAMEKEY(playerName));
-			*/
-			// ---
-			Player* player = ThePlayerList->m_slotPlayerRefs[slotNum];
-			// ---
-			
+			Player *player = ThePlayerList->getPlayerFromSlotIndex(slotNum);
 			Bool isAlive = !TheVictoryConditions->hasSinglePlayerBeenDefeated(player);
 			Bool isObserver = player->isPlayerObserver();
 
