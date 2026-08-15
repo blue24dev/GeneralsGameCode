@@ -4,6 +4,7 @@
 
 #include "Common/Extra.h"
 #include "Common/Player.h"
+#include "Common/PlayerList.h"
 #include "Common/KindOf.h"
 #include "Common/ThingFactory.h"
 #include "Common/ThingTemplate.h"
@@ -497,7 +498,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			else
 			{
 				// otherwise, leave the rate unaffected but half the amount instead
-				data->m_depositAmount /= 2;
+				_data->m_depositAmount /= 2;
 			}
 		}
 		else if( modNameKey == HackInternetAIUpdateNameKey )
