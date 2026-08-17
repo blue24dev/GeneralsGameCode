@@ -882,8 +882,12 @@ StateReturnType AIStateMachine::updateStateMachine()
 
 			return status;
 		}
-		m_temporaryState->onExit(EXIT_NORMAL);
-		m_temporaryState = nullptr;
+		//MODDD - added if-then, this issue will probably be patched/addressed with a fix from TheSuperHackers rather soon
+		if (m_temporaryState != nullptr)
+		{
+			m_temporaryState->onExit(EXIT_NORMAL);
+			m_temporaryState = nullptr;
+		}
 	}
 	StateReturnType retType = StateMachine::updateStateMachine();
 
