@@ -207,7 +207,7 @@ public:
 	virtual Real getZoom() { return m_zoom; }
 
 	//MODDD
-	virtual Real getZoomOld() const { return 0.0f; }
+	virtual Real getZoomOld() { return 0.0f; }
 
 	virtual void setZoom(Real z) { m_zoom = z; }
 	virtual Real getHeightAboveGround() { return m_heightAboveGround; }

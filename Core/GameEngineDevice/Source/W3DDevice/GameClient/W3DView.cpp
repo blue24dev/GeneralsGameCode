@@ -911,10 +911,12 @@ Coord3D W3DView::get3DCameraPosition() const
 // (for the math to make sense, add 'm_groundLevel=10' to each before dividing MaxCameraHeight by CameraHeight)
 // After the commit, 'm_zoom' was 1.0 (appears relative to 'm_maxCameraHeight' instead of 'm_cameraHeight').
 // Several places like health bars need the old zoom or they will be affected in unintended ways.
-Real W3DView::getZoomOld() const
+Real W3DView::getZoomOld()
 {
 	// follow-up: 'm_groundLevel' -> 'm_pos.z', or often a default of 10
-	return getCurrentHeightAboveGround() / (m_pos.z + TheGlobalData->m_cameraHeight);
+	//return getCurrentHeightAboveGround() / (m_pos.z + TheGlobalData->m_cameraHeight);
+	// TEST - re-rirect to zoom as TheSuperHackers intended, maybe larger health bars is the way it should be.
+	return getZoom();
 }
 
 //-------------------------------------------------------------------------------------------------

@@ -1753,7 +1753,14 @@ Bool AIPlayer::selectTeamToBuild()
 		// Build it at low priority, as we have selected it automagically.
 		buildSpecificAITeam(teamProto, false);
 		m_readyToBuildTeam = false;
+
+		//MODDD
+#if defined(FORCE_AI_TEAM_BUILD_DELAY_SECONDS) && FORCE_AI_TEAM_BUILD_DELAY_SECONDS != -1
+		m_teamTimer = FORCE_AI_TEAM_BUILD_DELAY_SECONDS*LOGICFRAMES_PER_SECOND;
+#else
 		m_teamTimer = m_teamSeconds*LOGICFRAMES_PER_SECOND;
+#endif
+
 		if (m_player->getMoney()->countMoney() < TheAI->getAiData()->m_resourcesPoor) {
 			m_teamTimer = m_teamTimer/TheAI->getAiData()->m_teamPoorMod;
 		}	else if (m_player->getMoney()->countMoney() > TheAI->getAiData()->m_resourcesWealthy) {
@@ -2955,7 +2962,10 @@ void AIPlayer::doTeamBuilding()
 			if (m_readyToBuildTeam) {
 				processTeamBuilding();
 			}
-			m_teamDelay = 5*LOGICFRAMES_PER_SECOND; // check again in 5 seconds.
+
+			//MODDD - making this time a little tighter
+			//m_teamDelay = 5*LOGICFRAMES_PER_SECOND; // check again in 5 seconds.
+			m_teamDelay = 3*LOGICFRAMES_PER_SECOND;
 			// Note that this timer gets shortcut when a unit or building is completed.
 		}
 	}

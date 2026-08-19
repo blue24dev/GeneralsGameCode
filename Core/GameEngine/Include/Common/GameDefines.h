@@ -105,6 +105,11 @@
 #define PRESERVE_RETAIL_SCRIPTED_CAMERA (1) // Retain scripted camera behavior present in retail Generals 1.08 and Zero Hour 1.04
 #endif
 
+#ifndef PRESERVE_RETAIL_PARTICLES
+//MODDD - was 1, changed to 0 for more fixes (I assume?)
+#define PRESERVE_RETAIL_PARTICLES (0) // Preserve original look of particles present in retail Generals 1.08 and Zero Hour 1.04
+#endif
+
 #ifndef RETAIL_COMPATIBLE_CRC
 //MODDD - was 1, changed to 0 for more fixes
 #define RETAIL_COMPATIBLE_CRC (0) // Game is expected to be CRC compatible with retail Generals 1.08, Zero Hour 1.04
@@ -280,6 +285,12 @@
 // This coincides with other possible edits to slow down the pace of the entire game - easy to end up with far more money than you
 // could possibly spend even with an absurd number of factories
 //#define RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE 1
+
+// If set, AI players will act as though the map script action "Set the delay between building teams" was set to this value.
+// Map scripts trying to set this will be ignored.
+// Note that a value of 0 does indeed force the setting to 0 - set to -1 or leave undefined to use retail behavior
+// (default of 10 seconds if map script/elsewhere? doesn't specify)
+//#define FORCE_AI_TEAM_BUILD_DELAY_SECONDS 0
 
 // Disable the fog-of-war mechanic entirely. Debugger's dream. Or to watch the AI duke it out without
 // having to be a replay.
@@ -497,13 +508,13 @@
 
 // ----------------------------------------------------------------------------------------------------------
 // Bundles of settings here for convenient access
-#define FORCE_GAME_CONTEXT FGC_NONE
 
 #define DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY DIFFICULTY_HARD
 
 #define FORCE_HUMAN_PLAYER_START_MONEY 0
 #define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS 1
 #define RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE 1
+#define FORCE_AI_TEAM_BUILD_DELAY_SECONDS 0
 
 #define REMOVE_FOG_OF_WAR 0
 #define REMOVE_FOG_OF_WAR_ALT 0
