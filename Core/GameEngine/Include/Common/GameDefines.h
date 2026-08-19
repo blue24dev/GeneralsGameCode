@@ -106,7 +106,8 @@
 #endif
 
 #ifndef PRESERVE_RETAIL_PARTICLES
-#define PRESERVE_RETAIL_PARTICLES (1) // Preserve original look of particles present in retail Generals 1.08 and Zero Hour 1.04
+//MODDD - was 1, changed to 0 for more fixes (I assume?)
+#define PRESERVE_RETAIL_PARTICLES (0) // Preserve original look of particles present in retail Generals 1.08 and Zero Hour 1.04
 #endif
 
 #ifndef RETAIL_COMPATIBLE_CRC
