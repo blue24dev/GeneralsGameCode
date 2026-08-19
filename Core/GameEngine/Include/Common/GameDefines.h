@@ -281,6 +281,12 @@
 // could possibly spend even with an absurd number of factories
 //#define RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE 1
 
+// If set, AI players will act as though the map script action "Set the delay between building teams" was set to this value.
+// Map scripts trying to set this will be ignored.
+// Note that a value of 0 does indeed force the setting to 0 - set to -1 or leave undefined to use retail behavior
+// (default of 10 seconds if map script/elsewhere? doesn't specify)
+//#define FORCE_AI_TEAM_BUILD_DELAY_SECONDS 0
+
 // Disable the fog-of-war mechanic entirely. Debugger's dream. Or to watch the AI duke it out without
 // having to be a replay.
 // Hey, you know AI players were already playing without it anyway.
@@ -497,13 +503,13 @@
 
 // ----------------------------------------------------------------------------------------------------------
 // Bundles of settings here for convenient access
-#define FORCE_GAME_CONTEXT FGC_NONE
 
 #define DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY DIFFICULTY_HARD
 
 #define FORCE_HUMAN_PLAYER_START_MONEY 0
 #define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS 0
 #define RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE 0
+#define FORCE_AI_TEAM_BUILD_DELAY_SECONDS -1
 
 #define REMOVE_FOG_OF_WAR 0
 #define REMOVE_FOG_OF_WAR_ALT 0
