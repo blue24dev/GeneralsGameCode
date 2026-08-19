@@ -231,7 +231,7 @@ public:
 	virtual void set3DCameraLookAt(const Coord3D &pos, const Coord3D &dir, Real roll) override; ///< Set the actual camera position and view direction
 
 	//MODDD
-	virtual Real getZoomOld() const override;
+	virtual Real getZoomOld() override;
 
 	virtual void setCameraLock(ObjectID id) override;
 	virtual void setSnapMode( CameraLockType lockType, Real lockDist ) override;
