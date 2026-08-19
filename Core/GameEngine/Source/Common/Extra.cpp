@@ -906,7 +906,8 @@ void automaticGlobalDataChanges()
 	TheWritableGlobalData->m_networkPlayerTimeoutTime = 60000 * 60;
 
 	// performance issues when on - forcing off
-	TheWritableGlobalData->m_drawEntireTerrain = FALSE;
+	// - nevermind, appears to have been fixed
+	//TheWritableGlobalData->m_drawEntireTerrain = FALSE;
 }
 #endif // CUSTOM_GAME_DATA_CHANGES
 
