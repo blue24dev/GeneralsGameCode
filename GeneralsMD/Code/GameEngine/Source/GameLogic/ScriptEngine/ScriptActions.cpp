@@ -1305,6 +1305,12 @@ void ScriptActions::updateTeamAttackPrioritySet(const AsciiString& teamName, con
 //-------------------------------------------------------------------------------------------------
 void ScriptActions::updateBaseConstructionSpeed(const AsciiString& playerName, Int delayInSeconds)
 {
+	//MODDD
+#if defined(FORCE_AI_TEAM_BUILD_DELAY_SECONDS) && FORCE_AI_TEAM_BUILD_DELAY_SECONDS != -1
+	// no sense in setting this - setting will be ignored anyway
+	return;
+#endif
+
 	Player* thePlayer = TheScriptEngine->getPlayerFromAsciiString(playerName);
 	if (thePlayer) {
 		thePlayer->setTeamDelaySeconds(delayInSeconds);
