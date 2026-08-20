@@ -107,7 +107,8 @@
 
 #ifndef PRESERVE_RETAIL_PARTICLES
 //MODDD - was 1, changed to 0 for more fixes (I assume?)
-#define PRESERVE_RETAIL_PARTICLES (0) // Preserve original look of particles present in retail Generals 1.08 and Zero Hour 1.04
+// Reverted. This the fire effect on damaged buildings/rubble and sevral other places into purple squares. No idea what this fix is doing.
+#define PRESERVE_RETAIL_PARTICLES (1) // Preserve original look of particles present in retail Generals 1.08 and Zero Hour 1.04
 #endif
 
 #ifndef RETAIL_COMPATIBLE_CRC
