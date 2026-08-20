@@ -2270,12 +2270,20 @@ Bool ScriptConditions::evaluateSkirmishPlayerTechBuildingWithinDistancePerimeter
 	Real radius = pTrig->getRadius() + pDistanceParm->getReal();
 
 	PartitionFilterAcceptByKindOf f1(MAKE_KINDOF_MASK(KINDOF_TECH_BUILDING), KINDOFMASK_NONE);
-	PartitionFilterPlayerAffiliation f2(player, ALLOW_ALLIES, false);
-	PartitionFilterPlayer f3(player, false);	// Don't find your own units, as our affiliation to self is neutral.
+
+	//MODDD - negation no longer needed, things belonging to the player are now excluded without 'ALLOW_SAME_PLAYER'.
+	//PartitionFilterPlayerAffiliation f2(player, ALLOW_ALLIES, false);
+	PartitionFilterPlayerAffiliation f2(player, ALLOW_NEUTRAL | ALLOW_ENEMIES, true);
+
+	//MODDD - filter removed, redundant since 'f2' aready blocks things owned by the 'player'.
+	// The as-is comment is inaccurate anyway (affilation to self is ALLIED).
+	//PartitionFilterPlayer f3(player, false);	// Don't find your own units, as our affiliation to self is neutral.
+
 	PartitionFilterOnMap filterMapStatus;
 
-
-	PartitionFilter *filters[] = { &f1, &f2, &f3, &filterMapStatus, nullptr };
+	//MODDD
+	//PartitionFilter *filters[] = { &f1, &f2, &f3, &filterMapStatus, nullptr };
+	PartitionFilter *filters[] = { &f1, &f2, &filterMapStatus, nullptr };
 
 	Bool comparison = ThePartitionManager->getClosestObject(&center, radius, FROM_CENTER_2D, filters) != nullptr;
 	pCondition->setCustomData(-1); // false.

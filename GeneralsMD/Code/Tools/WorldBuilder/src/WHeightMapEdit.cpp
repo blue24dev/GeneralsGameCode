@@ -43,6 +43,10 @@
 
 #include "Common/DataChunk.h"
 
+//MODDD
+#include "Common/PlayerList.h"
+#include "GameLogic/Scripts.h"
+
 
 int WorldHeightMapEdit::m_numGlobalTextureClasses=0;
 TGlobalTextureClass WorldHeightMapEdit::m_globalTextureClasses[NUM_TEXTURE_CLASSES];
@@ -1760,6 +1764,77 @@ Bool WorldHeightMapEdit::optimizeTiles()
 
 
 
+//MODDD - new helpers
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// Go through all script actions and check parameters that are 3D positions.
+// They need to be updated if the resize was from the bottom and/or left at all (the origin point at the bottom-left is fixed
+// -> resizing from there really pushes everything else up/right).
+// If manually given coordinates aren't updated, will be some strange offsets vs. what's expected.
+void updateScriptsForMapResize(Int xOffset, Int yOffset);
+void updateScriptsForMapResize_scripts(Script *pScriptHead, Int xOffset, Int yOffset);
+void updateScriptsForMapResize_script(Script *pScriptHead, Int xOffset, Int yOffset);
+
+void updateScriptsForMapResize(Int xOffset, Int yOffset)
+{
+	if (xOffset == 0 && yOffset == 0)
+	{
+		// no effect on the coords
+		return;
+	}
+
+	int i;
+	for (i=0; i<TheSidesList->getNumSides(); i++) {
+		ScriptList *pSL = TheSidesList->getSideInfo(i)->getScriptList();
+		if (!pSL) continue;
+		updateScriptsForMapResize_scripts(pSL->getScript(), xOffset, yOffset);
+		ScriptGroup *pGroup;
+		for (pGroup = pSL->getScriptGroup(); pGroup; pGroup=pGroup->getNext()) {
+			updateScriptsForMapResize_scripts(pGroup->getScript(), xOffset, yOffset);
+		}
+	}
+}
+
+void updateScriptsForMapResize_scripts(Script *pScriptHead, Int xOffset, Int yOffset)
+{
+	Script *pCurScript;
+	for (pCurScript = pScriptHead; pCurScript; pCurScript=pCurScript->getNext()) {
+		updateScriptsForMapResize_script(pCurScript, xOffset, yOffset);
+	}
+}
+
+void updateScriptsForMapResize_script(Script *pScript, Int xOffset, Int yOffset)
+{
+	ScriptAction* pActionHead = pScript->getAction();
+
+	// Search through every action's parameters for any 3D coordinate-types
+	ScriptAction *pCurAction;
+	for (pCurAction = pActionHead; pCurAction; pCurAction = pCurAction->getNext()) {
+		int numParam = pCurAction->getNumParameters();
+		int iParam;
+		for (iParam = 0; iParam < numParam; ++iParam)
+		{
+			Parameter* parameter = pCurAction->getParameter(iParam);
+			if (parameter->getParameterType() == Parameter::ParameterType::COORD3D)
+			{
+				// copy the coordinate to a var
+				Coord3D paramVal;
+				parameter->getCoord3D(&paramVal);
+				// adjust
+				paramVal.x += xOffset;
+				paramVal.y += yOffset;
+				// save it back
+				parameter->friend_setCoord3D(&paramVal);
+			}
+		}
+	}
+}
+
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+
 /** ****************************************************************
 	resize
 		Changes the size of the height map.
@@ -1958,6 +2033,10 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 	//initCliffFlagsFromHeights();
 
 	optimizeTiles();
+
+	//MODDD - new
+	updateScriptsForMapResize(xOffset, yOffset);
+
 	return(true);
 }
 

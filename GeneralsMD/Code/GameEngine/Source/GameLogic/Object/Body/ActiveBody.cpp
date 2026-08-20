@@ -719,7 +719,8 @@ void ActiveBody::attemptDamage( DamageInfo *damageInfo )
 	{
 		if( shouldRetaliateAgainstAggressor(obj, damager))
 		{
-			PartitionFilterPlayerAffiliation f1( controllingPlayer, ALLOW_ALLIES, true );
+			//MODDD - the effect of 'ALLOW_SAME_PLAYER' is no longer implied - added
+			PartitionFilterPlayerAffiliation f1( controllingPlayer, ALLOW_ALLIES | ALLOW_SAME_PLAYER, true );
 			PartitionFilterOnMap filterMapStatus;
 			PartitionFilter *filters[] = { &f1, &filterMapStatus, nullptr };
 

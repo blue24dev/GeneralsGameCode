@@ -317,6 +317,10 @@ public:
 	Bool isTimeFrozenDebug();		///< Ask whether the debug window has requested a pause.
 	Bool isTimeFast();		///< Ask whether the debug window has requested a fast forward.
 	void forceUnfreezeTime();	///< Force that time becomes unfrozen temporarily.
+
+	//MODDD - added
+	Bool shouldHandleSequentialScriptDebugMessage();
+
 	void AppendDebugMessage(const AsciiString& strToAdd, Bool forcePause);
 	void AdjustDebugVariableData(const AsciiString& variableName, Int value, Bool forcePause);
 
@@ -402,8 +406,7 @@ protected:
 	void setPriorityDefault( ScriptAction *pAction );
 
 	// For Object types maintenance.
-	//MODDD - renamed for clarity, a 2nd version added to break it up (as tiny as this is)
-	void removeObjectTypesFromList(ObjectTypes *typesToRemove);
+	void removeObjectTypes(ObjectTypes *typesToRemove);
 	void onRemoveObjectTypes(ObjectTypes* typesToRemove);
 
 	void particleEditorUpdate();
