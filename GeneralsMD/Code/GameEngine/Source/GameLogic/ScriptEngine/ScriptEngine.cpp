@@ -5552,7 +5552,7 @@ void ScriptEngine::reset()
 	m_sequentialScripts.clear();
 
 	// clear out all the lists of object types that were in the old map.
-	//MODDD - why the iterator back to 'begin' every time?
+	//MODDD - why is the iterator set back to 'begin' every loop iteration?
 	// Oh, because 'removeObjectTypes' calls 'erase' on the iterator without returning the result of 'erase'.
 	// Seems like this creates a lot of opportunity for mistakes, handling that here entirely.
 	for (AllObjectTypesIt it = m_allObjectTypeLists.begin(); it != m_allObjectTypeLists.end(); /*it = m_allObjectTypeLists.begin()*/ ) {
@@ -5564,7 +5564,7 @@ void ScriptEngine::reset()
 		}
 		*/
 		//MODDD - rest is new.
-		// This replaces the 'removeObjectTypesFromList' call's part that deals with removing from the list.
+		// This replaces the 'removeObjectTypes' call's part that deals with removing from the list.
 		ObjectTypes* typesToRemove = *it;
 		it = m_allObjectTypeLists.erase(it);
 		// Replicating the intent of the original null check above (on '*it'), doubt it's necessary though.
@@ -6136,7 +6136,7 @@ void ScriptEngine::doObjectTypeListMaintenance(const AsciiString& objectTypeList
 
 	// Remove it. Its dead Jim.
 	if (currentObjectTypeVec->getListSize() == 0) {
-		removeObjectTypesFromList(currentObjectTypeVec);
+		removeObjectTypes(currentObjectTypeVec);
 
 		// Semantic emphasis
 		currentObjectTypeVec = nullptr;
@@ -6960,13 +6960,12 @@ void ScriptEngine::setObjectCount(Int playerIndex, const AsciiString& objectType
 /** Removes an object types list from the list owned by the script engine, and then deletes the */
 /**	associated item. */
 //-------------------------------------------------------------------------------------------------
-void ScriptEngine::removeObjectTypesFromList(ObjectTypes *typesToRemove)
+void ScriptEngine::removeObjectTypes(ObjectTypes *typesToRemove)
 {
 	if (typesToRemove == nullptr) {
 		return;
 	}
 
-	//MODDD - condition
 	AllObjectTypesIt it = std::find(m_allObjectTypeLists.begin(), m_allObjectTypeLists.end(), typesToRemove);
 
 	if (it == m_allObjectTypeLists.end()) {
@@ -8311,25 +8310,49 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts()
 
 				// We want to suppress messages if we're repeatedly waiting for an event to occur, cause
 				// it KILLS our debug framerate.
-				Bool displayMessage = TRUE;
-
-				// Time to progress to the next task.
-				if (seqScript->m_dontAdvanceInstruction) {
-					seqScript->m_dontAdvanceInstruction = FALSE;
+				
+				// MODDD - splitting the declaration's assignment, adding a if-then to force 'displayMessage' to 'FALSE' if
+				// it's guaranteed impossible for the later 'AppendDebugMessage' to ever write anything.
+				// This should cut down on some waste from generating these strings that never have a chance to show up anywhere.
+				// If-then wrapper (and 'else' block) is new, existing script is as-is otherwise.
+				// MODDD - TODO - should more places here check for 'shouldHandleSequentialScriptDebugMessage' before things that
+				// only exist for some later 'AppendDebugMessage' call?
+				//Bool displayMessage = TRUE;
+				Bool displayMessage;
+				if (shouldHandleSequentialScriptDebugMessage())
+				{
+					//MODDD - moved
+					//displayMessage = TRUE;
+					// Time to progress to the next task.
+					if (seqScript->m_dontAdvanceInstruction) {
+						seqScript->m_dontAdvanceInstruction = FALSE;
+						displayMessage = FALSE;
+					} else {
+						//MODDD - moved to here
+						displayMessage = TRUE;
+						++seqScript->m_currentInstruction;
+					}
+				}
+				else
+				{
 					displayMessage = FALSE;
-				} else {
-					++seqScript->m_currentInstruction;
 				}
 
-				AsciiString msg = "Advancing SeqScript '";
-				msg.concat(seqScript->m_scriptToExecuteSequentially->getName());
-				msg.concat("' on ");
-				AsciiString name;
-				if (team) name = team->getName();
-				if (obj) name = obj->getName();
-				msg.concat(name);
-				msg.concat(" -- ");
-
+				//MODDD - splitting the declaration's assignment for a new if-then wrapper. Existing script is as-is otherwise.
+				//AsciiString msg = "Advancing SeqScript '";
+				AsciiString msg;
+				if (displayMessage)
+				{
+					msg = "Advancing SeqScript '";
+					msg.concat(seqScript->m_scriptToExecuteSequentially->getName());
+					msg.concat("' on ");
+					AsciiString name;
+					if (team) name = team->getName();
+					if (obj) name = obj->getName();
+					msg.concat(name);
+					msg.concat(" -- ");
+				}
+				
 				int instruction = seqScript->m_currentInstruction;
 				ScriptAction *action = seqScript->m_scriptToExecuteSequentially->getAction();
 				while (action && instruction) {
@@ -8365,12 +8388,15 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts()
 						executeActions(action);
 					}
 
+					//MODDD - changing how this works a little too.
+					// No sense in maintenance on 'msg' (msg.clear) here, the current value of 'msg' will never be used after here.
+					// Dummed out the 'else' block.
 					if (displayMessage) {
 						msg.concat(action->getUiText());
 						AppendDebugMessage(msg, false);
-					} else {
+					}/* else {
 						msg.clear();
-					}
+					}*/
 
 					action->setNextAction(nextAction);
 
@@ -8862,6 +8888,15 @@ void ScriptEngine::forceUnfreezeTime()
 			((funcptr)proc)();
 		}
 	}
+}
+
+//MODDD - small helper
+Bool ScriptEngine::shouldHandleSequentialScriptDebugMessage()
+{
+#ifdef INTENSE_DEBUG
+	return true;
+#endif
+	return (st_DebugDLL != nullptr);
 }
 
 void ScriptEngine::AppendDebugMessage(const AsciiString& strToAdd, Bool forcePause)

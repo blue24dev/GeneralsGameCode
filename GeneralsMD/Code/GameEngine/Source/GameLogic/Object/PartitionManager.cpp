@@ -5858,6 +5858,28 @@ Bool PartitionFilterPlayer::allow( Object *other )
 //-----------------------------------------------------------------------------
 Bool PartitionFilterPlayerAffiliation::allow( Object *other )
 {
+	//MODDD - new block to check for 'ALLOW_SAME_PLAYER' and skip the relationship check if the other object belongs
+	// to the associated player ('m_player').
+	// This handling avoids the likely unintended behavior of allowing an object to pass if it belongs exactly to the
+	// associated player, even if the filter doesn't specify 'ALLOW_ALLIES'.
+	// See the original 'if (other->getControllingPlayer() == m_player)' check/tiny block further down.
+	if (m_affiliation & ALLOW_SAME_PLAYER)
+	{
+		// If the other object belongs to the associated player, pass
+		if (other->getControllingPlayer() == m_player) {
+			return m_match;
+		}
+	}
+	else
+	{
+		// If the other object belongs to the a. player, fail
+		// This is reasonable because the relationship of a player with something that belongs to them is always 'ALLIES',
+		// to be presence/abscense of 'ALLOW_SAME_PLAYER' for this filter should take precedence in that case.
+		if (other->getControllingPlayer() == m_player) {
+			return !m_match;
+		}
+	}
+
 	Relationship rel = m_player->getRelationship(other->getTeam());
 	switch (rel)
 	{
@@ -5880,9 +5902,18 @@ Bool PartitionFilterPlayerAffiliation::allow( Object *other )
 			break;
 	}
 
+	//MODDD
+	// As of retal, even if the filter is supposed to exclude allies, an object belonging exactly to the associated player
+	// will still pass. Allowing things belonging to the same player but specifically excluding things from any other allied
+	// players doesn't seem deliberate.
+	// Example: 'ScriptActions::doTeamUseCommandButtonOnNearestObjectType'.
+	// It seems the implication is a command button ability should be used on an enemy unit, not a friendly one because
+	// the usage of this filer specifies NEUTRAL(?) and ENEMY but not ALLIES.
+	/*
 	if (other->getControllingPlayer() == m_player) {
 		return m_match;
 	}
+	*/
 
 	return !m_match;
 }

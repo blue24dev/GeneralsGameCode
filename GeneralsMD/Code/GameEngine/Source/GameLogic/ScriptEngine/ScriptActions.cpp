@@ -6121,11 +6121,39 @@ void ScriptActions::doTeamUseCommandButtonOnNearestObjectType( const AsciiString
 		return;
 	}
 
+	//MODDD - whether to include neutral units as potential targets.
+	// Retail always allowed this, which seems strange to me as plenty of stuff doesn't really have a reason to be used against neutral things.
+	// Going to allow the retail behavior for non-special-power commands (if anything ever uses something like that on a
+	// 'nearest object' at all?), and special power commands except capture ones will avoid neutral targets.
+	// 'doTeamCaptureNearestUnownedFactionUnit' is apparently for making units enter the nearest unit (not building?), not
+	// the capture-building mechanic. So checking for a capture-building-special-power here makes sense.
+	UnsignedInt allowedAffiliations = ALLOW_ENEMIES;
+
 	Object *srcObj = nullptr;
 	if (commandButton->getSpecialPowerTemplate()) {
 		srcObj = theGroup->getSpecialPowerSourceObject(commandButton->getSpecialPowerTemplate()->getID());
+
+		//MODDD - going to include some special power types besides capture ones just in case.
+		// At this point, some special power metadata to specify whether it allows enemy/neutral/ally targets might be welcome.
+		SpecialPowerType spType = commandButton->getSpecialPowerTemplate()->getSpecialPowerType();
+		if(
+			spType == SPECIAL_BLACKLOTUS_CAPTURE_BUILDING ||
+			spType == SPECIAL_INFANTRY_CAPTURE_BUILDING || 
+			spType == SPECIAL_REMOTE_CHARGES ||
+			spType == SPECIAL_TIMED_CHARGES ||
+			spType == SPECIAL_DISGUISE_AS_VEHICLE ||
+			spType == SPECIAL_BOOBY_TRAP ||
+			spType == SPECIAL_CLEANUP_AREA
+		)
+		{
+			allowedAffiliations |= ALLOW_NEUTRAL;
+		}
+
 	} else {
 		srcObj = theGroup->getCommandButtonSourceObject(commandButton->getCommandType());
+		//MODDD - actually, nevermind, non-neutrals for non-special-power commands.
+		// I can't see a reason for any to ever be used for this script action anyway though.
+		//allowedAffiliations |= ALLOW_NEUTRAL;
 	}
 
 	if (!srcObj) {
@@ -6138,7 +6166,10 @@ void ScriptActions::doTeamUseCommandButtonOnNearestObjectType( const AsciiString
 	const ThingTemplate *thingTemplate = TheThingFactory->findTemplate( objectType, FALSE );
 	if( thingTemplate )
 	{
-		PartitionFilterPlayerAffiliation f1(team->getControllingPlayer(), ALLOW_ENEMIES | ALLOW_NEUTRAL, true);
+		//MODDD - using the variable
+		//PartitionFilterPlayerAffiliation f1(team->getControllingPlayer(), ALLOW_ENEMIES | ALLOW_NEUTRAL, true);
+		PartitionFilterPlayerAffiliation f1(team->getControllingPlayer(), allowedAffiliations, true);
+
 		PartitionFilterThing f2(thingTemplate, true);
 		PartitionFilterValidCommandButtonTarget f3(srcObj, commandButton, true, CMD_FROM_SCRIPT);
 		PartitionFilterSameMapStatus filterMapStatus(srcObj);
@@ -6158,7 +6189,10 @@ void ScriptActions::doTeamUseCommandButtonOnNearestObjectType( const AsciiString
 		ObjectTypes *objectTypes = TheScriptEngine->getObjectTypes( objectType );
 		if( objectTypes )
 		{
-			PartitionFilterPlayerAffiliation f1(team->getControllingPlayer(), ALLOW_ENEMIES | ALLOW_NEUTRAL, true);
+			//MODDD - using the variable
+			//PartitionFilterPlayerAffiliation f1(team->getControllingPlayer(), ALLOW_ENEMIES | ALLOW_NEUTRAL, true);
+			PartitionFilterPlayerAffiliation f1(team->getControllingPlayer(), allowedAffiliations, true);
+
 			PartitionFilterValidCommandButtonTarget f3(srcObj, commandButton, true, CMD_FROM_SCRIPT);
 			PartitionFilterSameMapStatus f4(srcObj);
 
