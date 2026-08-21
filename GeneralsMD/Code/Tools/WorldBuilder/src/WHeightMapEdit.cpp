@@ -1772,11 +1772,11 @@ Bool WorldHeightMapEdit::optimizeTiles()
 // They need to be updated if the resize was from the bottom and/or left at all (the origin point at the bottom-left is fixed
 // -> resizing from there really pushes everything else up/right).
 // If manually given coordinates aren't updated, will be some strange offsets vs. what's expected.
-void updateScriptsForMapResize(Int xOffset, Int yOffset);
-void updateScriptsForMapResize_scripts(Script *pScriptHead, Int xOffset, Int yOffset);
-void updateScriptsForMapResize_script(Script *pScriptHead, Int xOffset, Int yOffset);
+void updateScriptsForMapResize(Real xOffset, Real yOffset);
+void updateScriptsForMapResize_scripts(Script *pScriptHead, Real xOffset, Real yOffset);
+void updateScriptsForMapResize_script(Script *pScriptHead, Real xOffset, Real yOffset);
 
-void updateScriptsForMapResize(Int xOffset, Int yOffset)
+void updateScriptsForMapResize(Real xOffset, Real yOffset)
 {
 	if (xOffset == 0 && yOffset == 0)
 	{
@@ -1796,7 +1796,7 @@ void updateScriptsForMapResize(Int xOffset, Int yOffset)
 	}
 }
 
-void updateScriptsForMapResize_scripts(Script *pScriptHead, Int xOffset, Int yOffset)
+void updateScriptsForMapResize_scripts(Script *pScriptHead, Real xOffset, Real yOffset)
 {
 	Script *pCurScript;
 	for (pCurScript = pScriptHead; pCurScript; pCurScript=pCurScript->getNext()) {
@@ -1804,7 +1804,7 @@ void updateScriptsForMapResize_scripts(Script *pScriptHead, Int xOffset, Int yOf
 	}
 }
 
-void updateScriptsForMapResize_script(Script *pScript, Int xOffset, Int yOffset)
+void updateScriptsForMapResize_script(Script *pScript, Real xOffset, Real yOffset)
 {
 	ScriptAction* pActionHead = pScript->getAction();
 
@@ -1821,11 +1821,22 @@ void updateScriptsForMapResize_script(Script *pScript, Int xOffset, Int yOffset)
 				// copy the coordinate to a var
 				Coord3D paramVal;
 				parameter->getCoord3D(&paramVal);
-				// adjust
-				paramVal.x += xOffset;
-				paramVal.y += yOffset;
-				// save it back
-				parameter->friend_setCoord3D(&paramVal);
+				// Before adjusting, check for a special value: coord (0,0,0): at the origin, bottom-left corner exactly.
+				// This is often times used for system objects as an arbitrary point since it doesn't matter where they go, I think.
+				// For safety, going to assume that's intentional and not apply a shift if a position is that.
+				if (paramVal.x == 0 && paramVal.y == 0 && paramVal.z == 0)
+				{
+					// at the origin - skip
+				}
+				else
+				{
+					// adjust - also, no further handling of 'x/yOffset' is expected, should be in the correct units & negated if needed
+					// (add, not minus is intentional here).
+					paramVal.x += xOffset;
+					paramVal.y += yOffset;
+					// save it back
+					parameter->friend_setCoord3D(&paramVal);
+				}
 			}
 		}
 	}
@@ -2035,7 +2046,7 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 	optimizeTiles();
 
 	//MODDD - new
-	updateScriptsForMapResize(xOffset, yOffset);
+	updateScriptsForMapResize(-xOffset*MAP_XY_FACTOR, -yOffset*MAP_XY_FACTOR);
 
 	return(true);
 }
