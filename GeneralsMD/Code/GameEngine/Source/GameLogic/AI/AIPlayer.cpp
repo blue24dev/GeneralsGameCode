@@ -1010,7 +1010,10 @@ Bool AIPlayer::isLocationSafe(const Coord3D *pos, const ThingTemplate *tthing )
 	radius += tthing->getTemplateGeometryInfo().getBoundingCircleRadius();
 
 	// only consider enemies.
-	PartitionFilterPlayerAffiliation	filterTeam(m_player, (ALLOW_ALLIES|ALLOW_NEUTRAL), false);
+	//MODDD - no need to use the negation (3rd param of 'false'), specifying 'ALLOW_ENEMIES' without 'ALLOW_SAME_PLAYER'
+	// will exclude things belonging to this player as expected.
+	//PartitionFilterPlayerAffiliation	filterTeam(m_player, (ALLOW_ALLIES|ALLOW_NEUTRAL), false);
+	PartitionFilterPlayerAffiliation	filterTeam(m_player, (ALLOW_ENEMIES), true);
 
 	// and only stuff that is not dead
 	PartitionFilterAlive filterAlive;
