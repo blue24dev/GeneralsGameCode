@@ -466,6 +466,18 @@ private:
 //	ObjectPtrHash m_objHash;																///< Used for ObjectID lookups
 	ObjectPtrVector m_objVector;
 
+	//MODDD - added so there can be a corresponding 'valid to continue using' flag associated with each object.
+	// When an object has been deleted, there needs to be a way to see this externally (ex: in later look-ups for that ID).
+	// Example: ActiveBody.cpp, "...findObjectByID(m_lastDamageInfo.in.m_sourceID)". This referred to bogus memory and lead
+	// to a crash - all I can figure is that it lead to a since-deleted object.
+	// ---------
+public:
+	std::vector<Bool> m_objValid;
+	// And for debugging, the class name most recently assigned to that object (unavailable once it's been deleted).
+	std::vector<AsciiString> m_objTemplateName;
+private:
+	// ---------
+
 	// this is a vector, but is maintained as a priority queue.
 	// never modify it directly; please use the proper access methods.
 	// (for an excellent discussion of priority queues, please see:
@@ -559,21 +571,8 @@ inline Bool GameLogic::isInInternetGame() { return (m_gameMode == GAME_INTERNET)
 inline Bool GameLogic::isInShellGame() { return (m_gameMode == GAME_SHELL); }
 inline UnsignedShort GameLogic::getSuperweaponRestriction() const { return m_superweaponRestriction; }
 
-inline Object* GameLogic::findObjectByID( ObjectID id )
-{
-	if( id == INVALID_ID )
-		return nullptr;
-
-//	ObjectPtrHash::iterator it = m_objHash.find(id);
-//	if (it == m_objHash.end())
-//		return nullptr;
-//
-//	return (*it).second;
-	if( (size_t)id < m_objVector.size() )
-		return m_objVector[(size_t)id];
-
-	return nullptr;
-}
+//MODDD - moved to GameLogic.cpp, not inline
+//inline Object* GameLogic::findObjectByID( ObjectID id ); ...
 
 // the singleton
 extern GameLogic *TheGameLogic;

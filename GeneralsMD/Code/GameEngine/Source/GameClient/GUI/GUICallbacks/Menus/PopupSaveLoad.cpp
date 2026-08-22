@@ -430,8 +430,10 @@ static void doLoadGame()
 	//MODDD - replacing this.
 	//MODDD - The 'clearGameData'/'reset' seems redundant. See 'loadGame', already does this if there is a
 	// failure loading a file & it didn't stop early on failing to find a file altogether.
-	//MODDD - UPDATE - this may no longer be the case - going to trust what's here as of TheSuperHackers for now
-	// ---
+	// Also, see how I often condensed the 'clearGameData/reset' calls into just a single 'clearGameData' call in
+	// 'GameState::_loadGame' - could be done here too I imagine if the original form is kept?
+	// --- (original)
+	/*
 	presentLoadResult( result, filename );
 	if (result != SC_OK)
 	{
@@ -440,16 +442,14 @@ static void doLoadGame()
 		TheGameEngine->reset();
 		TheShell->showShell(TRUE);
 	}
-	// ---
-	// (my original simplified version, up-to-date with the codebase as of TheSuperHackers changes)
-	/*
+	*/
+	// --- (my simplified version)
 	presentLoadResult( result, filename );
-	// For a 'file not found' result, no need to do anything - game isn't exited
+	// For a SC_FILE_NOT_FOUND result or something similar, no need to do anything anyway - game isn't exited
 	if (result == SC_INVALID_DATA)
 	{
 		TheShell->showShell(TRUE);
 	}
-	*/
 	// ---
 
 }

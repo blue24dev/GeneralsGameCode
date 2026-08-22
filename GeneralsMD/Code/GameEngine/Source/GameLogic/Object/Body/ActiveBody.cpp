@@ -628,6 +628,19 @@ void ActiveBody::attemptDamage( DamageInfo *damageInfo )
 			if (srcObj)
 			{
 				Player *srcPlayer = srcObj->getControllingPlayer();
+
+				//MODDD - debug - is this realistically even possible still??
+				if (srcPlayer == nullptr)
+				{
+					FILE* outputFile = fopen("test_crash_ActiveBody__atemptDamage.txt", "a");
+					printTimeStamp(outputFile);
+				
+					fprintf(outputFile, " - line:635 - object ");
+					printObjectIdentifyingInfo(outputFile, srcObj);
+					fprintf(outputFile, " has getControllingPlayer()==nullptr");
+					fclose(outputFile);
+				}
+
 				obj->getControllingPlayer()->setAttackedBy(srcPlayer->getPlayerIndex());
 			}
 		}

@@ -513,6 +513,12 @@ void GameLogic::reset()
 	m_objVector.clear();
 	m_objVector.resize(OBJ_HASH_SIZE, nullptr);
 
+	//MODDD
+	m_objValid.clear();
+	m_objValid.resize(OBJ_HASH_SIZE, FALSE);
+	m_objTemplateName.clear();
+	m_objTemplateName.resize(OBJ_HASH_SIZE, nullptr);
+
 	m_pauseFrame = 0;
 	m_pauseSound = FALSE;
 	m_pauseMusic = FALSE;
@@ -4617,9 +4623,20 @@ void GameLogic::addObjectToLookupTable( Object *obj )
 //	m_objHash[ obj->getID() ] = obj;
 	ObjectID newID = obj->getID();
 	while( newID >= m_objVector.size() ) // Fail case is hella rare, so faster to double up on size() call
-		m_objVector.resize(m_objVector.size() * 2, nullptr);
+	//MODDD - added brackets
+	{
+		//MODDD - moved expression in argument below to variable
+		size_t newSize = m_objVector.size() * 2;
+		m_objVector.resize(newSize, nullptr);
+		//MODDD
+		m_objValid.resize(newSize, FALSE);
+		m_objTemplateName.resize(newSize, nullptr);
+	}
 
 	m_objVector[ newID ] = obj;
+	//MODDD
+	m_objValid[newID] = true;
+	m_objTemplateName[newID] = obj->getTemplate() ? obj->getTemplate()->getName() : "!!!NO TEMPLATE!!!";
 
 }
 
@@ -4637,6 +4654,8 @@ void GameLogic::removeObjectFromLookupTable( Object *obj )
 	// remove from lookup table
 //	m_objHash.erase( obj->getID() );
 	m_objVector[ obj->getID() ] = nullptr;
+	//MODDD - though, deletion script should handle this sooner than this point for safety
+	m_objValid[ obj->getID() ] = false;
 
 }
 
@@ -4714,6 +4733,22 @@ void GameLogic::_destroyObject( Object *obj )
 	// if already flagged for destruction, ignore
 	if (!obj || obj->isDestroyed())
 		return;
+
+	//MODDD - seems like a good idea to let inner logic know that looks back at this object.
+	// Being destroyed by unusual means like a garrisoned building deleting all occupants can avoid the damage system's usual
+	// 'setEffectivelyDead' setter.
+	// Also, consider 'Object::onDie', but the caller often also calls something like 'ActiveBody::internalChangeHealth' which
+	// calls 'setEffectivelyDead' if the health becomes 0 or less.
+	// Mainly, this addresses a small technicality of 'RiderChangeContain::onRemoving' doing a bit more than needed because
+	// its check on 'bike->isEffectivelyDead()' fails, even though the source of the call is the bike being deleted but it's
+	// deleting its 'rider' before deleting itself (rider checks the bike before this can be realized).
+	// At this point, kindof have to wonder if changing particular places like that to use 'obj->isDestroyed()' instead,
+	// since as of retail, that is set sooner in the object destruction process.
+	// ---------
+	obj->setEffectivelyDead(TRUE);
+	// also, this
+	m_objValid[ obj->getID() ] = false;
+	// ---------
 
 	// run the object onDestroy event if provided
 	for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
@@ -4885,6 +4920,43 @@ UnsignedInt GameLogic::getCRC( Int mode, AsciiString deepCRCFileName )
 		CRCGEN_LOG(("CRC for frame %d is 0x%8.8X", m_frame, theCRC));
 	}
 	return theCRC;
+}
+
+//MODDD - moved from GameLogic.h
+Object* GameLogic::findObjectByID( ObjectID id )
+{
+	if( id == INVALID_ID )
+		return nullptr;
+
+//	ObjectPtrHash::iterator it = m_objHash.find(id);
+//	if (it == m_objHash.end())
+//		return nullptr;
+//
+//	return (*it).second;
+	if( (size_t)id < m_objVector.size() )
+	//MODDD - added brackets
+	{
+		//MODDD
+		// ------------------------
+		if (!m_objValid[(size_t)id])
+		{
+			// ultimately disallow returning an object that's being/been deleted.
+			if (m_objVector[(size_t)id] != nullptr)
+			{
+				// not good - reference is still there & something requested access to it
+				FILE* outputFile = fopen("test_crash_findObjectByID_invalid.txt", "a");
+				printTimeStamp(outputFile);
+				fprintf(outputFile, " - ID:%d occupied by template \"%s\" is being referenced after being deleted.", id, m_objTemplateName[(size_t)id]);
+				fclose(outputFile);
+			}
+			return nullptr;
+		}
+		// ------------------------
+
+		return m_objVector[(size_t)id];
+	}
+
+	return nullptr;
 }
 
 // ------------------------------------------------------------------------------------------------
