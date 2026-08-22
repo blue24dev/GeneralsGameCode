@@ -132,6 +132,15 @@ enum SaveCode CPP_11(: Int)
 	SC_ERROR,
 };
 
+struct SaveResult
+{
+	explicit SaveResult( SaveCode code ) : saveCode(code) { }
+	SaveResult( SaveCode code, const AsciiString &file ) : saveCode(code), filename(file) { }
+
+	SaveCode saveCode;
+	AsciiString filename;	///< the file that was written, empty when no filename could be found
+};
+
 enum SnapshotType CPP_11(: Int) {
 	SNAPSHOT_SAVELOAD,
 	SNAPSHOT_DEEPCRC_LOGICONLY,
@@ -157,16 +166,15 @@ public:
 
 	// save game methods
 	//MODDD - wrapper for a new global, original name given an underscore in front
-	SaveCode saveGame( AsciiString filename,
+	SaveResult saveGame( AsciiString filename,
 										 UnicodeString desc,
 										 SaveFileType saveType,
-										 SnapshotType which = SNAPSHOT_SAVELOAD  );
-	SaveCode _saveGame( AsciiString filename,
-										 UnicodeString desc,
-										 SaveFileType saveType,
-										 SnapshotType which = SNAPSHOT_SAVELOAD  );  ///< save a game
-
-	SaveCode missionSave();																	 ///< do a in between mission save
+										 SnapshotType which = SNAPSHOT_SAVELOAD );  ///< save a game
+	SaveResult _saveGame( AsciiString filename,
+										UnicodeString desc,
+										SaveFileType saveType,
+										SnapshotType which = SNAPSHOT_SAVELOAD );  ///< save a game
+	SaveResult missionSave();																 ///< do a in between mission save
 
 	//MODDD - wrapper for a new global, original name given an underscore in front
 	SaveCode loadGame( AvailableGameInfo gameInfo );							 ///< load a save file
