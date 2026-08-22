@@ -637,7 +637,7 @@ void ActiveBody::attemptDamage( DamageInfo *damageInfo )
 				
 					fprintf(outputFile, " - line:635 - object ");
 					printObjectIdentifyingInfo(outputFile, srcObj);
-					fprintf(outputFile, " has getControllingPlayer()==nullptr");
+					fprintf(outputFile, " has getControllingPlayer()==nullptr\n");
 					fclose(outputFile);
 				}
 
