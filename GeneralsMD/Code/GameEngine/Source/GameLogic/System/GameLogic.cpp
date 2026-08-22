@@ -4946,7 +4946,7 @@ Object* GameLogic::findObjectByID( ObjectID id )
 				// not good - reference is still there & something requested access to it
 				FILE* outputFile = fopen("test_crash_findObjectByID_invalid.txt", "a");
 				printTimeStamp(outputFile);
-				fprintf(outputFile, " - ID:%d occupied by template \"%s\" is being referenced after being deleted.", id, m_objTemplateName[(size_t)id].str());
+				fprintf(outputFile, " - ID:%d occupied by template \"%s\" is being referenced after being deleted.\n", id, m_objTemplateName[(size_t)id].str());
 				fclose(outputFile);
 			}
 			return nullptr;
