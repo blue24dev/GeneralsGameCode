@@ -8314,28 +8314,26 @@ void ScriptEngine::evaluateAndProgressAllSequentialScripts()
 				// MODDD - splitting the declaration's assignment, adding a if-then to force 'displayMessage' to 'FALSE' if
 				// it's guaranteed impossible for the later 'AppendDebugMessage' to ever write anything.
 				// This should cut down on some waste from generating these strings that never have a chance to show up anywhere.
-				// If-then wrapper (and 'else' block) is new, existing script is as-is otherwise.
 				// MODDD - TODO - should more places here check for 'shouldHandleSequentialScriptDebugMessage' before things that
 				// only exist for some later 'AppendDebugMessage' call?
 				//Bool displayMessage = TRUE;
 				Bool displayMessage;
 				if (shouldHandleSequentialScriptDebugMessage())
 				{
-					//MODDD - moved
-					//displayMessage = TRUE;
-					// Time to progress to the next task.
-					if (seqScript->m_dontAdvanceInstruction) {
-						seqScript->m_dontAdvanceInstruction = FALSE;
-						displayMessage = FALSE;
-					} else {
-						//MODDD - moved to here
-						displayMessage = TRUE;
-						++seqScript->m_currentInstruction;
-					}
+					displayMessage = !seqScript->m_dontAdvanceInstruction;
 				}
 				else
 				{
 					displayMessage = FALSE;
+				}
+
+				// Time to progress to the next task.
+				if (seqScript->m_dontAdvanceInstruction) {
+					seqScript->m_dontAdvanceInstruction = FALSE;
+					//MODDD - handling above instead
+					//displayMessage = FALSE;
+				} else {
+					++seqScript->m_currentInstruction;
 				}
 
 				//MODDD - splitting the declaration's assignment for a new if-then wrapper. Existing script is as-is otherwise.
