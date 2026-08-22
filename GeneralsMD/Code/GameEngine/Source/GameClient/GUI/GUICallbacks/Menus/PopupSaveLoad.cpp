@@ -56,6 +56,7 @@
 #include "GameClient/GameText.h"
 #include "GameClient/GameWindowManager.h"
 #include "GameClient/GUICallbacks.h"
+#include "GameClient/SaveLoadFeedback.h"
 #include "GameClient/Shell.h"
 #include "GameLogic/GameLogic.h"
 #include "GameClient/GameWindowTransitions.h"
@@ -390,23 +391,35 @@ static void doLoadGame()
 	//GameWindow *listboxGames = TheWindowManager->winGetWindowFromId( parent, NAMEKEY( "PopupSaveLoad.wnd:ListboxGames" ) );
 	DEBUG_ASSERTCRASH( listboxGames, ("doLoadGame: Unable to find game listbox") );
 
-	// get selected game info
-	AvailableGameInfo *selectedGameInfo = getSelectedSaveFileInfo( listboxGames );
-	DEBUG_ASSERTCRASH( selectedGameInfo, ("doLoadGame: No selected game info found") );
-
-	// when loading a game we also close the quit/esc menu for the user when in-game
-	if( TheShell->isShellActive() == FALSE )
+	AsciiString filename;
+	SaveCode result = SC_INVALID;
 	{
-		destroyQuitMenu();
+		// get selected game info
+		AvailableGameInfo *selectedGameInfo = getSelectedSaveFileInfo( listboxGames );
+		DEBUG_ASSERTCRASH( selectedGameInfo, ("doLoadGame: No selected game info found") );
+
+		// when loading a game we also close the quit/esc menu for the user when in-game
+		if( TheShell->isShellActive() == FALSE )
+		{
+			destroyQuitMenu();
 //		ToggleQuitMenu();
 //		TheTransitionHandler->remove("QuitNoSave");
 //		TheTransitionHandler->remove("QuitFull");
-	}
-	else
-	{
-		TheTransitionHandler->remove("MainMenuLoadReplayMenu");
-		TheTransitionHandler->remove("MainMenuLoadReplayMenuBack");
-		TheGameLogic->prepareNewGame( GAME_SINGLE_PLAYER, DIFFICULTY_NORMAL, 0 );
+		}
+		else
+		{
+			TheTransitionHandler->remove("MainMenuLoadReplayMenu");
+			TheTransitionHandler->remove("MainMenuLoadReplayMenuBack");
+			TheGameLogic->prepareNewGame( GAME_SINGLE_PLAYER, DIFFICULTY_NORMAL, 0 );
+		}
+
+		//
+		// load game, note the *copy* of the selected game info is passed here because we will
+		// loose these allocated user data pointers attached as listbox item data when the
+		// engine resets
+		//
+		filename = selectedGameInfo->filename;
+		result = TheGameState->loadGame( *selectedGameInfo );
 	}
 
 	//
@@ -417,22 +430,26 @@ static void doLoadGame()
 	//MODDD - replacing this.
 	//MODDD - The 'clearGameData'/'reset' seems redundant. See 'loadGame', already does this if there is a
 	// failure loading a file & it didn't stop early on failing to find a file altogether.
-	/*
-	if (TheGameState->loadGame( *selectedGameInfo ) != SC_OK)
+	//MODDD - UPDATE - this may no longer be the case - going to trust what's here as of TheSuperHackers for now
+	// ---
+	presentLoadResult( result, filename );
+	if (result != SC_OK)
 	{
 		if (TheGameLogic->isInGame())
 			TheGameLogic->clearGameData( FALSE );
 		TheGameEngine->reset();
 		TheShell->showShell(TRUE);
 	}
-	*/
 	// ---
-	SaveCode saveResult = TheGameState->loadGame( *selectedGameInfo );
+	// (my original simplified version, up-to-date with the codebase as of TheSuperHackers changes)
+	/*
+	presentLoadResult( result, filename );
 	// For a 'file not found' result, no need to do anything - game isn't exited
-	if (saveResult == SC_INVALID_DATA)
+	if (result == SC_INVALID_DATA)
 	{
 		TheShell->showShell(TRUE);
 	}
+	*/
 	// ---
 
 }
@@ -800,7 +817,7 @@ WindowMsgHandledType SaveLoadMenuSystem( GameWindow *window, UnsignedInt msg,
 					// save the game
 					AsciiString filename;
 					filename = selectedGameInfo->filename;
-					TheGameState->saveGame( filename, selectedGameInfo->saveGameInfo.description, fileType );
+					presentSaveResult( TheGameState->saveGame( filename, selectedGameInfo->saveGameInfo.description, fileType ) );
 
 /*
 					// set the description text entry field to default value
@@ -864,7 +881,7 @@ WindowMsgHandledType SaveLoadMenuSystem( GameWindow *window, UnsignedInt msg,
 				AsciiString filename;
 				if( selectedGameInfo )
 					filename = selectedGameInfo->filename;
-				TheGameState->saveGame( filename, desc, fileType );
+				presentSaveResult( TheGameState->saveGame( filename, desc, fileType ) );
 
 			}
 			else if( controlID == buttonSaveDescCancel )
