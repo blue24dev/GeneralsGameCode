@@ -1262,16 +1262,6 @@ const Object* Object::getOuterObject() const
 //-------------------------------------------------------------------------------------------------
 void Object::onDestroy()
 {
-	//MODDD - seems like a good idea to let inner logic know that looks back at this object.
-	// Being destroyed by unusual means like a garrisoned building deleting all occupants can avoid the damage system's usual
-	// 'setEffectivelyDead' setter.
-	// Also, consider 'Object::onDie', but the caller often also calls something like 'ActiveBody::internalChangeHealth' which
-	// calls 'setEffectivelyDead' if the health becomes 0 or less.
-	// Mainly, this addresses a small technicality of 'RiderChangeContain::onRemoving' doing a bit more than needed because
-	// its check on 'bike->isEffectivelyDead()' fails, even though the source of the call is the bike being deleted but it's
-	// deleting its 'rider' before deleting itself (rider checks the bike before this can be realized).
-	setEffectivelyDead(TRUE);
-
 	//MODDD - adding support for partial automatic refunds when in-progress/under-construction buildings are destroyed.
 	// This is a compromise between refunding 100% for being under construction at all (would reward spamming build
 	// sites around enemies just to be disruptive), and the annoying 0% for being taken out by fast attacks before a
