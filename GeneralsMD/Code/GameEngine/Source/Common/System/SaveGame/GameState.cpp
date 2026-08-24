@@ -636,7 +636,8 @@ SaveResult GameState::missionSave()
 }
 
 //MODDD - convenience wrapper for the new global
-SaveCode GameState::loadGame( AvailableGameInfo gameInfo ) {
+SaveCode GameState::loadGame( AvailableGameInfo gameInfo )
+{
 	globalXferStatus = XFER_LOAD;
 	SaveCode result = _loadGame(gameInfo);
 	globalXferStatus = XFER_INVALID;
@@ -750,6 +751,7 @@ SaveCode GameState::_loadGame( AvailableGameInfo gameInfo )
 		TheGameLogic->clearGameData( FALSE );
 		// ---
 
+		//MODDD - NOTE - no need to set 'gameStatus' here, 'clearGameData' above already handled that.
 		return SC_INVALID_DATA;	// you can't use a naked "throw" outside of a catch statement!
 
 	}

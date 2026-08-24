@@ -336,10 +336,6 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 #if RTS_ZEROHOUR
 	static NameKeyType UndeadBodyNameKey = NAMEKEY("UndeadBody");
 #endif
-#if RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE
-	static NameKeyType AutoDepositUpdateNameKey = NAMEKEY("AutoDepositUpdate");
-	static NameKeyType HackInternetAIUpdateNameKey = NAMEKEY("HackInternetAIUpdate");
-#endif
 #if CUSTOM_ATTRIBUTE_CHANGES
 	static NameKeyType RebuildHoleExposeDieNameKey = NAMEKEY("RebuildHoleExposeDie");
 	static NameKeyType MaxHealthUpgradeNameKey = NAMEKEY("MaxHealthUpgrade");
@@ -349,6 +345,8 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	static NameKeyType OCLSpecialPowerNameKey = NAMEKEY("OCLSpecialPower");
 	static NameKeyType CashHackSpecialPowerNameKey = NAMEKEY("CashHackSpecialPower");
 #endif
+	static NameKeyType AutoDepositUpdateNameKey = NAMEKEY("AutoDepositUpdate");
+	static NameKeyType HackInternetAIUpdateNameKey = NAMEKEY("HackInternetAIUpdate");
 	
 #if CUSTOM_ATTRIBUTE_CHANGES
 	Bool foundStealthDetectorUpdate = false;
@@ -487,30 +485,6 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 #endif
 		}
 #endif
-#if RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE
-		else if( modNameKey == AutoDepositUpdateNameKey )
-		{
-			AutoDepositUpdateModuleData* _data = (AutoDepositUpdateModuleData*)data;
-			// if the delay is less than 5 seconds, go ahead and double it
-			if (_data->m_depositFrame / LOGICFRAMES_PER_SECOND < 5)
-			{
-				_data->m_depositFrame *= 2;
-			}
-			else
-			{
-				// otherwise, leave the rate unaffected but half the amount instead
-				_data->m_depositAmount /= 2;
-			}
-		}
-		else if( modNameKey == HackInternetAIUpdateNameKey )
-		{
-			HackInternetAIUpdateModuleData* _data = (HackInternetAIUpdateModuleData*)data;
-			_data->m_cashUpdateDelay *= 2;
-			_data->m_cashUpdateDelayFast *= 2;
-			// increase the XP per hack to rank up in the same amount of time
-			_data->m_xpPerCashUpdate *= 2;
-		}
-#endif
 #if CUSTOM_ATTRIBUTE_CHANGES
 		else if( modNameKey == RebuildHoleExposeDieNameKey )
 		{
@@ -570,6 +544,55 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			}
 		}
 #endif
+		else if( modNameKey == AutoDepositUpdateNameKey )
+		{
+#if RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE
+			AutoDepositUpdateModuleData* _data = (AutoDepositUpdateModuleData*)data;
+			// if the delay is less than 5 seconds, go ahead and double it
+			if (_data->m_depositFrame / LOGICFRAMES_PER_SECOND < 5)
+			{
+				_data->m_depositFrame *= 2;
+			}
+			else
+			{
+				// otherwise, leave the rate unaffected but half the amount instead
+				_data->m_depositAmount /= 2;
+			}
+#endif
+		}
+		else if( modNameKey == HackInternetAIUpdateNameKey )
+		{
+			// Note - since the money from this ability is often small per update (5 or 6 credits in retail?), going to double
+			// its time & double its cash so there isn't a net change in the amount of income for a given time period.
+			// The point is to reduce the round error from some cheats (ex: +10% income -> completely lost to round error in anything under 10).
+			HackInternetAIUpdateModuleData* _data = (HackInternetAIUpdateModuleData*)data;
+			(void)_data;
+
+			// could make this depend on CUSTOM_ATTRIBUTE_CHANGES? No net change so I don't think I need to.
+			_data->m_cashUpdateDelay *= 2;
+#if RTS_ZEROHOUR
+			_data->m_cashUpdateDelayFast *= 2;
+#endif
+			// increase the XP per hack to rank up in the same amount of time
+			_data->m_xpPerCashUpdate *= 2;
+			_data->m_regularCashAmount *= 2;
+			_data->m_veteranCashAmount *= 2;
+			_data->m_eliteCashAmount *= 2;
+			_data->m_heroicCashAmount *= 2;
+#if RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE
+			// double the delay again w/o adjusting cash amount per update to halve the income
+			_data->m_cashUpdateDelay *= 2;
+#if RTS_ZEROHOUR
+			_data->m_cashUpdateDelayFast *= 2;
+#endif
+			// XP boost will be 1.5 times instead since this the overall pace of the game is slower.
+			// An income source ranking up at the same rate as the original game with everything else slowed down (most factions
+			// don't get rank-up-able income sources) would be an unfair advantage, I feel.
+			// This should be possible without roundoff error even in retail's XP of 1, since it is guaranteed doubled above now:
+			// [at least 2] times 1.5 -> 3
+			_data->m_xpPerCashUpdate *= 1.5;
+#endif
+		}
 	}
 
 #if CUSTOM_ATTRIBUTE_CHANGES
@@ -1277,8 +1300,7 @@ void objectContainedByOnDeleteCheck(Object* currentObject, int callSource)
 	{
 		if (objThru->getContainedBy() != nullptr && objThru->getContainedBy() == currentObject)
 		{
-			FILE* outputFile;
-			outputFile = fopen("test_crash_containedByBadMemoryBug.txt", "a");
+			FILE* outputFile = fopen("test_crash_containedByBadMemoryBug.txt", "a");
 			printTimeStamp(outputFile);
 
 			objectContainedByOnDeleteCheck_printLabel(outputFile, callSource);

@@ -9225,8 +9225,7 @@ void Pathfinder::prependCells( Path *path, const Coord3D *fromPos,
 	// Taking inspiration from the 'RETAIL_COMPATIBLE_PATHFINDING' fix below, hopefully this is ok in a pinch?
 	if (!cell)
 	{
-		FILE* outputFile;
-		outputFile = fopen("test_crash_AIPathfind.txt", "a");
+		FILE* outputFile = fopen("test_crash_AIPathfind.txt", "a");
 		printTimeStamp(outputFile);
 		fputs(" - 'cell' is unexpectedly 'nullptr' in 'Pathfinder::prependCells'!\n", outputFile);
 		
