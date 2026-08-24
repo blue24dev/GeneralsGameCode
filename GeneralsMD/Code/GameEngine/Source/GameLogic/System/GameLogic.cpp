@@ -4941,6 +4941,8 @@ Object* GameLogic::findObjectByID( ObjectID id )
 		if (!m_objValid[(size_t)id])
 		{
 			// ultimately disallow returning an object that's being/been deleted.
+			// - disable printout for now, quite spammy
+			/*
 			if (m_objVector[(size_t)id] != nullptr)
 			{
 				// not good - reference is still there & something requested access to it
@@ -4949,6 +4951,7 @@ Object* GameLogic::findObjectByID( ObjectID id )
 				fprintf(outputFile, " - ID:%d occupied by template \"%s\" is being referenced after being deleted.\n", id, m_objTemplateName[(size_t)id].str());
 				fclose(outputFile);
 			}
+			*/
 			return nullptr;
 		}
 		// ------------------------
