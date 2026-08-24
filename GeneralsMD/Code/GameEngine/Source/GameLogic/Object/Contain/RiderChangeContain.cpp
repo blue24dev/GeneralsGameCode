@@ -294,7 +294,11 @@ void RiderChangeContain::onRemoving( Object *rider )
 {
 	Object *bike = getObject();
 	//Note if the bike dies, the rider dies too.
-	if( bike->isEffectivelyDead() )
+	//MODDD - change to this flag that's set earlier, so this being reached sooner than expected through some
+	// call chain doesn't see the bike as 'still alive' (point to 'kill' the bike not yet reached but will happen
+	// soon enough -> typically that's a tear-down so why bother skipping here to set a scuttle delay?).
+	//if( bike->isEffectivelyDead() )
+	if( bike->m_isBeingDeleted )
 	{
 #if EXTRA_DEBUG_HELP
 		g_destroyObjectSource.push_back(42);

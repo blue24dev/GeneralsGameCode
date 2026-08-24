@@ -513,11 +513,11 @@ void GameLogic::reset()
 	m_objVector.clear();
 	m_objVector.resize(OBJ_HASH_SIZE, nullptr);
 
-	//MODDD
-	m_objValid.clear();
-	m_objValid.resize(OBJ_HASH_SIZE, FALSE);
-	m_objTemplateName.clear();
-	m_objTemplateName.resize(OBJ_HASH_SIZE, nullptr);
+	//MODDD - extra complementary 'm_objVector' lists
+	//m_objValid.clear();
+	//m_objValid.resize(OBJ_HASH_SIZE, FALSE);
+	//m_objTemplateName.clear();
+	//m_objTemplateName.resize(OBJ_HASH_SIZE, nullptr);
 
 	m_pauseFrame = 0;
 	m_pauseSound = FALSE;
@@ -4628,15 +4628,15 @@ void GameLogic::addObjectToLookupTable( Object *obj )
 		//MODDD - moved expression in argument below to variable
 		size_t newSize = m_objVector.size() * 2;
 		m_objVector.resize(newSize, nullptr);
-		//MODDD
-		m_objValid.resize(newSize, FALSE);
-		m_objTemplateName.resize(newSize, nullptr);
+		//MODDD - extra complementary 'm_objVector' lists
+		//m_objValid.resize(newSize, FALSE);
+		//m_objTemplateName.resize(newSize, nullptr);
 	}
 
 	m_objVector[ newID ] = obj;
-	//MODDD
-	m_objValid[newID] = true;
-	m_objTemplateName[newID] = obj->getTemplate() ? obj->getTemplate()->getName() : "!!!NO TEMPLATE!!!";
+	//MODDD - extra complementary 'm_objVector' lists
+	//m_objValid[newID] = true;
+	//m_objTemplateName[newID] = obj->getTemplate() ? obj->getTemplate()->getName() : "!!!NO TEMPLATE!!!";
 
 }
 
@@ -4654,8 +4654,10 @@ void GameLogic::removeObjectFromLookupTable( Object *obj )
 	// remove from lookup table
 //	m_objHash.erase( obj->getID() );
 	m_objVector[ obj->getID() ] = nullptr;
-	//MODDD - though, deletion script should handle this sooner than this point for safety
-	m_objValid[ obj->getID() ] = false;
+	//MODDD - extra complementary 'm_objVector' lists
+	// Keep in mind if some other place doesn't set this to 'false' sooner, there isn't any
+	// difference from just relying on the 'm_objVector[#]' lookup for this ID being non-null.
+	//m_objValid[ obj->getID() ] = false;
 
 }
 
@@ -4731,10 +4733,16 @@ void GameLogic::_destroyObject( Object *obj )
 	DEBUG_ASSERTCRASH(obj != nullptr, ("destroying null object"));
 
 	// if already flagged for destruction, ignore
+	//MODDD - can check the new flag instead
+	/*
 	if (!obj || obj->isDestroyed())
 		return;
+	*/
+	if (!obj || obj->m_isBeingDeleted)
+		return;
 
-	//MODDD - seems like a good idea to let inner logic know that looks back at this object.
+	//MODDD - extra complementary 'm_objVector' lists (partially)
+	// sSems like a good idea to let inner logic know that looks back at this object.
 	// Being destroyed by unusual means like a garrisoned building deleting all occupants can avoid the damage system's usual
 	// 'setEffectivelyDead' setter.
 	// Also, consider 'Object::onDie', but the caller often also calls something like 'ActiveBody::internalChangeHealth' which
@@ -4744,11 +4752,18 @@ void GameLogic::_destroyObject( Object *obj )
 	// deleting its 'rider' before deleting itself (rider checks the bike before this can be realized).
 	// At this point, kindof have to wonder if changing particular places like that to use 'obj->isDestroyed()' instead,
 	// since as of retail, that is set sooner in the object destruction process.
+	//MODDD - disabling this, could be causing some crashes from weird deep inner issues around "StateMachine::m_stateMap"
+	// for some things. feels like this engine is made out of hot glue and duct tape sometimes.
 	// ---------
+	/*
 	obj->setEffectivelyDead(TRUE);
 	// also, this
 	m_objValid[ obj->getID() ] = false;
+	*/
 	// ---------
+
+	//MODDD - how about the idea above with a new flag instead?
+	obj->m_isBeingDeleted = true;
 
 	// run the object onDestroy event if provided
 	for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
@@ -4936,8 +4951,9 @@ Object* GameLogic::findObjectByID( ObjectID id )
 	if( (size_t)id < m_objVector.size() )
 	//MODDD - added brackets
 	{
-		//MODDD
+		//MODDD - extra complementary 'm_objVector' lists
 		// ------------------------
+#if 0
 		if (!m_objValid[(size_t)id])
 		{
 			// ultimately disallow returning an object that's being/been deleted.
@@ -4954,6 +4970,7 @@ Object* GameLogic::findObjectByID( ObjectID id )
 			*/
 			return nullptr;
 		}
+#endif
 		// ------------------------
 
 		return m_objVector[(size_t)id];

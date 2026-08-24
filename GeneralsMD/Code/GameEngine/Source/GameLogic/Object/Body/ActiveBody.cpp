@@ -629,7 +629,7 @@ void ActiveBody::attemptDamage( DamageInfo *damageInfo )
 			{
 				Player *srcPlayer = srcObj->getControllingPlayer();
 
-				//MODDD - debug - is this realistically even possible still??
+				//MODDD - debug - is this still possible or linked to something dumb I did?
 				if (srcPlayer == nullptr)
 				{
 					FILE* outputFile = fopen("test_crash_ActiveBody__atemptDamage.txt", "a");
