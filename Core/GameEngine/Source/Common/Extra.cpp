@@ -1014,7 +1014,7 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 	const UnsignedInt startMin = 8;
 	const UnsignedInt endMin = 80;
 	const Real startModifier = 1.00f;
-	const Real endModifier = 0.60f;
+	const Real endModifier = 0.80f;
 
 	Int _buildTime = buildTime;
 	if (player->getPlayerType() == PLAYER_COMPUTER)

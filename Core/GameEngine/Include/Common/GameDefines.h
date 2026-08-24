@@ -509,7 +509,7 @@
 
 // ----------------------------------------------------------------------------------------------------------
 // Bundles of settings here for convenient access
-#define FORCE_GAME_CONTEXT FGC_GENERALS_CHALLENGE
+#define FORCE_GAME_CONTEXT FGC_NONE
 
 #define DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY DIFFICULTY_HARD
 
