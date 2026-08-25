@@ -406,6 +406,9 @@ Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& 
 
 	m_status = objectStatusMask;
 
+	// since this won't be filled by save data this route
+	this->m_moneySpentOnMe = 0;
+
 	createBehaviorModules_PRE(tt);
 
 	setTeam(team ? team : ThePlayerList->getNeutralPlayer()->getDefaultTeam());
@@ -416,19 +419,20 @@ Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& 
 	constructorOnActualTeamAssigned();
 	setStartVeterancy();
 
-	if (!objectInitLockLocalTemp) {
+	if (!objectInitLockLocalTemp)
+	{
 		runCreateModules();
 		constructorEnd();
 	}
 
 	// TODO - this should be handled externally instead, anywhere making an object outside of map start / loading a game
 	// should know to call these too, a new util for just those places maybe
-	if (!isInitLockedHard() && !objectInitLockLocalTemp){
+	if (!isInitLockedHard() && !objectInitLockLocalTemp)
+	{
 		gamePostLoad();
 	}
 	this->objectInitLockLocal = FALSE;
 	this->objectInitLockLocalTemp = FALSE;
-	this->moneySpentOnMe = 0;
 }
 
 //MODDD
@@ -731,7 +735,8 @@ void Object::runCreateModules()
 void Object::initHookup()
 {
 	// Don't involve the radar system if this is loading a game, when radar data is loaded this will be handled.
-	if (!(isInitLocked() && globalXferStatus == XFER_LOAD)) {
+	if (!(isInitLocked() && globalXferStatus == XFER_LOAD))
+	{
 		TheRadar->addObject( this );
 	}
 
@@ -760,6 +765,9 @@ void Object::initConstructor(const ThingTemplate* tt)
 	// that were removed (maybe the setTeam call during object init send a yes/no param?), this var could be
 	// removed.
 	m_modulesReady = false;
+
+	//MODDD - NEW. well gee, I would certainly hope not this early
+	m_isBeingDeleted = false;
 	
 	// Force the thing template to use the most overridden version of itself - jkmcd
 	// Note that after this, the object will be using m_template, which forces the usage of the
@@ -888,7 +896,8 @@ void Object::initObject()
 	//MODDD - don't run this while starting a game / loading a saved game.
 	// This will be called at the end when all objects are present.
 	/*
-	if (!isInitLocked()) {
+	if (!isInitLocked())
+	{
 		// If I have a valid team assigned, I can run through my Upgrade modules with his flags
 		updateUpgradeModules();
 	}
@@ -1049,11 +1058,11 @@ Bool Object::isInitLockedHard()
 }
 Int Object::getMoneySpentOnMe()
 {
-	return moneySpentOnMe;
+	return m_moneySpentOnMe;
 }
 void Object::setMoneySpentOnMe(Int moneySpentOnMe)
 {
-	this->moneySpentOnMe = moneySpentOnMe;
+	this->m_moneySpentOnMe = moneySpentOnMe;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1278,7 +1287,8 @@ void Object::onDestroy()
 	// The 'OBJECT_STATUS_RECONSTRUCTING' check is for being a GLA hole that's rebuilding - not part of this feature.
 	// Also, if I understand right, buildings being sold use a construction percent below 100 to steadily count down
 	// but lack the '..._UNDER_CONSTRUCTION' status. So redundant refunds shouldn't be an issue.
-	if ( this->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION) && !this->testStatus(OBJECT_STATUS_RECONSTRUCTING) ) {
+	if ( this->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION) && !this->testStatus(OBJECT_STATUS_RECONSTRUCTING) )
+	{
 		Player *thisPlayer = this->getControllingPlayer();
 		Money *money = thisPlayer->getMoney();
 
@@ -1289,14 +1299,17 @@ void Object::onDestroy()
 		// ---
 		// UnsignedInt rawAmount = this->getTemplate()->calcCostToBuild( thisPlayer );
 		UnsignedInt rawAmount = getMoneySpentOnMe();
-		if (rawAmount != 0) {
+		if (rawAmount != 0)
+		{
 			// Instead of always refunding 100% of the money, use a formula:
 			//   (100 - <construction progress %>) * 0.90 * total cost.
 			// That means you get the best refund (90%) at 0% construction progress, and it decreases up until 100% (nothing).
 			// And, sanity check: require a percent between 0 and 100 (do nothing if it's below 0, how did that happen)
 			Real constructionPercent = this->getConstructionPercent();
-			if (constructionPercent >= 0.0f) {
-				if (constructionPercent > 100.0f) {
+			if (constructionPercent >= 0.0f)
+			{
+				if (constructionPercent > 100.0f)
+				{
 					// clip it (still, how?)
 					constructionPercent = 100.0f;
 				}
@@ -2770,7 +2783,15 @@ Bool Object::isRecognizableToEnemy() const
 {
 	// Not necessary, checking the status should be enough
 	//StealthUpdate* stealth = getStealth();
-	if ((!testStatus( OBJECT_STATUS_STEALTHED ) && !testStatus( OBJECT_STATUS_DISGUISED )) || testStatus( OBJECT_STATUS_DETECTED )) {
+	if
+	(
+		(
+			!testStatus( OBJECT_STATUS_STEALTHED ) &&
+			!testStatus( OBJECT_STATUS_DISGUISED )
+		) ||
+		testStatus( OBJECT_STATUS_DETECTED )
+	)
+	{
 		// Clear to the enemy - not trying to hide or my cover's blown
 		return TRUE;
 	}
@@ -2872,7 +2893,8 @@ void Object::setDisabledUntil( DisabledType type, UnsignedInt frame )
 	// ... you get weird side effects if this is added, so don't do this yet at least. Maybe its mask isn't completley accurate/filled-out
 	// if it was never expected to be used here, somehow.
 	/*
-	if (!isDisabledByType(type)) {
+	if (!isDisabledByType(type))
+	{
 		return;
 	}
 	*/
@@ -2880,7 +2902,8 @@ void Object::setDisabledUntil( DisabledType type, UnsignedInt frame )
 	//MODDD - bugfix, minor. If this is a building under construction and this is a low-power disable, ignore it.
 	// No sense in making the low-power effect come on during construction when #1: it isn't drawing power yet,
 	// and #2: new construction made while low power doesn't show the low-power status (inconsistent).
-	if ( type == DISABLED_UNDERPOWERED && testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION) ) {
+	if ( type == DISABLED_UNDERPOWERED && testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION) )
+	{
 		return;
 	}
 
@@ -3773,7 +3796,8 @@ void Object::scoreTheKill( const Object *victim )
 
 	//MODDD - check from further down moved to here. under-construction victims shouldn't have some things
 	// blocked and some things not - block everything for consistency.
-	if (victim->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION)) {
+	if (victim->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION))
+	{
 		return;
 	}
 
@@ -3991,7 +4015,8 @@ void Object::onVeterancyLevelChanged( VeterancyLevel oldLevel, VeterancyLevel ne
 
 	//MODDD - don't run this while starting a game / loading a saved game.
 	// This will be called at the end when all objects are present.
-	if (!isInitLocked()) {
+	if (!isInitLocked())
+	{
 		updateUpgradeModules();
 	}
 
@@ -5037,12 +5062,14 @@ void Object::xfer( Xfer *xfer )
 
 	DEBUG_LOG(("Xfer Object %s id=%d",getTemplate()->getName().str(),id));
 
-	if (xfer->getXferMode() == XFER_LOAD) {
+	if (xfer->getXferMode() == XFER_LOAD)
+	{
 		loadInit();
 	}
 
 	/*
-	if( xfer->getXferMode() == XFER_LOAD ) {
+	if( xfer->getXferMode() == XFER_LOAD )
+	{
 		TheGameLogic->sendObjectCreated( this );
 		ThePartitionManager->registerObject( this );
 	}
@@ -5084,7 +5111,8 @@ void Object::xfer( Xfer *xfer )
 	// team
 	//MODDD - check xfer mode, only saving needs to bother getting the existing ID
 	TeamID teamID;
-	if (xfer->getXferMode() == XFER_SAVE) {
+	if (xfer->getXferMode() == XFER_SAVE)
+	{
 		teamID = m_team ? m_team->getID() : TEAM_ID_INVALID;
 	}
 	xfer->xferUser( &teamID, sizeof( TeamID ) );
@@ -5101,7 +5129,8 @@ void Object::xfer( Xfer *xfer )
 	// drawable id
 	//MODDD - only need to get the drawableID from the current drawable on saving a game
 	DrawableID drawableID;
-	if( xfer->getXferMode() == XFER_SAVE) {
+	if( xfer->getXferMode() == XFER_SAVE)
+	{
 		Drawable *draw = getDrawable();
 		drawableID = draw ? draw->getID() : INVALID_DRAWABLE_ID;
 	}
@@ -5168,7 +5197,8 @@ void Object::xfer( Xfer *xfer )
 	xfer->xferSnapshot( m_partitionLastLook );
 	
 #if PARTITIONMANAGER_ADVANCED_SHROUD_MECHANICS
-	if ( version >= 10 ) {
+	if ( version >= 10 )
+	{
 	  xfer->xferSnapshot( m_partitionLastLookJammable );
 	}
 #endif
@@ -5350,7 +5380,8 @@ void Object::xfer( Xfer *xfer )
 		xfer->xferCoord2D(&m_formationOffset);
 	}
 
-	if( xfer->getXferMode() == XFER_LOAD ) {
+	if( xfer->getXferMode() == XFER_LOAD )
+	{
 		//tt = (const ThingTemplate *) tt->getFinalOverride();
 		//MODDD - do this here!  And is 'getFinalOverride' needed?
 		// I fail to see how 'getTemplate' reaches the current final override implicitly at any point.
@@ -5365,9 +5396,12 @@ void Object::xfer( Xfer *xfer )
 		++moduleCount;
 
 	//MODDD - per the above comment
-	if( xfer->getXferMode() == XFER_SAVE ) {
+	if( xfer->getXferMode() == XFER_SAVE )
+	{
 		xfer->xferUnsignedShort( &moduleCount );
-	} else {
+	}
+	else
+	{
 		UnsignedShort moduleCountIn;
 		xfer->xferUnsignedShort( &moduleCountIn );
 		if (moduleCountIn != moduleCount) {
@@ -5468,7 +5502,8 @@ void Object::xfer( Xfer *xfer )
 
 	/*
 	//MODDD - does here work, or before the module-load stuff above instead?
-	if( xfer->getXferMode() == XFER_LOAD ) {
+	if( xfer->getXferMode() == XFER_LOAD )
+	{
 		const Bool restoring = true;
 		Team* team = m_team;
 		m_team = nullptr;
@@ -5531,7 +5566,8 @@ void Object::xfer( Xfer *xfer )
 		// both as-is and with my object-init changes. And, loading a game would have already re-run basic object
 		// init before this point (set modulesReady to 'false' -> 'true').
 		// (added condition).
-		if (version <= 9) {
+		if (version <= 9)
+		{
 			xfer->xferBool(&m_modulesReady);
 		}
 	}
@@ -5543,6 +5579,8 @@ void Object::xfer( Xfer *xfer )
 	else
 		m_isReceivingDifficultyBonus = FALSE;
 
+	//MODDD - new
+	xfer->xferInt( &m_moneySpentOnMe );
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -5613,7 +5651,8 @@ void Object::giveUpgrade( const UpgradeTemplate *upgradeT )
 		// grant a new upgrade
 		//
 		//MODDD
-		if (!isInitLocked()) {
+		if (!isInitLocked())
+		{
 			updateUpgradeModules();
 		}
 	}
@@ -5647,7 +5686,8 @@ void Object::onCapture( Player *oldOwner, Player *newOwner )
 {
 	//MODDD - Added. See notes in a bugfix further down, but I feel that 'onCapture' running when oldOwner &
 	// newOwner match doesn't make much sense. What impact is this supposed to have?
-	if (oldOwner == newOwner) {
+	if (oldOwner == newOwner)
+	{
 		return;
 	}
 
@@ -6272,14 +6312,17 @@ Real Object::determineNonJammableShroudClearingRange( Real shroudClearingRangeJa
 // Undetected stealthed units shouldn't be spied on, they are unfairly revealed by clearing shroud/fog around them.
 // Disguised units can be treated as the player they're disguised as instead (disguised successfully as something
 // the spying player is still enemies with -> stays spied on, otherwise no, that would be unfairly revealed like stealth).
-PlayerMaskType Object::getFilteredVisionSpiedMask() {
+PlayerMaskType Object::getFilteredVisionSpiedMask()
+{
 	Bool stealthed = (testStatus( OBJECT_STATUS_STEALTHED ) && !testStatus( OBJECT_STATUS_DETECTED ) && !testStatus( OBJECT_STATUS_DISGUISED ) );
-	if (stealthed) {
+	if (stealthed)
+	{
 		// not possible to spy on this
 		return 0;
 	}
 
-	if (!testStatus( OBJECT_STATUS_DISGUISED )) {
+	if (!testStatus( OBJECT_STATUS_DISGUISED ))
+	{
 		// Not cloaked, not disguised - go ahead
 		return m_visionSpiedMask;
 	}
@@ -6298,7 +6341,8 @@ PlayerMaskType Object::getFilteredVisionSpiedMask() {
 	if( update /*&& update->isDisguised()*/ )
 	{
 		Player *disguisedAsPlayer = ThePlayerList->getNthPlayer( update->getDisguisedPlayerIndex() );
-		if (disguisedAsPlayer) {
+		if (disguisedAsPlayer)
+		{
 			// Go through the players that want to spy on this disguised unit (enemies of it, regardless of the disguise).
 			// Only let them spy on it if it is disguised as an enemy unit, on a per-player basis.
 			// Note that detected disguised units lose the disguise (would not even reach this far -> already spied on w/o filtering).
@@ -6312,7 +6356,12 @@ PlayerMaskType Object::getFilteredVisionSpiedMask() {
 				// * spying player is not allies with this unit's player, regardless of the disguise (allies share intel & know of diguised ally units to not think they're enemies)
 				// * spying player is enemies with what this unit is diguised as's player (meant to be fooled by the diguise -> includes this as an enemy to spy on)
 				Player *spyingPlayer = ThePlayerList->getEachPlayerFromMask(visionSpiedMaskClone);
-				if (spyingPlayer->getRelationship( owningPlayer->getDefaultTeam() ) != ALLIES && spyingPlayer->getRelationship( disguisedAsPlayer->getDefaultTeam() ) == ENEMIES) {
+				if
+				(
+					spyingPlayer->getRelationship( owningPlayer->getDefaultTeam() ) != ALLIES &&
+					spyingPlayer->getRelationship( disguisedAsPlayer->getDefaultTeam() ) == ENEMIES
+				)
+				{
 					finalVisionSpiedMask |= spyingPlayer->getPlayerMask();
 				}
 			}

@@ -466,16 +466,19 @@ private:
 //	ObjectPtrHash m_objHash;																///< Used for ObjectID lookups
 	ObjectPtrVector m_objVector;
 
-	//MODDD - added so there can be a corresponding 'valid to continue using' flag associated with each object.
+	//MODDD - extra complementary 'm_objVector' lists
+	// Added so there can be a corresponding 'valid to continue using' flag associated with each object.
 	// When an object has been deleted, there needs to be a way to see this externally (ex: in later look-ups for that ID).
 	// Example: ActiveBody.cpp, "...findObjectByID(m_lastDamageInfo.in.m_sourceID)". This referred to bogus memory and lead
 	// to a crash - all I can figure is that it lead to a since-deleted object.
 	// ---------
+	/*
 public:
 	std::vector<Bool> m_objValid;
 	// And for debugging, the class name most recently assigned to that object (unavailable once it's been deleted).
 	std::vector<AsciiString> m_objTemplateName;
 private:
+*/
 	// ---------
 
 	// this is a vector, but is maintained as a priority queue.
