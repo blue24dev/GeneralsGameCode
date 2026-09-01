@@ -1470,7 +1470,23 @@ StateReturnType AIIdleState::update()
 				Object* enemy = ai->getNextMoodTarget( true, true );
 				if (enemy)
 				{
-	 				ai->aiAttackObject(enemy, NO_MAX_SHOTS_LIMIT, CMD_FROM_AI);
+					//MODDD - added checks for whether this is something that prefers to hijack/enter than use a standard attack
+					// ------------
+					if (obj->getTemplate()->isHijackGuard())
+					{
+						ai->aiHijack(enemy, CMD_FROM_AI);
+					}
+					else if (obj->getTemplate()->isEnterGuard())
+					{
+						ai->aiEnter(enemy, CMD_FROM_AI);
+					}
+					else
+					{
+						//MODDD - NOTE - original line in place of this whole block
+	 					ai->aiAttackObject(enemy, NO_MAX_SHOTS_LIMIT, CMD_FROM_AI);
+					}
+					// ------------
+
 					// weird but true. return state_continue, because if we're here, we're actually an attack state
 					// since we just changed the state, it doesn't really matter what we return here.
 					return STATE_CONTINUE;
@@ -5581,6 +5597,14 @@ void AIAttackState::notifyNewVictimChosen(Object* victim)
 DECLARE_PERF_TIMER(AIAttackState)
 StateReturnType AIAttackState::onEnter()
 {
+	/*
+	if (source->getTemplate()->getName() == "Slth_GLAVehicleCombatBikeHijacker" || source->getTemplate()->getName() == "Slth_GLAInfantryHijackerPropelled")
+	{
+		int x;
+		x = 4;
+	}
+	*/
+
 	USE_PERF_TIMER(AIAttackState)
 	//CRCDEBUG_LOG(("AIAttackState::onEnter() - start for object %d", getMachineOwner()->getID()));
 	Object* source = getMachineOwner();
@@ -5623,6 +5647,7 @@ StateReturnType AIAttackState::onEnter()
 			return STATE_FAILURE;	// we have nothing to attack!
 		}
 		m_victimTeam = victim->getTeam();
+
 		m_attackMachine->setGoalObject( victim );
 		m_originalVictimPos = *victim->getPosition();
 	}
@@ -6294,6 +6319,47 @@ void _AIEnterState::xfer( Xfer *xfer )
 	AIInternalMoveToState::xfer(xfer);
 
 	xfer->xferObjectID(&m_entryToClear);
+
+	//MODDD - this is tempting, but notice that none of the states in AIGuard.cpp (reference for having a 'm_attackState'
+	// sub-state) ever handle saving/loading 'm_attackState' in their 'xfer' methods.
+	// I can only assume here also shouldn't.
+	// Actually, consider that most of those guard states have a '::loadPostProcess' that calls 'onEnter', presumably
+	// to re-start the state. '_AIEnterState' doesn't do that, so, maybe saving the state is a good idea after all
+	// in this case.
+	// ------------
+	Bool hasAttackState;
+	if (xfer->getXferMode() == XFER_SAVE)
+	{
+		hasAttackState = m_attackState!=nullptr;
+	}
+
+	xfer->xferBool(&hasAttackState);
+
+	// well this turned out a lot uglier than expected - AIAttackState doesn't save its params, goody.
+	if (hasAttackState)
+	{
+		Bool b1;
+		Bool b2;
+		Bool b3;
+		if (xfer->getXferMode() == XFER_SAVE)
+		{
+			b1 = m_attackState->getFollow();
+			b2 = m_attackState->getIsAttackingObject();
+			b3 = m_attackState->getIsForceAttacking();
+			xfer->xferBool(&b1);
+			xfer->xferBool(&b2);
+			xfer->xferBool(&b3);
+		}
+		else if (xfer->getXferMode() == XFER_LOAD)
+		{
+			xfer->xferBool(&b1);
+			xfer->xferBool(&b2);
+			xfer->xferBool(&b3);
+			m_attackState = newInstance(AIAttackState)(getMachine(), b1, b2, b3, nullptr);
+		}
+		xfer->xferSnapshot(m_attackState);
+	}
+	// ------------
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -6311,6 +6377,7 @@ StateReturnType _AIEnterState::onEnter()
 
 	Object* obj = getMachineOwner();
 	Object* goal = getMachineGoalObject();
+
 	if (goal)
 	{
 		//MODDD - turned into an overridable feature
@@ -6320,11 +6387,19 @@ StateReturnType _AIEnterState::onEnter()
 
 		m_goalPosition = *goal->getPosition();
 
-		ContainModuleInterface* contain = goal->getContain();
-		if (contain)
+		//MODDD - require this object to be friends with the goal to bother sending them a notification.
+		// Ex: although not possible in retail, if a tiny edit is made in ConverToHijackCrateCollide to allow in-flight air
+		// units to be hijacked, a chinook that's hijack-ordered on will willingly land to let the hijacker take the chinook.
+		// Amusing to watch, but this is more believable if the hijacker could use a disguise and this weren't abuseable
+		// (ex: have disguised hijackers try to enter enemy chinooks 24/7 to effectively keep them grounded).
+		if (goal->getRelationship(obj) == ALLIES)
 		{
-			contain->onObjectWantsToEnterOrExit(obj, WANTS_TO_ENTER);
-			m_entryToClear = goal->getID();
+			ContainModuleInterface* contain = goal->getContain();
+			if (contain)
+			{
+				contain->onObjectWantsToEnterOrExit(obj, WANTS_TO_ENTER);
+				m_entryToClear = goal->getID();
+			}
 		}
 	}
 	else
@@ -6340,7 +6415,53 @@ StateReturnType _AIEnterState::onEnter()
 		ai->getCurLocomotor()->setAllowInvalidPosition(true);
 	}
 	setAdjustsDestination(false);
-	return AIInternalMoveToState::onEnter();
+
+	//MODDD - save the return val for later
+	StateReturnType parentReturnVal = AIInternalMoveToState::onEnter();
+
+	//MODDD - hijacker can fire weapons while running a hijack command
+	// ------------
+	// This is mainly for flying hijackers in the Contra mod to be able to use their dive (technically a weapon) alongside
+	// a hijack command that's properly being used (in retail, this is a plain attack command like anything else, not a hijack
+	// command - it still works because the dive attack leads to a collision that registers as a hijack -> change owner).
+	// This is part of base class behavior ('_AIEnterState' instead of the hijack one) so that a flying hijacker told to
+	// enter an unpiloted vehicle will do the dive too.
+	// If this combination of things ever turns out to be a poor assumption (there is a hijacker with an actual ranged
+	// attack like a side-arm that shouldn't be used on the thing he's trying to hijack), adding INI support to this
+	// (per weapon or for the whole hijacker object) to allow/deny firing weapons on the thing he's running towards to enter/hijack.
+	const WeaponSet* ws = obj->getWeaponSet();
+	if
+	(
+		// require hijacker collide so that anything else entering (ex: infantry garrisoning a building/transport or barracks temporarily to heal)
+		// don't attack it as they enter.
+		obj->getTemplate()->isHijackGuard() &&
+		(
+			ws->getWeaponInWeaponSlot(PRIMARY_WEAPON) != nullptr ||
+			ws->getWeaponInWeaponSlot(SECONDARY_WEAPON) != nullptr ||
+			ws->getWeaponInWeaponSlot(TERTIARY_WEAPON) != nullptr
+		)
+	)
+	{
+		// Puzzlingly, the first bool param (m_follow) is supposed to be set to 'false' for the same retail behavior like diving for flying hijackers in Contra.
+		// I have no clue why, but this is observed for any other typical attack commands with normal left-clicks on enemy units (attack with weapon).
+		Bool isForceAttack = (obj->getRelationship(goal) != ENEMIES);
+
+		m_attackState = newInstance(AIAttackState)(getMachine(), false, true, isForceAttack, nullptr);
+		m_attackState->getMachine()->setGoalObject(goal);
+		StateReturnType returnVal = m_attackState->onEnter();
+		(void)returnVal;
+		// ?
+		/*
+		if (returnVal == STATE_CONTINUE) {
+			return STATE_CONTINUE;
+		}
+		*/
+		// !!!
+		//return AIInternalMoveToState::onEnter();
+	}
+	// ------------
+
+	return parentReturnVal;
 }
 
 //----------------------------------------------------------------------------------------------------------
@@ -6348,6 +6469,14 @@ void _AIEnterState::onExit( StateExitType status )
 {
 	Object* obj = getMachineOwner();
 	AIInternalMoveToState::onExit( status );
+
+	//MODDD - hijacker can fire weapons while running a hijack command
+	if (m_attackState)
+	{
+		m_attackState->onExit(status);
+		deleteInstance(m_attackState);
+		m_attackState = nullptr;
+	}
 
 	// tell the pathfinder to stop ignoring the object
 	AIUpdateInterface *ai = obj->getAI();
@@ -6393,6 +6522,7 @@ StateReturnType _AIEnterState::update()
 	// update the goal position to coincide with the GoalObject
 	Object* obj = getMachineOwner();
 	Object* goal = getMachineGoalObject();
+
 	if (goal)
 	{
 		// if our goal is contained by something else, give up. this is for the following bug:
@@ -6407,6 +6537,8 @@ StateReturnType _AIEnterState::update()
 
 		m_goalPosition = *goal->getPosition();
 		obj->getAI()->friend_setGoalObject(goal);
+
+		//MODDD - let a hijacking unit use 
 
 		//MODDD - turned into an overridable feature
 		//if (!TheActionManager->canEnterObject(obj, goal, obj->getAI()->getLastCommandSource(), CHECK_CAPACITY))
@@ -6493,6 +6625,13 @@ StateReturnType _AIEnterState::update()
 				}
 			}
 		}
+	}
+	
+	//MODDD - hijacker can fire weapons while running a hijack command
+	if (m_attackState)
+	{
+		StateReturnType returnVal = m_attackState->update();
+		(void)returnVal;
 	}
 
 	return code;
@@ -6963,6 +7102,18 @@ void AIGuardRetaliateState::xfer( Xfer *xfer )
 		xfer->xferSnapshot(m_guardRetaliateMachine);
 	}
 
+	//MODDD - new
+	TeamID teamID;
+	if (xfer->getXferMode() == XFER_SAVE)
+	{
+		teamID = m_cachedVictimTeam ? m_cachedVictimTeam->getID() : TEAM_ID_INVALID;
+	}
+	xfer->xferUser( &teamID, sizeof( TeamID ) );
+
+	if(xfer->getXferMode() == XFER_LOAD)
+	{
+		m_cachedVictimTeam = TheTeamFactory->findTeamByID( teamID );
+	}
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -7007,6 +7158,13 @@ StateReturnType AIGuardRetaliateState::onEnter()
 	if( goalObject )
 	{
 		m_guardRetaliateMachine->setNemesisID( goalObject->getID() );
+		//MODDD - similar to AIAttackState, record the team at the time this state is made.
+		// There were a few cases of a state within 'm_guardRetaliateMachine' telling its owner to attack a now-friendly
+		// enemy. If the team transition happens just right, the machine's state's sub-state for attacking (that's not
+		// confusing, right?)
+		// sets its 'm_cachedVictimTeam' to the allied team of the friendly unit to attack at the beginning -> the attack
+		// continues if uninterrupted.
+		m_cachedVictimTeam = goalObject->getTeam();
 	}
 
 	// now that essential parameters are set, set the machine's initial state
@@ -7042,8 +7200,42 @@ StateReturnType AIGuardRetaliateState::update()
 		return STATE_FAILURE;
 	}
 
+	//MODDD - new block
+	//MODDD - TODO - should a null victim be grounds for ending in STATE_FAILURE?
+	Object* innerMachineVictim = m_guardRetaliateMachine->getGoalObject();
+	if (innerMachineVictim != nullptr)
+	{
+		if(innerMachineVictim->getTeam() != m_cachedVictimTeam)
+		{
+			// check the current relationship
+			if (owner->getRelationshipWithAppearance(innerMachineVictim) != ENEMIES)
+			{
+				// if I'm no longer enemies with this, stop
+				return STATE_FAILURE;
+			}
+			else
+			{
+				// Still enemies - okay then. Save the new team and business as usual?
+				m_cachedVictimTeam = innerMachineVictim->getTeam();
+			}
+		}
+	}
+
 	StateReturnType ret = m_guardRetaliateMachine->updateStateMachine();
 	return ret;
+}
+
+//MODDD
+Object *AIGuardRetaliateState::getStateSpecificGoalObject()
+{
+	if (m_guardRetaliateMachine == nullptr) return nullptr;
+	return m_guardRetaliateMachine->getGoalObject();
+}
+//MODDD
+Object *AIGuardRetaliateState::getStateSpecificGoalObject() const
+{
+	if (m_guardRetaliateMachine == nullptr) return nullptr;
+	return m_guardRetaliateMachine->getGoalObject();
 }
 
 //----------------------------------------------------------------------------------------------------------

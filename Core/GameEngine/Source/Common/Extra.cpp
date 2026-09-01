@@ -329,6 +329,9 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 #endif
 	
 	static NameKeyType SalvageCrateCollideNameKey = NAMEKEY("SalvageCrateCollide");
+#if RTS_ZEROHOUR
+	static NameKeyType ConvertToHijackedVehicleCrateCollideNameKey = NAMEKEY("ConvertToHijackedVehicleCrateCollide");
+#endif
 	static NameKeyType StealthUpdateNameKey = NAMEKEY("StealthUpdate");
 	static NameKeyType ActiveBodyNameKey = NAMEKEY("ActiveBody");
 	static NameKeyType StructureBodyNameKey = NAMEKEY("StructureBody");
@@ -385,6 +388,15 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 				_data->m_allowMultiPickup = TRUE;
 			}
 		}
+#if RTS_ZEROHOUR
+		else if ( modNameKey == ConvertToHijackedVehicleCrateCollideNameKey )
+		{
+			// Don't need to do anything to the module data - just force 'hijackGuard' on for this object in the INI.
+			// ex: flying hijackers in the Contra mod - even if they use the fake guard button, this flag is needed
+			// for some hijack commands to take precedence over standard attack ones
+			_this->m_hijackGuard = true;
+		}
+#endif
 		else if( modNameKey == StealthUpdateNameKey )
 		{
 			// This change is part of a bugfix for attack cycles becoming stealthed when evacuated.

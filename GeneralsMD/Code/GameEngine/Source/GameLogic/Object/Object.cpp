@@ -2101,6 +2101,8 @@ Bool Object::getAmmoPipShowingInfo(Int& numTotal, Int& numFull) const
 	call isAbleToAttack prior to calling this! (srj)
 */
 //MODDD - new param 'broadCheck'
+#include "Common/ActionManager.h"
+
 CanAttackResult Object::getAbleToAttackSpecificObject( AbleToAttackType t, const Object* target, CommandSourceType commandSource, WeaponSlotType specificSlot, Bool broadCheck ) const
 {
 	// NO! BAD! WRONG!
@@ -2256,6 +2258,29 @@ Relationship Object::getRelationship(const Object *that) const
 
 	return NEUTRAL;
 
+}
+
+//MODDD - alt version that allows the other object ('that') to offer the player they're portraying themselves as belonging
+// to instead.
+// ex: a disguised enemy bomb truck wants you/your units to think it belongs to you or an ally of yours, use who it looks
+// like it belongs to for the relationship check with the 'this' object/player requesting it.
+Relationship Object::getRelationshipWithAppearance(const Object *that) const
+{
+	if (
+		that->testStatus(OBJECT_STATUS_DISGUISED) &&
+		!that->testStatus(OBJECT_STATUS_DETECTED) &&
+		// also, require not being allies (friends see the actual owner so the hiding mechanic is ignored then)
+		that->getRelationship(this) != ALLIES
+	)
+	{
+		// disguised & fools me: get the player from what the other's presenting itself as belonging to
+		StealthUpdate *update = that->getStealth();
+		Player* that_playerDisguisedAs = ThePlayerList->getNthPlayer( update->getDisguisedPlayerIndex() );
+		return this->getControllingPlayer()->getRelationship( that_playerDisguisedAs->getDefaultTeam() );
+	}
+	
+	// not disguised - no trickery. A normal relationship check works.
+	return this->getRelationship(that);
 }
 
 //MODDD
@@ -2769,6 +2794,13 @@ Bool Object::isHero() const
 //MODDD - NEW. Convenience feature for whether this is visible to the enemy (not stealthed, or detected if so)
 // and not trying to fool them (not disguised). Note that a detected disguised unit immediately loses the disguise.
 // Doesn't consider defection stuff, not meaningfully testable for me.
+// Also, note that some places like 'WeaponSet::getAbleToAttackSpecificObject' do this instead of checking
+// OBJECT_STATUS_DISGUISED (no idea if there's ever a meaningful difference):
+//   StealthUpdate *update = someObject->getStealth();
+//   if( ...update->isDisguised() )
+// Basically, several places in retail similarly check for this without using this utility since added by me.
+// And some places may still need to do a check to see if this object is trying to fool the player viewing it:
+//   someStealthUpdate->getDisguisedPlayerIndex() -> somePlayer->getRelationship(playerImPretendingToBeFor)
 //-------------------------------------------------------------------------------------------------
 Bool Object::isRecognizableToEnemy() const
 {
@@ -4160,7 +4192,6 @@ void Object::createVeterancyLevelFX(VeterancyLevel oldLevel, VeterancyLevel newL
  */
 Bool Object::isAbleToAttack() const
 {
-
 	//******************************************************
 	//********* AUTOMATICALLY FALSE CONDITIONS *************
 	//******************************************************
@@ -4308,7 +4339,8 @@ Bool Object::isAbleToAttack() const
 		}
 	}
 
-	if (getTemplate()->isEnterGuard())
+	//MODDD - added 'isHijackGuard' so that specifying that alone will also suffice
+	if (getTemplate()->isEnterGuard() || getTemplate()->isHijackGuard())
 		return TRUE;
 
 //Default is no

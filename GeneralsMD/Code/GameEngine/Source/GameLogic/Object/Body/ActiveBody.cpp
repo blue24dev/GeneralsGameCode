@@ -60,6 +60,9 @@
 #include "GameLogic/Module/DamageModule.h"
 #include "GameLogic/Module/DieModule.h"
 
+//MODDD
+#include "Common/ActionManager.h"
+
 
 
 #define YELLOW_DAMAGE_PERCENT (0.25f)
@@ -751,11 +754,35 @@ void ActiveBody::attemptDamage( DamageInfo *damageInfo )
 					continue;
 				}
 				//If we have AI and we're mobile, then assist!
-				if( !them->isKindOf( KINDOF_IMMOBILE ))
+				//MODDD - removing the requirement. I believe 'getAbleToAttackSpecificObject' already checks for the attacker being
+				// immobile -> can not return 'POSSIBLE_AFTER_MOVING' to begin with
+				//if( !them->isKindOf( KINDOF_IMMOBILE ))
 				{
 					//But only if we can attack it!
+					//MODDD - adding support for having enter/hijack guard mode
+					// ------------ Original
+					/*
 					CanAttackResult result = them->getAbleToAttackSpecificObject( ATTACK_NEW_TARGET, damager, CMD_FROM_AI );
 					if( result == ATTACKRESULT_POSSIBLE_AFTER_MOVING || result == ATTACKRESULT_POSSIBLE )
+					*/
+					// ------------ New
+					Bool canRetaliate;
+					if (them->getTemplate()->isHijackGuard() && them->isAbleToAttack())
+					{
+						canRetaliate = TheActionManager->canHijackVehicle( them, damager, CMD_FROM_AI );
+					}
+					else if (them->getTemplate()->isEnterGuard() && them->isAbleToAttack())
+					{
+						canRetaliate = TheActionManager->canEnterObject( them, damager, CMD_FROM_AI, CHECK_CAPACITY );
+					}
+					else
+					{
+						CanAttackResult result = them->getAbleToAttackSpecificObject( ATTACK_NEW_TARGET, damager, CMD_FROM_AI );
+						canRetaliate = (result == ATTACKRESULT_POSSIBLE_AFTER_MOVING || result == ATTACKRESULT_POSSIBLE);
+					}
+
+					if (canRetaliate)
+					// ------------
 					{
 						ai->aiGuardRetaliate( damager, them->getPosition(), NO_MAX_SHOTS_LIMIT, CMD_FROM_AI );
 					}
