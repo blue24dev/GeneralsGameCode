@@ -1,6 +1,6 @@
 /*
 **	Command & Conquer Generals Zero Hour(tm)
-**	Copyright 2025 Electronic Arts Inc.
+**	Copyright 2026 TheSuperHackers
 **
 **	This program is free software: you can redistribute it and/or modify
 **	it under the terms of the GNU General Public License as published by
@@ -16,28 +16,15 @@
 **	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// TheSuperHackers @refactor bobtista 10/04/2026 Backend selection seam. The
+// build links exactly one backend implementation, and that implementation
+// defines Create_Render_Backend. WW3D owns the instance it returns; use
+// WW3D::Get_Render_Backend() to reach the active backend.
+
 #pragma once
 
-#include "Lib/BaseType.h"
+class IRenderBackend;
 
-class CButtonShowColor : public CButton
-{
-	protected:
-		RGBColor m_color;
-
-	public:
-		const RGBColor& getColor() const { return m_color; }
-		void setColor(Int color) { m_color.setFromInt(color); }
-		void setColor(const RGBColor& color) { m_color = color; }
-		~CButtonShowColor() override;
-
-
-		static COLORREF RGBtoBGR(Int color);
-		static Int BGRtoRGB(COLORREF color);
-
-
-	protected:
-		afx_msg void OnPaint();
-
-	DECLARE_MESSAGE_MAP();
-};
+// Construct and initialize the backend selected by the build. Exactly one
+// backend implementation must define this function. Returns null on failure.
+IRenderBackend *Create_Render_Backend(void * window, bool lite);

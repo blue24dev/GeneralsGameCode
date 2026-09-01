@@ -292,7 +292,9 @@ protected:
 	virtual void loadPostProcess() override;
 
 private:
-	enum { MIN_REPATH_TIME = 10 };										///< minimum # of frames must elapse before re-pathing
+	//MODDD - increasing, I don't think this is too noticeable most of the time
+	//enum { MIN_REPATH_TIME = 10 };										///< minimum # of frames must elapse before re-pathing
+	enum { MIN_REPATH_TIME = 30 };										///< minimum # of frames must elapse before re-pathing
 protected:
 	Coord3D							m_goalPosition;											///< the goal position to move to
 	PathfindLayerEnum		m_goalLayer;										///< The layer we are moving towards.
@@ -1005,6 +1007,12 @@ public:
 	virtual AsciiString getName() const override;
 #endif
 
+	//MODDD - getters for some things
+	const Bool getFollow() const { return m_follow; }
+	const Bool getIsAttackingObject() const { return m_isAttackingObject; }
+	const Bool getIsForceAttacking() const { return m_isForceAttacking; }
+	AttackExitConditionsInterface* getAttackParameters() const { return m_attackParameters; }
+
 protected:
 	// snapshot interface
 	virtual void crc( Xfer *xfer ) override;
@@ -1109,6 +1117,8 @@ class _AIEnterState : public AIInternalMoveToState
 	MEMORY_POOL_GLUE_ABC(_AIEnterState)
 protected:
 	ObjectID m_entryToClear;
+	//MODDD - hijacker can fire weapons while running a hijack command
+	AIAttackState* m_attackState;
 protected:
 	// snapshot interface
 	virtual void crc( Xfer *xfer ) override;
@@ -1117,7 +1127,12 @@ protected:
 public:
 	//MODDD - constructor adjustment
 	//_AIEnterState( StateMachine *machine ) : AIInternalMoveToState( machine, "AIEnterState" ) { }
-	_AIEnterState( StateMachine *machine, AsciiString name ) : AIInternalMoveToState( machine, name ) { }
+	_AIEnterState( StateMachine *machine, AsciiString name ) : AIInternalMoveToState( machine, name )
+	//MODDD - hijacker can fire weapons while running a hijack command
+	// uncondensed constructor implementation, added 'm_attackState' initialization
+	{
+		m_attackState = nullptr;
+	}
 	virtual StateReturnType onEnter() override;
 	virtual StateReturnType update() override;
 	virtual void onExit( StateExitType status ) override;
@@ -1229,12 +1244,18 @@ class AIGuardRetaliateState : public State
 {
 	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE(AIGuardRetaliateState, "AIGuardRetaliateState")
 public:
-	AIGuardRetaliateState( StateMachine *machine ) : State( machine, "AIGuardRetaliateState" ), m_guardRetaliateMachine(nullptr) {}
+	//MODDD - added 'm_victimTeam' to initializer list
+	AIGuardRetaliateState( StateMachine *machine ) : State( machine, "AIGuardRetaliateState" ), m_guardRetaliateMachine(nullptr), m_cachedVictimTeam(nullptr) {}
 	//~AIGuardRetaliateState();
 	virtual Bool isAttack() const override;
 	virtual StateReturnType onEnter() override;
 	virtual void onExit( StateExitType status ) override;
 	virtual StateReturnType update() override;
+
+	//MODDD
+	virtual Object *getStateSpecificGoalObject() override;
+	virtual Object *getStateSpecificGoalObject() const override;
+
 #ifdef STATE_MACHINE_DEBUG
 	virtual AsciiString getName() const override;
 #endif
@@ -1246,6 +1267,8 @@ protected:
 
 private:
 	AIGuardRetaliateMachine *m_guardRetaliateMachine;					///< state sub-machine for retaliate behavior
+	//MODDD - new
+	Team *m_cachedVictimTeam;
 };
 
 //-----------------------------------------------------------------------------------------------------------

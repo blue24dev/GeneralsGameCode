@@ -1716,8 +1716,24 @@ Bool Team::hasAnyBuildings() const
 		if (iter.cur()->isDestroyed())
 			continue;
 
-		if (iter.cur()->isKindOf(KINDOF_STRUCTURE))
+		//MODDD - add a check for a DOZER too. It's capable of adding new buildings, so why not.
+		if (iter.cur()->isKindOf(KINDOF_DOZER))
+		{
 			return true;
+		}
+
+		if (iter.cur()->isKindOf(KINDOF_STRUCTURE))
+		{
+			//MODDD - not so fast. If this is an in-progress building, don't count it for victory.
+			// If there are dozers that could possibly finish it, that will be enough to keep the player in the game
+			// (see an addition above).
+			if (iter.cur()->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ))
+			{
+				continue;
+			}
+
+			return true;
+		}
 	}
 	return false;
 }
@@ -1733,9 +1749,25 @@ Bool Team::hasAnyBuildings(KindOfMaskType kindOf) const
 		if (iter.cur()->isDestroyed())
 			continue;
 
+		//MODDD - add a check for a DOZER too. It's capable of adding new buildings, so why not.
+		if (iter.cur()->isKindOf(KINDOF_DOZER))
+		{
+			return true;
+		}
+
 		kindOf.set(KINDOF_STRUCTURE);
 		if (iter.cur()->isKindOfMulti(kindOf, KINDOFMASK_NONE))
+		{
+			//MODDD - not so fast. If this is an in-progress building, don't count it for victory.
+			// If there are dozers that could possibly finish it, that will be enough to keep the player in the game
+			// (see an addition above).
+			if (iter.cur()->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ))
+			{
+				continue;
+			}
+
 			return true;
+		}
 	}
 	return false;
 }

@@ -965,17 +965,25 @@ Bool ActionManager::canHijackVehicle( const Object *obj, const Object *objectToH
 		return FALSE;
 	}
 
+	//MODDD - added, see a note at the top of 'ConvertToHijackedVehicleCrateCollide::isValidToExecute' for more info
+	if (!obj->isAbleToAttack())
+	{
+		return FALSE;
+	}
+
 	// if the target is in the shroud, we can't do anything
 	if (isObjectShroudedForAction(obj, objectToHijack, commandSource))
 	{
 		return FALSE;
 	}
 
-	//MODDD - seems like this is a good idea too?
+	//MODDD - seems like this is a good idea too?  nevermind, ConvertToHijackedVehicleCrateCollide already has this
+	/*
 	if (objectToHijack->isKindOf( KINDOF_IGNORED_IN_GUI ))
 	{
 		return FALSE;
 	}
+	*/
 
 	//MODDD - no need for these here, the 'ConvertToHijackedVehicleCrateCollide' module for a hijacker will check for these.
 	// Could argue that for several checks above too probably.
@@ -1007,7 +1015,10 @@ Bool ActionManager::canHijackVehicle( const Object *obj, const Object *objectToH
 	*/
 
 	//MODDD - easy way to skip checking for something that doesn't exist
-	if (!obj->hasHijackerCollide())
+	// (changed to 'isHijackGuard' as something to check for more consistently everywhere - should be 1-1 with having
+	// hijacker collide anyway)
+	//if (!obj->hasHijackerCollide())
+	if (!obj->getTemplate()->isHijackGuard())
 	{
 		return FALSE;
 	}

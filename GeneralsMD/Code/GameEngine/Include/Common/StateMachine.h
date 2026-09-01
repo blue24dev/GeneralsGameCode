@@ -168,6 +168,10 @@ public:
 	
 	//MODDD - new
 	virtual Object *getEnemyObject();
+	// Intended to be overridden as needed to see the goal object that's more meaningful to a particular state.
+	// Ex: 'AIGuardRetaliateState' has 'm_guardRetaliateMachine' -> return its goal obj here
+	virtual Object *getStateSpecificGoalObject() { return nullptr; }
+	virtual Object *getStateSpecificGoalObject() const { return nullptr; }
 
 #ifdef STATE_MACHINE_DEBUG
 	virtual AsciiString getName() const {return m_name;}

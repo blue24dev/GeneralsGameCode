@@ -253,40 +253,24 @@ void HelixContain::addToContainList( Object *obj )
 {
   if ( obj->isKindOf( KINDOF_PORTABLE_STRUCTURE ) && m_portableStructureID == INVALID_ID)
   {
-    Object *portable = getPortableStructure();
-    if ( portable )
+    if ( Object *portable = getPortableStructure() )
     {
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(38);
+		  g_destroyObjectSource.push_back(38);
 #endif
       TheGameLogic->destroyObject( portable );
     }
 
-    portable = obj;
+    m_portableStructureID = obj->getID();
+    obj->friend_setContainedBy( getObject() );//fool portable into thinking my object is his container
 
-    m_portableStructureID = portable->getID();
-    portable->friend_setContainedBy( getObject() );//fool portable into thinking my object is his container
-
-#if RETAIL_COMPATIBLE_CRC
-    Object* containedBy = getObject();
-
-    // TheSuperHackers @info Set INVALID_ID if the container object was destroyed
-    // to indicate that the pointer will become a dangling pointer in the next frame.
-    if (containedBy && !containedBy->isDestroyed())
-    {
-      portable->friend_setContainedByID(containedBy->getID());
-    }
-    else
-    {
-      portable->friend_setContainedByID(INVALID_ID);
-    }
-#else
     DEBUG_ASSERTCRASH(getObject() == nullptr || !getObject()->isDestroyed(),
       ("HelixContain::addToContainList - Adding to a destroyed container"));
-#endif
   }
   else
-		TransportContain::addToContainList( obj );
+  {
+    TransportContain::addToContainList( obj );
+  }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -294,8 +278,7 @@ void HelixContain::addToContain( Object *obj )
 {
   if ( obj->isKindOf( KINDOF_PORTABLE_STRUCTURE ) && m_portableStructureID == INVALID_ID)
   {
-    Object *portable = getPortableStructure();
-    if ( portable )
+    if ( Object *portable = getPortableStructure() )
     {
 #if EXTRA_DEBUG_HELP
 		  g_destroyObjectSource.push_back(39);
@@ -303,31 +286,16 @@ void HelixContain::addToContain( Object *obj )
       TheGameLogic->destroyObject( portable );
     }
 
-    portable = obj;
+    m_portableStructureID = obj->getID();
+    obj->friend_setContainedBy( getObject() );//fool portable into thinking my object is his container
 
-    m_portableStructureID = portable->getID();
-    portable->friend_setContainedBy( getObject() );//fool portable into thinking my object is his container
-
-#if RETAIL_COMPATIBLE_CRC
-    Object* containedBy = getObject();
-
-    // TheSuperHackers @info Set INVALID_ID if the container object was destroyed
-    // to indicate that the pointer will become a dangling pointer in the next frame.
-    if (containedBy && !containedBy->isDestroyed())
-    {
-      portable->friend_setContainedByID(containedBy->getID());
-    }
-    else
-    {
-      portable->friend_setContainedByID(INVALID_ID);
-    }
-#else
     DEBUG_ASSERTCRASH(getObject() == nullptr || !getObject()->isDestroyed(),
       ("HelixContain::addToContain - Adding to a destroyed container"));
-#endif
   }
   else
-		TransportContain::addToContain( obj );
+  {
+    TransportContain::addToContain( obj );
+  }
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -338,9 +306,7 @@ void HelixContain::removeFromContain( Object *obj, Bool exposeStealthUnits )
     Object *portable = getPortableStructure();
     if ( portable )
     {
-#if RETAIL_COMPATIBLE_CRC
-      portable->friend_setContainedByID(INVALID_ID);
-#else
+#if !RETAIL_COMPATIBLE_CRC
       portable->friend_setContainedBy(nullptr);
 #endif
 

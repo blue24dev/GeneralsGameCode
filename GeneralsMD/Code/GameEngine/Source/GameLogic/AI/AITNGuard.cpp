@@ -53,7 +53,8 @@
 #include "GameLogic/PartitionManager.h"
 #include "GameLogic/PolygonTrigger.h"
 
-const Real CLOSE_ENOUGH = (25.0f);
+//MODDD - nothing uses this? disabled
+//const Real CLOSE_ENOUGH = (25.0f);
 
 
 static Bool hasAttackedMeAndICanReturnFire( State *thisState, void* /*userData*/ )

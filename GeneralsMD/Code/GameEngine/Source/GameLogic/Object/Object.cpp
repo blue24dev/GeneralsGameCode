@@ -274,7 +274,7 @@ Object::Object( const ThingTemplate *tt ) :
 	m_physics(nullptr),
 	m_geometryInfo(tt->getTemplateGeometryInfo()),
 	m_containedBy(nullptr),
-	m_containedByID(INVALID_ID),
+	m_xferContainedByID(INVALID_ID),
 	m_containedByFrame(0),
 	m_behaviors(nullptr),
 	m_body(nullptr),
@@ -1175,21 +1175,8 @@ void Object::onContainedBy( Object *containedBy )
 	m_containedBy = containedBy;
 	m_containedByFrame = TheGameLogic->getFrame();
 
-#if RETAIL_COMPATIBLE_CRC
-	// TheSuperHackers @info Set INVALID_ID if the container object was destroyed
-	// to indicate that the pointer will become a dangling pointer in the next frame.
-	if (containedBy && !containedBy->isDestroyed())
-	{
-		m_containedByID = containedBy->getID();
-	}
-	else
-	{
-		m_containedByID = INVALID_ID;
-	}
-#else
 	DEBUG_ASSERTCRASH(containedBy == nullptr || !containedBy->isDestroyed(),
-		("Object::onContainedBy - Adding into a destroyed container"));
-#endif
+		("Object::onContainedBy - Adding to a destroyed container"));
 
   handlePartitionCellMaintenance(); // which should unlook me now that I am contained
 
@@ -1203,10 +1190,6 @@ void Object::onRemovedFrom( Object *removedFrom )
 	clearStatus( MAKE_OBJECT_STATUS_MASK2( OBJECT_STATUS_MASKED, OBJECT_STATUS_UNSELECTABLE ) );
 	m_containedBy = nullptr;
 	m_containedByFrame = 0;
-
-#if RETAIL_COMPATIBLE_CRC
-	m_containedByID = INVALID_ID;
-#endif
 
   handlePartitionCellMaintenance(); // get a clean look, now that I am outdoors, again
 
@@ -1322,33 +1305,9 @@ void Object::onDestroy()
 	}
 	
 	// This is the old cleanUpContain safeguard.  Say goodbye so they don't try to look us up.
-	if (m_containedBy)
+	if( m_containedBy && m_containedBy->getContain() )
 	{
-#if RETAIL_COMPATIBLE_CRC
-		if (m_containedByID == INVALID_ID)
-		{
-			// TheSuperHackers @bugfix Caball009 25/05/2026 Due to a potential use-after-free bug that cannot be fixed
-			// with retail compatibility, the 'contained by' pointer of this object may point to an already destroyed object.
-			// Avoid removing this object from the contain list, because it could crash the game,
-			// as the begin / end iterator for STLPort and MSVC std::list implementations depends on dynamically allocated memory.
-			DEBUG_CRASH(("container object must be valid; this looks like use-after-free"));
-		}
-		else
-		{
-			DEBUG_ASSERTCRASH(TheGameLogic->findObjectByID(m_containedByID) == m_containedBy,
-				("contained by pointer is out of sync with contained by ID"));
-
-			if (ContainModuleInterface* contain = m_containedBy->getContain())
-			{
-				contain->removeFromContain(this);
-			}
-		}
-#else
-		if (ContainModuleInterface* contain = m_containedBy->getContain())
-		{
-			contain->removeFromContain(this);
-		}
-#endif
+		m_containedBy->getContain()->removeFromContain( this );
 	}
 
 	//
@@ -2110,6 +2069,8 @@ Bool Object::getAmmoPipShowingInfo(Int& numTotal, Int& numFull) const
 	call isAbleToAttack prior to calling this! (srj)
 */
 //MODDD - new param 'broadCheck'
+#include "Common/ActionManager.h"
+
 CanAttackResult Object::getAbleToAttackSpecificObject( AbleToAttackType t, const Object* target, CommandSourceType commandSource, WeaponSlotType specificSlot, Bool broadCheck ) const
 {
 	// NO! BAD! WRONG!
@@ -2265,6 +2226,29 @@ Relationship Object::getRelationship(const Object *that) const
 
 	return NEUTRAL;
 
+}
+
+//MODDD - alt version that allows the other object ('that') to offer the player they're portraying themselves as belonging
+// to instead.
+// ex: a disguised enemy bomb truck wants you/your units to think it belongs to you or an ally of yours, use who it looks
+// like it belongs to for the relationship check with the 'this' object/player requesting it.
+Relationship Object::getRelationshipWithAppearance(const Object *that) const
+{
+	if (
+		that->testStatus(OBJECT_STATUS_DISGUISED) &&
+		!that->testStatus(OBJECT_STATUS_DETECTED) &&
+		// also, require not being allies (friends see the actual owner so the hiding mechanic is ignored then)
+		that->getRelationship(this) != ALLIES
+	)
+	{
+		// disguised & fools me: get the player from what the other's presenting itself as belonging to
+		StealthUpdate *update = that->getStealth();
+		Player* that_playerDisguisedAs = ThePlayerList->getNthPlayer( update->getDisguisedPlayerIndex() );
+		return this->getControllingPlayer()->getRelationship( that_playerDisguisedAs->getDefaultTeam() );
+	}
+	
+	// not disguised - no trickery. A normal relationship check works.
+	return this->getRelationship(that);
 }
 
 //MODDD
@@ -2778,6 +2762,13 @@ Bool Object::isHero() const
 //MODDD - NEW. Convenience feature for whether this is visible to the enemy (not stealthed, or detected if so)
 // and not trying to fool them (not disguised). Note that a detected disguised unit immediately loses the disguise.
 // Doesn't consider defection stuff, not meaningfully testable for me.
+// Also, note that some places like 'WeaponSet::getAbleToAttackSpecificObject' do this instead of checking
+// OBJECT_STATUS_DISGUISED (no idea if there's ever a meaningful difference):
+//   StealthUpdate *update = someObject->getStealth();
+//   if( ...update->isDisguised() )
+// Basically, several places in retail similarly check for this without using this utility since added by me.
+// And some places may still need to do a check to see if this object is trying to fool the player viewing it:
+//   someStealthUpdate->getDisguisedPlayerIndex() -> somePlayer->getRelationship(playerImPretendingToBeFor)
 //-------------------------------------------------------------------------------------------------
 Bool Object::isRecognizableToEnemy() const
 {
@@ -4169,7 +4160,6 @@ void Object::createVeterancyLevelFX(VeterancyLevel oldLevel, VeterancyLevel newL
  */
 Bool Object::isAbleToAttack() const
 {
-
 	//******************************************************
 	//********* AUTOMATICALLY FALSE CONDITIONS *************
 	//******************************************************
@@ -4317,7 +4307,8 @@ Bool Object::isAbleToAttack() const
 		}
 	}
 
-	if (getTemplate()->isEnterGuard())
+	//MODDD - added 'isHijackGuard' so that specifying that alone will also suffice
+	if (getTemplate()->isEnterGuard() || getTemplate()->isHijackGuard())
 		return TRUE;
 
 //Default is no
@@ -5301,19 +5292,16 @@ void Object::xfer( Xfer *xfer )
 		// No, the contain module is just going to friend_ reach in and set this for us.
 		// Containers more complicated than Open (like Tunnel) can't do that.  Our variable,
 		// our responsibility.
-#if RETAIL_COMPATIBLE_CRC
-		// TheSuperHackers @tweak Contained by ID is already set with retail compatibility; don't overwrite it.
-#else
 		if( xfer->getXferMode() == XFER_SAVE )
 		{
 			if( m_containedBy != nullptr )
-				m_containedByID = m_containedBy->getID();
+				m_xferContainedByID = m_containedBy->getID();
 			else
-				m_containedByID = INVALID_ID;
+				m_xferContainedByID = INVALID_ID;
 		}
-#endif
 
-		xfer->xferObjectID( &m_containedByID );
+
+		xfer->xferObjectID( &m_xferContainedByID );
 	}
 
 	// contained by frame
@@ -5588,8 +5576,8 @@ void Object::xfer( Xfer *xfer )
 //-------------------------------------------------------------------------------------------------
 void Object::loadPostProcess()
 {
-	if( m_containedByID != INVALID_ID )
-		m_containedBy = TheGameLogic->findObjectByID(m_containedByID);
+	if( m_xferContainedByID != INVALID_ID )
+		m_containedBy = TheGameLogic->findObjectByID(m_xferContainedByID);
 	else
 		m_containedBy = nullptr;
 
