@@ -792,6 +792,7 @@ void StateMachine::internalSetGoalObject( const Object *obj )
 			x = 4;
 		}
 	}
+	*/
 
 	if (obj) {
 		m_goalObjectID = obj->getID();
@@ -800,7 +801,6 @@ void StateMachine::internalSetGoalObject( const Object *obj )
 	else {
 		m_goalObjectID = INVALID_ID;
 	}
-	*/
 }
 
 //-----------------------------------------------------------------------------
@@ -809,7 +809,15 @@ Object *StateMachine::getGoalObject()
 	//MODDD - in case my own state has its own goal, use that instead
 	// There have been a few rare cases observed of 'getGoalObject()' being null but
 	// 'AIGuardRetaliateState' had 'm_guardRetaliateMachine', whose goal could have been used.
-	// ------------
+	// ------------ Original
+	//return TheGameLogic->findObjectByID( m_goalObjectID );
+	// ------------ New
+	Object* objMyGoal = TheGameLogic->findObjectByID( m_goalObjectID );
+	if (objMyGoal != nullptr)
+	{
+		return objMyGoal;
+	}
+
 	if (m_currentState != nullptr)
 	{
 		Object* objTest = m_currentState->getStateSpecificGoalObject();
@@ -818,9 +826,9 @@ Object *StateMachine::getGoalObject()
 			return objTest;
 		}
 	}
-	// ------------
 
-	return TheGameLogic->findObjectByID( m_goalObjectID );
+	return nullptr;
+	// ------------
 
 	/*
 	//MODDD - in case my own state has its own goal, use that instead
@@ -868,7 +876,15 @@ const Object *StateMachine::getGoalObject() const
 	//MODDD - in case my own state has its own goal, use that instead
 	// There have been a few rare cases observed of 'getGoalObject()' being null but
 	// 'AIGuardRetaliateState' had 'm_guardRetaliateMachine', whose goal could have been used.
-	// ------------
+	// ------------ Original
+	//return TheGameLogic->findObjectByID( m_goalObjectID );
+	// ------------ New
+	Object* objMyGoal = TheGameLogic->findObjectByID( m_goalObjectID );
+	if (objMyGoal != nullptr)
+	{
+		return objMyGoal;
+	}
+
 	if (m_currentState != nullptr)
 	{
 		Object* objTest = m_currentState->getStateSpecificGoalObject();
@@ -877,9 +893,9 @@ const Object *StateMachine::getGoalObject() const
 			return objTest;
 		}
 	}
-	// ------------
 
-	return TheGameLogic->findObjectByID( m_goalObjectID );
+	return nullptr;
+	// ------------
 
 	/*
 	//MODDD - in case my own state has its own goal, use that instead
