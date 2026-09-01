@@ -812,11 +812,13 @@ Object *StateMachine::getGoalObject()
 	// ------------ Original
 	//return TheGameLogic->findObjectByID( m_goalObjectID );
 	// ------------ New
+	/*
 	Object* objMyGoal = TheGameLogic->findObjectByID( m_goalObjectID );
 	if (objMyGoal != nullptr)
 	{
 		return objMyGoal;
 	}
+	*/
 
 	if (m_currentState != nullptr)
 	{
@@ -827,7 +829,8 @@ Object *StateMachine::getGoalObject()
 		}
 	}
 
-	return nullptr;
+	//return nullptr;
+	return TheGameLogic->findObjectByID( m_goalObjectID );
 	// ------------
 
 	/*
@@ -879,11 +882,13 @@ const Object *StateMachine::getGoalObject() const
 	// ------------ Original
 	//return TheGameLogic->findObjectByID( m_goalObjectID );
 	// ------------ New
+	/*
 	Object* objMyGoal = TheGameLogic->findObjectByID( m_goalObjectID );
 	if (objMyGoal != nullptr)
 	{
 		return objMyGoal;
 	}
+	*/
 
 	if (m_currentState != nullptr)
 	{
@@ -894,7 +899,8 @@ const Object *StateMachine::getGoalObject() const
 		}
 	}
 
-	return nullptr;
+	//return nullptr;
+	return TheGameLogic->findObjectByID( m_goalObjectID );
 	// ------------
 
 	/*
