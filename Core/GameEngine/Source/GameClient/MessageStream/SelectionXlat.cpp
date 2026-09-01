@@ -1178,7 +1178,7 @@ GameMessageDisposition SelectionTranslator::onMetaSelectTeam(MAYBE_UNUSED const 
 				{
 					//MODDD - add the player as a param to 'getLiveObjects' so things that no longer belong to the player
 					// (ex: depiloted, hijacked) are removed
-					VecObjectPtr objlist = selectedSquad->getLiveObjects(player);
+					const VecObjectPtr& objlist = selectedSquad->getLiveObjects(player);
 					Int numObjs = objlist.size();
 					if (numObjs > 0)
 					{
@@ -1204,7 +1204,7 @@ GameMessageDisposition SelectionTranslator::onMetaSelectTeam(MAYBE_UNUSED const 
 				if (selectedSquad != nullptr)
 				{
 					//MODDD - added 'player' param
-					VecObjectPtr objlist = selectedSquad->getLiveObjects(player);
+					const VecObjectPtr& objlist = selectedSquad->getLiveObjects(player);
 					Int numObjs = objlist.size();
 					for (Int i = 0; i < numObjs; ++i)
 					{
@@ -1248,7 +1248,7 @@ GameMessageDisposition SelectionTranslator::onMetaAddTeam(MAYBE_UNUSED const Gam
 				if (selectedSquad != nullptr)
 				{
 					//MODDD - added 'player' param
-					VecObjectPtr objlist = selectedSquad->getLiveObjects(player);
+					const VecObjectPtr& objlist = selectedSquad->getLiveObjects(player);
 					Int numObjs = objlist.size();
 					if (numObjs > 0)
 					{
@@ -1280,7 +1280,7 @@ GameMessageDisposition SelectionTranslator::onMetaAddTeam(MAYBE_UNUSED const Gam
 				if (selectedSquad != nullptr)
 				{
 					//MODDD - added 'player' param
-					VecObjectPtr objlist = selectedSquad->getLiveObjects(player);
+					const VecObjectPtr& objlist = selectedSquad->getLiveObjects(player);
 					Int numObjs = objlist.size();
 
 					// TheSuperHackers @bugfix skyaero 22/07/2025 Can't select other units if you have a structure selected. So deselect the structure to prevent group force attack exploit.
@@ -1317,7 +1317,7 @@ GameMessageDisposition SelectionTranslator::onMetaViewTeam(MAYBE_UNUSED const Ga
 			if (selectedSquad != nullptr)
 			{
 				//MODDD - added 'player' param
-				VecObjectPtr objlist = selectedSquad->getLiveObjects(player);
+				const VecObjectPtr& objlist = selectedSquad->getLiveObjects(player);
 				Int numObjs = objlist.size();
 				if (numObjs > 0)
 				{

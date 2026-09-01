@@ -52,7 +52,8 @@
 #include "GameLogic/PartitionManager.h"
 #include "GameLogic/PolygonTrigger.h"
 
-const Real CLOSE_ENOUGH = (25.0f);
+//MODDD - nothing uses this? disabled
+//const Real CLOSE_ENOUGH = (25.0f);
 
 
 static Bool hasAttackedMeAndICanReturnFire( State *thisState, void* /*userData*/ )
@@ -251,7 +252,11 @@ Bool AIGuardRetaliateMachine::lookForInnerTarget()
 
 	PartitionFilter *filters[16];
 	Int count = 0;
-
+	
+	//MODDD - changing this to check for 'isHijackGuard' independently of 'isEnterGuard' instead of within.
+	//MODDD - NOTE - holy code copy/paste batman - see 'AIGuardMachine::lookForInnerTarget()' (same change as there here)
+	// ------------ Original
+	/*
 	// Enter Guard state
 	if (owner->getTemplate()->isEnterGuard())
 	{
@@ -268,6 +273,24 @@ Bool AIGuardRetaliateMachine::lookForInnerTarget()
 			filters[count++] = &f5;
 		}
 	}
+	*/
+	// ------------ New
+	//MODDD - NOTE - an important difference is the 'f6' filter (...PossibleToEnter) is now only for the 'isEnterGuard'
+	// route instead of both (this is in addition to 'isHijackGuard' using filter '...PossibleToHijack' as-is, oddly enough).
+	// ---
+	// Hijack Guard state
+	if (owner->getTemplate()->isHijackGuard())
+	{
+		filters[count++] = &f1;
+		filters[count++] = &f7;
+	}
+	// Enter Guard state
+	else if (owner->getTemplate()->isEnterGuard())
+	{
+		filters[count++] = &f5;
+		filters[count++] = &f6;
+	}
+	// ------------
 	// Attack Guard state
 	else
 	{
@@ -375,6 +398,27 @@ AIGuardRetaliateInnerState::~AIGuardRetaliateInnerState()
 //--------------------------------------------------------------------------------------
 StateReturnType AIGuardRetaliateInnerState::onEnter()
 {
+	//MODDD - a particular check for a 'hijack guard' to use the 'AIHijackState' instead
+	// ------------
+	if (getMachineOwner()->getTemplate()->isHijackGuard())
+	{
+		Object* nemesis = TheGameLogic->findObjectByID(getGuardMachine()->getNemesisID()) ;
+		if (nemesis == nullptr)
+		{
+			DEBUG_LOG(("Unexpected null nemesis in AIGuardRetaliateInnerState."));
+			return STATE_SUCCESS;
+		}
+		m_enterState = newInstance(AIHijackState)(getMachine());
+
+		m_enterState->getMachine()->setGoalObject(nemesis);
+
+		StateReturnType returnVal = m_enterState->onEnter();
+		if (returnVal == STATE_CONTINUE) {
+			return STATE_CONTINUE;
+		}
+	}
+	else
+	// ------------
 	// See if we try to enter the target
 	if (getMachineOwner()->getTemplate()->isEnterGuard())
 	{

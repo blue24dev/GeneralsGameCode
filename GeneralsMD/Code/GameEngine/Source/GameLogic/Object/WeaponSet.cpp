@@ -773,36 +773,43 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 	{
 		// note that 'checkCmdSource' is always on for this route.
 		// 'weaponToSkipCmdSourceCheck' can still specify a weapon to skip the 'commandSource' check for.
-		if (m_curWeaponLockedStatus == LOCKED_PERMANENTLY)
+		// a typical broad 'do I have some weapon that would work' check
+		if( specificSlot != (WeaponSlotType)-1 )
 		{
-			// if this weapon is permanently locked, it will be the only thing checked even for a broad check
-			first = m_curWeapon;
-			last = m_curWeapon;
-			weaponToSkipCmdSourceCheck = m_curWeapon;
+			// exclude checks for the given specific slot
+			first = WEAPONSLOT_COUNT - 1;
+			last = PRIMARY_WEAPON;
+			weaponToSkipCmdSourceCheck = specificSlot;
+		}
+		else if (isCurWeaponLocked())
+		{
+			if (m_curWeaponLockedStatus == LOCKED_PERMANENTLY)
+			{
+				// if this weapon is permanently locked, it will be the only thing checked even for a broad check
+				first = m_curWeapon;
+				last = m_curWeapon;
+				//weaponToSkipCmdSourceCheck = m_curWeapon;
+				checkCmdSource = FALSE;
+			}
+			else // LOCKED_TEMPORARILY
+			{
+				// if the weapon is temp-locked, skip the CMD check to work as usual for locked weapons
+				first = WEAPONSLOT_COUNT - 1;
+				last = PRIMARY_WEAPON;
+				weaponToSkipCmdSourceCheck = m_curWeapon;
+			}
 		}
 		else
 		{
-			// otherwise, a typical broad 'do I have some weapon that would work' check
 			first = WEAPONSLOT_COUNT - 1;
 			last = PRIMARY_WEAPON;
-			if( specificSlot != (WeaponSlotType)-1 )
-			{
-				// exclude checks for the given specific slot
-				weaponToSkipCmdSourceCheck = specificSlot;
-			}
-			else if (isCurWeaponLocked())
-			{
-				// if the weapon is locked at all, skip the CMD check to work as usual for locked weapons
-				weaponToSkipCmdSourceCheck = m_curWeapon;
-			}
 		}
 	}
 	else
 	{
 		//MODDD - swapped the 'isCurWeaponLocked' and 'specificSlot' condition-block pairs so that specifying a non-any
 		// 'specificSlot' takes precedence over being locked. 'specificSlot' tends to be provided by places checking to see
-		// if a weapon is possible like on-hover events, so using the locked weapon anyway won't work.
-
+		// if a weapon is possible like on-hover events, so using the locked weapon anyway would be inaccurate.
 		if( specificSlot != (WeaponSlotType)-1 )
 		{
 			first = specificSlot;

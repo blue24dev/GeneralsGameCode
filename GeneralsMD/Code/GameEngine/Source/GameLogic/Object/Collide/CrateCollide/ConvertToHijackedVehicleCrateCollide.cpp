@@ -73,7 +73,14 @@ ConvertToHijackedVehicleCrateCollide::~ConvertToHijackedVehicleCrateCollide()
 //-------------------------------------------------------------------------------------------------
 Bool ConvertToHijackedVehicleCrateCollide::isValidToExecute( const Object *other ) const
 {
-	//MODDD - replacing this parent call with a more specialized version
+	//MODDD - replacing this parent call with more specialized handling in here as needed.
+	// Note that an important difference is losing this part from 'CrateCollide::isValidToExecute':
+  //   if( getObject()->isAboveTerrain() && !validBuildingAttempt )
+	// This part is the only reason flying hijackers in the Contra mod are unable to use the typical Hijack command in
+	// the game engine - they are really attacking with a weapon that makes them want to get as close as possible instead.
+	// However, checks for the hijack command (typically ActionManager::canHijackVehicle, leads to this 'isValidToExecute'
+	// method as well) never involve 'Object::isAbleToAttack()'. Going to add it to there since that seems important to me.
+	// This stops a cease-fire'd flying hijacker from thinking it can hijack when it really can't to behave like retail would.
 	// ---------------
 	/*
 	if( !CrateCollide::isValidToExecute(other) )
@@ -137,7 +144,7 @@ Bool ConvertToHijackedVehicleCrateCollide::isValidToExecute( const Object *other
 		return FALSE; //Kris: Patch 1.03 -- Prevent hijackers from being able to hijack battle buses.
 	}
 
-	//MODDD - let's allow aircraft if it's not airborne (docket at airfield).
+	//MODDD - let's allow aircraft if it's not airborne (docked at airfield).
 	// (boats is tempting too, in case the hijacker were amphibious, and you could check for ridiculous cases like an entire aircraft carrier)
 	//if( other->isKindOf( KINDOF_AIRCRAFT ) || other->isKindOf( KINDOF_BOAT ) )
 	if((other->isKindOf(KINDOF_AIRCRAFT) && other->isAirborneTarget()) || other->isKindOf( KINDOF_BOAT ))
@@ -153,6 +160,9 @@ Bool ConvertToHijackedVehicleCrateCollide::isValidToExecute( const Object *other
 	}
 
 	//MODDD - why not allow a counter-hijack?
+	//MODDD - TODO - test that. if the hijacked thing has a pilot-ejection mechanic (hijacker inside is preserved),
+	// hijacking a hijacked vehicle should replace that preserved hijacker with the most recent one - anything
+	// existing is deleted first
 	/*
 	if( other->getStatusBits().test( OBJECT_STATUS_HIJACKED ) )
 	{
@@ -160,7 +170,10 @@ Bool ConvertToHijackedVehicleCrateCollide::isValidToExecute( const Object *other
 	}
 	*/
 
-	Relationship r = getObject()->getRelationship( other );
+	//MODDD - replaced 'getRelationship' with 'getRelationshipWithAppearance' so this takes a disguise into consideration
+	// (don't think you can hijack something that looks like a friendly unit)
+	Relationship r = getObject()->getRelationshipWithAppearance( other );
+	
 	//Only hijack enemy objects
 	if( r != ENEMIES )
 	{
@@ -284,6 +297,7 @@ Bool ConvertToHijackedVehicleCrateCollide::executeCrateBehavior( Object *other )
 	//MODDD - TODO - If a mod wants to support a unit that can hijack but uses a different unit for ejection systems
 	// (ex: a biker or flying hijacker from Contra hijacks something -> it dies -> spawns infantry hijacker), an additional
 	// field for what the hijacker should spawn in some hijacker-related module should suffice.
+	//MODDD - TODO - have the 'HijackerUpdate' reference cached at object creation so this is easy to find in real-time
 	// ---
 	static NameKeyType key_HijackerUpdate = NAMEKEY( "HijackerUpdate" );
 	HijackerUpdate *hijackerUpdate = (HijackerUpdate*)obj->findUpdateModule( key_HijackerUpdate );
