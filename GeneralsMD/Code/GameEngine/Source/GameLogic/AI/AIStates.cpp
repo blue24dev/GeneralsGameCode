@@ -6089,7 +6089,7 @@ Object *AIAttackSquadState::chooseVictim()
 			// pick a random unit
 			//MODDD - NOTE - not sure how to assume what player should own 'victimSquad' for using the not-changed-ownership
 			// filter.
-			VecObjectPtr objects = victimSquad->getLiveObjects();
+			const VecObjectPtr& objects = victimSquad->getLiveObjects();
 			Int numUnits = objects.size();
 			if (numUnits == 0)
 			{
@@ -6120,7 +6120,7 @@ Object *AIAttackSquadState::chooseVictim()
 		case DIFFICULTY_HARD:
 		{
 			// everyone picks the same unit
-			VecObjectPtr objects = victimSquad->getLiveObjects();
+			const VecObjectPtr& objects = victimSquad->getLiveObjects();
 			if (!objects.empty())
 			{
 				return objects[0];
