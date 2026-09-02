@@ -1140,7 +1140,8 @@ public:
 	//MODDD - new - overridable
 	virtual Bool canEnterGoal() = 0;
 };
-EMPTY_DTOR(_AIEnterState)
+//MODDD
+//EMPTY_DTOR(_AIEnterState)
 
 //MODDD
 class AIEnterState : public _AIEnterState
