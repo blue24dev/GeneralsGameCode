@@ -334,7 +334,7 @@ void StateMachine::internalClear()
 	Object* objTest = getOwner();
 	if (objTest != nullptr)
 	{
-		if (objTest->getTemplate()->getName() == "Slth_GLAVehicleCombatBikeHijacker" || objTest->getTemplate()->getName() == "Slth_GLAInfantryHijackerPropelled")
+		if (objTest->getTemplate()->getName() == "Slth_GLAInfantryHijacker" || objTest->getTemplate()->getName() == "Slth_GLAVehicleCombatBikeHijacker" || objTest->getTemplate()->getName() == "Slth_GLAInfantryHijackerPropelled")
 		{
 			int x;
 			x = 4;
@@ -786,7 +786,7 @@ void StateMachine::internalSetGoalObject( const Object *obj )
 	Object* objTest = getOwner();
 	if (objTest != nullptr)
 	{
-		if (objTest->getTemplate()->getName() == "Slth_GLAVehicleCombatBikeHijacker" || objTest->getTemplate()->getName() == "Slth_GLAInfantryHijackerPropelled")
+		if (objTest->getTemplate()->getName() == "Slth_GLAInfantryHijacker" || objTest->getTemplate()->getName() == "Slth_GLAVehicleCombatBikeHijacker" || objTest->getTemplate()->getName() == "Slth_GLAInfantryHijackerPropelled")
 		{
 			int x;
 			x = 4;
@@ -806,6 +806,7 @@ void StateMachine::internalSetGoalObject( const Object *obj )
 //-----------------------------------------------------------------------------
 Object *StateMachine::getGoalObject()
 {
+#if 1
 	//MODDD - in case my own state has its own goal, use that instead
 	// There have been a few rare cases observed of 'getGoalObject()' being null but
 	// 'AIGuardRetaliateState' had 'm_guardRetaliateMachine', whose goal could have been used.
@@ -831,14 +832,11 @@ Object *StateMachine::getGoalObject()
 
 	//return nullptr;
 	return TheGameLogic->findObjectByID( m_goalObjectID );
-	// ------------
-
-	/*
+#else
 	//MODDD - in case my own state has its own goal, use that instead
 	// There have been a few rare cases observed of 'getGoalObject()' being null but
 	// 'AIGuardRetaliateState' had 'm_guardRetaliateMachine', whose goal could have been used.
 	// ------------
-	//MODDD - test. try this first.
 	Object* objMyGoal = TheGameLogic->findObjectByID( m_goalObjectID );
 	Object* objFromState = nullptr;
 
@@ -851,31 +849,28 @@ Object *StateMachine::getGoalObject()
 			objFromState = objTest;
 		}
 	}
-	// ------------
 
-	//MODDD - test. try this first.
-	Object* objTest = getOwner();
-	if (objTest != nullptr)
+	Object* myObj = getOwner();
+	if (myObj != nullptr)
 	{
-		if (objTest->getTemplate()->getName() == "Slth_GLAVehicleCombatBikeHijacker" || objTest->getTemplate()->getName() == "Slth_GLAInfantryHijackerPropelled")
+		if (myObj->getTemplate()->getName() == "Slth_GLAInfantryHijacker" || myObj->getTemplate()->getName() == "Slth_GLAVehicleCombatBikeHijacker" || myObj->getTemplate()->getName() == "Slth_GLAInfantryHijackerPropelled")
 		{
-
-			if (objMyGoal != objFromState)
+			if (objMyGoal != objFromState && objFromState != nullptr)
 			{
 				int x;
 				x = 4;
 			}
 		}
 	}
-	
-	//MODDD - was here
+	// ------------
 	return TheGameLogic->findObjectByID( m_goalObjectID );
-	*/
+#endif
 }
 
 //-----------------------------------------------------------------------------
 const Object *StateMachine::getGoalObject() const
 {
+#if 1
 	//MODDD - in case my own state has its own goal, use that instead
 	// There have been a few rare cases observed of 'getGoalObject()' being null but
 	// 'AIGuardRetaliateState' had 'm_guardRetaliateMachine', whose goal could have been used.
@@ -902,13 +897,11 @@ const Object *StateMachine::getGoalObject() const
 	//return nullptr;
 	return TheGameLogic->findObjectByID( m_goalObjectID );
 	// ------------
-
-	/*
+#else
 	//MODDD - in case my own state has its own goal, use that instead
 	// There have been a few rare cases observed of 'getGoalObject()' being null but
 	// 'AIGuardRetaliateState' had 'm_guardRetaliateMachine', whose goal could have been used.
 	// ------------
-	//MODDD - test. try this first.
 	Object* objMyGoal = TheGameLogic->findObjectByID( m_goalObjectID );
 	Object* objFromState = nullptr;
 
@@ -921,26 +914,22 @@ const Object *StateMachine::getGoalObject() const
 			objFromState = objTest;
 		}
 	}
-	// ------------
 
-	//MODDD - test. try this first.
-	const Object* objTest = getOwner();
-	if (objTest != nullptr)
+	const Object* myObj = getOwner();
+	if (myObj != nullptr)
 	{
-		if (objTest->getTemplate()->getName() == "Slth_GLAVehicleCombatBikeHijacker" || objTest->getTemplate()->getName() == "Slth_GLAInfantryHijackerPropelled")
+		if (myObj->getTemplate()->getName() == "Slth_GLAInfantryHijacker" || myObj->getTemplate()->getName() == "Slth_GLAVehicleCombatBikeHijacker" || myObj->getTemplate()->getName() == "Slth_GLAInfantryHijackerPropelled")
 		{
-
-			if (objMyGoal != objFromState)
+			if (objMyGoal != objFromState && objFromState != nullptr)
 			{
 				int x;
 				x = 4;
 			}
 		}
 	}
-	
-	//MODDD - was here
+	// ------------
 	return TheGameLogic->findObjectByID( m_goalObjectID );
-	*/
+#endif
 }
 
 //MODDD - version of 'getGoalObject' that allows the current state to intervene first.

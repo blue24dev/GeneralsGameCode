@@ -5597,17 +5597,18 @@ void AIAttackState::notifyNewVictimChosen(Object* victim)
 DECLARE_PERF_TIMER(AIAttackState)
 StateReturnType AIAttackState::onEnter()
 {
+	USE_PERF_TIMER(AIAttackState)
+	//CRCDEBUG_LOG(("AIAttackState::onEnter() - start for object %d", getMachineOwner()->getID()));
+	Object* source = getMachineOwner();
+
 	/*
-	if (source->getTemplate()->getName() == "Slth_GLAVehicleCombatBikeHijacker" || source->getTemplate()->getName() == "Slth_GLAInfantryHijackerPropelled")
+	if (source->getTemplate()->getName() == "Slth_GLAInfantryHijacker" || source->getTemplate()->getName() == "Slth_GLAVehicleCombatBikeHijacker" || source->getTemplate()->getName() == "Slth_GLAInfantryHijackerPropelled")
 	{
 		int x;
 		x = 4;
 	}
 	*/
 
-	USE_PERF_TIMER(AIAttackState)
-	//CRCDEBUG_LOG(("AIAttackState::onEnter() - start for object %d", getMachineOwner()->getID()));
-	Object* source = getMachineOwner();
 	AIUpdateInterface *ai = source->getAI();
 	// if we are in sleep mode, we will not attack
 	if ((ai->getMoodMatrixActionAdjustment(MM_Action_Attack) & MAA_Action_Ok) == 0)
@@ -6298,6 +6299,12 @@ StateReturnType AIDockState::update()
 //----------------------------------------------------------------------------------------------------------
 //----------------------------------------------------------------------------------------------------------
 
+//MODDD - new
+_AIEnterState::~_AIEnterState()
+{
+	deleteInstance(m_attackState);
+}
+
 // ------------------------------------------------------------------------------------------------
 /** CRC */
 // ------------------------------------------------------------------------------------------------
@@ -6326,11 +6333,13 @@ void _AIEnterState::xfer( Xfer *xfer )
 	// Actually, consider that most of those guard states have a '::loadPostProcess' that calls 'onEnter', presumably
 	// to re-start the state. '_AIEnterState' doesn't do that, so, maybe saving the state is a good idea after all
 	// in this case.
+	//MODDD - TODO - test this! on loading a game, is 'onEnter' for something with a '_AIEnterState' run to re-generate the 'm_attackState'?
+	// And I don't think handling the goal should be needed - same machine, same goal, long as it's done loading that part I hope if that's needed?
 	// ------------
 	Bool hasAttackState;
 	if (xfer->getXferMode() == XFER_SAVE)
 	{
-		hasAttackState = m_attackState!=nullptr;
+		hasAttackState = (m_attackState!=nullptr);
 	}
 
 	xfer->xferBool(&hasAttackState);
@@ -6377,6 +6386,14 @@ StateReturnType _AIEnterState::onEnter()
 
 	Object* obj = getMachineOwner();
 	Object* goal = getMachineGoalObject();
+
+	/*
+	if (obj->getTemplate()->getName() == "Slth_GLAInfantryHijacker" || obj->getTemplate()->getName() == "Slth_GLAVehicleCombatBikeHijacker" || obj->getTemplate()->getName() == "Slth_GLAInfantryHijackerPropelled")
+	{
+		int x;
+		x = 4;
+	}
+	*/
 
 	if (goal)
 	{
@@ -6446,7 +6463,17 @@ StateReturnType _AIEnterState::onEnter()
 		// I have no clue why, but this is observed for any other typical attack commands with normal left-clicks on enemy units (attack with weapon).
 		Bool isForceAttack = (obj->getRelationship(goal) != ENEMIES);
 
+		//MODDD - is this possible on loading a game??
+		if (m_attackState != nullptr)
+		{
+			deleteInstance(m_attackState);
+		}
+
 		m_attackState = newInstance(AIAttackState)(getMachine(), false, true, isForceAttack, nullptr);
+		//MODDD - this should be unnecessary - taking the same machine as myself means the same goal will be carried along
+		// ...but all the guard states as-is do this and they pass along the same 'getMachine()' for themselves to their 'm_attackState''s too.
+		// I don't understand.
+		// MODDD - TODO - Keeping it for now, test with this turned off everywhere following the same-state-init's like this!
 		m_attackState->getMachine()->setGoalObject(goal);
 		StateReturnType returnVal = m_attackState->onEnter();
 		(void)returnVal;
