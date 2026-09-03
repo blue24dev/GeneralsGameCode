@@ -1388,3 +1388,7 @@ protected:
 	Bool m_canTurnInPlace;
 };
 EMPTY_DTOR(AIFaceState)
+
+//MODDD - helper utilities
+StateReturnType createHijackSubstate(State*& out_substate, StateMachine* stateMachine, Object* nemesis);
+StateReturnType createEnterSubstate(State*& out_substate, StateMachine* stateMachine, Object* nemesis);

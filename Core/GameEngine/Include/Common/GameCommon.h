@@ -107,6 +107,14 @@ inline Real ConvertAngularVelocityInDegreesPerSecToRadsPerFrame(Real degPerSec)
 	return (degPerSec * (SECONDS_PER_LOGICFRAME_REAL * RADS_PER_DEGREE));
 }
 
+//MODDD - new, just want this to go somewhere that state machines / AI states and objects can see
+enum ACTIONSUBSTATETYPE
+{
+	ACTIONSUBSTATETYPE_ATTACK = 0,
+	ACTIONSUBSTATETYPE_ENTER,
+	ACTIONSUBSTATETYPE_HIJACK
+};
+
 //MODDD
 #if !DOUBLE_MAX_PLAYER_COUNT
 // -----------------------------------------------------------------------------------------------------------
