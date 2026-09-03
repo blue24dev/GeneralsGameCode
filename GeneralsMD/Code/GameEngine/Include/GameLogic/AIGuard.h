@@ -203,8 +203,11 @@ protected:
 private:
 	AIGuardMachine* getGuardMachine() { return (AIGuardMachine*)getMachine(); }
 
+	//MODDD - added
+	ACTIONSUBSTATETYPE m_actionSubstateType;
 	ExitConditions m_exitConditions;
-	AIAttackState *m_attackState;
+	//MODDD - type changed from 'AIAttackState' to a broader 'State'
+	State *m_attackState;
 };
 
 //--------------------------------------------------------------------------------------
@@ -263,8 +266,12 @@ protected:
 	virtual void loadPostProcess() override;
 private:
 	AIGuardMachine* getGuardMachine() { return (AIGuardMachine*)getMachine(); }
+	
+	//MODDD - added
+	ACTIONSUBSTATETYPE m_actionSubstateType;
 	ExitConditions m_exitConditions;
-	AIAttackState *m_attackState;
+	//MODDD - type changed from 'AIAttackState' to a broader 'State'
+	State *m_attackState;
 };
 
 //--------------------------------------------------------------------------------------
