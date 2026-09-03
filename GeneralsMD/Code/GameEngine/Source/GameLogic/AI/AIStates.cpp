@@ -6377,6 +6377,13 @@ void _AIEnterState::xfer( Xfer *xfer )
 void _AIEnterState::loadPostProcess()
 {
 	AIInternalMoveToState::loadPostProcess();
+
+	//MODDD - is this niecessary?
+	if (m_attackState != nullptr)
+	{
+		Object* goal = getMachineGoalObject();
+		m_attackState->getMachine()->setGoalObject(goal);
+	}
 }
 
 //----------------------------------------------------------------------------------------------------------
@@ -7848,4 +7855,31 @@ StateReturnType AIFaceState::update()
 	}
 
 	return STATE_CONTINUE;
+}
+
+//MODDD - helper utilities
+StateReturnType createHijackSubstate(State*& out_substate, StateMachine* stateMachine, Object* nemesis)
+{
+	out_substate = newInstance(AIHijackState)(stateMachine);
+	out_substate->getMachine()->setGoalObject(nemesis);
+
+	StateReturnType returnVal = out_substate->onEnter();
+	if (returnVal == STATE_CONTINUE) {
+		return STATE_CONTINUE;
+	}
+	// catch-all seen at the end in a typical caller's context
+	return STATE_SUCCESS;
+}
+
+StateReturnType createEnterSubstate(State*& out_substate, StateMachine* stateMachine, Object* nemesis)
+{
+	out_substate = newInstance(AIEnterState)(stateMachine);
+	out_substate->getMachine()->setGoalObject(nemesis);
+
+	StateReturnType returnVal = out_substate->onEnter();
+	if (returnVal == STATE_CONTINUE) {
+		return STATE_CONTINUE;
+	}
+	// catch-all seen at the end in a typical caller's context
+	return STATE_SUCCESS;
 }

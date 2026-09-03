@@ -718,6 +718,9 @@ public:
 	Bool canClearMines() const;
 	//MODDD - moved from AIUpdate
 	Bool isClearingMines() const;
+	
+	//MODDD - new - utility to get the 'ACTIONSUBSTATETYPE' to use for a given object
+	ACTIONSUBSTATETYPE getActionSubstateType() const;
 
 	Bool getReceivingDifficultyBonus() const { return m_isReceivingDifficultyBonus; }
 	void setReceivingDifficultyBonus(Bool receive);

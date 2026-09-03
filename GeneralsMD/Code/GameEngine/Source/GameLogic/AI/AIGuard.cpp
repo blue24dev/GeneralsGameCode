@@ -573,43 +573,71 @@ StateReturnType AIGuardOuterState::onEnter()
 		return STATE_SUCCESS;
 	}
 
-	Object* targetToGuard = getGuardMachine()->findTargetToGuardByID();
-	Coord3D pos = targetToGuard ? *targetToGuard->getPosition() : *getGuardMachine()->getPositionToGuard();
-
+	//MODDD - moved to here
+	// ------------
+	Object *obj = getMachineOwner();
 	Object* nemesis = TheGameLogic->findObjectByID(getGuardMachine()->getNemesisID()) ;
 	if (nemesis == nullptr)
 	{
-		DEBUG_LOG(("Unexpected null nemesis in AIGuardInnerState."));
+		DEBUG_LOG(("Unexpected null nemesis in AIGuardOuterState."));
 		return STATE_SUCCESS;
 	}
-	Object *obj = getMachineOwner();
+	// ------------
 
-	Real range = TheAI->getAdjustedVisionRangeForObject(obj, AI_VISIONFACTOR_OWNERTYPE | AI_VISIONFACTOR_MOOD);
-
-	const PolygonTrigger *area = getGuardMachine()->getAreaToGuard();
-	if (area)
+	//MODDD - check for whether this object prefers to hijack or enter instead of attack
+	m_actionSubstateType = obj->getActionSubstateType();
+	if (m_actionSubstateType == ACTIONSUBSTATETYPE_HIJACK)
 	{
-		if (range < area->getRadius())
-			range = area->getRadius();
-		area->getCenterPoint(&pos);
+		return createHijackSubstate(m_attackState, getMachine(), nemesis);
 	}
-	m_exitConditions.m_center = pos;
-	m_exitConditions.m_radiusSqr = sqr(range);
-	m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
-	m_exitConditions.m_conditionsToConsider = (ExitConditions::ATTACK_ExitIfExpiredDuration |
-																								ExitConditions::ATTACK_ExitIfOutsideRadius |
-																								ExitConditions::ATTACK_ExitIfNoUnitFound);
-
-	m_attackState = newInstance(AIAttackState)(getMachine(), false, true, false, &m_exitConditions);
-	m_attackState->getMachine()->setGoalObject(nemesis);
-
-	StateReturnType returnVal = m_attackState->onEnter();
-	if (returnVal == STATE_CONTINUE) {
-		return STATE_CONTINUE;
+	else if (m_actionSubstateType == ACTIONSUBSTATETYPE_ENTER)
+	{
+		return createEnterSubstate(m_attackState, getMachine(), nemesis);
 	}
+	//MODDD - else-wrapper for the rest of the original contents
+	else
+	{
+		Object* targetToGuard = getGuardMachine()->findTargetToGuardByID();
+		Coord3D pos = targetToGuard ? *targetToGuard->getPosition() : *getGuardMachine()->getPositionToGuard();
+		
+		//MODDD - moved up (also, corrected printout - referred to 'AIGuardInnerState' as-is)
+		/*
+		Object* nemesis = TheGameLogic->findObjectByID(getGuardMachine()->getNemesisID()) ;
+		if (nemesis == nullptr)
+		{
+			DEBUG_LOG(("Unexpected null nemesis in AIGuardOuterState."));
+			return STATE_SUCCESS;
+		}
+		Object *obj = getMachineOwner();
+		*/
 
-	// if we had no one to attack, we were successful, so go to the next state.
-	return STATE_SUCCESS;
+		Real range = TheAI->getAdjustedVisionRangeForObject(obj, AI_VISIONFACTOR_OWNERTYPE | AI_VISIONFACTOR_MOOD);
+
+		const PolygonTrigger *area = getGuardMachine()->getAreaToGuard();
+		if (area)
+		{
+			if (range < area->getRadius())
+				range = area->getRadius();
+			area->getCenterPoint(&pos);
+		}
+		m_exitConditions.m_center = pos;
+		m_exitConditions.m_radiusSqr = sqr(range);
+		m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
+		m_exitConditions.m_conditionsToConsider = (ExitConditions::ATTACK_ExitIfExpiredDuration |
+																									ExitConditions::ATTACK_ExitIfOutsideRadius |
+																									ExitConditions::ATTACK_ExitIfNoUnitFound);
+
+		m_attackState = newInstance(AIAttackState)(getMachine(), false, true, false, &m_exitConditions);
+		m_attackState->getMachine()->setGoalObject(nemesis);
+
+		StateReturnType returnVal = m_attackState->onEnter();
+		if (returnVal == STATE_CONTINUE) {
+			return STATE_CONTINUE;
+		}
+
+		// if we had no one to attack, we were successful, so go to the next state.
+		return STATE_SUCCESS;
+	}
 }
 
 //--------------------------------------------------------------------------------------
@@ -884,44 +912,76 @@ StateReturnType AIGuardAttackAggressorState::onEnter()
 		getGuardMachine()->setNemesisID(nemID);
 	}
 
+	//MODDD - moved to here
+	// ------------
 	Object *nemesis = TheGameLogic->findObjectByID(getGuardMachine()->getNemesisID());
 	if (nemesis == nullptr)
 	{
 		DEBUG_LOG(("Unexpected null nemesis in AIGuardAttackAggressorState."));
 		return STATE_SUCCESS;
 	}
+	// ------------
 
-	Object* targetToGuard = getGuardMachine()->findTargetToGuardByID();
-	Coord3D pos = targetToGuard ? *targetToGuard->getPosition() : *getGuardMachine()->getPositionToGuard();
-	//Don't allow guarding units to leave their guard radius!
-	m_exitConditions.m_center = pos;
-	m_exitConditions.m_radiusSqr = sqr(AIGuardMachine::getStdGuardRange(getMachineOwner()));
-	m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
-	m_exitConditions.m_conditionsToConsider = (ExitConditions::ATTACK_ExitIfExpiredDuration |
-																						 ExitConditions::ATTACK_ExitIfNoUnitFound |
-																						 ExitConditions::ATTACK_ExitIfOutsideRadius );
-
-	m_attackState = newInstance(AIAttackState)(getMachine(), true, true, false, &m_exitConditions);
-	m_attackState->getMachine()->setGoalObject(nemesis);
-
-	StateReturnType returnVal = m_attackState->onEnter();
-	if (returnVal == STATE_CONTINUE) {
-		return STATE_CONTINUE;
+	//MODDD - check for whether this object prefers to hijack or enter instead of attack
+	m_actionSubstateType = obj->getActionSubstateType();
+	if (m_actionSubstateType == ACTIONSUBSTATETYPE_HIJACK)
+	{
+		return createHijackSubstate(m_attackState, getMachine(), nemesis);
 	}
+	else if (m_actionSubstateType == ACTIONSUBSTATETYPE_ENTER)
+	{
+		return createEnterSubstate(m_attackState, getMachine(), nemesis);
+	}
+	//MODDD - else-wrapper for the rest of the original contents
+	else
+	{
+		//MODDD - moved up
+		/*
+		Object *nemesis = TheGameLogic->findObjectByID(getGuardMachine()->getNemesisID());
+		if (nemesis == nullptr)
+		{
+			DEBUG_LOG(("Unexpected null nemesis in AIGuardAttackAggressorState."));
+			return STATE_SUCCESS;
+		}
+		*/
 
-	// if we had no one to attack, we were successful, so go to the next state.
-	return STATE_SUCCESS;
+		Object* targetToGuard = getGuardMachine()->findTargetToGuardByID();
+		Coord3D pos = targetToGuard ? *targetToGuard->getPosition() : *getGuardMachine()->getPositionToGuard();
+		//Don't allow guarding units to leave their guard radius!
+		m_exitConditions.m_center = pos;
+		m_exitConditions.m_radiusSqr = sqr(AIGuardMachine::getStdGuardRange(getMachineOwner()));
+		m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
+		m_exitConditions.m_conditionsToConsider = (ExitConditions::ATTACK_ExitIfExpiredDuration |
+																							 ExitConditions::ATTACK_ExitIfNoUnitFound |
+																							 ExitConditions::ATTACK_ExitIfOutsideRadius );
+
+		m_attackState = newInstance(AIAttackState)(getMachine(), true, true, false, &m_exitConditions);
+		m_attackState->getMachine()->setGoalObject(nemesis);
+
+		StateReturnType returnVal = m_attackState->onEnter();
+		if (returnVal == STATE_CONTINUE) {
+			return STATE_CONTINUE;
+		}
+
+		// if we had no one to attack, we were successful, so go to the next state.
+		return STATE_SUCCESS;
+	}
 }
 
 //-------------------------------------------------------------------------------------------------
 StateReturnType AIGuardAttackAggressorState::update()
 {
 	if (m_attackState==nullptr) return STATE_SUCCESS;
-	// if the position has moved (IE we're guarding an object), move with it.
-	Object* targetToGuard = getGuardMachine()->findTargetToGuardByID();
-	if (targetToGuard)
+
+	//MODDD - wrapping this in a condition
+	if (m_actionSubstateType == ACTIONSUBSTATETYPE_ATTACK)
 	{
-		m_exitConditions.m_center = *targetToGuard->getPosition();
+		// if the position has moved (IE we're guarding an object), move with it.
+		Object* targetToGuard = getGuardMachine()->findTargetToGuardByID();
+		if (targetToGuard)
+		{
+			m_exitConditions.m_center = *targetToGuard->getPosition();
+		}
 	}
 
 	return m_attackState->update();

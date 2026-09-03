@@ -2849,6 +2849,22 @@ Bool Object::isClearingMines() const
 	return TRUE;
 }
 
+//MODDD - new
+ACTIONSUBSTATETYPE Object::getActionSubstateType() const
+{
+	if (getTemplate()->isHijackGuard())
+	{
+		return ACTIONSUBSTATETYPE_HIJACK;
+	}
+	else if(getTemplate()->isEnterGuard())
+	{
+		return ACTIONSUBSTATETYPE_ENTER;
+	}
+
+	// default
+	return ACTIONSUBSTATETYPE_ATTACK;
+}
+
 //-------------------------------------------------------------------------------------------------
 void Object::setReceivingDifficultyBonus(Bool receive)
 {
