@@ -645,25 +645,29 @@ StateReturnType AIGuardOuterState::update()
 {
 	if (m_attackState==nullptr) return STATE_SUCCESS;
 
-	// if the position has moved (IE we're guarding an object), move with it.
-	Object* targetToGuard = getGuardMachine()->findTargetToGuardByID();
-	if (targetToGuard)
+	//MODDD - wrapping this in a condition
+	if (m_actionSubstateType == ACTIONSUBSTATETYPE_ATTACK)
 	{
-		m_exitConditions.m_center = *targetToGuard->getPosition();
-	}
-
-	Object* goalObj = m_attackState->getMachineGoalObject();
-	if (goalObj)
-	{
-		Coord3D deltaAggr;
-		deltaAggr.x = m_exitConditions.m_center.x - goalObj->getPosition()->x;
-		deltaAggr.y = m_exitConditions.m_center.y - goalObj->getPosition()->y;
-		deltaAggr.z = m_exitConditions.m_center.z - goalObj->getPosition()->z;
-		Real visionSqr = sqr(AIGuardMachine::getStdGuardRange(getMachineOwner()));
-		if (deltaAggr.lengthSqr() <= visionSqr)
+		// if the position has moved (IE we're guarding an object), move with it.
+		Object* targetToGuard = getGuardMachine()->findTargetToGuardByID();
+		if (targetToGuard)
 		{
-			// reset the counter
-			m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
+			m_exitConditions.m_center = *targetToGuard->getPosition();
+		}
+
+		Object* goalObj = m_attackState->getMachineGoalObject();
+		if (goalObj)
+		{
+			Coord3D deltaAggr;
+			deltaAggr.x = m_exitConditions.m_center.x - goalObj->getPosition()->x;
+			deltaAggr.y = m_exitConditions.m_center.y - goalObj->getPosition()->y;
+			deltaAggr.z = m_exitConditions.m_center.z - goalObj->getPosition()->z;
+			Real visionSqr = sqr(AIGuardMachine::getStdGuardRange(getMachineOwner()));
+			if (deltaAggr.lengthSqr() <= visionSqr)
+			{
+				// reset the counter
+				m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
+			}
 		}
 	}
 
