@@ -392,13 +392,15 @@ void AIGuardRetaliateInnerState::loadPostProcess()
 AIGuardRetaliateInnerState::~AIGuardRetaliateInnerState()
 {
 	deleteInstance(m_attackState);
-	deleteInstance(m_enterState);
+	// MODDD - condensed 'm_enterState' & 'm_attackState' into the latter (disabled)
+	//deleteInstance(m_enterState);
 }
 
 //--------------------------------------------------------------------------------------
 StateReturnType AIGuardRetaliateInnerState::onEnter()
 {
 	//MODDD - a particular check for a 'hijack guard' to use the 'AIHijackState' instead
+	// Also, since condensed 'm_enterState' & 'm_attackState' into the latter
 	// ------------
 	if (getMachineOwner()->getTemplate()->isHijackGuard())
 	{
@@ -408,14 +410,8 @@ StateReturnType AIGuardRetaliateInnerState::onEnter()
 			DEBUG_LOG(("Unexpected null nemesis in AIGuardRetaliateInnerState."));
 			return STATE_SUCCESS;
 		}
-		m_enterState = newInstance(AIHijackState)(getMachine());
-
-		m_enterState->getMachine()->setGoalObject(nemesis);
-
-		StateReturnType returnVal = m_enterState->onEnter();
-		if (returnVal == STATE_CONTINUE) {
-			return STATE_CONTINUE;
-		}
+		
+		return createHijackStateAndEnter(&m_attackState, getMachine(), nemesis);
 	}
 	else
 	// ------------
@@ -428,14 +424,9 @@ StateReturnType AIGuardRetaliateInnerState::onEnter()
 			DEBUG_LOG(("Unexpected null nemesis in AIGuardRetaliateInnerState."));
 			return STATE_SUCCESS;
 		}
-		m_enterState = newInstance(AIEnterState)(getMachine());
-
-		m_enterState->getMachine()->setGoalObject(nemesis);
-
-		StateReturnType returnVal = m_enterState->onEnter();
-		if (returnVal == STATE_CONTINUE) {
-			return STATE_CONTINUE;
-		}
+		//MODDD - condensed existing script into this - in case of merge conflicts, see if the utility should be updated
+		// (and m_enterState -> m_attackState)
+		return createEnterStateAndEnter(&m_attackState, getMachine(), nemesis);
 	}
 	// Or try to destroy the target
 	else
@@ -473,10 +464,13 @@ StateReturnType AIGuardRetaliateInnerState::update()
 	{
 		return m_attackState->update();
 	}
+	// MODDD - condensed 'm_enterState' & 'm_attackState' into the latter (block disabled)
+	/*
 	else if (m_enterState)
 	{
 		return m_enterState->update();
 	}
+	*/
 
 	return STATE_SUCCESS;
 }
@@ -491,12 +485,15 @@ void AIGuardRetaliateInnerState::onExit( StateExitType status )
 		deleteInstance(m_attackState);
 		m_attackState = nullptr;
 	}
+	// MODDD - condensed 'm_enterState' & 'm_attackState' into the latter (block disabled)
+	/*
 	else if (m_enterState)
 	{
 		m_enterState->onExit(status);
 		deleteInstance(m_enterState);
 		m_enterState = nullptr;
 	}
+	*/
 
 	if (obj->getTeam())
 	{
@@ -557,25 +554,39 @@ StateReturnType AIGuardRetaliateOuterState::onEnter()
 	}
 	Object *obj = getMachineOwner();
 
-	Real range = TheAI->getAdjustedVisionRangeForObject(obj, AI_VISIONFACTOR_OWNERTYPE | AI_VISIONFACTOR_MOOD);
-
-	m_exitConditions.m_center = pos;
-	m_exitConditions.m_radiusSqr = sqr( 0.67f * (range + AIGuardRetaliateMachine::getStdGuardRange( getMachineOwner() )) );
-	m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
-	m_exitConditions.m_conditionsToConsider = (GuardRetaliateExitConditions::ATTACK_ExitIfExpiredDuration |
-																								GuardRetaliateExitConditions::ATTACK_ExitIfOutsideRadius |
-																								GuardRetaliateExitConditions::ATTACK_ExitIfNoUnitFound);
-
-	m_attackState = newInstance(AIAttackState)(getMachine(), false, true, false, &m_exitConditions);
-	m_attackState->getMachine()->setGoalObject(nemesis);
-
-	StateReturnType returnVal = m_attackState->onEnter();
-	if (returnVal == STATE_CONTINUE) {
-		return STATE_CONTINUE;
+	//MODDD - check for whether this object prefers to hijack or enter instead of attack
+	ACTIONSTATETYPE actionSubstateType = obj->getActionStateType();
+	if (actionSubstateType == ACTIONSTATETYPE_HIJACK)
+	{
+		return createHijackStateAndEnter(&m_attackState, getMachine(), nemesis);
 	}
+	else if (actionSubstateType == ACTIONSTATETYPE_ENTER)
+	{
+		return createEnterStateAndEnter(&m_attackState, getMachine(), nemesis);
+	}
+	//MODDD - else-wrapper for the rest of the original contents
+	else
+	{
+		Real range = TheAI->getAdjustedVisionRangeForObject(obj, AI_VISIONFACTOR_OWNERTYPE | AI_VISIONFACTOR_MOOD);
 
-	// if we had no one to attack, we were successful, so go to the next state.
-	return STATE_SUCCESS;
+		m_exitConditions.m_center = pos;
+		m_exitConditions.m_radiusSqr = sqr( 0.67f * (range + AIGuardRetaliateMachine::getStdGuardRange( getMachineOwner() )) );
+		m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
+		m_exitConditions.m_conditionsToConsider = (GuardRetaliateExitConditions::ATTACK_ExitIfExpiredDuration |
+																									GuardRetaliateExitConditions::ATTACK_ExitIfOutsideRadius |
+																									GuardRetaliateExitConditions::ATTACK_ExitIfNoUnitFound);
+
+		m_attackState = newInstance(AIAttackState)(getMachine(), false, true, false, &m_exitConditions);
+		m_attackState->getMachine()->setGoalObject(nemesis);
+
+		StateReturnType returnVal = m_attackState->onEnter();
+		if (returnVal == STATE_CONTINUE) {
+			return STATE_CONTINUE;
+		}
+
+		// if we had no one to attack, we were successful, so go to the next state.
+		return STATE_SUCCESS;
+	}
 }
 
 //--------------------------------------------------------------------------------------
@@ -852,27 +863,41 @@ StateReturnType AIGuardRetaliateAttackAggressorState::onEnter()
 		return STATE_SUCCESS;
 	}
 
-	Coord3D pos = *getGuardMachine()->getPositionToGuard();
-
-	Real range = TheAI->getAdjustedVisionRangeForObject(obj, AI_VISIONFACTOR_OWNERTYPE | AI_VISIONFACTOR_MOOD);
-
-	m_exitConditions.m_center = pos;
-	m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
-	m_exitConditions.m_radiusSqr = sqr( range + AIGuardRetaliateMachine::getStdGuardRange( obj ) );
-	m_exitConditions.m_conditionsToConsider = ( GuardRetaliateExitConditions::ATTACK_ExitIfExpiredDuration |
-																						  GuardRetaliateExitConditions::ATTACK_ExitIfOutsideRadius |
-																						  GuardRetaliateExitConditions::ATTACK_ExitIfNoUnitFound );
-
-	m_attackState = newInstance(AIAttackState)(getMachine(), false, true, false, &m_exitConditions);
-	m_attackState->getMachine()->setGoalObject(nemesis);
-
-	StateReturnType returnVal = m_attackState->onEnter();
-	if (returnVal == STATE_CONTINUE) {
-		return STATE_CONTINUE;
+	//MODDD - check for whether this object prefers to hijack or enter instead of attack
+	ACTIONSTATETYPE actionSubstateType = obj->getActionStateType();
+	if (actionSubstateType == ACTIONSTATETYPE_HIJACK)
+	{
+		return createHijackStateAndEnter(&m_attackState, getMachine(), nemesis);
 	}
+	else if (actionSubstateType == ACTIONSTATETYPE_ENTER)
+	{
+		return createEnterStateAndEnter(&m_attackState, getMachine(), nemesis);
+	}
+	//MODDD - else-wrapper for the rest of the original contents
+	else
+	{
+		Coord3D pos = *getGuardMachine()->getPositionToGuard();
 
-	// if we had no one to attack, we were successful, so go to the next state.
-	return STATE_SUCCESS;
+		Real range = TheAI->getAdjustedVisionRangeForObject(obj, AI_VISIONFACTOR_OWNERTYPE | AI_VISIONFACTOR_MOOD);
+
+		m_exitConditions.m_center = pos;
+		m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
+		m_exitConditions.m_radiusSqr = sqr( range + AIGuardRetaliateMachine::getStdGuardRange( obj ) );
+		m_exitConditions.m_conditionsToConsider = ( GuardRetaliateExitConditions::ATTACK_ExitIfExpiredDuration |
+																								GuardRetaliateExitConditions::ATTACK_ExitIfOutsideRadius |
+																								GuardRetaliateExitConditions::ATTACK_ExitIfNoUnitFound );
+
+		m_attackState = newInstance(AIAttackState)(getMachine(), false, true, false, &m_exitConditions);
+		m_attackState->getMachine()->setGoalObject(nemesis);
+
+		StateReturnType returnVal = m_attackState->onEnter();
+		if (returnVal == STATE_CONTINUE) {
+			return STATE_CONTINUE;
+		}
+
+		// if we had no one to attack, we were successful, so go to the next state.
+		return STATE_SUCCESS;
+	}
 }
 
 //-------------------------------------------------------------------------------------------------

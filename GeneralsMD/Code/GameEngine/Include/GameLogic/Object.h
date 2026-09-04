@@ -720,7 +720,7 @@ public:
 	Bool isClearingMines() const;
 	
 	//MODDD - new - utility to get the 'ACTIONSUBSTATETYPE' to use for a given object
-	ACTIONSUBSTATETYPE getActionSubstateType() const;
+	ACTIONSTATETYPE getActionStateType() const;
 
 	Bool getReceivingDifficultyBonus() const { return m_isReceivingDifficultyBonus; }
 	void setReceivingDifficultyBonus(Bool receive);

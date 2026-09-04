@@ -108,11 +108,11 @@ inline Real ConvertAngularVelocityInDegreesPerSecToRadsPerFrame(Real degPerSec)
 }
 
 //MODDD - new, just want this to go somewhere that state machines / AI states and objects can see
-enum ACTIONSUBSTATETYPE
+enum ACTIONSTATETYPE
 {
-	ACTIONSUBSTATETYPE_ATTACK = 0,
-	ACTIONSUBSTATETYPE_ENTER,
-	ACTIONSUBSTATETYPE_HIJACK
+	ACTIONSTATETYPE_ATTACK = 0,
+	ACTIONSTATETYPE_ENTER,
+	ACTIONSTATETYPE_HIJACK
 };
 
 //MODDD
