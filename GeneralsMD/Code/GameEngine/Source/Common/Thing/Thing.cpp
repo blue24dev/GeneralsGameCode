@@ -96,6 +96,13 @@ const ThingTemplate *Thing::getTemplate() const
 	return m_template;
 }
 
+//MODDD - new, convenience feature
+// Not to be confused with 'm_templateName' found as-is for debug builds, probably for debugger convenience.
+const AsciiString& Thing::getTemplateName() const
+{
+	return getTemplate()->getName();
+}
+
 //=============================================================================
 Bool Thing::isPositioned() const
 {

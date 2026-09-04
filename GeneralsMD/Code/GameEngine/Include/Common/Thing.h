@@ -97,6 +97,8 @@ public:
 
 	/** Return the final override of this thing's template. */
 	const ThingTemplate *getTemplate() const;
+	//MODDD - new, convenience feature
+	const AsciiString& getTemplateName() const;
 
 	// convenience method for patching isKindOf thru to template.
 	Bool isKindOf(KindOfType t) const;

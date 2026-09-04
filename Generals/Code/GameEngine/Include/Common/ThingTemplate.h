@@ -603,9 +603,7 @@ public:
 	AsciiString getUpgradeCameoName( Int n)const{ return m_upgradeCameoUpgradeNames[n];	}
 	
 	//MODDD
-#if CUSTOM_ATTRIBUTE_CHANGES
 	friend void automaticThingTemplateChanges(ThingTemplate* _this);
-#endif
 
 protected:
 
