@@ -135,7 +135,8 @@ private:
 
 	TunnelNetworkExitConditions m_exitConditions;
 	Bool			m_scanForEnemy;
-	AIAttackState *m_attackState;
+	//MODDD - changed to broader type from 'AIAttackState'
+	State *m_attackState;
 };
 
 //--------------------------------------------------------------------------------------
@@ -181,7 +182,8 @@ private:
 	AITNGuardMachine* getGuardMachine() { return (AITNGuardMachine*)getMachine(); }
 
 	TunnelNetworkExitConditions m_exitConditions;
-	AIAttackState *m_attackState;
+	//MODDD - change to broader type from 'AIAttackState'
+	State *m_attackState;
 };
 
 //--------------------------------------------------------------------------------------
@@ -240,7 +242,8 @@ protected:
 private:
 	AITNGuardMachine* getGuardMachine() { return (AITNGuardMachine*)getMachine(); }
 	TunnelNetworkExitConditions m_exitConditions;
-	AIAttackState *m_attackState;
+	//MODDD - changed to broader type from 'AIAttackState'
+	State *m_attackState;
 };
 
 //--------------------------------------------------------------------------------------

@@ -2841,19 +2841,19 @@ Bool Object::isClearingMines() const
 }
 
 //MODDD - new
-ACTIONSUBSTATETYPE Object::getActionSubstateType() const
+ACTIONSTATETYPE Object::getActionStateType() const
 {
 	if (getTemplate()->isHijackGuard())
 	{
-		return ACTIONSUBSTATETYPE_HIJACK;
+		return ACTIONSTATETYPE_HIJACK;
 	}
-	else if(getTemplate()->isEnterGuard())
+	else if (getTemplate()->isEnterGuard())
 	{
-		return ACTIONSUBSTATETYPE_ENTER;
+		return ACTIONSTATETYPE_ENTER;
 	}
 
 	// default
-	return ACTIONSUBSTATETYPE_ATTACK;
+	return ACTIONSTATETYPE_ATTACK;
 }
 
 //-------------------------------------------------------------------------------------------------
