@@ -7858,12 +7858,14 @@ StateReturnType AIFaceState::update()
 }
 
 //MODDD - helper utilities
-StateReturnType createHijackSubstate(State*& out_substate, StateMachine* stateMachine, Object* nemesis)
+StateReturnType createEnterStateAndEnter(State** out_substate, StateMachine* stateMachine, Object* nemesis)
 {
-	out_substate = newInstance(AIHijackState)(stateMachine);
-	out_substate->getMachine()->setGoalObject(nemesis);
+	State* substate = newInstance(AIEnterState)(stateMachine);
+	substate->friend_setID(AI_ENTER);
+	(*out_substate) = substate;
+	substate->getMachine()->setGoalObject(nemesis);
 
-	StateReturnType returnVal = out_substate->onEnter();
+	StateReturnType returnVal = substate->onEnter();
 	if (returnVal == STATE_CONTINUE) {
 		return STATE_CONTINUE;
 	}
@@ -7871,12 +7873,14 @@ StateReturnType createHijackSubstate(State*& out_substate, StateMachine* stateMa
 	return STATE_SUCCESS;
 }
 
-StateReturnType createEnterSubstate(State*& out_substate, StateMachine* stateMachine, Object* nemesis)
+StateReturnType createHijackStateAndEnter(State** out_substate, StateMachine* stateMachine, Object* nemesis)
 {
-	out_substate = newInstance(AIEnterState)(stateMachine);
-	out_substate->getMachine()->setGoalObject(nemesis);
+	State* substate = newInstance(AIHijackState)(stateMachine);
+	substate->friend_setID(AI_HIJACK);
+	(*out_substate) = substate;
+	substate->getMachine()->setGoalObject(nemesis);
 
-	StateReturnType returnVal = out_substate->onEnter();
+	StateReturnType returnVal = substate->onEnter();
 	if (returnVal == STATE_CONTINUE) {
 		return STATE_CONTINUE;
 	}

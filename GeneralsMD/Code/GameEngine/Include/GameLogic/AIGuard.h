@@ -138,8 +138,9 @@ class AIGuardInnerState : public State
 public:
 	AIGuardInnerState( StateMachine *machine ) : State( machine, "AIGuardInner" )
 	{
+		//MODDD - commented out the removed 'm_enterState'
 		m_attackState = nullptr;
-		m_enterState = nullptr;
+		//m_enterState = nullptr;
 	}
 	virtual Bool isAttack() const override { return m_attackState ? m_attackState->isAttack() : FALSE; }
 	virtual StateReturnType onEnter() override;
@@ -152,10 +153,13 @@ protected:
 	virtual void loadPostProcess() override;
 private:
 	AIGuardMachine* getGuardMachine() { return (AIGuardMachine*)getMachine(); }
-
 	ExitConditions m_exitConditions;
+	//MODDD - if only one is ever used, why have space for both?
+	/*
 	AIAttackState *m_attackState;
 	_AIEnterState *m_enterState;
+	*/
+	State* m_attackState;
 };
 
 //--------------------------------------------------------------------------------------
@@ -202,9 +206,6 @@ protected:
 	virtual void loadPostProcess() override;
 private:
 	AIGuardMachine* getGuardMachine() { return (AIGuardMachine*)getMachine(); }
-
-	//MODDD - added
-	ACTIONSUBSTATETYPE m_actionSubstateType;
 	ExitConditions m_exitConditions;
 	//MODDD - type changed from 'AIAttackState' to a broader 'State'
 	State *m_attackState;
@@ -266,9 +267,6 @@ protected:
 	virtual void loadPostProcess() override;
 private:
 	AIGuardMachine* getGuardMachine() { return (AIGuardMachine*)getMachine(); }
-	
-	//MODDD - added
-	ACTIONSUBSTATETYPE m_actionSubstateType;
 	ExitConditions m_exitConditions;
 	//MODDD - type changed from 'AIAttackState' to a broader 'State'
 	State *m_attackState;

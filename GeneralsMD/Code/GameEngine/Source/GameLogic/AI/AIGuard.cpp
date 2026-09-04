@@ -410,15 +410,20 @@ void AIGuardInnerState::loadPostProcess()
 AIGuardInnerState::~AIGuardInnerState()
 {
 	deleteInstance(m_attackState);
-	deleteInstance(m_enterState);
+	// MODDD - condensed 'm_enterState' & 'm_attackState' into the latter (disabled)
+	//deleteInstance(m_enterState);
 }
 
 //--------------------------------------------------------------------------------------
 StateReturnType AIGuardInnerState::onEnter()
 {
+	//MODDD - new
+	int actionStateType = getMachineOwner()->getActionStateType();
+
 	//MODDD - a particular check for a 'hijack guard' to use the 'AIHijackState' instead
+	// Also, since condensed 'm_enterState' & 'm_attackState' into the latter
 	// ------------
-	if (getMachineOwner()->getTemplate()->isHijackGuard())
+	if (actionStateType == ACTIONSTATETYPE_HIJACK)
 	{
 		Object* nemesis = TheGameLogic->findObjectByID(getGuardMachine()->getNemesisID()) ;
 		if (nemesis == nullptr)
@@ -426,19 +431,14 @@ StateReturnType AIGuardInnerState::onEnter()
 			DEBUG_LOG(("Unexpected null nemesis in AIGuardInnerState."));
 			return STATE_SUCCESS;
 		}
-		m_enterState = newInstance(AIHijackState)(getMachine());
-
-		m_enterState->getMachine()->setGoalObject(nemesis);
-
-		StateReturnType returnVal = m_enterState->onEnter();
-		if (returnVal == STATE_CONTINUE) {
-			return STATE_CONTINUE;
-		}
+		
+		return createHijackStateAndEnter(&m_attackState, getMachine(), nemesis);
 	}
 	else
 	// ------------
 	// See if we try to enter the target
-	if (getMachineOwner()->getTemplate()->isEnterGuard())
+	//MODDD - replaced condition to check 'm_actionSubstateType'
+	if (actionStateType == ACTIONSTATETYPE_ENTER)
 	{
 		Object* nemesis = TheGameLogic->findObjectByID(getGuardMachine()->getNemesisID()) ;
 		if (nemesis == nullptr)
@@ -446,14 +446,9 @@ StateReturnType AIGuardInnerState::onEnter()
 			DEBUG_LOG(("Unexpected null nemesis in AIGuardInnerState."));
 			return STATE_SUCCESS;
 		}
-		m_enterState = newInstance(AIEnterState)(getMachine());
-
-		m_enterState->getMachine()->setGoalObject(nemesis);
-
-		StateReturnType returnVal = m_enterState->onEnter();
-		if (returnVal == STATE_CONTINUE) {
-			return STATE_CONTINUE;
-		}
+		//MODDD - condensed existing script into this - in case of merge conflicts, see if the utility should be updated
+		// (and m_enterState -> m_attackState)
+		return createEnterStateAndEnter(&m_attackState, getMachine(), nemesis);
 	}
 	// Or try to destroy the target
 	else
@@ -472,7 +467,9 @@ StateReturnType AIGuardInnerState::onEnter()
 																								ExitConditions::ATTACK_ExitIfNoUnitFound);
 
 		m_attackState = newInstance(AIAttackState)(getMachine(), false, true, false, &m_exitConditions);
-
+		//MODDD - now necessary. Note that accuracy about "AI_ATTACK_<etc>" isn't necessary, this is just to differentiate
+		// using a typical attack state as opposed to an enter or hijack one
+		m_attackState->friend_setID(AI_ATTACK_OBJECT);
 		m_attackState->getMachine()->setGoalObject(nemesis);
 
 		StateReturnType returnVal = m_attackState->onEnter();
@@ -490,19 +487,26 @@ StateReturnType AIGuardInnerState::update()
 {
 	if (m_attackState)
 	{
-		// if the position has moved (IE we're guarding an object), move with it.
-		Object* targetToGuard = getGuardMachine()->findTargetToGuardByID();
-		if (targetToGuard)
+		//MODDD - wrapped in condition
+		if (m_attackState->getID() == AI_ATTACK_OBJECT)
 		{
-			m_exitConditions.m_center = *targetToGuard->getPosition();
+			// if the position has moved (IE we're guarding an object), move with it.
+			Object* targetToGuard = getGuardMachine()->findTargetToGuardByID();
+			if (targetToGuard)
+			{
+				m_exitConditions.m_center = *targetToGuard->getPosition();
+			}
 		}
 
 		return m_attackState->update();
 	}
+	// MODDD - condensed 'm_enterState' & 'm_attackState' into the latter (block disabled)
+	/*
 	else if (m_enterState)
 	{
 		return m_enterState->update();
 	}
+	*/
 
 	return STATE_SUCCESS;
 }
@@ -517,12 +521,15 @@ void AIGuardInnerState::onExit( StateExitType status )
 		deleteInstance(m_attackState);
 		m_attackState = nullptr;
 	}
+	// MODDD - condensed 'm_enterState' & 'm_attackState' into the latter (block disabled)
+	/*
 	else if (m_enterState)
 	{
 		m_enterState->onExit(status);
 		deleteInstance(m_enterState);
 		m_enterState = nullptr;
 	}
+	*/
 
 	if (obj->getTeam())
 	{
@@ -585,14 +592,14 @@ StateReturnType AIGuardOuterState::onEnter()
 	// ------------
 
 	//MODDD - check for whether this object prefers to hijack or enter instead of attack
-	m_actionSubstateType = obj->getActionSubstateType();
-	if (m_actionSubstateType == ACTIONSUBSTATETYPE_HIJACK)
+	ACTIONSTATETYPE actionStateType = obj->getActionStateType();
+	if (actionStateType == ACTIONSTATETYPE_HIJACK)
 	{
-		return createHijackSubstate(m_attackState, getMachine(), nemesis);
+		return createHijackStateAndEnter(&m_attackState, getMachine(), nemesis);
 	}
-	else if (m_actionSubstateType == ACTIONSUBSTATETYPE_ENTER)
+	else if (actionStateType == ACTIONSTATETYPE_ENTER)
 	{
-		return createEnterSubstate(m_attackState, getMachine(), nemesis);
+		return createEnterStateAndEnter(&m_attackState, getMachine(), nemesis);
 	}
 	//MODDD - else-wrapper for the rest of the original contents
 	else
@@ -628,6 +635,8 @@ StateReturnType AIGuardOuterState::onEnter()
 																									ExitConditions::ATTACK_ExitIfNoUnitFound);
 
 		m_attackState = newInstance(AIAttackState)(getMachine(), false, true, false, &m_exitConditions);
+		//MODDD - now necessary
+		m_attackState->friend_setID(AI_ATTACK_OBJECT);
 		m_attackState->getMachine()->setGoalObject(nemesis);
 
 		StateReturnType returnVal = m_attackState->onEnter();
@@ -646,7 +655,7 @@ StateReturnType AIGuardOuterState::update()
 	if (m_attackState==nullptr) return STATE_SUCCESS;
 
 	//MODDD - wrapping this in a condition
-	if (m_actionSubstateType == ACTIONSUBSTATETYPE_ATTACK)
+	if (m_attackState->getID() == AI_ATTACK_OBJECT)
 	{
 		// if the position has moved (IE we're guarding an object), move with it.
 		Object* targetToGuard = getGuardMachine()->findTargetToGuardByID();
@@ -927,14 +936,14 @@ StateReturnType AIGuardAttackAggressorState::onEnter()
 	// ------------
 
 	//MODDD - check for whether this object prefers to hijack or enter instead of attack
-	m_actionSubstateType = obj->getActionSubstateType();
-	if (m_actionSubstateType == ACTIONSUBSTATETYPE_HIJACK)
+	ACTIONSTATETYPE actionStateType = obj->getActionStateType();
+	if (actionStateType == ACTIONSTATETYPE_HIJACK)
 	{
-		return createHijackSubstate(m_attackState, getMachine(), nemesis);
+		return createHijackStateAndEnter(&m_attackState, getMachine(), nemesis);
 	}
-	else if (m_actionSubstateType == ACTIONSUBSTATETYPE_ENTER)
+	else if (actionStateType == ACTIONSTATETYPE_ENTER)
 	{
-		return createEnterSubstate(m_attackState, getMachine(), nemesis);
+		return createEnterStateAndEnter(&m_attackState, getMachine(), nemesis);
 	}
 	//MODDD - else-wrapper for the rest of the original contents
 	else
@@ -960,6 +969,8 @@ StateReturnType AIGuardAttackAggressorState::onEnter()
 																							 ExitConditions::ATTACK_ExitIfOutsideRadius );
 
 		m_attackState = newInstance(AIAttackState)(getMachine(), true, true, false, &m_exitConditions);
+		//MODDD - now necessary
+		m_attackState->friend_setID(AI_ATTACK_OBJECT);
 		m_attackState->getMachine()->setGoalObject(nemesis);
 
 		StateReturnType returnVal = m_attackState->onEnter();
@@ -978,7 +989,7 @@ StateReturnType AIGuardAttackAggressorState::update()
 	if (m_attackState==nullptr) return STATE_SUCCESS;
 
 	//MODDD - wrapping this in a condition
-	if (m_actionSubstateType == ACTIONSUBSTATETYPE_ATTACK)
+	if (m_attackState->getID() == AI_ATTACK_OBJECT)
 	{
 		// if the position has moved (IE we're guarding an object), move with it.
 		Object* targetToGuard = getGuardMachine()->findTargetToGuardByID();

@@ -347,19 +347,34 @@ StateReturnType AITNGuardInnerState::onEnter()
 		DEBUG_LOG(("Unexpected null nemesis in AITNGuardInnerState."));
 		return STATE_SUCCESS;
 	}
-	m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
 
-	m_attackState = newInstance(AIAttackState)(getMachine(), false, true, false, &m_exitConditions);
-
-	m_attackState->getMachine()->setGoalObject(nemesis);
-
-	StateReturnType returnVal = m_attackState->onEnter();
-	if (returnVal == STATE_CONTINUE) {
-		return STATE_CONTINUE;
+	//MODDD - check for whether this object prefers to hijack or enter instead of attack
+	ACTIONSTATETYPE actionSubstateType = getMachineOwner()->getActionStateType();
+	if (actionSubstateType == ACTIONSTATETYPE_HIJACK)
+	{
+		return createHijackStateAndEnter(&m_attackState, getMachine(), nemesis);
 	}
+	else if (actionSubstateType == ACTIONSTATETYPE_ENTER)
+	{
+		return createEnterStateAndEnter(&m_attackState, getMachine(), nemesis);
+	}
+	//MODDD - else-wrapper for the rest of the original contents
+	else
+	{
+		m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
 
-	// if we had no one to attack, we were successful, so go to the next state.
-	return STATE_SUCCESS;
+		m_attackState = newInstance(AIAttackState)(getMachine(), false, true, false, &m_exitConditions);
+
+		m_attackState->getMachine()->setGoalObject(nemesis);
+
+		StateReturnType returnVal = m_attackState->onEnter();
+		if (returnVal == STATE_CONTINUE) {
+			return STATE_CONTINUE;
+		}
+
+		// if we had no one to attack, we were successful, so go to the next state.
+		return STATE_SUCCESS;
+	}
 }
 
 static Object *TunnelNetworkScan(Object *owner)
@@ -498,17 +513,31 @@ StateReturnType AITNGuardOuterState::onEnter()
 		return STATE_SUCCESS;
 	}
 
-	m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
-	m_attackState = newInstance(AIAttackState)(getMachine(), false, true, false, &m_exitConditions);
-	m_attackState->getMachine()->setGoalObject(nemesis);
-
-	StateReturnType returnVal = m_attackState->onEnter();
-	if (returnVal == STATE_CONTINUE) {
-		return STATE_CONTINUE;
+	//MODDD - check for whether this object prefers to hijack or enter instead of attack
+	ACTIONSTATETYPE actionSubstateType = getMachineOwner()->getActionStateType();
+	if (actionSubstateType == ACTIONSTATETYPE_HIJACK)
+	{
+		return createHijackStateAndEnter(&m_attackState, getMachine(), nemesis);
 	}
+	else if (actionSubstateType == ACTIONSTATETYPE_ENTER)
+	{
+		return createEnterStateAndEnter(&m_attackState, getMachine(), nemesis);
+	}
+	//MODDD - else-wrapper for the rest of the original contents
+	else
+	{
+		m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
+		m_attackState = newInstance(AIAttackState)(getMachine(), false, true, false, &m_exitConditions);
+		m_attackState->getMachine()->setGoalObject(nemesis);
 
-	// if we had no one to attack, we were successful, so go to the next state.
-	return STATE_SUCCESS;
+		StateReturnType returnVal = m_attackState->onEnter();
+		if (returnVal == STATE_CONTINUE) {
+			return STATE_CONTINUE;
+		}
+
+		// if we had no one to attack, we were successful, so go to the next state.
+		return STATE_SUCCESS;
+	}
 }
 
 //--------------------------------------------------------------------------------------
@@ -851,17 +880,31 @@ StateReturnType AITNGuardAttackAggressorState::onEnter()
 	}
 	if (tunnels) tunnels->updateNemesis(nemesis);
 
-	m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
-	m_attackState = newInstance(AIAttackState)(getMachine(), true, true, false, &m_exitConditions);
-	m_attackState->getMachine()->setGoalObject(nemesis);
-
-	StateReturnType returnVal = m_attackState->onEnter();
-	if (returnVal == STATE_CONTINUE) {
-		return STATE_CONTINUE;
+	//MODDD - check for whether this object prefers to hijack or enter instead of attack
+	ACTIONSTATETYPE actionSubstateType = getMachineOwner()->getActionStateType();
+	if (actionSubstateType == ACTIONSTATETYPE_HIJACK)
+	{
+		return createHijackStateAndEnter(&m_attackState, getMachine(), nemesis);
 	}
+	else if (actionSubstateType == ACTIONSTATETYPE_ENTER)
+	{
+		return createEnterStateAndEnter(&m_attackState, getMachine(), nemesis);
+	}
+	//MODDD - else-wrapper for the rest of the original contents
+	else
+	{
+		m_exitConditions.m_attackGiveUpFrame = TheGameLogic->getFrame() + TheAI->getAiData()->m_guardChaseUnitFrames;
+		m_attackState = newInstance(AIAttackState)(getMachine(), true, true, false, &m_exitConditions);
+		m_attackState->getMachine()->setGoalObject(nemesis);
 
-	// if we had no one to attack, we were successful, so go to the next state.
-	return STATE_SUCCESS;
+		StateReturnType returnVal = m_attackState->onEnter();
+		if (returnVal == STATE_CONTINUE) {
+			return STATE_CONTINUE;
+		}
+
+		// if we had no one to attack, we were successful, so go to the next state.
+		return STATE_SUCCESS;
+	}
 }
 
 //-------------------------------------------------------------------------------------------------

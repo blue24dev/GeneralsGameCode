@@ -127,8 +127,9 @@ class AIGuardRetaliateInnerState : public State
 public:
 	AIGuardRetaliateInnerState( StateMachine *machine ) : State( machine, "AIGuardRetaliateInner" )
 	{
-		m_attackState = 0;
-		m_enterState = 0;
+		//MODDD - set to 'nullptr' instead of 0 (not that there should be any difference anyway), commented out the removed 'm_enterState'
+		m_attackState = nullptr;
+		//m_enterState = nullptr;
 	}
 	virtual StateReturnType onEnter() override;
 	virtual StateReturnType update() override;
@@ -142,8 +143,12 @@ private:
 	AIGuardRetaliateMachine* getGuardMachine() { return (AIGuardRetaliateMachine*)getMachine(); }
 
 	GuardRetaliateExitConditions m_exitConditions;
+	//MODDD - if only one is ever used, why have space for both?
+	/*
 	AIAttackState *m_attackState;
 	_AIEnterState *m_enterState;
+	*/
+	State* m_attackState;
 };
 
 //--------------------------------------------------------------------------------------
@@ -187,9 +192,9 @@ protected:
 	virtual void loadPostProcess() override;
 private:
 	AIGuardRetaliateMachine* getGuardMachine() { return (AIGuardRetaliateMachine*)getMachine(); }
-
 	GuardRetaliateExitConditions m_exitConditions;
-	AIAttackState *m_attackState;
+	//MODDD - changed to broader type from 'AIAttackState'
+	State *m_attackState;
 };
 
 //--------------------------------------------------------------------------------------
@@ -249,7 +254,8 @@ protected:
 private:
 	AIGuardRetaliateMachine* getGuardMachine() { return (AIGuardRetaliateMachine*)getMachine(); }
 	GuardRetaliateExitConditions m_exitConditions;
-	AIAttackState *m_attackState;
+	//MODDD - changed to broader type from 'AIAttackState'
+	State *m_attackState;
 };
 
 //--------------------------------------------------------------------------------------
