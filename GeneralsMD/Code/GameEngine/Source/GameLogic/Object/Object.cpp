@@ -767,7 +767,7 @@ void Object::initConstructor(const ThingTemplate* tt)
 	m_modulesReady = false;
 
 	//MODDD - NEW. well gee, I would certainly hope not this early
-	m_isBeingDeleted = false;
+	m_calledForDeletion = false;
 	
 	// Force the thing template to use the most overridden version of itself - jkmcd
 	// Note that after this, the object will be using m_template, which forces the usage of the
@@ -5777,6 +5777,11 @@ void Object::onCapture( Player *oldOwner, Player *newOwner )
 /// Object level events that need to happen upon game death
 void Object::onDie( DamageInfo *damageInfo )
 {
+	//MODDD - it turns out adding this to 'GameLogic::destroyObject' is not quite enough.
+	// Several places like 'ActiveBody::attemptDamage' call 'onDie' directly, bypassing 'destroyObject' (or really deferring that to a later step).
+	// An initial goal of this is for 'RiderChangeContain::onRemoving' to have a way of telling whether it should bother with the scuttle-bike
+	// logic (in several cases it will even when it's clearly being destroyed that frame).
+	m_calledForDeletion = true;
 
 	checkAndDetonateBoobyTrap(nullptr);// Already dying, so no need to handle death case of explosion
 

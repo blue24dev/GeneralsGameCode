@@ -297,8 +297,15 @@ void RiderChangeContain::onRemoving( Object *rider )
 	//MODDD - change to this flag that's set earlier, so this being reached sooner than expected through some
 	// call chain doesn't see the bike as 'still alive' (point to 'kill' the bike not yet reached but will happen
 	// soon enough -> typically that's a tear-down so why bother skipping here to set a scuttle delay?).
+	// Note that being destroyed by combat in-game (Object::onDie -> reaching here) tends to (always?) set 'isEffectivelyDead'
+	// before here, as does 'destroyAllObjectsImmediate' (exiting the current game), but calls to destroy a game object
+	// in particular while in-game (GameLogic::destroyObject) will skip setting 'isEffectivelyDead' (ex: probably, a
+	// garrisonable building/unit clearing is contents -> might outright delete passengers from the game via 'destroyObject'
+	// instead of evac).
+	// To ease a whole lot of confusion, check for 'm_calledForDeletion' instead - this is set anytime 'onDie' or
+	// 'GameLogic::destroyObject' is the reason this point is reached - really all that matters.
 	//if( bike->isEffectivelyDead() )
-	if( bike->m_isBeingDeleted )
+	if( bike->m_calledForDeletion )
 	{
 #if EXTRA_DEBUG_HELP
 		g_destroyObjectSource.push_back(42);
