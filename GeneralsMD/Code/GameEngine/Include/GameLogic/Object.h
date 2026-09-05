@@ -945,9 +945,10 @@ private:
 	// Selling an already completed structure doesn't use this, though could if you want that to.
 	Int m_moneySpentOnMe;
 	Bool m_hasHijackerCollide;
-	// Creating a new boolean just to track whether this object is currently being deleted.
+	// Creating a new boolean just to track whether this object is going to be removed soon (set as soon as 'onDie' or
+	// 'GameLogic::destoryObject' is called on this).
 	// Not going to trust tinkering with other things for safety - untrackable bugs from bad memory involving 'm_stateMap' is a nightmare.
-	public: Bool m_isBeingDeleted;
+	public: Bool m_calledForDeletion;
 };
 
 // deleteInstance is not meant to be used with Object in order to require the use of TheGameLogic->destroyObject()

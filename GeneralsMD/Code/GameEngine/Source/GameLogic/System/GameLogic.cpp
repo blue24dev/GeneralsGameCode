@@ -4733,16 +4733,11 @@ void GameLogic::_destroyObject( Object *obj )
 	DEBUG_ASSERTCRASH(obj != nullptr, ("destroying null object"));
 
 	// if already flagged for destruction, ignore
-	//MODDD - can check the new flag instead
-	/*
 	if (!obj || obj->isDestroyed())
-		return;
-	*/
-	if (!obj || obj->m_isBeingDeleted)
 		return;
 
 	//MODDD - extra complementary 'm_objVector' lists (partially)
-	// sSems like a good idea to let inner logic know that looks back at this object.
+	// Seems like a good idea to let inner logic know that looks back at this object.
 	// Being destroyed by unusual means like a garrisoned building deleting all occupants can avoid the damage system's usual
 	// 'setEffectivelyDead' setter.
 	// Also, consider 'Object::onDie', but the caller often also calls something like 'ActiveBody::internalChangeHealth' which
@@ -4762,8 +4757,8 @@ void GameLogic::_destroyObject( Object *obj )
 	*/
 	// ---------
 
-	//MODDD - how about the idea above with a new flag instead?
-	obj->m_isBeingDeleted = true;
+	//MODDD - how about the idea above with a new flag instead
+	obj->m_calledForDeletion = true;
 
 	// run the object onDestroy event if provided
 	for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
