@@ -177,7 +177,7 @@ enum KindOfType CPP_11(: Int)
 
 	KINDOF_NO_ATTACK_WARNING,				///< does not trigger the under attack radar/EVA warning when taking damage
 
-	//MODDDD - new
+	//MODDD - new
 	// ---
 	KINDOF_FS_NAVALFACTORY,         ///< A production structure for naval units, likely placed on water or a coast (does not affect placement requirements - see next flag)
 	                                //   (also, this flag has no effect yet, just bookkeeping)

@@ -4558,6 +4558,77 @@ void ScriptActions::doSkirmishFireSpecialPowerAtMostCost( const AsciiString &pla
 	}
 }
 
+//MODDD - variant of above to specify which unit should fire at a determined 'highest cost' area
+void ScriptActions::doSkirmishFireSpecialPowerFromUnitAtMostCost( const AsciiString& player, const AsciiString& unit, const AsciiString& specialPower )
+{
+	Int enemyNdx;
+	Player *enemyPlayer = TheScriptEngine->getSkirmishEnemyPlayer();
+	if (enemyPlayer == nullptr) return;
+	enemyNdx = enemyPlayer->getPlayerIndex();
+
+	const SpecialPowerTemplate *power = TheSpecialPowerStore->findSpecialPowerTemplate(specialPower);
+	if (power==nullptr)
+		return;
+	Real radius = 50.0f;
+	if (power->getRadiusCursorRadius()>radius) {
+		radius = power->getRadiusCursorRadius();
+	}
+
+	Player::PlayerTeamList::const_iterator it;
+
+	Player *pPlayer = TheScriptEngine->getPlayerFromAsciiString(player);
+	if (pPlayer==nullptr)
+		return;
+
+	//MODDD - involve the unit
+	Object *pObj = TheScriptEngine->getUnitNamed(unit);
+	if (!pObj) {
+		return;
+	}
+	// verify ownership
+	if (pObj->getControllingPlayer() != pPlayer)
+	{
+		// nope
+		return;
+	}
+	
+	// and lazily re-using from above, but with only the one named object in mind
+	// (want to turn this into a helper/utility?)
+	SpecialPowerModuleInterface *mod = pObj->getSpecialPowerModule(power);
+	if (!mod)
+		return;
+	
+	if( !mod->isReady() )
+		return;
+
+	//MODDD - if this module is an OCL for OWNER type, block it. See the comment there.
+	if (!mod->canBeSpecialPowerSource())
+		return;
+
+	Coord3D location;
+  Bool locationFound = FALSE;
+
+	locationFound = pPlayer->computeSuperweaponTarget(power, &location, enemyNdx, radius);
+
+	if( locationFound && power->getSpecialPowerType() == SPECIAL_SNEAK_ATTACK )
+	{
+		//We need to modify the location. We're already calculated the sweet spot, but we need to modify that
+		//position if we can't place it in the current location.
+		const ThingTemplate *sneakAttackTemplate = mod->getReferenceThingTemplate();
+		if( sneakAttackTemplate )
+		{
+			locationFound = pPlayer->calcClosestConstructionZoneLocation( sneakAttackTemplate, &location );
+		}
+	}
+
+  DEBUG_ASSERTCRASH( locationFound, ("ScriptActions::doSkirmishFireSpecialPowerAtMostCost() could not find a valid (costly) location.") );
+
+	if( locationFound && location.lengthSqr() > 0.0f )
+	{
+		mod->doSpecialPowerAtLocation( &location, INVALID_ANGLE, COMMAND_FIRED_BY_SCRIPT );
+	}
+}
+
 //-------------------------------------------------------------------------------------------------
 /** doNamedFireSpecialPowerAtNamed */
 //-------------------------------------------------------------------------------------------------
@@ -7626,6 +7697,11 @@ void ScriptActions::executeAction( ScriptAction *pAction )
 
 		case ScriptAction::SKIRMISH_FIRE_SPECIAL_POWER_AT_MOST_COST:
 			doSkirmishFireSpecialPowerAtMostCost(pAction->getParameter(0)->getString(), pAction->getParameter(1)->getString());
+			return;
+
+		//MODDD - new
+		case ScriptAction::SKIRMISH_FIRE_SPECIAL_POWER_FROM_UNIT_AT_MOST_COST:
+			doSkirmishFireSpecialPowerFromUnitAtMostCost(pAction->getParameter(0)->getString(), pAction->getParameter(1)->getString(), pAction->getParameter(2)->getString());
 			return;
 
 		case ScriptAction::NAMED_FIRE_SPECIAL_POWER_AT_NAMED:

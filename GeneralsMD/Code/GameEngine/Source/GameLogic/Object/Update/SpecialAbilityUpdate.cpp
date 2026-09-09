@@ -1502,7 +1502,7 @@ Bool SpecialAbilityUpdate::attemptTriggerAbilityEffect(Bool& okToLoseStealth)
       }
 
       // Just in case we are capturing a building which is already garrisoned by other
-      //MODDDD - removing this. 'target->defect' below ('Object::defect') already leads to a 'removeAllContained'
+      //MODDD - removing this. 'target->defect' below ('Object::defect') already leads to a 'removeAllContained'
       // if the captured thing contains anything. Also, it would be better to leave reacting to a successful capture
       // up to the thing captured, or have some clear indicator of whether skipping ('break') like as-is is best.
       // Ex: a civilian building vs. the China bunker. Former is neutral-controlled when empty, latter still belongs
