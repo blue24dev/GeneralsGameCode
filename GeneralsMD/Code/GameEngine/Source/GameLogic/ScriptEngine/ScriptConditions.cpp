@@ -1937,6 +1937,58 @@ Bool ScriptConditions::evaluateSkirmishSpecialPowerIsReady(Parameter *pSkirmishP
 	return false;
 }
 
+//MODDD - variant of above to specify a unit that has the special power ready
+// (requires ownership by the mentioned side so capturing doesn't count)
+Bool ScriptConditions::evaluateSkirmishSpecialPowerFromUnitIsReady(Parameter *pSkirmishPlayerParm, Parameter *pUnitParm, Parameter *pPower)
+{
+	if (pPower->getInt() == -1) return false;
+	if (pPower->getInt()>0 && pPower->getInt()>TheGameLogic->getFrame()) {
+		return false;
+	}
+	Int nextFrame = TheGameLogic->getFrame() + 10*LOGICFRAMES_PER_SECOND;
+	const SpecialPowerTemplate *power = TheSpecialPowerStore->findSpecialPowerTemplate(pPower->getString());
+	if (power==nullptr) {
+		pPower->friend_setInt(-1); // flag as never true.
+		return false;
+	}
+	Bool found = false;
+	Player::PlayerTeamList::const_iterator it;
+	Player *pPlayer = playerFromParam(pSkirmishPlayerParm);
+	if (pPlayer==nullptr)
+		return false;
+
+	//MODDD - involve the unit
+	Object *pObj = TheScriptEngine->getUnitNamed(pUnitParm->getString());
+	if (!pObj) {
+		return false;
+	}
+	// verify ownership
+	if (pObj->getControllingPlayer() != pPlayer)
+	{
+		// nope
+		return false;
+	}
+
+	// and lazily re-using from above, but with only the one named object in mind
+	// (want to turn this into a helper/utility?)
+	if( pObj->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ) || pObj->isDisabled() )
+	{
+		return false; // can't fire if under construction or disabled.
+	}
+	SpecialPowerModuleInterface *mod = pObj->getSpecialPowerModule(power);
+	if (mod)
+	{
+		if (!TheSpecialPowerStore->canUseSpecialPower(pObj, power)) {
+			return false;
+		}
+		found = true;
+		if (mod->isReady()) return true;
+		if (mod->getReadyFrame()<nextFrame) nextFrame = mod->getReadyFrame();
+	}
+
+	pPower->friend_setInt(nextFrame);
+	return false;
+}
 
 //-------------------------------------------------------------------------------------------------
 /** evaluatePlayerDestroyedNOrMoreBuildings */
@@ -2912,7 +2964,11 @@ Bool ScriptConditions::evaluateCondition( Condition *pCondition )
 
 		case Condition::SKIRMISH_SPECIAL_POWER_READY:
 			return evaluateSkirmishSpecialPowerIsReady(pCondition->getParameter(0), pCondition->getParameter(1));
-
+			
+		//MODDD - new
+		case Condition::SKIRMISH_SPECIAL_POWER_FROM_UNIT_READY:
+			return evaluateSkirmishSpecialPowerFromUnitIsReady(pCondition->getParameter(0), pCondition->getParameter(1), pCondition->getParameter(2));
+			
 		case Condition::UNIT_HAS_OBJECT_STATUS:
 			return evaluateUnitHasObjectStatus(pCondition->getParameter(0), pCondition->getParameter(1));
 
@@ -2982,7 +3038,7 @@ Bool ScriptConditions::evaluateCondition( Condition *pCondition )
 		case Condition::PLAYER_LOST_OBJECT_TYPE:
 			return evaluatePlayerLostObjectType(pCondition->getParameter(0), pCondition->getParameter(1));
 
-
+			
 	}
 }
 
