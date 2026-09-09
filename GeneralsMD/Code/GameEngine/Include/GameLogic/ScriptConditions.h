@@ -157,6 +157,10 @@ protected:
 	// Skirmish Scripts. Please note that ALL Skirmish conditions should first pass a pSkirmishPlayerParm to
 	// prevent the necessity of having to write additional scripts for other players / skirmish types later.
 	Bool evaluateSkirmishSpecialPowerIsReady(Parameter *pSkirmishPlayerParm, Parameter *pPower);
+
+	//MODDD - new
+	Bool evaluateSkirmishSpecialPowerFromUnitIsReady(Parameter *pSkirmishPlayerParm, Parameter *pUnitParm, Parameter *pPower);
+
 	Bool evaluateSkirmishValueInArea(Condition *pCondition, Parameter *pSkirmishPlayerParm, Parameter *pComparisonParm, Parameter *pMoneyParm, Parameter *pTriggerParm);
 	Bool evaluateSkirmishPlayerIsFaction(Parameter *pSkirmishPlayerParm, Parameter *pFactionParm);
 	Bool evaluateSkirmishSuppliesWithinDistancePerimeter(Parameter *pSkirmishPlayerParm, Parameter *pDistanceParm, Parameter *pLocationParm, Parameter *pValueParm);

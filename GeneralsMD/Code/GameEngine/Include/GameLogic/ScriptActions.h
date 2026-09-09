@@ -194,6 +194,10 @@ protected:
 	void doNamedFireSpecialPowerAtWaypoint( const AsciiString& unit, const AsciiString& specialPower, const AsciiString& waypoint );
 	void doNamedFireSpecialPowerAtNamed( const AsciiString& unit, const AsciiString& specialPower, const AsciiString& target );
 	void doSkirmishFireSpecialPowerAtMostCost( const AsciiString& player, const AsciiString& specialPower );
+
+	//MODDD
+	void doSkirmishFireSpecialPowerFromUnitAtMostCost( const AsciiString& player, const AsciiString& unit, const AsciiString& specialPower );
+
 	void doNamedFireWeaponFollowingWaypointPath( const AsciiString& unit, const AsciiString& waypointPath );
 	void doNamedUseCommandButtonAbility( const AsciiString& unit, const AsciiString& ability );
 	void doNamedUseCommandButtonAbilityOnNamed( const AsciiString& unit, const AsciiString& ability, const AsciiString& target );

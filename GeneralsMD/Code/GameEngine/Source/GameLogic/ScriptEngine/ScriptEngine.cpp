@@ -3021,10 +3021,25 @@ void ScriptEngine::init()
 	curTemplate->m_numParameters = 2;
 	curTemplate->m_parameters[0] = Parameter::SIDE;
 	curTemplate->m_parameters[1] = Parameter::SPECIAL_POWER;
-	curTemplate->m_numUiStrings = 2;
+	//MODDD - puzzlingly, this was 2 instead of 3, leaving the last part out as of retail
+	curTemplate->m_numUiStrings = 3;
 	curTemplate->m_uiStrings[0] = " ";
 	curTemplate->m_uiStrings[1] = " fire ";
 	curTemplate->m_uiStrings[2] = " at enemy's most costly area.";
+
+	//MODDD - new
+	curTemplate = &m_actionTemplates[ScriptAction::SKIRMISH_FIRE_SPECIAL_POWER_FROM_UNIT_AT_MOST_COST];
+	curTemplate->m_internalName = "SKIRMISH_FIRE_SPECIAL_POWER_FROM_UNIT_AT_MOST_COST";
+	curTemplate->m_uiName = "Skirmish_/ Special power from particular unit -- fire at enemy's highest cost area.";
+	curTemplate->m_numParameters = 3;
+	curTemplate->m_parameters[0] = Parameter::SIDE;
+	curTemplate->m_parameters[1] = Parameter::UNIT;
+	curTemplate->m_parameters[2] = Parameter::SPECIAL_POWER;
+	curTemplate->m_numUiStrings = 4;
+	curTemplate->m_uiStrings[0] = "Player ";
+	curTemplate->m_uiStrings[1] = " owns unit ";
+	curTemplate->m_uiStrings[2] = " which fires ";
+	curTemplate->m_uiStrings[3] = " at enemy's most costly area.";
 
 	curTemplate = &m_actionTemplates[ScriptAction::PLAYER_REPAIR_NAMED_STRUCTURE];
 	curTemplate->m_internalName = "PLAYER_REPAIR_NAMED_STRUCTURE";
@@ -5133,6 +5148,20 @@ void ScriptEngine::init()
 	curTemplate->m_uiStrings[0] = " ";
 	curTemplate->m_uiStrings[1] = " is ready to fire ";
 	curTemplate->m_uiStrings[2] = ".";
+	
+	//MODDD - new
+	curTemplate = &m_conditionTemplates[Condition::SKIRMISH_SPECIAL_POWER_FROM_UNIT_READY];
+	curTemplate->m_internalName = "SKIRMISH_SPECIAL_POWER_FROM_UNIT_READY";
+	curTemplate->m_uiName = "Skirmish_/ Player's special power from a particular unit is ready to fire.";
+	curTemplate->m_numParameters = 3;
+	curTemplate->m_parameters[0] = Parameter::SIDE;
+	curTemplate->m_parameters[1] = Parameter::UNIT;
+	curTemplate->m_parameters[2] = Parameter::SPECIAL_POWER;
+	curTemplate->m_numUiStrings = 4;
+	curTemplate->m_uiStrings[0] = "Player ";
+	curTemplate->m_uiStrings[1] = " owns unit ";
+	curTemplate->m_uiStrings[2] = " which is ready to fire ";
+	curTemplate->m_uiStrings[3] = ".";
 
 	curTemplate = &m_conditionTemplates[Condition::UNIT_HAS_OBJECT_STATUS];
 	curTemplate->m_internalName = "UNIT_HAS_OBJECT_STATUS";
