@@ -20,8 +20,10 @@
 
 #include "WWLib/WWDefines.h"
 
-//MODDD - NOTE - the goal of this fork disagrees with below - enable all fixes regardless.
-// Settings below up to a significant 'MODDD' separator are from TheSuperHackers repo.
+//MODDD - NOTE - the goal of this fork is to make broad improvements / bug fixes to the game, period, with no regard
+// to multiplayer compatibility with others using the retail build of the game.
+// Compatibility with the retail game in terms of playability is still intended, as in skirmish, the campaign, etc. should
+// all still be playable, even if behavior is not 1-1 with the retail build due to bug fixes or intentional small changes.
 // Changing settings such as 'PRESERVE_RETAIL_BEHAVIOR' (since split into several more specific settings) back to 1
 // will no longer guarantee compatibility because of several other changes as of this fork.
 // For terminology, I'm calling these "Settings" or "Macro settings" most often, but "Macro constants" and
@@ -31,9 +33,7 @@
 // And note the preprocessor constants RTS_GENERALS and RTS_ZEROHOUR defined as 1 for the respective game builds.
 // For script used in both cases ('Core' folder instead of 'Generals'/'GeneralsMD'), it may make sense to involve that.
 // See 'Core/GameEngine/Include/Common/Debug.h' and 'GameMemory.h' for some other new macro settings mentioned by 'MODDD'.
-// ---
-// Note: Retail compatibility must not be broken before this project officially does.
-// Use RETAIL_COMPATIBLE_CRC and RETAIL_COMPATIBLE_XFER_SAVE to guard breaking changes.
+// Settings between below & above a significant 'MODDD' separator are from TheSuperHackers repo.
 
 #ifndef PRESERVE_BUILDING_RESUMPTION_DELAY
 #define PRESERVE_BUILDING_RESUMPTION_DELAY (0) // The fix for this unfavorable behavior was approved by the Game Design Committee.
@@ -110,6 +110,17 @@
 // Reverted. This the fire effect on damaged buildings/rubble and sevral other places into purple squares. No idea what this fix is doing.
 #define PRESERVE_RETAIL_PARTICLES (1) // Preserve original look of particles present in retail Generals 1.08 and Zero Hour 1.04
 #endif
+
+#ifndef PRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_SEARCH
+#define PRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_SEARCH (0) // The fix for this unfavorable behavior was approved by the Game Design Committee.
+#endif
+
+#ifndef PRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_DAMAGE
+#define PRESERVE_RETAIL_NUKE_MISSILE_OUTER_RADIUS_DAMAGE (0) // The fix for this unfavorable behavior was approved by the Game Design Committee.
+#endif
+
+// Note: Retail compatibility must not be broken before this project officially does.
+// Use RETAIL_COMPATIBLE_CRC and RETAIL_COMPATIBLE_XFER_SAVE to guard breaking changes.
 
 #ifndef RETAIL_COMPATIBLE_CRC
 //MODDD - was 1, changed to 0 for more fixes
