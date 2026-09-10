@@ -559,15 +559,30 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 #if RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE
 			AutoDepositUpdateModuleData* _data = (AutoDepositUpdateModuleData*)data;
+
+			Real timeMulti;
+			if (!_this->isKindOf(KINDOF_TECH_BUILDING))
+			{
+				// normal: double the amount of time
+				timeMulti = 2.0f;
+			}
+			else
+			{
+				// For tech buildings, increase the time by 50% instead (1.5x).
+				// This makes tech buildings more rewarding to have since they're impacted less by the income rate reduction than player-built sources.
+				timeMulti = 1.5f;
+			}
+
 			// if the delay is less than 5 seconds, go ahead and double it
 			if (_data->m_depositFrame / LOGICFRAMES_PER_SECOND < 5)
 			{
-				_data->m_depositFrame *= 2;
+				//_data->m_depositFrame *= timeMulti;
+				_data->m_depositFrame = (UnsignedInt) ((Real)_data->m_depositFrame * timeMulti);
 			}
 			else
 			{
 				// otherwise, leave the rate unaffected but half the amount instead
-				_data->m_depositAmount /= 2;
+				_data->m_depositAmount = (Int) ((Real)_data->m_depositAmount / timeMulti);
 			}
 #endif
 		}
