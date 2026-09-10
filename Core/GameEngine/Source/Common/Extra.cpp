@@ -959,7 +959,7 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 	const Real startModifier = 1.1f;
 	const Real endModifier = 4.0f;
 	*/
-	const UnsignedInt startMin = 6;
+	const UnsignedInt startMin = 10;
 	const UnsignedInt endMin = 80;
 	const Real startModifier = 1.0f;
 	const Real endModifier = 2.0f;
@@ -1023,10 +1023,10 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 	const Real startModifier = 1.00f;
 	const Real endModifier = 0.76f;
 	*/
-	const UnsignedInt startMin = 6;
+	const UnsignedInt startMin = 12;
 	const UnsignedInt endMin = 80;
 	const Real startModifier = 1.00f;
-	const Real endModifier = 0.75f;
+	const Real endModifier = 0.70f;
 
 	Int _buildTime = buildTime;
 	if (player->getPlayerType() == PLAYER_COMPUTER)
