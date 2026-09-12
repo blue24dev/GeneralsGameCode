@@ -562,6 +562,9 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			AutoDepositUpdateModuleData* _data = (AutoDepositUpdateModuleData*)data;
 
 			Real timeMulti;
+			// Note: a check for not being a faction structure, like ('not' of this)
+			//   Bool Object::isFactionStructure() -> isAnyKindOf( KINDOFMASK_FS );
+			// could work too
 			if (!_this->isKindOf(KINDOF_TECH_BUILDING))
 			{
 				// normal: double the amount of time
