@@ -6572,8 +6572,6 @@ StateReturnType _AIEnterState::update()
 		m_goalPosition = *goal->getPosition();
 		obj->getAI()->friend_setGoalObject(goal);
 
-		//MODDD - let a hijacking unit use 
-
 		//MODDD - turned into an overridable feature
 		//if (!TheActionManager->canEnterObject(obj, goal, obj->getAI()->getLastCommandSource(), CHECK_CAPACITY))
 		if (!canEnterGoal())

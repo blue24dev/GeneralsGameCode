@@ -4108,7 +4108,10 @@ GameMessageDisposition CommandTranslator::translateGameMessage(const GameMessage
 														|| (command && command->getCommandType() == GUI_COMMAND_SPECIAL_POWER_FROM_SHORTCUT);
 				if (isPoint && controllable)
 				{
-					UnsignedInt pickType = getPickTypesForContext( TheInGameUI->isInForceAttackMode() );
+					//MODDD - just unconditionally say 'yes' for pickType's is-forcefire-mode param.
+					// This will allow enemy support-power-delivery planes to be returned instead of clicking on the ground behind them.
+					//UnsignedInt pickType = getPickTypesForContext( TheInGameUI->isInForceAttackMode() );
+					UnsignedInt pickType = getPickTypesForContext( true );
 					Drawable *draw = TheTacticalView->pickDrawable(&msg->getArgument(0)->pixelRegion.lo,
 																													TheInGameUI->isInForceAttackMode(),
 																													(PickType) pickType);
@@ -4189,7 +4192,10 @@ GameMessageDisposition CommandTranslator::translateGameMessage(const GameMessage
 													|| (command && command->getCommandType() == GUI_COMMAND_SPECIAL_POWER_FROM_SHORTCUT);
 			if (isPoint && controllable)
 			{
-				UnsignedInt pickType = getPickTypesForContext( TheInGameUI->isInForceAttackMode() );
+				//MODDD - just unconditionally say 'yes' for pickType's is-forcefire-mode param.
+				// This will allow enemy support-power-delivery planes to be returned instead of clicking on the ground behind them.
+				//UnsignedInt pickType = getPickTypesForContext( TheInGameUI->isInForceAttackMode() );
+				UnsignedInt pickType = getPickTypesForContext( true );
 				Drawable *draw = TheTacticalView->pickDrawable(&msg->getArgument(0)->pixelRegion.lo,
 																												TheInGameUI->isInForceAttackMode(),
 																												(PickType) pickType);
