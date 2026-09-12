@@ -1861,12 +1861,19 @@ void PhysicsBehavior::testStunnedUnitForDestruction()
 	Object *obj = getObject();
 	const Coord3D *pos = obj->getPosition();
 
+	//MODDD - I disagree with this. Units can bounce back from plenty of strange physics interactions ever so
+	// slightly less ridiculous than this - avoid the random chance of killing a unit faster, people hate bad luck more
+	// than straying from realism a bit in their video games I'm sure.
+	// (commented out)
+	// ---
+	/*
 	// If a stunned object is upside down when it hits the ground, kill it
 	if(obj->getTransformMatrix()->Get_Z_Vector().Z < 0.0f)
 	{
 		obj->kill();
 		return;
 	}
+	*/
 
 	// Check if unit has exited playable area. If so, kill it
   if (obj->isOffMap())

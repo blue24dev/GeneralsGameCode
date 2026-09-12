@@ -131,13 +131,6 @@ BOOL EditCondition::OnInitDialog()
 	Int i;
 	HTREEITEM selItem = nullptr;
 	for (i=0; i<Condition::NUM_ITEMS; i++) {
-
-		if (i == Condition::SKIRMISH_SPECIAL_POWER_FROM_UNIT_READY)
-		{
-			int x;
-			x = 4;
-		}
-
 		const ConditionTemplate *pTemplate = TheScriptEngine->getConditionTemplate(i);
 		char prefix[_MAX_PATH];
 		const char *name = pTemplate->getName().str();
