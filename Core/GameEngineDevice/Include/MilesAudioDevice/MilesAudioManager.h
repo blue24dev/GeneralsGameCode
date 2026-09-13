@@ -365,9 +365,14 @@ class MilesAudioManager : public AudioManager
 		UnsignedInt m_numStreams;
 
 		//MODDD - my multithread MilesAudioManager crash fix
-		//public: std::list<AILCallbackCall> AILCallbackList;
-		//public: MutexClass AILCallbackListMutex;
+		/*
+		public: std::list<AILCallbackCall> AILCallbackList;
+		public: MutexClass AILCallbackListMutex;
 	protected:
+		*/
+
+		Bool m_deviceOpened;
+		Bool m_milesLoaded;
 
 #if defined(RTS_DEBUG)
 		typedef std::set<AsciiString> SetAsciiString;
