@@ -67,6 +67,7 @@
 #include "Common/file.h"
 
 #include <Utility/interlocked_adapter.h>
+#include "MilesLoader.h"
 
 //MODDD
 #include <algorithm>
@@ -95,6 +96,8 @@ MilesAudioManager::MilesAudioManager() :
 	m_num2DSamples(0),
 	m_num3DSamples(0),
 	m_numStreams(0),
+	m_deviceOpened(false),
+	m_milesLoaded(false),
 	m_delayFilter(nullptr),
 	m_binkHandle(nullptr),
 	m_pref3DProvider(AsciiString::TheEmptyString),
@@ -1439,6 +1442,18 @@ void MilesAudioManager::openDevice()
 		return;
 	}
 
+	m_deviceOpened = true;
+
+	// Load the Miles Sound System on runtime here instead of importing it into the executable.
+	if (!MilesLoader::load())
+	{
+		DEBUG_LOG(("Failed to load mss32.dll (error %d). Audio will be turned off.", MilesLoader::getLastError()));
+		setOn(false, AudioAffect_All);
+		return;
+	}
+
+	m_milesLoaded = true;
+
 	AIL_set_redist_directory("MSS\\");
 	AIL_startup();
 	Int retval = 0;
@@ -1474,9 +1489,18 @@ void MilesAudioManager::openDevice()
 //-------------------------------------------------------------------------------------------------
 void MilesAudioManager::closeDevice()
 {
-	freeAllMilesHandles();
-	unselectProvider();
-	AIL_shutdown();
+	if (m_deviceOpened)
+	{
+		if (m_milesLoaded)
+		{
+			freeAllMilesHandles();
+			unselectProvider();
+			AIL_shutdown();
+			m_milesLoaded = false;
+		}
+		MilesLoader::unload();
+		m_deviceOpened = false;
+	}
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -2925,7 +2949,7 @@ void MilesAudioManager::initSamplePools()
 		DEBUG_ASSERTCRASH(sample, ("Couldn't get %d 2D samples", i + 1));
 		if (sample) {
 			AIL_init_sample(sample);
-			AIL_set_sample_user_data(sample, 0, (void *)(i + 1));
+			AIL_set_sample_user_data(sample, 0, i + 1);
 			m_availableSamples.push_back(sample);
 			++m_num2DSamples;
 		}
@@ -2935,7 +2959,7 @@ void MilesAudioManager::initSamplePools()
 		H3DSAMPLE sample = AIL_allocate_3D_sample_handle(m_provider3D[m_selectedProvider].id);
 		DEBUG_ASSERTCRASH(sample, ("Couldn't get %d 3D samples", i + 1));
 		if (sample) {
-			AIL_set_3D_user_data(sample, 0, (void *)(i + 1));
+			AIL_set_3D_user_data(sample, 0, i + 1);
 			m_available3DSamples.push_back(sample);
 			++m_num3DSamples;
 		}
