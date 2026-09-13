@@ -477,6 +477,8 @@ set(GAMEENGINE_SRC
     Include/GameLogic/Module/WorkerAIUpdate.h
     Include/GameLogic/Object.h
     Include/GameLogic/ObjectCreationList.h
+    #MODDD - new
+    Include/GameLogic/ObjectCreationList/DeliverPayloadNugget.h
     Include/GameLogic/ObjectIter.h
     Include/GameLogic/ObjectScriptStatusBits.h
     Include/GameLogic/ObjectTypes.h

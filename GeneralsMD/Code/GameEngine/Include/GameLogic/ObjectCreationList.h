@@ -42,6 +42,17 @@ class ObjectCreationListStore;
 class INI;
 class Object;
 
+//MODDD - new enum
+enum OCLNuggetType CPP_11(: Int)
+{
+	OCL_NUGGET_TYPE_GENERIC,
+	OCL_NUGGET_TYPE_DELIVER_PAYLOAD
+};
+
+//MODDD - moved typedefs that were inside classes to here
+typedef std::map< NameKeyType, ObjectCreationList, std::less<NameKeyType>/**/> ObjectCreationListMap;
+typedef std::vector<ObjectCreationNugget*> ObjectCreationNuggetVector;
+
 //-------------------------------------------------------------------------------------------------
 /**
 	An ObjectCreationNugget encapsulates the creation of an Object. ObjectCreationNuggets are virtually
@@ -75,6 +86,9 @@ public:
 
 	ObjectCreationNugget() { }
 	//virtual ~ObjectCreationNugget() { }
+
+	//MODDD - new, for post-parsing hackery to be possible (override in a child class if you want to check for that specific type)
+	virtual OCLNuggetType getTypeID() { return OCL_NUGGET_TYPE_GENERIC; }
 
 	/**
 		The main guts of the system: actually perform the sound and/or video effects
@@ -127,6 +141,9 @@ class ObjectCreationList
 {
 
 public:
+	
+	//MODDD - getter for hackery
+	ObjectCreationNuggetVector* getNuggetList() { return &m_nuggets; }
 
 	/**
 		Toss the contents.
@@ -181,7 +198,8 @@ private:
 	Object* createInternal(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const;
 
 	// note, this list doesn't own the nuggets; all nuggets are owned by the Store.
-	typedef std::vector<ObjectCreationNugget*> ObjectCreationNuggetVector;
+	//MODDD - moved to above all class definitions in this file
+	//typedef std::vector<ObjectCreationNugget*> ObjectCreationNuggetVector;
 	ObjectCreationNuggetVector m_nuggets;
 
 };
@@ -202,6 +220,10 @@ public:
 	virtual void reset() override { }
 	virtual void update() override { }
 
+	//MODDD - getter for the inner list/map of items, presumably to iterate one-by-one
+	// (basically for post-parsing hackery)
+	ObjectCreationListMap* getItemListMap() { return &m_ocls; }
+
 	/**
 		return the ObjectCreationList with the given namekey.
 		return nullptr if no such ObjectCreationList exists.
@@ -213,12 +235,13 @@ public:
 	void addObjectCreationNugget(ObjectCreationNugget* nugget);
 
 private:
-
-	typedef std::map< NameKeyType, ObjectCreationList, std::less<NameKeyType>/**/> ObjectCreationListMap;
+	//MODDD - moving typedefs to above all class definitions in this file
+	//typedef std::map< NameKeyType, ObjectCreationList, std::less<NameKeyType>/**/> ObjectCreationListMap;
 	ObjectCreationListMap m_ocls;
 
 	// note, this list doesn't own the nuggets; all nuggets are owned by the Store.
-	typedef std::vector<ObjectCreationNugget*> ObjectCreationNuggetVector;
+	//MODDD - see note above
+	//typedef std::vector<ObjectCreationNugget*> ObjectCreationNuggetVector;
 	ObjectCreationNuggetVector m_nuggets;
 
 };

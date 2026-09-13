@@ -246,220 +246,236 @@ EMPTY_DTOR(AttackNugget)
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
-class DeliverPayloadNugget : public ObjectCreationNugget
+//MODDD - DeliverPayloadNugget class definition moved to its own file DeliverPayloadNugget.h, implementations remain here
+#include "GameLogic/ObjectCreationList/DeliverPayloadNugget.h"
+// ------------------------------------------------------------------------------------------------
+DeliverPayloadNugget::DeliverPayloadNugget() :
+	m_startAtPreferredHeight(true),
+	m_startAtMaxSpeed(false),
+	m_formationSize(1),
+	m_formationSpacing(25.0f),
+	m_errorRadius(0.0f),
+	m_delayDeliveryFramesMax(0),
+	m_convergenceFactor( 0.0f )
 {
-	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE(DeliverPayloadNugget, "DeliverPayloadNugget")
-public:
+	//Note: m_data is constructed with default values.
+	m_payload.clear();
+	m_putInContainerName.clear();
+	m_transportName.clear();
+}
 
-	DeliverPayloadNugget() :
-		m_startAtPreferredHeight(true),
-		m_startAtMaxSpeed(false),
-		m_formationSize(1),
-		m_formationSpacing(25.0f),
-		m_errorRadius(0.0f),
-		m_delayDeliveryFramesMax(0),
-		m_convergenceFactor( 0.0f )
+//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+// (default arg on 'lifetimeFrames' removed - see new '.h' file)
+Object* DeliverPayloadNugget::create(Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames ) const
+{
+	return create( primaryObj, primary, secondary, true, lifetimeFrames );
+}
+
+//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+// (default arg on 'lifetimeFrames' removed - see new '.h' file)
+Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames ) const
+{
+	if (!primaryObj || !primary || !secondary)
 	{
-		//Note: m_data is constructed with default values.
-		m_payload.clear();
-		m_putInContainerName.clear();
-		m_transportName.clear();
+		DEBUG_CRASH(("You must have a primary and secondary source for this effect"));
+    return nullptr;
+  }
+
+	Team* owner = primaryObj ? primaryObj->getControllingPlayer()->getDefaultTeam() : nullptr;
+
+
+	//What I'm doing for the purposes of the formations is to calculate the relative positions of
+	//each member of the formation. To do so, we take the vector from the target location to the
+	//lead plane location, normalize it, then rotate it 90 degrees (CW and CCW). When we add the
+	//resultant vectors to the initial vectors, we can calculate the delta positions for each plane.
+	Real CCWx = 0.0f, CCWy = 0.0f, CWx = 0.0f, CWy = 0.0f;
+
+	if( m_formationSize > 1 )
+	{
+		//Get the delta x and y values from the target to the origin.
+		Real dx = primary->x - secondary->x;
+		Real dy = primary->y - secondary->y;
+
+		//Calc length
+		Real length = sqrt( dx*dx + dy*dy );
+
+		//Normalize length
+		dx /= length;
+		dy /= length;
+
+		//Rotate 90 degrees CCW.
+		Real radians = 90.0f * PI / 180.0f;
+		Real s = Sin( radians );
+		Real c = Cos( radians );
+		CCWx = dx * c + dy * -s + dx;
+		CCWy = dx * s + dy * c + dy;
+
+		//Rotate 90 degrees CW
+		s = Sin( -radians );
+		c = Cos( -radians );
+		CWx = dx * c + dy * -s + dx;
+		CWy = dx * s + dy * c + dy;
 	}
 
-	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
-	virtual Object* create(Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const override
+	Object *firstTransport = nullptr;
+	for( UnsignedInt formationIndex = 0; formationIndex < m_formationSize; formationIndex++ )
 	{
-		return create( primaryObj, primary, secondary, true, lifetimeFrames );
-	}
+		Coord3D offset;
+		offset.zero();
 
-	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
-	virtual Object* create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 ) const override
-	{
-		if (!primaryObj || !primary || !secondary)
+		Int offsetMultiplier = ( formationIndex + 1 ) / 2 * m_formationSpacing;
+
+		if( formationIndex % 2 )
 		{
-			DEBUG_CRASH(("You must have a primary and secondary source for this effect"));
-      return nullptr;
-    }
-
-		Team* owner = primaryObj ? primaryObj->getControllingPlayer()->getDefaultTeam() : nullptr;
-
-
-		//What I'm doing for the purposes of the formations is to calculate the relative positions of
-		//each member of the formation. To do so, we take the vector from the target location to the
-		//lead plane location, normalize it, then rotate it 90 degrees (CW and CCW). When we add the
-		//resultant vectors to the initial vectors, we can calculate the delta positions for each plane.
-		Real CCWx = 0.0f, CCWy = 0.0f, CWx = 0.0f, CWy = 0.0f;
-
-		if( m_formationSize > 1 )
+			//Formation index is odd -- use the CCW deltas
+			offset.x = CCWx * offsetMultiplier;
+			offset.y = CCWy * offsetMultiplier;
+		}
+		else
 		{
-			//Get the delta x and y values from the target to the origin.
-			Real dx = primary->x - secondary->x;
-			Real dy = primary->y - secondary->y;
-
-			//Calc length
-			Real length = sqrt( dx*dx + dy*dy );
-
-			//Normalize length
-			dx /= length;
-			dy /= length;
-
-			//Rotate 90 degrees CCW.
-			Real radians = 90.0f * PI / 180.0f;
-			Real s = Sin( radians );
-			Real c = Cos( radians );
-			CCWx = dx * c + dy * -s + dx;
-			CCWy = dx * s + dy * c + dy;
-
-			//Rotate 90 degrees CW
-			s = Sin( -radians );
-			c = Cos( -radians );
-			CWx = dx * c + dy * -s + dx;
-			CWy = dx * s + dy * c + dy;
+			//Formation index is even -- use the CW deltas
+			offset.x = CWx * offsetMultiplier;
+			offset.y = CWy * offsetMultiplier;
 		}
 
-		Object *firstTransport = nullptr;
-		for( UnsignedInt formationIndex = 0; formationIndex < m_formationSize; formationIndex++ )
+		Coord3D startPos = *primary;
+		Coord3D moveToPos = *secondary;
+		startPos.add( offset );
+		//Also give our moveToPos the same offset to maintain perfect formation.
+		moveToPos.add( offset );
+
+		Coord3D targetPos = *secondary;
+
+
+		//Our target position only applies when using fireweapon and when we have multiple planes,
+		//as is the case with the napalm strike. The target position either be somewhere between the
+		//moveToPos of the lead plane and that of the relative offset -- determined by the convergenceFactor.
+		targetPos.x += offset.x * (1.0f - m_convergenceFactor);
+		targetPos.y += offset.y * (1.0f - m_convergenceFactor);
+
+
+		// first guy in each formation is always spot-on (to keep targeting cursor well-matched)
+		if ( m_errorRadius > 1.0f && formationIndex > 0 )
 		{
-			Coord3D offset;
-			offset.zero();
+			Real randomRadius = GameLogicRandomValueReal(0, m_errorRadius );
+			Real randomAngle = GameLogicRandomValueReal(0, PI*2 );
+			targetPos.x += randomRadius * Cos( randomAngle );
+			targetPos.y += randomRadius * Sin( randomAngle );
+		}
 
-			Int offsetMultiplier = ( formationIndex + 1 ) / 2 * m_formationSpacing;
 
-			if( formationIndex % 2 )
+		Real orient = atan2( moveToPos.y - startPos.y, moveToPos.x - startPos.x);
+		if( m_data.m_distToTarget > 0 )
+		{
+			const Real SLOP = 1.5f;
+			startPos.x -= Cos(orient) * m_data.m_distToTarget * SLOP;
+			startPos.y -= Sin(orient) * m_data.m_distToTarget * SLOP;
+		}
+
+		Object *transport;
+
+		if( createOwner )
+		{
+			const ThingTemplate* ttn = TheThingFactory->findTemplate(m_transportName);
+			transport = TheThingFactory->newObject( ttn, owner );
+			if( !transport )
 			{
-				//Formation index is odd -- use the CCW deltas
-				offset.x = CCWx * offsetMultiplier;
-				offset.y = CCWy * offsetMultiplier;
+				return nullptr;
 			}
+			if( !firstTransport )
+			{
+				firstTransport = transport;
+			}
+			transport->setPosition(&startPos);
+			transport->setOrientation(orient);
+			transport->setProducer(primaryObj);
+			//Adding this nifty flag allows enemy players to target it manually with weapons :)
+			transport->setScriptStatus( OBJECT_STATUS_SCRIPT_TARGETABLE );
+
+			if ( m_delayDeliveryFramesMax > 0 )
+			{
+				transport->setDisabledUntil( DISABLED_DEFAULT, TheGameLogic->getFrame() + GameLogicRandomValue(0, m_delayDeliveryFramesMax) );
+			}
+		}
+		else
+		{
+			transport = (Object*)primaryObj;
+		}
+
+		// Notify special power tracking
+		SpecialPowerCompletionDie *die = transport->findSpecialPowerCompletionDie();
+		if (die)
+		{
+			if (formationIndex == 0)
+				die->setCreator(primaryObj->getID());
 			else
+				die->setCreator(INVALID_ID);
+		}
+
+		static NameKeyType key_DeliverPayloadAIUpdate = NAMEKEY("DeliverPayloadAIUpdate");
+		DeliverPayloadAIUpdate *ai = (DeliverPayloadAIUpdate*)transport->findUpdateModule(key_DeliverPayloadAIUpdate);
+		if( ai )
+		{
+			if( m_startAtMaxSpeed && createOwner )
 			{
-				//Formation index is even -- use the CW deltas
-				offset.x = CWx * offsetMultiplier;
-				offset.y = CWy * offsetMultiplier;
-			}
-
-			Coord3D startPos = *primary;
-			Coord3D moveToPos = *secondary;
-			startPos.add( offset );
-			//Also give our moveToPos the same offset to maintain perfect formation.
-			moveToPos.add( offset );
-
-			Coord3D targetPos = *secondary;
-
-
-			//Our target position only applies when using fireweapon and when we have multiple planes,
-			//as is the case with the napalm strike. The target position either be somewhere between the
-			//moveToPos of the lead plane and that of the relative offset -- determined by the convergenceFactor.
-			targetPos.x += offset.x * (1.0f - m_convergenceFactor);
-			targetPos.y += offset.y * (1.0f - m_convergenceFactor);
-
-
-			// first guy in each formation is always spot-on (to keep targeting cursor well-matched)
-			if ( m_errorRadius > 1.0f && formationIndex > 0 )
-			{
-				Real randomRadius = GameLogicRandomValueReal(0, m_errorRadius );
-				Real randomAngle = GameLogicRandomValueReal(0, PI*2 );
-				targetPos.x += randomRadius * Cos( randomAngle );
-				targetPos.y += randomRadius * Sin( randomAngle );
-			}
-
-
-			Real orient = atan2( moveToPos.y - startPos.y, moveToPos.x - startPos.x);
-			if( m_data.m_distToTarget > 0 )
-			{
-				const Real SLOP = 1.5f;
-				startPos.x -= Cos(orient) * m_data.m_distToTarget * SLOP;
-				startPos.y -= Sin(orient) * m_data.m_distToTarget * SLOP;
-			}
-
-			Object *transport;
-
-			if( createOwner )
-			{
-				const ThingTemplate* ttn = TheThingFactory->findTemplate(m_transportName);
-				transport = TheThingFactory->newObject( ttn, owner );
-				if( !transport )
+				PhysicsBehavior* physics = transport->getPhysics();
+				if (physics)
 				{
+					Coord3D startingForce = *transport->getUnitDirectionVector2D();
+					Real maxSpeed = ai->getCurLocomotor()->getMaxSpeedForCondition(transport->getBodyModule()->getDamageState());
+					Real factor = maxSpeed * physics->getMass();
+					startingForce.x *= factor;
+					startingForce.y *= factor;
+					startingForce.z *= factor;
+					physics->applyMotiveForce( &startingForce );
+				}
+			}
+
+			// only the first guy in each formation gets a delivery decal
+			DeliverPayloadData data = m_data;
+			if (formationIndex != 0)
+				data.m_deliveryDecalRadius = 0;
+			ai->deliverPayload( &moveToPos, &targetPos, &data );
+			if( m_startAtPreferredHeight && createOwner )
+			{
+				startPos.z = TheTerrainLogic->getGroundHeight(startPos.x, startPos.y) + ai->getCurLocomotor()->getPreferredHeight();
+				transport->setPosition(&startPos);
+			}
+
+			const ThingTemplate* putInContainerTmpl = m_putInContainerName.isEmpty() ? nullptr : TheThingFactory->findTemplate(m_putInContainerName);
+			for (std::vector<Payload>::const_iterator it = m_payload.begin(); it != m_payload.end(); ++it)
+  		{
+				const ThingTemplate* payloadTmpl = TheThingFactory->findTemplate(it->m_payloadName);
+				if( !payloadTmpl )
+				{
+					DEBUG_CRASH( ("DeliverPayloadNugget::create() -- %s couldn't create %s (template not found).",
+						transport->getTemplate()->getName().str(), it->m_payloadName.str() ) );
 					return nullptr;
 				}
-				if( !firstTransport )
+				for (int i = 0; i < it->m_payloadCount; ++i)
 				{
-					firstTransport = transport;
-				}
-				transport->setPosition(&startPos);
-				transport->setOrientation(orient);
-				transport->setProducer(primaryObj);
-				//Adding this nifty flag allows enemy players to target it manually with weapons :)
-				transport->setScriptStatus( OBJECT_STATUS_SCRIPT_TARGETABLE );
+					Object* payload = TheThingFactory->newObject( payloadTmpl, owner );
+					payload->setPosition(&startPos);
+					payload->setProducer(transport);
 
-				if ( m_delayDeliveryFramesMax > 0 )
-				{
-					transport->setDisabledUntil( DISABLED_DEFAULT, TheGameLogic->getFrame() + GameLogicRandomValue(0, m_delayDeliveryFramesMax) );
-				}
-			}
-			else
-			{
-				transport = (Object*)primaryObj;
-			}
-
-			// Notify special power tracking
-			SpecialPowerCompletionDie *die = transport->findSpecialPowerCompletionDie();
-			if (die)
-			{
-				if (formationIndex == 0)
-					die->setCreator(primaryObj->getID());
-				else
-					die->setCreator(INVALID_ID);
-			}
-
-			static NameKeyType key_DeliverPayloadAIUpdate = NAMEKEY("DeliverPayloadAIUpdate");
-			DeliverPayloadAIUpdate *ai = (DeliverPayloadAIUpdate*)transport->findUpdateModule(key_DeliverPayloadAIUpdate);
-			if( ai )
-			{
-				if( m_startAtMaxSpeed && createOwner )
-				{
-					PhysicsBehavior* physics = transport->getPhysics();
-					if (physics)
+					// Notify special power tracking
+					SpecialPowerCompletionDie *die = payload->findSpecialPowerCompletionDie();
+					if (die)
 					{
-						Coord3D startingForce = *transport->getUnitDirectionVector2D();
-						Real maxSpeed = ai->getCurLocomotor()->getMaxSpeedForCondition(transport->getBodyModule()->getDamageState());
-						Real factor = maxSpeed * physics->getMass();
-						startingForce.x *= factor;
-						startingForce.y *= factor;
-						startingForce.z *= factor;
-						physics->applyMotiveForce( &startingForce );
+						if (formationIndex == 0 && i == 0)
+							die->setCreator(primaryObj->getID());
+						else
+							die->setCreator(INVALID_ID);
 					}
-				}
 
-				// only the first guy in each formation gets a delivery decal
-				DeliverPayloadData data = m_data;
-				if (formationIndex != 0)
-					data.m_deliveryDecalRadius = 0;
-				ai->deliverPayload( &moveToPos, &targetPos, &data );
-				if( m_startAtPreferredHeight && createOwner )
-				{
-					startPos.z = TheTerrainLogic->getGroundHeight(startPos.x, startPos.y) + ai->getCurLocomotor()->getPreferredHeight();
-					transport->setPosition(&startPos);
-				}
-
-				const ThingTemplate* putInContainerTmpl = m_putInContainerName.isEmpty() ? nullptr : TheThingFactory->findTemplate(m_putInContainerName);
-				for (std::vector<Payload>::const_iterator it = m_payload.begin(); it != m_payload.end(); ++it)
-  			{
-					const ThingTemplate* payloadTmpl = TheThingFactory->findTemplate(it->m_payloadName);
-					if( !payloadTmpl )
+					if (putInContainerTmpl)
 					{
-						DEBUG_CRASH( ("DeliverPayloadNugget::create() -- %s couldn't create %s (template not found).",
-							transport->getTemplate()->getName().str(), it->m_payloadName.str() ) );
-						return nullptr;
-					}
-					for (int i = 0; i < it->m_payloadCount; ++i)
-					{
-						Object* payload = TheThingFactory->newObject( payloadTmpl, owner );
-						payload->setPosition(&startPos);
-						payload->setProducer(transport);
+						Object* container = TheThingFactory->newObject( putInContainerTmpl, owner );
+						container->setPosition(&startPos);
+						container->setProducer(transport);
 
 						// Notify special power tracking
-						SpecialPowerCompletionDie *die = payload->findSpecialPowerCompletionDie();
+						SpecialPowerCompletionDie *die = container->findSpecialPowerCompletionDie();
 						if (die)
 						{
 							if (formationIndex == 0 && i == 0)
@@ -468,128 +484,90 @@ public:
 								die->setCreator(INVALID_ID);
 						}
 
-						if (putInContainerTmpl)
+						if (container->getContain() && container->getContain()->isValidContainerFor(payload, true))
 						{
-							Object* container = TheThingFactory->newObject( putInContainerTmpl, owner );
-							container->setPosition(&startPos);
-							container->setProducer(transport);
-
-							// Notify special power tracking
-							SpecialPowerCompletionDie *die = container->findSpecialPowerCompletionDie();
-							if (die)
-							{
-								if (formationIndex == 0 && i == 0)
-									die->setCreator(primaryObj->getID());
-								else
-									die->setCreator(INVALID_ID);
-							}
-
-							if (container->getContain() && container->getContain()->isValidContainerFor(payload, true))
-							{
-								container->getContain()->addToContain(payload);
-								payload = container;
-							}
-							else
-							{
-								DEBUG_CRASH(("DeliverPayload: PutInContainer %s is full, or not valid for the payload %s!",m_putInContainerName.str(),it->m_payloadName.str()));
-							}
-						}
-
-						if (transport->getContain() && transport->getContain()->isValidContainerFor(payload, true))
-						{
-							transport->getContain()->addToContain(payload);
+							container->getContain()->addToContain(payload);
+							payload = container;
 						}
 						else
 						{
-							DEBUG_CRASH(("DeliverPayload: transport %s is full, or not valid for the payload %s!",m_transportName.str(),it->m_payloadName.str()));
+							DEBUG_CRASH(("DeliverPayload: PutInContainer %s is full, or not valid for the payload %s!",m_putInContainerName.str(),it->m_payloadName.str()));
 						}
+					}
+
+					if (transport->getContain() && transport->getContain()->isValidContainerFor(payload, true))
+					{
+						transport->getContain()->addToContain(payload);
+					}
+					else
+					{
+						DEBUG_CRASH(("DeliverPayload: transport %s is full, or not valid for the payload %s!",m_transportName.str(),it->m_payloadName.str()));
 					}
 				}
 			}
-			else
-			{
-				DEBUG_CRASH(("You should really have a DeliverPayloadAIUpdate here"));
-			}
 		}
-		return firstTransport;
-	}
-
-	static void parsePayload( INI* ini, void *instance, void *store, const void* /*userData*/ )
-	{
-		DeliverPayloadNugget* self = (DeliverPayloadNugget*)instance;
-		const char* name = ini->getNextToken();
-		const char* countStr = ini->getNextTokenOrNull();
-		Int count = countStr ? INI::scanInt(countStr) : 1;
-
-		Payload p;
-		p.m_payloadName.set(name);
-		p.m_payloadCount = count;
-		self->m_payload.push_back(p);
-	}
-
-	static void parse(INI *ini, void *instance, void* /*store*/, const void* /*userData*/)
-	{
-		static const FieldParse myFieldParse[] =
+		else
 		{
-			//***************************************************************
-			//OBJECT CREATION LIST SPECIFIC DATA -- once created data no longer needed
-			//The transport(s) that carry all the payload items (and initial physics information)
-			{ "Transport",								INI::parseAsciiString,				nullptr, offsetof(DeliverPayloadNugget, m_transportName) },
-			{ "StartAtPreferredHeight",		INI::parseBool,								nullptr, offsetof(DeliverPayloadNugget, m_startAtPreferredHeight) },
-			{ "StartAtMaxSpeed",					INI::parseBool,								nullptr, offsetof(DeliverPayloadNugget, m_startAtMaxSpeed) },
-
-			//For multiple transports, this defines the formation (and convergence if all weapons will hit same target)
-			{ "FormationSize",						INI::parseUnsignedInt,					nullptr, offsetof( DeliverPayloadNugget, m_formationSize) },
-			{ "FormationSpacing",					INI::parseReal,									nullptr, offsetof( DeliverPayloadNugget, m_formationSpacing) },
-			{ "WeaponConvergenceFactor",	INI::parseReal,									nullptr, offsetof( DeliverPayloadNugget, m_convergenceFactor ) },
-			{ "WeaponErrorRadius",				INI::parseReal,									nullptr, offsetof( DeliverPayloadNugget, m_errorRadius ) },
-			{ "DelayDeliveryMax",					INI::parseDurationUnsignedInt,	nullptr, offsetof( DeliverPayloadNugget, m_delayDeliveryFramesMax ) },
-
-			//Payload information (it's all created now and stored inside)
-			{ "Payload",									parsePayload,									nullptr, 0 },
-			{ "PutInContainer",						INI::parseAsciiString,				nullptr, offsetof( DeliverPayloadNugget, m_putInContainerName) },
-			//END OBJECT CREATION LIST SPECIFIC DATA
-			//***************************************************************
-
-			//***************************************************************
-			//DELIVERPAYLOADDATA contains the rest (and most) of the parsed data.
-			//***************************************************************
-			{ nullptr, nullptr, nullptr, 0 }
-		};
-
-		DeliverPayloadNugget* nugget = newInstance(DeliverPayloadNugget);
-
-		MultiIniFieldParse p;
-		p.add(myFieldParse);
-		p.add(DeliverPayloadData::getFieldParse(), offsetof( DeliverPayloadNugget, m_data ));
- 		ini->initFromINIMulti(nugget, p);
-		((ObjectCreationList*)instance)->addObjectCreationNugget(nugget);
+			DEBUG_CRASH(("You should really have a DeliverPayloadAIUpdate here"));
+		}
 	}
+	return firstTransport;
+}
 
-private:
+void DeliverPayloadNugget::parsePayload( INI* ini, void *instance, void *store, const void* /*userData*/ )
+{
+	DeliverPayloadNugget* self = (DeliverPayloadNugget*)instance;
+	const char* name = ini->getNextToken();
+	const char* countStr = ini->getNextTokenOrNull();
+	Int count = countStr ? INI::scanInt(countStr) : 1;
 
-	struct Payload
+	Payload p;
+	p.m_payloadName.set(name);
+	p.m_payloadCount = count;
+	self->m_payload.push_back(p);
+}
+
+void DeliverPayloadNugget::parse(INI *ini, void *instance, void* /*store*/, const void* /*userData*/)
+{
+	static const FieldParse myFieldParse[] =
 	{
-		AsciiString m_payloadName;
-		Int m_payloadCount;
+		//***************************************************************
+		//OBJECT CREATION LIST SPECIFIC DATA -- once created data no longer needed
+		//The transport(s) that carry all the payload items (and initial physics information)
+		{ "Transport",								INI::parseAsciiString,				nullptr, offsetof(DeliverPayloadNugget, m_transportName) },
+		{ "StartAtPreferredHeight",		INI::parseBool,								nullptr, offsetof(DeliverPayloadNugget, m_startAtPreferredHeight) },
+		{ "StartAtMaxSpeed",					INI::parseBool,								nullptr, offsetof(DeliverPayloadNugget, m_startAtMaxSpeed) },
+
+		//For multiple transports, this defines the formation (and convergence if all weapons will hit same target)
+		{ "FormationSize",						INI::parseUnsignedInt,					nullptr, offsetof( DeliverPayloadNugget, m_formationSize) },
+		{ "FormationSpacing",					INI::parseReal,									nullptr, offsetof( DeliverPayloadNugget, m_formationSpacing) },
+		{ "WeaponConvergenceFactor",	INI::parseReal,									nullptr, offsetof( DeliverPayloadNugget, m_convergenceFactor ) },
+		{ "WeaponErrorRadius",				INI::parseReal,									nullptr, offsetof( DeliverPayloadNugget, m_errorRadius ) },
+		{ "DelayDeliveryMax",					INI::parseDurationUnsignedInt,	nullptr, offsetof( DeliverPayloadNugget, m_delayDeliveryFramesMax ) },
+
+		//Payload information (it's all created now and stored inside)
+		{ "Payload",									parsePayload,									nullptr, 0 },
+		{ "PutInContainer",						INI::parseAsciiString,				nullptr, offsetof( DeliverPayloadNugget, m_putInContainerName) },
+		//END OBJECT CREATION LIST SPECIFIC DATA
+		//***************************************************************
+
+		//***************************************************************
+		//DELIVERPAYLOADDATA contains the rest (and most) of the parsed data.
+		//***************************************************************
+		{ nullptr, nullptr, nullptr, 0 }
 	};
 
-	//Specific data needed to create the transport(s), internal payload, and initial physics.
-  AsciiString           m_transportName;
-	AsciiString						m_putInContainerName;
-	std::vector<Payload>	m_payload;
-	Real									m_formationSpacing;
-	Real									m_convergenceFactor;
-	Real									m_errorRadius;
-	UnsignedInt						m_delayDeliveryFramesMax;
-	UnsignedInt						m_formationSize;
-	Bool									m_startAtPreferredHeight;
-	Bool									m_startAtMaxSpeed;
+	DeliverPayloadNugget* nugget = newInstance(DeliverPayloadNugget);
 
-	//AI specific data passed over to DeliverPayloadAIUpdate::deliver()
-	DeliverPayloadData		m_data;
-};
-EMPTY_DTOR(DeliverPayloadNugget)
+	MultiIniFieldParse p;
+	p.add(myFieldParse);
+	p.add(DeliverPayloadData::getFieldParse(), offsetof( DeliverPayloadNugget, m_data ));
+ 	ini->initFromINIMulti(nugget, p);
+	((ObjectCreationList*)instance)->addObjectCreationNugget(nugget);
+}
+// field declarations moved
+// 'EMPTY_DTOR(DeliverPayloadNugget)' moved
+// ------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 static void calcRandomForce(Real minMag, Real maxMag, Real minPitch, Real maxPitch, Coord3D* force)
