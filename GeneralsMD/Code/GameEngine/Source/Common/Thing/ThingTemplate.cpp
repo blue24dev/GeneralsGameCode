@@ -1166,7 +1166,6 @@ void ThingTemplate::validate()
 	//MODDD
   automaticThingTemplateChanges(this);
 	determineHasInactiveBodyModule();
-	makeNonCivilianGarrisonableStructureCapturableHack();
 
 	if (m_shadowTextureName.isEmpty())
 	{
@@ -1673,38 +1672,6 @@ void ThingTemplate::determineHasInactiveBodyModule()
 		}
 	}
 	setHasInactiveBodyModule(isInactiveBody);
-}
-
-//MODDD - make buildings that are normally built by the player (non-civilian) and garrisonable, capturable.
-// Typically this combo has the "IMMUNE_TO_CAPTURE" flag (ex: 'GLAPalace' in retail generals), though I fail to see why.
-// Why should a poorly defended building with poor anti-infantry garrisoned be impossible to capture?
-// This excludes base defenses, which are fine to remain uncapturable.
-void ThingTemplate::makeNonCivilianGarrisonableStructureCapturableHack()
-{
-	// does not apply to base defenses
-	if (this->isKindOf(KINDOF_FS_BASE_DEFENSE) || this->isKindOf(KINDOF_TECH_BASE_DEFENSE))
-	{
-		return;
-	}
-
-	// The palace has 'GARRISONABLE_UNTIL_DESTROYED', but the internet center doesn't - can't depend on that flag.
-	// Fine to only check for 'IMMUNE_TO_CAPTURE'. Civilian buildings are uncapturable through a different way, see
-	// 'ActionManager::canCaptureBuilding': having a garrison contain module with an original team (including its default
-	// state at the start of the game) that isn't enemies with the player makes it uncapturable.
-	if (this->isKindOf(KINDOF_IMMUNE_TO_CAPTURE))
-	{
-		m_kindof.set(KINDOF_IMMUNE_TO_CAPTURE, 0);
-		// While we're at it, add the CAPTURABLE flag if it's missing.
-		// Seems it's only needed to make the building capturable if it's neutral to the current player (ex: civilian
-		// controlled tech buildings at the start of skirmish games like oil derricks). Typically any enemy building without
-		// 'IMMUNE_TO_CAPTURE' is capturable with or without this flag. Still, seems proper to just add the flag as player-
-		// built structures tend to have it (if they ever occur neutral, capturable too).
-		// The building-hack-disable ability also mentions the 'CAPTURABLE' flag in a few places, oddly enough.
-		if (!this->isKindOf(KINDOF_CAPTURABLE))
-		{
-			m_kindof.set(KINDOF_CAPTURABLE, 1);
-		}
-	}
 }
 
 //MODDD

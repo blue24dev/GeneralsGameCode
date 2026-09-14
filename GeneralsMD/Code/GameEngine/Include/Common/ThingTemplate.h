@@ -405,6 +405,12 @@ public:
 	{
 		return TEST_KINDOFMASK_ANY(m_kindof, anyKindOf);
 	}
+	
+	//MODDD - new, for hackery
+	void setKindOf(KindOfType t, Int val)
+	{
+		m_kindof.set(t, val);
+	}
 
 	/// set the display name
 	const UnicodeString& getDisplayName() const { return m_displayName; }  ///< return display name
@@ -603,7 +609,6 @@ public:
 
 	//MODDD
 	void determineHasInactiveBodyModule();
-	void makeNonCivilianGarrisonableStructureCapturableHack();
 	Bool getHasInactiveBodyModule() const;
 	void setHasInactiveBodyModule(Bool hasInactiveBodyModule);
 

@@ -13,6 +13,7 @@
 #include "GameClient/ControlBar.h"
 #include "GameLogic/Weapon.h"
 #include "GameLogic/Object.h"
+#include "GameLogic/ObjectCreationList.h"
 #include "GameLogic/GameLogic.h"
 #include "GameLogic/Module/AutoDepositUpdate.h"
 #include "GameLogic/Module/HackInternetAIUpdate.h"
@@ -33,12 +34,14 @@
 #include "GameLogic/Module/SpecialAbilityUpdate.h"
 #include "GameLogic/Module/ActiveShroudUpgrade.h"
 #include "GameLogic/Module/CashHackSpecialPower.h"
+//#include "GameLogic/Module/DeliverPayloadAIUpdate.h"
+#include "GameLogic/ObjectCreationList/DeliverPayloadNugget.h"
 
 // It would make sense to consider 'CUSTOM_ATTRIBUTE_CHANGES' sections "MODDD - for me only".
 
 // Other new functions that handle post-parsing edits:
 //   WeaponTemplateSet::validateAutoChooseSources
-//   ThingTemplate::makeNonCivilianGarrisonableStructureCapturableHack
+//   ThingTemplate::makeNonCivilianGarrisonableStructureCapturableHack (since moved to here, since "setKindOf" was added)
 
 // Set this in code to let breakpoints work in release mode, as opposed to the usual 'int x; x = 4;' thing I usually do.
 // Ex:
@@ -197,6 +200,38 @@ void checkActiveBodyModuleDataSubdualAttributes(ActiveBodyModuleData* _data)
 }
 #endif
 
+//MODDD - make buildings that are normally built by the player (non-civilian) and garrisonable, capturable.
+// Typically this combo has the "IMMUNE_TO_CAPTURE" flag (ex: 'GLAPalace' in retail generals), though I fail to see why.
+// Why should a poorly defended building with poor anti-infantry garrisoned be impossible to capture?
+// This excludes base defenses, which are fine to remain uncapturable.
+void makeNonCivilianGarrisonableStructureCapturableHack(ThingTemplate* _this)
+{
+	// does not apply to base defenses
+	if (_this->isKindOf(KINDOF_FS_BASE_DEFENSE) || _this->isKindOf(KINDOF_TECH_BASE_DEFENSE))
+	{
+		return;
+	}
+
+	// The palace has 'GARRISONABLE_UNTIL_DESTROYED', but the internet center doesn't - can't depend on that flag.
+	// Fine to only check for 'IMMUNE_TO_CAPTURE'. Civilian buildings are uncapturable through a different way, see
+	// 'ActionManager::canCaptureBuilding': having a garrison contain module with an original team (including its default
+	// state at the start of the game) that isn't enemies with the player makes it uncapturable.
+	if (_this->isKindOf(KINDOF_IMMUNE_TO_CAPTURE))
+	{
+		_this->setKindOf(KINDOF_IMMUNE_TO_CAPTURE, 0);
+		// While we're at it, add the CAPTURABLE flag if it's missing.
+		// Seems it's only needed to make the building capturable if it's neutral to the current player (ex: civilian
+		// controlled tech buildings at the start of skirmish games like oil derricks). Typically any enemy building without
+		// 'IMMUNE_TO_CAPTURE' is capturable with or without this flag. Still, seems proper to just add the flag as player-
+		// built structures tend to have it (if they ever occur neutral, capturable too).
+		// The building-hack-disable ability also mentions the 'CAPTURABLE' flag in a few places, oddly enough.
+		if (!_this->isKindOf(KINDOF_CAPTURABLE))
+		{
+			_this->setKindOf(KINDOF_CAPTURABLE, 1);
+		}
+	}
+}
+
 // Go through a ThingTemplate that's recently been parsed from the INI files
 // (ex: 'AmericaVehicle.ini' -> 'Object AmericaVehicleHumvee')
 // and see if it has any stats or modules that should be adjusted for either bug fixes or additional attribute edits
@@ -328,6 +363,8 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		_this->m_shroudClearingRange *= 1.50f;
 	}
 #endif
+
+	makeNonCivilianGarrisonableStructureCapturableHack(_this);
 	
 	static NameKeyType SalvageCrateCollideNameKey = NAMEKEY("SalvageCrateCollide");
 #if RTS_ZEROHOUR
@@ -682,69 +719,77 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 void automaticChangesPostINIParsing()
 {
 #if RTS_ZEROHOUR
-	static NameKeyType OCLSpecialPowerNameKey = NAMEKEY("OCLSpecialPower");
-	ThingTemplateHashMap* templateHashMap = TheThingFactory->getTemplateHashMap();
-	ThingTemplateHashMap::iterator it;
-	for (it = templateHashMap->begin(); it != templateHashMap->end(); ++it)
 	{
-		ThingTemplate* _this = (*it).second;
-
-		//TODO - should overrides be blocked like the '_this->m_reskinnedFrom != nullptr' check elsewhere? Not sure, see if doing this for the base
-		// implicitly carries over to overrides for this post-parsing run-through
-
-		Int modIdx;
-		const ModuleInfo& mi = _this->getBehaviorModuleInfo();
-		for (modIdx = 0; modIdx < mi.getCount(); ++modIdx)
+		static NameKeyType OCLSpecialPowerNameKey = NAMEKEY("OCLSpecialPower");
+		ThingTemplateHashMap* templateHashMap = TheThingFactory->getTemplateHashMap();
+		ThingTemplateHashMap::iterator it;
+		for (it = templateHashMap->begin(); it != templateHashMap->end(); ++it)
 		{
-			AsciiString modName = mi.getNthName(modIdx);
-			const ModuleData* data = mi.getNthData(modIdx);
-			if (modName.isEmpty())
-				continue;
-			NameKeyType modNameKey = NAMEKEY(modName);
+			ThingTemplate* _this = (*it).second;
 
-			if( modNameKey == OCLSpecialPowerNameKey )
+			//TODO - should overrides be blocked like the '_this->m_reskinnedFrom != nullptr' check elsewhere? Not sure, see if doing this for the base
+			// implicitly carries over to overrides for this post-parsing run-through.
+			// My guess is this should be re-run for things that are reskins of something else,
+			// because ThingFactory.cpp has 'thingTemplate->copyFrom(reskinTmpl);' - I'm lead to believe by the post-parsing point
+			// (all things loaded in), every reskin is an independent copy of the thing it's reskinned from -> changes to the
+			// first encountered parent don't affect the reskinned thing. This is unlike during parsing where changes to a parent
+			// would affect things that are reskins of it because these children would read the then-modified parent to be copied
+			// from when they are parsed later (repeating changes in that case would be redundant).
+
+			Int modIdx;
+			const ModuleInfo& mi = _this->getBehaviorModuleInfo();
+			for (modIdx = 0; modIdx < mi.getCount(); ++modIdx)
 			{
-				OCLSpecialPowerModuleData* _data = (OCLSpecialPowerModuleData*)data;
+				AsciiString modName = mi.getNthName(modIdx);
+				const ModuleData* data = mi.getNthData(modIdx);
+				if (modName.isEmpty())
+					continue;
+				NameKeyType modNameKey = NAMEKEY(modName);
 
-				if (_data->m_createLoc == CREATE_AT_LOCATION)
+				if( modNameKey == OCLSpecialPowerNameKey )
 				{
-					// See if this is an OCL special power that requires the user to place something on the map with a build preview, such as the sneak attack.
-					// In several mods, the 'ReferenceObject' field is either missing or referring to a nonexistent object - sometimes, just the incorrect variant
-					// such as a stealth-gen sneak attack tunnel for the chem general's ability, but that detail is probably negligible.
-					// This field was just for the AI to do finer collision checks with the resulting object, but this is now needed even for player use because of
-					// a TheSuperHacker's change in 'ActionManager::canDoSpecialPowerAtLocation' with RETAIL_COMPATIBLE_CRC=0: the 'reference object' is used to see
-					// if the object is placeable on the game's end so the client saying it's buildable isn't blindly trusted (anti-cheat measure).
-					const ThingTemplate* referenceObjectRef = nullptr;
-					if (!_data->m_referenceThingName.isEmpty())
-					{
-						referenceObjectRef = TheThingFactory->findTemplate( _data->m_referenceThingName );
-					}
+					OCLSpecialPowerModuleData* _data = (OCLSpecialPowerModuleData*)data;
 
-					if (referenceObjectRef == nullptr)
+					if (_data->m_createLoc == CREATE_AT_LOCATION)
 					{
-						// No 'ReferenceObject' field, or whatever was provided wasn't found in the list of game objects - need to figure out what the field should be.
-						// I did find that there is always a CommandButton that can be used to decide what this should be: Command = SPECIAL_POWER_CONSTRUCT or SPECIAL_POWER_CONSTRUCT_FROM_SHORTCUT,
-						// has an 'Object' field that would match the special power's 'ReferenceObject' in retail -> copy it over to apply the fix.
-						// The only issue is, there isn't a way to tell which abilities ever have a button to use them with placement (special power needs a valid 'ReferenceObject')
-						// without checking every single button & coming up empty or finding one of the expected 'Command'.
-						const CommandButton* commandButtons = TheControlBar->getCommandButtons();
-						const CommandButton* commandButton;
-						for( commandButton = commandButtons; commandButton != nullptr; commandButton = commandButton->getNext() )
+						// See if this is an OCL special power that requires the user to place something on the map with a build preview, such as the sneak attack.
+						// In several mods, the 'ReferenceObject' field is either missing or referring to a nonexistent object - sometimes, just the incorrect variant
+						// such as a stealth-gen sneak attack tunnel for the chem general's ability, but that detail is probably negligible.
+						// This field was just for the AI to do finer collision checks with the resulting object, but this is now needed even for player use because of
+						// a TheSuperHacker's change in 'ActionManager::canDoSpecialPowerAtLocation' with RETAIL_COMPATIBLE_CRC=0: the 'reference object' is used to see
+						// if the object is placeable on the game's end so the client saying it's buildable isn't blindly trusted (anti-cheat measure).
+						const ThingTemplate* referenceObjectRef = nullptr;
+						if (!_data->m_referenceThingName.isEmpty())
 						{
-							if (commandButton->getCommandType() == GUI_COMMAND_SPECIAL_POWER_CONSTRUCT || commandButton->getCommandType() == GUI_COMMAND_SPECIAL_POWER_CONSTRUCT_FROM_SHORTCUT)
-							{
-								if (commandButton->getThingTemplate() != nullptr)
-								{
-									referenceObjectRef = commandButton->getThingTemplate();
-									break;
-								}
-							}
+							referenceObjectRef = TheThingFactory->findTemplate( _data->m_referenceThingName );
 						}
 
-						if (referenceObjectRef != nullptr)
+						if (referenceObjectRef == nullptr)
 						{
-							// we got em'.
-							_data->m_referenceThingName = referenceObjectRef->getName();
+							// No 'ReferenceObject' field, or whatever was provided wasn't found in the list of game objects - need to figure out what the field should be.
+							// I did find that there is always a CommandButton that can be used to decide what this should be: Command = SPECIAL_POWER_CONSTRUCT or SPECIAL_POWER_CONSTRUCT_FROM_SHORTCUT,
+							// has an 'Object' field that would match the special power's 'ReferenceObject' in retail -> copy it over to apply the fix.
+							// The only issue is, there isn't a way to tell which abilities ever have a button to use them with placement (special power needs a valid 'ReferenceObject')
+							// without checking every single button & coming up empty or finding one of the expected 'Command'.
+							const CommandButton* commandButtons = TheControlBar->getCommandButtons();
+							const CommandButton* commandButton;
+							for( commandButton = commandButtons; commandButton != nullptr; commandButton = commandButton->getNext() )
+							{
+								if (commandButton->getCommandType() == GUI_COMMAND_SPECIAL_POWER_CONSTRUCT || commandButton->getCommandType() == GUI_COMMAND_SPECIAL_POWER_CONSTRUCT_FROM_SHORTCUT)
+								{
+									if (commandButton->getThingTemplate() != nullptr)
+									{
+										referenceObjectRef = commandButton->getThingTemplate();
+										break;
+									}
+								}
+							}
+
+							if (referenceObjectRef != nullptr)
+							{
+								// we got em'.
+								_data->m_referenceThingName = referenceObjectRef->getName();
+							}
 						}
 					}
 				}
@@ -752,8 +797,61 @@ void automaticChangesPostINIParsing()
 		}
 	}
 #endif
-}
 
+	{
+		//std::set<ThingTemplate*> wat;
+		std::set<AsciiString> transportProcessedList;
+
+		// Note: why is there a list of all nuggets ever made? that seems redundant with the fact that every nugget belongs
+		// to some OCL and iterating through all OCLs will already reach every nugget.
+		// All I can figure is for 'TheObjectCreationListStore''s deconstructor to be able to handle deleting all the nuggets.
+		// Why not leave this up to each OCL item to deal with its own nugget list instead? I have no idea.
+		ObjectCreationListMap* oclListMap = TheObjectCreationListStore->getItemListMap();
+		ObjectCreationListMap::iterator it;
+		for (it = oclListMap->begin(); it != oclListMap->end(); ++it)
+		{
+			ObjectCreationList& ocl = (*it).second;
+			ObjectCreationNuggetVector* nuggetList = ocl.getNuggetList();
+			ObjectCreationNuggetVector::iterator itN;
+			for (itN = nuggetList->begin(); itN != nuggetList->end(); ++itN)
+			{
+				ObjectCreationNugget* nugget = *itN;
+				if (nugget->getTypeID() == OCL_NUGGET_TYPE_DELIVER_PAYLOAD)
+				{
+					DeliverPayloadNugget* deliverPayloadNugget = (DeliverPayloadNugget*)nugget;
+					const AsciiString& transportName = deliverPayloadNugget->getTransportName();
+					if (transportName.isEmpty())
+					{
+						continue;
+					}
+					// If this thing has previously been checked, don't do it again
+					if (transportProcessedList.contains(transportName))
+					{
+						continue;
+					}
+					transportProcessedList.insert(transportName);
+
+					const ThingTemplate* transportObjectRef = nullptr;
+					transportObjectRef = TheThingFactory->findTemplate( transportName );
+					if (transportObjectRef != nullptr)
+					{
+						// If this thing is ever used as a transport and lacks all three of these flags, add FORCEATTACKABLE
+						// so that left-clicking it to attack will work. No longer has to be force-attack thanks to another small change elsewhere.
+						if (
+							!transportObjectRef->isKindOf(KINDOF_UNATTACKABLE) &&
+							!transportObjectRef->isKindOf(KINDOF_SELECTABLE) &&
+							!transportObjectRef->isKindOf(KINDOF_FORCEATTACKABLE)
+						)
+						{
+							((ThingTemplate*)transportObjectRef)->setKindOf(KINDOF_FORCEATTACKABLE, 1);
+						}
+					}
+				}
+			}
+		}
+	}
+
+}
 
 #if CUSTOM_ATTRIBUTE_CHANGES
 
