@@ -773,7 +773,8 @@ void SpecialPowerModule::aboutToDoSpecialPower( const Coord3D *location )
 // Does retail even have any cases of a 'shared (special power?) superweapon'? Doesn't seem like it.
 // This logic was never called for outside of the constructor and 'loadPostProcess', this may have been
 // poorly tested.
-void SpecialPowerModule::checkAddTimerForSharedSuperWeapon() {
+void SpecialPowerModule::checkAddTimerForSharedSuperWeapon()
+{
 	// Now, if we find that we have just come into being,
 	// but there is already a science granted for our shared superweapon,
 	// lets make sure TheIngameUI knows about our public timer
@@ -981,15 +982,6 @@ void SpecialPowerModule::xfer( Xfer *xfer )
 
 	// paused percent
 	xfer->xferReal( &m_pausedPercent );
-
-	//MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
-	// DOH I made a booboo, leave this out if you're not me!
-	/*
-	if (version >= 1 && xfer->getXferMode() == XFER_LOAD) {
-		Int waitingForInitCallAfterConstruction;
-		xfer->xferInt(&waitingForInitCallAfterConstruction);
-	}
-	*/
 }
 
 // ------------------------------------------------------------------------------------------------
