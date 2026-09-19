@@ -176,28 +176,6 @@ PathNode *PathNode::prependToList( PathNode *list )
 	return this;
 }
 
-//-----------------------------------------------------------------------------------
-/// given a list, append this node, return new list.  slow implementation.
-/// @todo optimize this
-PathNode *PathNode::appendToList( PathNode *list )
-{
-	if (list == nullptr)
-	{
-		m_next = nullptr;
-		m_prev = nullptr;
-		return this;
-	}
-
-	PathNode *tail;
-	for( tail = list; tail->m_next; tail = tail->m_next )
-		;
-
-	tail->m_next = this;
-	m_prev = tail;
-	m_next = nullptr;
-
-	return list;
-}
 
 //-----------------------------------------------------------------------------------
 /// given a node, append new node to this.
@@ -416,10 +394,6 @@ void Path::prependNode( const Coord3D *pos, PathfindLayerEnum layer )
 		m_pathTail = node;
 
 	m_isOptimized = false;
-
-#ifdef CPOP_STARTS_FROM_PREV_SEG
-	m_cpopRecentStart = nullptr;
-#endif
 }
 
 /**
@@ -440,18 +414,22 @@ void Path::appendNode( const Coord3D *pos, PathfindLayerEnum layer )
 	node->setPosition( pos );
 	node->setLayer(layer);
 
-	m_path = node->appendToList( m_path );
+	if (!m_path)
+	{
+		m_path = node;
+		m_pathTail = node;
 
-	if (m_isOptimized && m_pathTail)
+		return;
+	}
+
+	m_pathTail->append(node);
+
+	if (m_isOptimized)
 	{
 		m_pathTail->setNextOptimized(node);
 	}
 
 	m_pathTail = node;
-
-#ifdef CPOP_STARTS_FROM_PREV_SEG
-	m_cpopRecentStart = nullptr;
-#endif
 }
 /**
  * Create a new node at the tail of the path
@@ -801,13 +779,7 @@ void Path::computePointOnPath(
 	//
 	// Find the closest segment of the path
 	//
-#ifdef CPOP_STARTS_FROM_PREV_SEG
-	const PathNode* prevNode = m_cpopRecentStart;
-	if (prevNode == nullptr)
-		prevNode = m_path;
-#else
 	const PathNode* prevNode = m_path;
-#endif
 	Coord2D segmentDirNorm;
 	Real segmentLength;
 
@@ -880,10 +852,6 @@ void Path::computePointOnPath(
 		prevNode = node;
 		DUMPCOORD3D(&pointOnPath);
 	}
-
-#ifdef CPOP_STARTS_FROM_PREV_SEG
-	m_cpopRecentStart = closeNode;
-#endif
 
 	//
 	// Compute the goal movement position for this agent
@@ -6143,6 +6111,7 @@ struct ExamineCellsStruct
 	const LocomotorSet	*theLoco;
 	Bool								centerInCell;
 	Bool								isHuman;
+	Bool								isCrusher;
 	Int									radius;
 	const Object				*obj;
 	PathfindCell				*goalCell;
@@ -6151,10 +6120,9 @@ struct ExamineCellsStruct
 /*static*/ Int Pathfinder::examineCellsCallback(Pathfinder* pathfinder, PathfindCell* from, PathfindCell* to, Int to_x, Int to_y, void* userData)
 {
 	ExamineCellsStruct* d = (ExamineCellsStruct*)userData;
-	Bool isCrusher = d->obj ? d->obj->getCrusherLevel() > 0 : false;
 	if (d->thePathfinder->m_isTunneling) return 1; // abort.
 	if (from && to) {
-			if (!d->thePathfinder->validMovementPosition( isCrusher, d->theLoco->getValidSurfaces(), to, from )) {
+			if (!d->thePathfinder->validMovementPosition( d->isCrusher, d->theLoco->getValidSurfaces(), to, from )) {
 				return 1;
 			}
 			if ( (to->getLayer() == LAYER_GROUND) && !d->thePathfinder->m_zoneManager.isPassable(to_x, to_y) ) {
@@ -6256,6 +6224,7 @@ Int Pathfinder::examineNeighboringCells(PathfindCell *parentCell, PathfindCell *
 			info.radius = radius;
 			info.obj = obj;
 			info.isHuman = isHuman;
+			info.isCrusher = isCrusher;
 			info.goalCell = goalCell;
 			ICoord2D start, end;
 			start.x = parentCell->getXIndex();
@@ -6280,6 +6249,11 @@ Int Pathfinder::examineNeighboringCells(PathfindCell *parentCell, PathfindCell *
 		Bool neighborFlags[8] = { 0 };
 
 		UnsignedInt newCostSoFar = 0;
+
+		Coord3D fromPos;
+		fromPos.x = parentCell->getXIndex() * PATHFIND_CELL_SIZE_F ;
+		fromPos.y = parentCell->getYIndex() * PATHFIND_CELL_SIZE_F ;
+		fromPos.z = TheTerrainLogic->getGroundHeight(fromPos.x , fromPos.y);
 
 		for( int i=0; i<numNeighbors; i++ )
 		{
@@ -6319,11 +6293,6 @@ Int Pathfinder::examineNeighboringCells(PathfindCell *parentCell, PathfindCell *
 			// do the gravity check here
 			if ( locomotorSet.isDownhillOnly() )
 			{
-				Coord3D fromPos;
-				fromPos.x = parentCell->getXIndex() * PATHFIND_CELL_SIZE_F ;
-				fromPos.y = parentCell->getYIndex() * PATHFIND_CELL_SIZE_F ;
-				fromPos.z = TheTerrainLogic->getGroundHeight(fromPos.x , fromPos.y);
-
 				Coord3D toPos;
 				toPos.x = newCellCoord.x * PATHFIND_CELL_SIZE_F ;
 				toPos.y = newCellCoord.y * PATHFIND_CELL_SIZE_F ;
@@ -6389,11 +6358,6 @@ Int Pathfinder::examineNeighboringCells(PathfindCell *parentCell, PathfindCell *
 			}
 
 			if (newCell->getType() == PathfindCell::CELL_CLIFF && !newCell->getPinched() ) {
-				Coord3D fromPos;
-				fromPos.x = parentCell->getXIndex() * PATHFIND_CELL_SIZE_F ;
-				fromPos.y = parentCell->getYIndex() * PATHFIND_CELL_SIZE_F ;
-				fromPos.z = TheTerrainLogic->getGroundHeight(fromPos.x , fromPos.y);
-
 				Coord3D toPos;
 				toPos.x = newCellCoord.x * PATHFIND_CELL_SIZE_F ;
 				toPos.y = newCellCoord.y * PATHFIND_CELL_SIZE_F ;
@@ -7541,24 +7505,16 @@ void Pathfinder::processHierarchicalCell( const ICoord2D &scanCell, const ICoord
 			return;
 		}
 
-		newCell->allocateInfo(scanCell);
-#if RETAIL_COMPATIBLE_PATHFINDING
-		if (!s_useFixedPathfinding)
-		{
-			if (!newCell->getClosed() && !newCell->getOpen()) {
-				newCell->putOnClosedList(m_closedList);
-			}
-		}
-		else
+#if RTS_GENERALS && RETAIL_COMPATIBLE_PATHFINDING
+		// TheSuperHackers @bugfix Caball009 14/09/2026 Check newCell->m_info before accessing it to prevent a possible crash.
+		// The Zero Hour / non-retail compatible pathfinding code performs this check earlier in the function.
+		if (newCell->allocateInfo(scanCell) && !newCell->getOpen() && !newCell->getClosed())
 #endif
 		{
-			if (newCell->hasInfo() && !newCell->getClosed() && !newCell->getOpen()) {
-				newCell->putOnClosedList(m_closedList);
-			}
+			newCell->putOnClosedList(m_closedList);
 		}
 
-		adjNewCell->allocateInfo(adjacentCell);
-		if( adjNewCell->hasInfo() )
+		if (adjNewCell->allocateInfo(adjacentCell))
 		{
 
 			cellCount++;
@@ -11092,6 +11048,10 @@ Path *Pathfinder::findAttackPath( const Object *obj, const LocomotorSet& locomot
 				Path *path = buildActualPath( obj, locomotorSet.getValidSurfaces(), obj->getPosition(), parentCell, centerInCell, false);
 #if RETAIL_COMPATIBLE_PATHFINDING
 				if (!s_useFixedPathfinding) {
+#if RTS_GENERALS
+					parentCell->releaseInfo();
+#endif
+
 					if (goalCell->hasInfo() && !goalCell->getClosed() && !goalCell->getOpen()) {
 						goalCell->releaseInfo();
 					}
