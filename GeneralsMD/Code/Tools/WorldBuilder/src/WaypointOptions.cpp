@@ -109,17 +109,21 @@ void WaypointOptions::updateTheUI()
 	PolygonTrigger *theTrigger = WaypointOptions::getSingleSelectedPolygon();
 
 	CWnd *pWnd = this->GetDlgItem(IDC_WAYPOINTNAME_EDIT);
-	CWnd *pCaption1 = this->GetDlgItem(IDC_WAYPOINT_CAPTION1);
+	//MODDD - disabled, see point further down
+	//CWnd *pCaption1 = this->GetDlgItem(IDC_WAYPOINT_CAPTION1);
 	CWnd *pCaption2 = this->GetDlgItem(IDC_WAYPOINT_PATHLABELS);
 
 	CComboBox *pCombo = (CComboBox*)GetDlgItem(IDC_WAYPOINTNAME_EDIT);
 	CComboBox *pListWayptNames = (CComboBox*)GetDlgItem(IDC_LIST_OF_WAYPOINT_NAMES);
 
 	if (theTrigger) {
-		pCaption1->ShowWindow(SW_SHOW);
+		//MODDD - disabled visibility toggling for 'pCaption1'.
+		// It's erroneously hidden when the waypoint dialog is shown, even though there's something for it to say in that case too.
+		//pCaption1->ShowWindow(SW_SHOW);
 		pWnd->ShowWindow(SW_SHOW);
 	} else {
-		pCaption1->ShowWindow(SW_HIDE);
+		//MODDD - per the point above
+		//pCaption1->ShowWindow(SW_HIDE);
 		pCaption2->ShowWindow(SW_HIDE);
 		pWnd->ShowWindow(SW_HIDE);
 	}
@@ -236,7 +240,8 @@ void WaypointOptions::setupUIForWaypoint(MapObject *theMapObj)
 	Bool exists;
 	pWnd->EnableWindow();
 	pWnd->SetWindowText(theMapObj->getProperties()->getAsciiString(TheKey_waypointName).str());
-	pCaption1->SetWindowText("Waypoint name:");
+	//MODDD - uppercase text: "Waypoint name" -> "Waypoint Name"
+	pCaption1->SetWindowText("Waypoint Name:");
 	SetWindowText("Waypoint Options");
 	CWorldBuilderDoc* pDoc = CWorldBuilderDoc::GetActiveDoc();
 
@@ -317,7 +322,8 @@ void WaypointOptions::setupUIForPolygon(PolygonTrigger* theTrigger)
 	pWaypointLabel3->ShowWindow(SW_HIDE);
 	pCaption2->ShowWindow(SW_HIDE);
 	pBiDirCheck->ShowWindow(SW_HIDE);
-	pCaption1->SetWindowText("Area name:");
+	//MODDD - uppercase: "Area name" -> "Area Name"
+	pCaption1->SetWindowText("Area Name:");
 	SetWindowText("Area Trigger Options");
 	pWnd->SetWindowText(theTrigger->getTriggerName().str());
 	pWnd->EnableWindow();
