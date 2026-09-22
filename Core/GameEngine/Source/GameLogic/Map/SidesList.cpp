@@ -1,5 +1,5 @@
 /*
-**	Command & Conquer Generals(tm)
+**	Command & Conquer Generals Zero Hour(tm)
 **	Copyright 2025 Electronic Arts Inc.
 **
 **	This program is free software: you can redistribute it and/or modify
@@ -53,6 +53,9 @@
 #include "GameLogic/AI.h"
 #include "GameLogic/Scripts.h"
 #include "GameLogic/SidesList.h"
+
+//MODDD
+#include "GameClient/InGameUI.h"
 
 static const Int K_SIDES_DATA_VERSION_1 = 1;
 static const Int K_SIDES_DATA_VERSION_2 = 2;	// includes Team list.
@@ -429,13 +432,23 @@ static AsciiString static_readPlayerNames[MAX_PLAYER_COUNT];
 *	Input: DataChunkInput
 *
 */
+#define K_PLAYERS_NAMES_FOR_SCRIPTS_VERSION_1 1
+#define K_PLAYERS_NAMES_FOR_SCRIPTS_VERSION_2 2 // Added in Zero Hour
+
 static Bool ParsePlayersDataChunk(DataChunkInput &file, DataChunkInfo *info, void *userData)
 {
+	Int readDicts = 0;
+	if (info->version >= K_PLAYERS_NAMES_FOR_SCRIPTS_VERSION_2) {
+		readDicts = file.readInt();
+	}
 	Int numNames = file.readInt();
 	Int i;
 	for (i=0; i<numNames; i++) {
 		if (i>=MAX_PLAYER_COUNT) break;
 		static_readPlayerNames[i] = file.readAsciiString();
+		if (readDicts) {
+			Dict sideDict = file.readDict();
+		}
 	}
 	DEBUG_ASSERTCRASH(file.atEndOfChunk(), ("Unexpected data left over."));
 	return true;
@@ -490,6 +503,24 @@ void SidesList::prepareForMP_or_Skirmish()
 			// Don't remove FactionCivilian.
 			continue;
 		}
+
+		//MODDD - print out sides automatically removed for info
+		/*
+		//////////////////////////////////////////////////////////////////////////////////////////////
+		WideChar buf[ UnicodeString::MAX_FORMAT_BUF_LEN ];
+		UnicodeString formattedMessage;
+
+		swprintf(&buf[0], L"Removed side %hs", m_sides[i].getDict()->getAsciiString(TheKey_playerFaction).str());
+		formattedMessage.set(buf);
+
+		TheInGameUI->messageNoFormat(formattedMessage);
+		//////////////////////////////////////////////////////////////////////////////////////////////
+		*/
+
+		//MODDD - NOTE - this removes the sides, this behavior is expected for skirmish/multiplayer maps.
+		// However, for generals challenge maps loaded as skirmish, this isn't good.
+		// Going to skip a call to this method entirely (prepareForMP_or_Skirmish) instead of just dummying
+		// out the 'removeSide' call here.
 		if (m_numSides == 1) break;	// can't remove the last side.
 		removeSide(i);
 		i--;
@@ -1121,7 +1152,7 @@ void TeamsInfoRec::addTeam(const Dict* d)
 		TEAM_ALLOC_CHUNK = 8	///< how many teams to alloc at a time
 	};
 
-	DEBUG_ASSERTCRASH(m_numTeams < 1024, ("hmm, seems like an awful lot of teams..."));
+	DEBUG_ASSERTCRASH(m_numTeams < 2048, ("%d teams have been allocated (so far). This seems excessive.", m_numTeams ));
 	if (m_numTeams >= m_numTeamsAllocated)
 	{
 		// pool[]ify
