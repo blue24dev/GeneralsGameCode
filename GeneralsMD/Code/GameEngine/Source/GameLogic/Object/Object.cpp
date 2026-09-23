@@ -1162,6 +1162,11 @@ Object::~Object()
 //-------------------------------------------------------------------------------------------------
 void Object::onContainedBy( Object *containedBy )
 {
+	//MODDD - DEBUG - temp
+	if (this->getTemplate()->getName() == "EurofighterStrikeSoundTriggerObject")
+	{
+		g_dummy = 4;
+	}
 	setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_UNSELECTABLE ) );
 	if (containedBy && containedBy->getContain()->isEnclosingContainerFor(this))
 		setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_MASKED ) );
@@ -1213,6 +1218,11 @@ Int Object::getTransportSlotCount() const
 
 void Object::friend_setContainedBy( Object *containedBy )
 {
+	//MODDD - DEBUG - temp
+	if (this->getTemplate()->getName() == "EurofighterStrikeSoundTriggerObject")
+	{
+		g_dummy = 4;
+	}
 	m_containedBy = containedBy;
 
 #if !RETAIL_COMPATIBLE_CRC
