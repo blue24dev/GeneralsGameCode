@@ -486,7 +486,7 @@
 // They're tweaked to be more of an average case, but a one-size-fits-all is difficult, especially considering that most maps probably
 // never gave much thought to times of day other than the one they're saved with - keep that in mind of shadows look wonky on some maps/TOD's.
 // NOTE - beware of bugs observed while this is on, though they don't usually make the game unplayable - see the readme.
-#define REAL_TIME_TOD_CHANGE 1
+#define REAL_TIME_TOD_CHANGE 0
 
 // TODO - edit the save/load feature to include the time-of-day at the time the game is saved?
 // Leaving that out for now since the saved game would only work with builds where 'REAL_TIME_TOD_CHANGE' is in agreement.
@@ -541,9 +541,9 @@
 #define NOOB_INCOME_MONEY_SCALAR 1.10
 #define NOOB_PLAYER_PROMOTION_EXPERIENCE_RATE_SCALAR 1.15
 
-#define RUN_EXTRA_MONEY_CHEATS 1
-#define RUN_BUILD_TIME_CHEATS 1
-#define RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS 1
+#define RUN_EXTRA_MONEY_CHEATS 0
+#define RUN_BUILD_TIME_CHEATS 0
+#define RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS 0
 #define CUSTOM_ATTRIBUTE_CHANGES 1
 #define CUSTOM_GAME_DATA_CHANGES 1
 

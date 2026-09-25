@@ -1068,6 +1068,7 @@ void automaticGlobalDataChanges()
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 Real moneyScalarAdjustmentFilter(const Player* player)
 {
+	#if RUN_EXTRA_MONEY_CHEATS
 	// The income bonus for AI players can increase over the course of a long game.
 	/*
 	const UnsignedInt startMin = 8;
@@ -1079,6 +1080,7 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 	const UnsignedInt endMin = 90;
 	const Real startModifier = 1.0f;
 	const Real endModifier = 2.5f;
+	#endif
 
 	Real scalar = 1.0f;
 
