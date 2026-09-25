@@ -1176,11 +1176,13 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 #if RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS || NOOB_MODE
 Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModifier)
 {
+	#if RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS
 	// AI players receive more experience toward promotions (not individual unit veterancy) per kill over the course of a long game.
 	const UnsignedInt startMin = 6;
 	const UnsignedInt endMin = 60;
 	const Real startModifier = 1.00f;
 	const Real endModifier = 1.50f;
+	#endif
 
 	Real _expRateModifier = expRateModifier;
 
