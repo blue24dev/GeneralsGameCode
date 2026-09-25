@@ -16,7 +16,17 @@
 **	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// This file includes the dbghelp types of imagehlp.h. The imagehlp.h of VC6 does not have the
+// minidump API yet, so a subset of it is added for VC6.
+
 #pragma once
 
-#include "CppMacros.h"
-#include "CppTypes.h"
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#include <imagehlp.h> // Must be included after windows.h
+
+#if defined(_MSC_VER) && _MSC_VER < 1300
+#include "minidump_subset.h"
+#endif
