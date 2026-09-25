@@ -24,12 +24,15 @@
 #include "Lib/BaseType.h"
 #include "CUndoable.h"
 #include "WaterOptions.h"
-#include "WaypointOptions.h"
+//MODDD - disabled waypoint includes
+//#include "WaypointOptions.h"
+//MODDD - added polygon include
+#include "PolygonOptions.h"
 #include "WorldBuilder.h"
 #include "WorldBuilderDoc.h"
 #include "wbview3d.h"
 #include "PolygonTool.h"
-#include "WaypointTool.h"
+//#include "WaypointTool.h"
 #include "GameLogic/PolygonTrigger.h"
 #include "Common/WellKnownKeys.h"
 #include "LayersList.h"
@@ -72,7 +75,7 @@ void WaterOptions::setHeight(Int height)
 
 void WaterOptions::updateTheUI()
 {
-	PolygonTrigger *theTrigger = WaypointOptions::getSingleSelectedPolygon();
+	PolygonTrigger *theTrigger = PolygonOptions::getSingleSelectedPolygon();
 
 	CWnd *pWnd = this->GetDlgItem(IDC_WATERNAME_EDIT);
 
@@ -140,7 +143,13 @@ END_MESSAGE_MAP()
 
 void WaterOptions::OnChangeWaterEdit()
 {
-	PolygonTrigger *theTrigger = WaypointOptions::getSingleSelectedPolygon();
+	PolygonTrigger *theTrigger = PolygonOptions::getSingleSelectedPolygon();
+
+	//MODDD - small new block - may as well end early if nothing's there to be changed in the end
+	if (theTrigger == nullptr)
+	{
+		return;
+	}
 
 	// get the combo box
 	CComboBox *pCombo = (CComboBox*)GetDlgItem(IDC_WATERNAME_EDIT);
@@ -160,7 +169,9 @@ void WaterOptions::OnChangeWaterEdit()
 
 		// check trigger area objects
 		PolygonTrigger *pTrig;
-		for (pTrig=PolygonTrigger::getFirstPolygonTrigger(); !didMatch && pTrig; pTrig = pTrig->getNext()) {
+		//MODDD - removed '!didMatch &&' part of condition. This is most likely leftover from being a copy of
+		// 'WaypointOptions::OnChangeWaypointnameEdit()'.
+		for (pTrig=PolygonTrigger::getFirstPolygonTrigger(); pTrig; pTrig = pTrig->getNext()) {
 			if (pTrig==theTrigger) continue; // don't check against yourself.
 			const AsciiString& trigName = pTrig->getTriggerName();
 			if (name == trigName) {
@@ -177,9 +188,10 @@ void WaterOptions::OnChangeWaterEdit()
 		if (didMatch) {
 			::AfxMessageBox("Name already in use");
 		} else {
-			if (theTrigger) {
+			//MODDD - condition handled earlier now
+			//if (theTrigger) {
 				theTrigger->setTriggerName(name);
-			}
+			//}
 		}
 	}
 }
@@ -195,7 +207,7 @@ void WaterOptions::OnMakeRiver()
 {
 	CButton *pButton = (CButton*)GetDlgItem(IDC_MAKE_RIVER);
 	Bool river = (pButton->GetCheck()==1);
-	PolygonTrigger *theTrigger = WaypointOptions::getSingleSelectedPolygon();
+	PolygonTrigger *theTrigger = PolygonOptions::getSingleSelectedPolygon();
 	if (theTrigger) {
 		theTrigger->setRiver(river);
 		if (river) {
@@ -407,7 +419,7 @@ void WaterOptions::PopSliderFinished(const long sliderID, long theVal)
 
 void WaterOptions::startUpdateHeight()
 {
-	PolygonTrigger *theTrigger = WaypointOptions::getSingleSelectedPolygon();
+	PolygonTrigger *theTrigger = PolygonOptions::getSingleSelectedPolygon();
 	if (!theTrigger) {
 		REF_PTR_RELEASE(m_moveUndoable);
 		return;
@@ -434,7 +446,7 @@ void WaterOptions::startUpdateHeight()
 
 void WaterOptions::updateHeight()
 {
-	PolygonTrigger *theTrigger = WaypointOptions::getSingleSelectedPolygon();
+	PolygonTrigger *theTrigger = PolygonOptions::getSingleSelectedPolygon();
 	if (!theTrigger || !m_moveUndoable) {
 		REF_PTR_RELEASE(m_moveUndoable); // belongs to pDoc now.
 		return;

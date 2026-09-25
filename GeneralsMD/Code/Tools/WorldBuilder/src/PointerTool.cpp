@@ -118,7 +118,7 @@ PointerTool::~PointerTool()
 void PointerTool::checkForPropertiesPanel(Bool useNoOptionsFallback)
 {
 	MapObject *theMapObj = WaypointOptions::getSingleSelectedWaypoint();
-	PolygonTrigger *theTrigger = WaypointOptions::getSingleSelectedPolygon();
+	PolygonTrigger *theTrigger = PolygonOptions::getSingleSelectedPolygon();
 	MapObject *theLightObj = LightOptions::getSingleSelectedLight();
 	MapObject *theObj = MapObjectProps::getSingleSelectedMapObject();
 	if (theMapObj) {
@@ -129,8 +129,9 @@ void PointerTool::checkForPropertiesPanel(Bool useNoOptionsFallback)
 			CMainFrame::GetMainFrame()->showOptionsDialog(IDD_WATER_OPTIONS);
 			WaterOptions::update();
 		} else {
-			CMainFrame::GetMainFrame()->showOptionsDialog(IDD_WAYPOINT_OPTIONS);
-			WaypointOptions::update();
+			//MODDD - 'IDD_WAYPOINT_OPTIONS' -> 'IDD_POLYGON_OPTIONS' and similar for 'WaypointOptions::update'
+			CMainFrame::GetMainFrame()->showOptionsDialog(IDD_POLYGON_OPTIONS);
+			PolygonOptions::update();
 		}
 	} else if (theLightObj) {
 		CMainFrame::GetMainFrame()->showOptionsDialog(IDD_LIGHT_OPTIONS);

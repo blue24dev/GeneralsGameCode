@@ -84,7 +84,8 @@ void PolygonTool::deactivate()
 /// Shows the terrain materials options panel.
 void PolygonTool::activate()
 {
-	CMainFrame::GetMainFrame()->showOptionsDialog(IDD_WAYPOINT_OPTIONS);
+	//MODDD - IDD_WAYPOINT_OPTIONS to the new IDD_POLYGON_OPTIONS
+	CMainFrame::GetMainFrame()->showOptionsDialog(IDD_POLYGON_OPTIONS);
 	//MODDD - replaced all 'WaypointOptions::update' calls with 'updateOptionsDialog' for flexibility
 	updateOptionsDialog();
 	if (!m_poly_curSelectedPolygon) {
@@ -360,7 +361,8 @@ void PolygonTool::startMouseDown(TTrackingMode m, CPoint viewPt, WbView* pView, 
 //MODDD
 void PolygonTool::updateOptionsDialog()
 {
-	WaypointOptions::update();
+	//MODDD - 'WaypointOptions' -> 'PolygonOptions'
+	PolygonOptions::update();
 }
 
 /// Delete the selected polygon or point.

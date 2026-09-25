@@ -221,6 +221,13 @@ int CMainFrame::OnCreate(LPCREATESTRUCT lpCreateStruct)
 	if (m_optionsPanelWidth < frameRect.Width()) m_optionsPanelWidth = frameRect.Width();
 	if (m_optionsPanelHeight < frameRect.Height()) m_optionsPanelHeight = frameRect.Height();
 
+	//MODDD - new
+	m_polygonOptions.Create(IDD_POLYGON_OPTIONS, this);
+	m_polygonOptions.SetWindowPos(nullptr, frameRect.left, frameRect.top, 0, 0, SWP_NOZORDER|SWP_NOSIZE);
+ 	m_polygonOptions.GetWindowRect(&frameRect);
+	if (m_optionsPanelWidth < frameRect.Width()) m_optionsPanelWidth = frameRect.Width();
+	if (m_optionsPanelHeight < frameRect.Height()) m_optionsPanelHeight = frameRect.Height();
+
 	m_waterOptions.Create(IDD_WATER_OPTIONS, this);
 	m_waterOptions.SetWindowPos(nullptr, frameRect.left, frameRect.top, 0, 0, SWP_NOZORDER|SWP_NOSIZE);
  	m_waterOptions.GetWindowRect(&frameRect);
@@ -389,6 +396,8 @@ void CMainFrame::showOptionsDialog(Int dialogID)
 		case IDD_FEATHER_OPTIONS:newOptions  = &m_featherOptions; break;
 		case IDD_MESHMOLD_OPTIONS:newOptions  = &m_meshMoldOptions; break;
 		case IDD_WAYPOINT_OPTIONS:newOptions  = &m_waypointOptions; break;
+		//MODDD - new
+		case IDD_POLYGON_OPTIONS:newOptions  = &m_polygonOptions; break;
 		case IDD_WATER_OPTIONS:newOptions  = &m_waterOptions; break;
 		case IDD_LIGHT_OPTIONS:newOptions  = &m_lightOptions; break;
 		case IDD_BUILD_LIST_PANEL:newOptions  = &m_buildListOptions; break;
