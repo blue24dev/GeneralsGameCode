@@ -1066,11 +1066,13 @@ void automaticGlobalDataChanges()
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 Real moneyScalarAdjustmentFilter(const Player* player)
 {
+	#if RUN_EXTRA_MONEY_CHEATS
 	// The income bonus for AI players can increase over the course of a long game.
 	const UnsignedInt startMin = 8;
 	const UnsignedInt endMin = 80;
 	const Real startModifier = 1.1f;
 	const Real endModifier = 4.0f;
+	#endif
 
 	Real scalar = 1.0f;
 
@@ -1121,36 +1123,50 @@ UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDepo
 }
 #endif // RUN_EXTRA_MONEY_CHEATS
 
-#if RUN_BUILD_TIME_CHEATS
+#if RUN_BUILD_TIME_CHEATS || NOOB_MODE
 Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 {
+	#if RUN_BUILD_TIME_CHEATS
 	// AI players can build faster over the course of a long game.
 	const UnsignedInt startMin = 8;
 	const UnsignedInt endMin = 80;
 	const Real startModifier = 1.00f;
 	const Real endModifier = 0.76f;
+	#endif
 
 	Int _buildTime = buildTime;
+
+	#if RUN_BUILD_TIME_CHEATS
 	if (player->getPlayerType() == PLAYER_COMPUTER)
 	{
 		UnsignedInt frame = TheGameLogic->getFrame();
 		if (frame <= (30 * 60) * startMin)
 		{
-			_buildTime *= startModifier;
+			_buildTime = (Int)((Real)_buildTime * startModifier);
 		}
 		else if(frame <= (30 * 60) * endMin)
 		{
 			Real fracto = (Real)(frame - ((30 * 60) * startMin)) / (Real)((30 * 60) * (endMin - startMin));
 			Real fracto_inv = 1.0f - fracto;
 			
-			_buildTime *= endModifier + (startModifier - endModifier) * fracto_inv;
+			_buildTime = (Int)((Real)buildTime * (endModifier + (startModifier - endModifier) * fracto_inv));
 		}
 		else
 		{
-			_buildTime *= endModifier;
+			_buildTime = (Int)((Real)_buildTime * endModifier);
 		}
 		return _buildTime;
 	}
+	#endif
+
+	#if NOOB_MODE
+	if (player->getPlayerType() == PLAYER_HUMAN && ThePlayerList->getSlotIndex(player->getPlayerIndex()) == 1)
+	{
+		_buildTime = (Int)((Real)_buildTime * (Real)NOOB_BUILD_TIME_SCALAR);
+		return _buildTime;
+	}
+	#endif
+
 	return _buildTime;
 }
 #endif // RUN_BUILD_TIME_CHEATS
@@ -1158,11 +1174,13 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 #if RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS || NOOB_MODE
 Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModifier)
 {
+	#if RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS
 	// AI players receive more experience toward promotions (not individual unit veterancy) per kill over the course of a long game.
 	const UnsignedInt startMin = 10;
 	const UnsignedInt endMin = 50;
 	const Real startModifier = 1.10f;
 	const Real endModifier = 1.80f;
+	#endif
 
 	Real _expRateModifier = expRateModifier;
 
