@@ -1131,9 +1131,10 @@ UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDepo
 }
 #endif // RUN_EXTRA_MONEY_CHEATS
 
-#if RUN_BUILD_TIME_CHEATS
+#if RUN_BUILD_TIME_CHEATS || NOOB_MODE
 Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 {
+	#if RUN_BUILD_TIME_CHEATS
 	// AI players can build faster over the course of a long game.
 	/*
 	const UnsignedInt startMin = 8;
@@ -1147,28 +1148,41 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 	//const Real endModifier = 0.70f;
 	const Real startModifier = 0.95f;
 	const Real endModifier = 0.75f;
+	#endif
 
 	Int _buildTime = buildTime;
+
+	#if RUN_BUILD_TIME_CHEATS
 	if (player->getPlayerType() == PLAYER_COMPUTER)
 	{
 		UnsignedInt frame = TheGameLogic->getFrame();
 		if (frame <= (30 * 60) * startMin)
 		{
-			_buildTime *= startModifier;
+			_buildTime = (Int)((Real)_buildTime * startModifier);
 		}
 		else if(frame <= (30 * 60) * endMin)
 		{
 			Real fracto = (Real)(frame - ((30 * 60) * startMin)) / (Real)((30 * 60) * (endMin - startMin));
 			Real fracto_inv = 1.0f - fracto;
 			
-			_buildTime *= endModifier + (startModifier - endModifier) * fracto_inv;
+			_buildTime = (Int)((Real)buildTime * (endModifier + (startModifier - endModifier) * fracto_inv));
 		}
 		else
 		{
-			_buildTime *= endModifier;
+			_buildTime = (Int)((Real)_buildTime * endModifier);
 		}
 		return _buildTime;
 	}
+	#endif
+
+	#if NOOB_MODE
+	if (player->getPlayerType() == PLAYER_HUMAN && ThePlayerList->getSlotIndex(player->getPlayerIndex()) == 1)
+	{
+		_buildTime = (Int)((Real)_buildTime * (Real)NOOB_BUILD_TIME_SCALAR);
+		return _buildTime;
+	}
+	#endif
+
 	return _buildTime;
 }
 #endif // RUN_BUILD_TIME_CHEATS
