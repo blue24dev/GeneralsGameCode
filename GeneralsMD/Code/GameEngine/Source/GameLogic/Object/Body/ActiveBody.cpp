@@ -643,8 +643,10 @@ void ActiveBody::attemptDamage( DamageInfo *damageInfo )
 					fprintf(outputFile, " has getControllingPlayer()==nullptr\n");
 					fclose(outputFile);
 				}
-
-				obj->getControllingPlayer()->setAttackedBy(srcPlayer->getPlayerIndex());
+				//MODDD - TEMP FIX - being bound by a 'srcPlayer' check should not be needed!!
+				{
+					obj->getControllingPlayer()->setAttackedBy(srcPlayer->getPlayerIndex());
+				}
 			}
 		}
 

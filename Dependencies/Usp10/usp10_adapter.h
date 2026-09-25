@@ -1,6 +1,6 @@
 /*
 **	Command & Conquer Generals Zero Hour(tm)
-**	Copyright 2025 TheSuperHackers
+**	Copyright 2026 TheSuperHackers
 **
 **	This program is free software: you can redistribute it and/or modify
 **	it under the terms of the GNU General Public License as published by
@@ -16,29 +16,23 @@
 **	along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+// This file includes the Uniscribe API of usp10.h. It uses the header of the Windows SDK if the
+// compiler can find it, and otherwise a subset of it for compilers that do not have it, such as VC6.
+// The functions are implemented by Usp10Loader.cpp.
+
 #pragma once
 
-#include "always.h"
+#if defined(__has_include)
+	#if __has_include(<usp10.h>)
+		#define HAVE_USP10_H 1
+	#endif
+#endif
 
-
-// This class temporarily loads and unloads dbghelp.dll from the desired location to prevent
-// other code from potentially loading it from an undesired location.
-// This helps avoid crashing on boot using recent AMD/ATI drivers, which attempt to load and use
-// dbghelp.dll from the game install directory but are unable to do so without crashing because
-// the dbghelp.dll that ships with the game is very old and the AMD/ATI code does not handle
-// that correctly.
-
-class DbgHelpGuard
-{
-public:
-
-	DbgHelpGuard();
-	~DbgHelpGuard();
-
-	void activate();
-	void deactivate();
-
-private:
-
-	bool m_needsUnload;
-};
+#ifdef HAVE_USP10_H
+	#ifndef WIN32_LEAN_AND_MEAN
+		#define WIN32_LEAN_AND_MEAN
+	#endif
+	#include <usp10.h>
+#else
+	#include "usp10_subset.h"
+#endif

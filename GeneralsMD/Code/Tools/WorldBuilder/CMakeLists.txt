@@ -54,6 +54,8 @@ set(WORLDBUILDER_SRC
     "src/PickUnitDialog.cpp"
     "src/playerlistdlg.cpp"
     "src/PointerTool.cpp"
+    #MODDD - new
+    "src/PolygonOptions.cpp"
     "src/PolygonTool.cpp"
     "src/propedit.cpp"
     "src/RampOptions.cpp"
@@ -159,6 +161,8 @@ set(WORLDBUILDER_SRC
     "include/PickUnitDialog.h"
     "include/playerlistdlg.h"
     "include/PointerTool.h"
+    #MODDD - new
+    "include/PolygonOptions.h"
     "include/PolygonTool.h"
     "include/propedit.h"
     "include/RampOptions.h"

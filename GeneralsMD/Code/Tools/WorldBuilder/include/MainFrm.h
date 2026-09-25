@@ -36,6 +36,8 @@
 #include "ContourOptions.h"
 #include "MeshMoldOptions.h"
 #include "WaypointOptions.h"
+//MODDD - new
+#include "PolygonOptions.h"
 #include "WaterOptions.h"
 #include "LightOptions.h"
 #include "mapobjectprops.h"
@@ -118,6 +120,8 @@ protected:  // control bar embedded members
 	FeatherOptions			m_featherOptions;
 	MeshMoldOptions			m_meshMoldOptions;
 	WaypointOptions			m_waypointOptions;
+	//MODDD - new
+	PolygonOptions			m_polygonOptions;
 	WaterOptions				m_waterOptions;
 	LightOptions				m_lightOptions;
 	BuildList						m_buildListOptions;
