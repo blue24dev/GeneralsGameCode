@@ -24,8 +24,9 @@
 #include "Common/WellKnownKeys.h"
 
 class MapObject;
-class PolygonTrigger;
-class MovePolygonUndoable;
+//MODDD - disabled prototype class lines
+//class PolygonTrigger;
+//class MovePolygonUndoable;
 /////////////////////////////////////////////////////////////////////////////
 // WaypointOptions dialog
 
@@ -72,19 +73,24 @@ protected:
 protected:
 	static WaypointOptions *m_staticThis;  ///< Reference to the floating panel so SetWidth and SetFeather can be static.
 	Bool		m_updating; ///<true if the ui is updating itself.
+	//MODDD - there is now 'PolygonOptions', I assume here shouldn't need this one anymore
+	// ...wait, the field here was never used to begin with??  CURSE YOU WESTWOOD!
+	// (also, this applies to both of these?)
+	/*
 	MovePolygonUndoable *m_moveUndoable;
 	Int									 m_originalHeight;
+	*/
 protected:
 	void updateTheUI();
 	//MODDD
 	void setupUIForWaypoint(MapObject *theMapObj);
-	void setupUIForPolygon(PolygonTrigger* theTrigger);
 	void changeWaypointLabel(Int editControlID, NameKeyType key);
 
 public:
 	static void update();
 	static MapObject *getSingleSelectedWaypoint();
-	static PolygonTrigger *getSingleSelectedPolygon();
+	//MODDD - moved to the new 'PolygonOptions'
+	//static PolygonTrigger *getSingleSelectedPolygon();
 	static Bool isUnique(AsciiString name, MapObject* theMapObj = nullptr);
 	static AsciiString GenerateUniqueName(Int id);
 

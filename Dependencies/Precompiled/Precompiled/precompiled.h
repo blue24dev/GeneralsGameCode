@@ -19,3 +19,4 @@
 #pragma once
 
 #include "CppMacros.h"
+#include "CppTypes.h"

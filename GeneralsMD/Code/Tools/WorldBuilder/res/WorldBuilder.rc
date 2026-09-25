@@ -1596,6 +1596,17 @@ BEGIN
                     BS_AUTOCHECKBOX | WS_TABSTOP,11,172,132,9
 END
 
+//MODDD - new (no idea why 'IDD_WATER_OPTIONS' wasn't after 'IDD_WAYPOINT_OPTIONS')
+IDD_POLYGON_OPTIONS DIALOG DISCARDABLE  0, 0, 200, 186
+STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION
+CAPTION "Area Trigger Options"
+FONT 8, "MS Sans Serif"
+BEGIN
+    GROUPBOX        "Area Name:",IDC_POLYGON_CAPTION,1,1,195,34
+    COMBOBOX        IDC_POLYGONNAME_EDIT,7,15,186,88,CBS_DROPDOWN | 
+                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
+END
+
 IDD_CHANGE_TEAM_OWNER DIALOG DISCARDABLE  0, 0, 209, 131
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Select a valid Player"
@@ -2327,6 +2338,15 @@ BEGIN
         BOTTOMMARGIN, 182
     END
 
+    //MODDD - new
+    IDD_POLYGON_OPTIONS, DIALOG
+    BEGIN
+        LEFTMARGIN, 1
+        RIGHTMARGIN, 196
+        TOPMARGIN, 1
+        BOTTOMMARGIN, 182
+    END
+
     IDD_CHANGE_TEAM_OWNER, DIALOG
     BEGIN
         LEFTMARGIN, 7
@@ -2498,23 +2518,14 @@ BEGIN
     0
 END
 
-IDD_WATER_OPTIONS DLGINIT
-BEGIN
-    IDC_WATERNAME_EDIT, 0x403, 22, 0
-0x6e49, 0x7469, 0x6169, 0x436c, 0x6d61, 0x7265, 0x5061, 0x736f, 0x7469, 
-0x6f69, 0x006e, 
-    0
-END
+//MODDD - 'IDD_WATER_OPTIONS DLGINIT' section removed, now empty
+//MODDD - 'IDC_WATERNAME_EDIT' entry removed, had erroneous initial combobox option of "InitialCameraPosition"
 
-IDD_WAYPOINT_OPTIONS DLGINIT
-BEGIN
-    IDC_WAYPOINTNAME_EDIT, 0x403, 22, 0
-0x6e49, 0x7469, 0x6169, 0x436c, 0x6d61, 0x7265, 0x5061, 0x736f, 0x7469, 
-0x6f69, 0x006e, 
-    IDC_LIST_OF_WAYPOINT_NAMES, 0x403, 1, 0
-"\000" 
-    0
-END
+//MODDD - 'IDD_WAYPOINT_OPTIONS DLGINIT' section removed, now empty
+//MODDD - initialization for 'IDC_WAYPOINTNAME_EDIT' and 'IDC_LIST_OF_WAYPOINT_NAMES' removed, don't appear to mean anything
+// (set by app code anyway)
+
+//MODDD - 'IDD_POLYGON_OPTIONS DLGINIT' would go here if it were needed (would be empty).
 
 IDD_TeamObjectProperties DLGINIT
 BEGIN

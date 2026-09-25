@@ -27,9 +27,10 @@
 #include "WorldBuilder.h"
 #include "WorldBuilderDoc.h"
 #include "wbview3d.h"
-#include "PolygonTool.h"
+//MODDD - disabled polygon includes
+//#include "PolygonTool.h"
 #include "WaypointTool.h"
-#include "GameLogic/PolygonTrigger.h"
+//#include "GameLogic/PolygonTrigger.h"
 #include "GameLogic/Scripts.h"
 #include "Common/WellKnownKeys.h"
 #include "LayersList.h"
@@ -39,8 +40,10 @@ WaypointOptions *WaypointOptions::m_staticThis = nullptr;
 /// WaypointOptions dialog trivial constructor - Create does the real work.
 
 
-WaypointOptions::WaypointOptions(CWnd* pParent /*=nullptr*/):
+//MODDD - disabled initializer list, only member 'm_moveUndoable' no longer part of this class
+WaypointOptions::WaypointOptions(CWnd* pParent /*=nullptr*/)/*:
 m_moveUndoable(nullptr)
+*/
 {
 	//{{AFX_DATA_INIT(WaypointOptions)
 		// NOTE: the ClassWizard will add member initialization here
@@ -77,58 +80,63 @@ MapObject *WaypointOptions::getSingleSelectedWaypoint()
 	return(nullptr);
 }
 
-PolygonTrigger *WaypointOptions::getSingleSelectedPolygon()
-{
-	CWorldBuilderDoc *pDoc = CWorldBuilderDoc::GetActiveDoc();
-	if (pDoc==nullptr) return nullptr;
-	WbView3d *p3View = pDoc->GetActive3DView();
-	Bool showPoly = false;
-	if (p3View) {
-		showPoly = p3View->isPolygonTriggerVisible();
-	}
-	if (showPoly || PolygonTool::isActive()) {
-		for (PolygonTrigger *pTrig=PolygonTrigger::getFirstPolygonTrigger(); pTrig; pTrig = pTrig->getNext()) {
-			if (PolygonTool::isSelected(pTrig)) {
-				return pTrig;
-			}
-		}
-	}
-	return(nullptr);
-}
+//MODDD - moved to the new 'PolygonOptions'
+//PolygonTrigger *WaypointOptions::getSingleSelectedPolygon()
+// ...
 
-//MODDD - TODO - I feel this should be overhauled so only 'isWaypointTool' being true/false decides whether to check
-// for 'theMapObj' or 'theTrigger' accordingly. Then receiving one of 'nullptr' gives a blank version of that window.
-// A lot of things between here and the now-'if (isWaypointTool) {' line below could likely be moved to either
-// 'setupUIFor...' helper too.
 void WaypointOptions::updateTheUI()
 {
+	//MODDD NOTE - since 'PolygonTool' has been added, this class no longer needs to handle its functionality
+	// Making several edits for this purpose
+	// ---
+	//MODDD - disabling
+	/*
 	Tool *curTool = ((CWorldBuilderApp*)AfxGetApp())->getCurTool();
 
 	Bool isWaypointTool = (curTool && (curTool->getToolID() == ID_WAYPOINT_TOOL));
-	MapObject *theMapObj = getSingleSelectedWaypoint();
-	PolygonTrigger *theTrigger = WaypointOptions::getSingleSelectedPolygon();
+	*/
 
-	CWnd *pWnd = this->GetDlgItem(IDC_WAYPOINTNAME_EDIT);
+	MapObject *theMapObj = getSingleSelectedWaypoint();
+	//MODDD - disabling
+	//PolygonTrigger *theTrigger = WaypointOptions::getSingleSelectedPolygon();
+
+	//MODDD - this separate reference to the same UI component is just confusing - replacing references to this with 'pCombo'
+	//CWnd *pWnd = this->GetDlgItem(IDC_WAYPOINTNAME_EDIT);
 	//MODDD - disabled, see point further down
 	//CWnd *pCaption1 = this->GetDlgItem(IDC_WAYPOINT_CAPTION1);
 	CWnd *pCaption2 = this->GetDlgItem(IDC_WAYPOINT_PATHLABELS);
 
 	CComboBox *pCombo = (CComboBox*)GetDlgItem(IDC_WAYPOINTNAME_EDIT);
 	CComboBox *pListWayptNames = (CComboBox*)GetDlgItem(IDC_LIST_OF_WAYPOINT_NAMES);
+	
+	//MODDD - represents the 'pWnd' seen in all the conditions in the chunk at the very bottom of this method as-is
+	// (as in, the commented out "if ((theMapObj || isWaypointTool) ) {" now).
+	// Just skip the rest if an important part of the UI couldn't be located.
+	if (!pCombo || !pListWayptNames)
+	{
+		return;
+	}
 
+	//MODDD - disabled - since this class is only for waypoints, the UI will remain shown at all times, no need
+	// to handle toggling these basic parts on/off
+	/*
 	if (theTrigger) {
 		//MODDD - disabled visibility toggling for 'pCaption1'.
 		// It's erroneously hidden when the waypoint dialog is shown, even though there's something for it to say in that case too.
 		//pCaption1->ShowWindow(SW_SHOW);
-		pWnd->ShowWindow(SW_SHOW);
+		pCombo->ShowWindow(SW_SHOW);
 	} else {
 		//MODDD - per the point above
 		//pCaption1->ShowWindow(SW_HIDE);
 		pCaption2->ShowWindow(SW_HIDE);
-		pWnd->ShowWindow(SW_HIDE);
+		pCombo->ShowWindow(SW_HIDE);
 	}
+	*/
 
-	if (pCombo && !theTrigger) {
+	//MODDD - removed '!theTrigger' part of condition: no longer applicable since this class is now only for waypoints.
+	// The 'else' of this block was moved to the new 'PolygonTool.cpp'.
+	//if (pCombo)
+	{
 		pCombo->ResetContent();
 		pCombo->AddString((TheNameKeyGenerator->keyToName(TheKey_InitialCameraPosition)).str());
 		pCombo->AddString((TheNameKeyGenerator->keyToName(TheKey_Player_1_Start)).str());
@@ -140,39 +148,12 @@ void WaypointOptions::updateTheUI()
 		pCombo->AddString((TheNameKeyGenerator->keyToName(TheKey_Player_7_Start)).str());
 		pCombo->AddString((TheNameKeyGenerator->keyToName(TheKey_Player_8_Start)).str());
 		pCombo->ShowWindow(SW_SHOW);
-	}	else if (pCombo && theTrigger) {
-		pCombo->ResetContent();
-		AsciiString trigger;
-		trigger = INNER_PERIMETER;
-		trigger.concat("1");
-		pCombo->AddString(trigger.str());
-		trigger = OUTER_PERIMETER;
-		trigger.concat("1");
-		pCombo->AddString(trigger.str());
-		trigger = INNER_PERIMETER;
-		trigger.concat("2");
-		pCombo->AddString(trigger.str());
-		trigger = OUTER_PERIMETER;
-		trigger.concat("2");
-		pCombo->AddString(trigger.str());
-		trigger = INNER_PERIMETER;
-		trigger.concat("3");
-		pCombo->AddString(trigger.str());
-		trigger = OUTER_PERIMETER;
-		trigger.concat("3");
-		pCombo->AddString(trigger.str());
-		trigger = INNER_PERIMETER;
-		trigger.concat("4");
-		pCombo->AddString(trigger.str());
-		trigger = OUTER_PERIMETER;
-		trigger.concat("4");
-		pCombo->AddString(trigger.str());
-		pCombo->ShowWindow(SW_SHOW);
 	}
 
 	// display the list of waypoint names drop down menu
-	if (pListWayptNames && !theTrigger) {
-
+	//MODDD - removed the '!theTrigger' part of condition - 'theTrigger' is no longer applicable since this is only for waypoints.
+	//if (pListWayptNames)
+	{
 		// reset everything and start fresh again
 		pListWayptNames->ResetContent();
 
@@ -194,35 +175,64 @@ void WaypointOptions::updateTheUI()
 		pCombo->ShowWindow(SW_SHOW);
 	}
 
-	//MODDD - why the 'pWnd' null checks, it was already referred to without null checks at all well before this point
+	//MODDD - outright replacing the rest of this block since this can be greatly simplified by only handling the
+	// waypoint case now
+#if 0
+	//MODDD - why the 'pWnd' (now 'pCombo') null checks, it was already referred to without null checks at all well before this point
 	// Also, starting the condition with just 'isWaypointTool' to be easier to understand.
 	//if ((theMapObj || isWaypointTool) ) {
 	if (isWaypointTool) {
 		if (theMapObj) {
 			//MODDD - condensed
 			setupUIForWaypoint(theMapObj);
+			//MODDD - pasting the 'else' block from the polygon tool section further down.
+			// If there's nothing to show, hide the UI all the same
+		}	else {
+			pCaption2->ShowWindow(SW_HIDE);
+			pCombo->EnableWindow(false);
+			pCombo->SetWindowText("");
 		}
 	}
 	//MODDD - new separate block for if 'theMapObj' is present
+	// ...actually, no. Going to let only the waypoint tool handle 'theMapObj' (it is the waypoint - why do anything
+	// here for an incompatible tool?)
+	/*
 	else if (theMapObj)
 	{
 		setupUIForWaypoint(theMapObj);
 	}
-	else if (theTrigger) {
-		//MODDD - condensed
-		setupUIForPolygon(theTrigger);
-	}	else {
-		pCaption2->ShowWindow(SW_HIDE);
-		pWnd->EnableWindow(false);
-		pWnd->SetWindowText("");
+	*/
+	//MODDD - wrapping the rest to make the intent this is for the "other tool" (polygon tool) more clear
+	else
+	{
+		if (theTrigger) {
+			//MODDD - condensed
+			setupUIForPolygon(theTrigger);
+		}	else {
+			pCaption2->ShowWindow(SW_HIDE);
+			pCombo->EnableWindow(false);
+			pCombo->SetWindowText("");
+		}
 	}
+#endif
+	//MODDD - replacement
+	// ------------
+	if (theMapObj) {
+		setupUIForWaypoint(theMapObj);
+	} else {
+		pCaption2->ShowWindow(SW_HIDE);
+		pCombo->EnableWindow(false);
+		pCombo->SetWindowText("");
+	}
+	// ------------
 }
 
 //MODDD
 void WaypointOptions::setupUIForWaypoint(MapObject *theMapObj)
 {
 	CWnd *pWnd = this->GetDlgItem(IDC_WAYPOINTNAME_EDIT);
-	CWnd *pCaption1 = this->GetDlgItem(IDC_WAYPOINT_CAPTION1);
+	//MODDD - disabled
+	//CWnd *pCaption1 = this->GetDlgItem(IDC_WAYPOINT_CAPTION1);
 	CWnd *pCaption2 = this->GetDlgItem(IDC_WAYPOINT_PATHLABELS);
 	CWnd *pCaption5 = this->GetDlgItem(IDC_LIST_WAYPOINTS);
 
@@ -241,8 +251,10 @@ void WaypointOptions::setupUIForWaypoint(MapObject *theMapObj)
 	pWnd->EnableWindow();
 	pWnd->SetWindowText(theMapObj->getProperties()->getAsciiString(TheKey_waypointName).str());
 	//MODDD - uppercase text: "Waypoint name" -> "Waypoint Name"
-	pCaption1->SetWindowText("Waypoint Name:");
-	SetWindowText("Waypoint Options");
+	// (nevermind, disabled - never changed from initial state now)
+	//pCaption1->SetWindowText("Waypoint Name:");
+	//MODDD - same
+	//SetWindowText("Waypoint Options");
 	CWorldBuilderDoc* pDoc = CWorldBuilderDoc::GetActiveDoc();
 
 	/* display location of waypoint */
@@ -288,46 +300,7 @@ void WaypointOptions::setupUIForWaypoint(MapObject *theMapObj)
 	}
 }
 
-//MODDD
-void WaypointOptions::setupUIForPolygon(PolygonTrigger* theTrigger)
-{
-	CWnd *pWnd = this->GetDlgItem(IDC_WAYPOINTNAME_EDIT);
-	CWnd *pCaption1 = this->GetDlgItem(IDC_WAYPOINT_CAPTION1);
-	CWnd *pCaption2 = this->GetDlgItem(IDC_WAYPOINT_PATHLABELS);
-	//MODDD - NOTE - what in the heck is that ID? const '65535', '65534'??? why so cryptic
-	CWnd *pCaption3 = this->GetDlgItem(65535);
-	CWnd *pCaption4 = this->GetDlgItem(65534);
-	CWnd *pCaption5 = this->GetDlgItem(IDC_LIST_WAYPOINTS);
-
-	CComboBox *pListWayptNames = (CComboBox*)GetDlgItem(IDC_LIST_OF_WAYPOINT_NAMES);
-
-	CWnd *pWaypointLabel1 = GetDlgItem(IDC_WAYPOINTLABEL1_EDIT);
-	CWnd *pWaypointLabel2 = GetDlgItem(IDC_WAYPOINTLABEL2_EDIT);
-	CWnd *pWaypointLabel3 = GetDlgItem(IDC_WAYPOINTLABEL3_EDIT);
-
-	CWnd *pWaypointLocation = this->GetDlgItem(IDC_WAYPOINT_LOCATION);
-	CWnd *pWaypointX = GetDlgItem(IDC_WAYPOINT_LOCATIONX);
-	CWnd *pWaypointY = GetDlgItem(IDC_WAYPOINT_LOCATIONY);
-	CButton *pBiDirCheck = (CButton *)GetDlgItem(IDC_WAYPOINT_BIDIRECTIONAL);
-
-	pListWayptNames->ShowWindow(SW_HIDE);
-	pWaypointLocation->ShowWindow(SW_HIDE);
-	pWaypointY->ShowWindow(SW_HIDE);
-	pWaypointX->ShowWindow(SW_HIDE);
-	pCaption3->ShowWindow(SW_HIDE);
-	pCaption4->ShowWindow(SW_HIDE);
-	pCaption5->ShowWindow(SW_HIDE);
-	pWaypointLabel1->ShowWindow(SW_HIDE);
-	pWaypointLabel2->ShowWindow(SW_HIDE);
-	pWaypointLabel3->ShowWindow(SW_HIDE);
-	pCaption2->ShowWindow(SW_HIDE);
-	pBiDirCheck->ShowWindow(SW_HIDE);
-	//MODDD - uppercase: "Area name" -> "Area Name"
-	pCaption1->SetWindowText("Area Name:");
-	SetWindowText("Area Trigger Options");
-	pWnd->SetWindowText(theTrigger->getTriggerName().str());
-	pWnd->EnableWindow();
-}
+//MODDD - 'WaypointOptions::setupUIForPolygon' has been moved to the since-added 'PolygonOptions.cpp'
 
 void WaypointOptions::update()
 {
@@ -365,7 +338,8 @@ BEGIN_MESSAGE_MAP(WaypointOptions, COptionsPanel)
 	ON_EN_CHANGE(IDC_WAYPOINTLABEL2_EDIT, OnEditchangeWaypointlabel2Edit)
 	ON_EN_CHANGE(IDC_WAYPOINTLABEL3_EDIT, OnEditchangeWaypointlabel3Edit)
 	ON_CBN_SELENDOK(IDC_LIST_OF_WAYPOINT_NAMES, OnChangeSelectedWaypoint)
-	ON_CBN_SELENDOK(IDC_WAYPOINTNAME_EDIT, OnChangeWaypointnameEdit)
+	//MODDD - this doesn't seem necessary, killing the focus after making the selection will tell you if there's a problem
+	//ON_CBN_SELENDOK(IDC_WAYPOINTNAME_EDIT, OnChangeWaypointnameEdit)
 	ON_BN_CLICKED(IDC_WAYPOINT_BIDIRECTIONAL, OnWaypointBidirectional)
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
@@ -517,7 +491,14 @@ AsciiString WaypointOptions::GenerateUniqueName(Int id)
 void WaypointOptions::OnChangeWaypointnameEdit()
 {
 	MapObject *theMapObj = getSingleSelectedWaypoint();
-	PolygonTrigger *theTrigger = WaypointOptions::getSingleSelectedPolygon();
+	//MODDD - no longer handled here, see the new 'PolygonOptions'
+	//PolygonTrigger *theTrigger = WaypointOptions::getSingleSelectedPolygon();
+
+	//MODDD - added small block - why bother proceeding if there isn't a selected waypoint?
+	if (theMapObj == nullptr)
+	{
+		return;
+	}
 
 	// get the combo box
 	CComboBox *pCombo = (CComboBox*)GetDlgItem(IDC_WAYPOINTNAME_EDIT);
@@ -538,6 +519,8 @@ void WaypointOptions::OnChangeWaypointnameEdit()
 		// check waypoint objects.
 		didMatch = !isUnique(name, theMapObj);
 
+		//MODDD - moved to the new 'PolygonOptions'
+		/*
 		// check trigger area objects
 		PolygonTrigger *pTrig;
 		for (pTrig=PolygonTrigger::getFirstPolygonTrigger(); !didMatch && pTrig; pTrig = pTrig->getNext()) {
@@ -552,19 +535,24 @@ void WaypointOptions::OnChangeWaypointnameEdit()
 				break;
 			}
 		}
+		*/
 
 		// if there's a match, throw up a messagebox, otherwise set the name
 		if (didMatch) {
 			::AfxMessageBox("Name already in use");
 		} else {
-			if (theMapObj) {
+			//MODDD - disabled - condition redundant, 'else' nonapplicable
+			//if (theMapObj) {
 				AsciiString layerName = TheLayersList->removeMapObjectFromLayersList(theMapObj);
 				theMapObj->setWaypointName(name);
 				theMapObj->validate();
 				TheLayersList->addMapObjectToLayersList(theMapObj, layerName);
+			//MODDD - disabled per above
+			/*
 			}	else if (theTrigger) {
 				theTrigger->setTriggerName(name);
 			}
+			*/
 		}
 	}
 }

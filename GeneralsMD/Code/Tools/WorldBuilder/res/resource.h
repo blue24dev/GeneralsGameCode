@@ -140,6 +140,10 @@
 #define IDD_MAPOBJECT_PROPPAGE_VISUAL   237
 #define IDD_MAPOBJECT_PROPPAGE_UPGRADES 238
 #define IDD_MAPOBJECT_PROPPAGE_SOUND    239
+
+//MODDD - new
+#define IDD_POLYGON_OPTIONS             240
+
 #define IDC_HEIGHT_COMBO                1000
 #define IDC_CELL_WIDTH                  1001
 #define IDC_INITIAL_HEIGHT              1002
@@ -329,14 +333,19 @@
 #define IDC_TEXTURE_TREEVIEW            1158
 #define IDC_SCALE_POPUP                 1159
 #define IDC_WAYPOINTNAME_EDIT           1160
+//MODDD - new
+#define IDC_POLYGONNAME_EDIT           1160
 #define IDC_RAISE_LOWER                 1161
 #define IDC_WAYPOINTLABEL1_EDIT         1161
 #define IDC_LR_EDIT                     1162
 #define IDC_WAYPOINT_LOCATIONX          1162
 #define IDC_LR_POPUP                    1163
 #define IDC_WAYPOINTLABEL2_EDIT         1163
-#define IDC_WAYPOINT_CAPTION            1164
+//MODDD - why does this even exist, only 'IDC_WAYPOINT_CAPTION1' is ever referred to
+//#define IDC_WAYPOINT_CAPTION            1164
 #define IDC_WAYPOINT_CAPTION1           1164
+//MODDD - new
+#define IDC_POLYGON_CAPTION           1164
 #define IDC_LR_EDIT1                    1164
 #define IDC_PLAYER_ATTITUDE_IN          1165
 #define IDC_WAYPOINTLABEL3_EDIT         1165

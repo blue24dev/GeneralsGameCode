@@ -304,7 +304,7 @@ static LONG WINAPI UnHandledExceptionFilter(struct _EXCEPTION_POINTERS* e_info)
 
 BOOL CWorldBuilderApp::InitApplication()
 {
-	//MODD
+	//MODDD
 	this->m_pDocManager = &m_docManager;
 	// For a possible alternative, this is how the doc manager could be set from the static variable (a standard, expected to exist - not meaningful if it's null)
 	//   m_pDocManager = CDocManager::pStaticDocManager;

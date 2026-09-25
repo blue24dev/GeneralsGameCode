@@ -601,7 +601,7 @@ void TerrainMaterial::OnUpdateFromHeight()
 	button->SetCheck(0);
 }
 
-//MODD
+//MODDD
 void TerrainMaterial::setPaintTypeRadioButtonGroupEnabled(Bool enabled)
 {
 	CButton *button;
