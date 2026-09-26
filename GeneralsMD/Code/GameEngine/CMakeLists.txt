@@ -478,7 +478,10 @@ set(GAMEENGINE_SRC
     Include/GameLogic/Object.h
     Include/GameLogic/ObjectCreationList.h
     #MODDD - new
+    # ---
     Include/GameLogic/ObjectCreationList/DeliverPayloadNugget.h
+    Include/GameLogic/ObjectCreationList/GenericObjectCreationNugget.h
+    # ---
     Include/GameLogic/ObjectIter.h
     Include/GameLogic/ObjectScriptStatusBits.h
     Include/GameLogic/ObjectTypes.h

@@ -633,6 +633,7 @@ public:
 
 	//MODDD
 	friend void automaticThingTemplateChanges(ThingTemplate* _this);
+	friend void automaticChangesPostINIParsing_thing(ThingTemplate* _this);
 
 protected:
 

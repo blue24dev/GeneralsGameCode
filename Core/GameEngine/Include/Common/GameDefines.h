@@ -300,7 +300,13 @@
 // Makes player-built renewable sources of income (hackers, black markets, supply drop zones) half as effective.
 // This coincides with other possible edits to slow down the pace of the entire game - easy to end up with far more money than you
 // could possibly spend even with an absurd number of factories
-//#define RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE 1
+//#define RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE 0
+
+// Makes player-built renewable sources of incomes have the scalar applied to their costs.
+// Ex: 0.8 means a 20% reduction -> 2500 becomes 2000
+// If undefined or 1, no effect (it is best to leave undefined if you're going for '1' - decimal checks with macro settings
+// in VS6 appear to be rather painful)
+//#define RENEWABLE_MONEY_SOURCE_COST_SCALAR 1
 
 // If set, AI players will act as though the map script action "Set the delay between building teams" was set to this value.
 // Map scripts trying to set this will be ignored.
@@ -530,7 +536,8 @@
 
 #define FORCE_HUMAN_PLAYER_START_MONEY 0
 #define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS 0
-#define RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE 0
+#define RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE 0
+//#define RENEWABLE_MONEY_SOURCE_COST_SCALAR 0.8
 #define FORCE_AI_TEAM_BUILD_DELAY_SECONDS -1
 
 #define REMOVE_FOG_OF_WAR 0
@@ -539,7 +546,7 @@
 #define NOOB_MODE 0
 #define NOOB_START_MONEY_SCALAR 1.25
 #define NOOB_INCOME_MONEY_SCALAR 1.25
-#define NOOB_BUILD_TIME_SCALAR 1.25
+#define NOOB_BUILD_TIME_SCALAR 0.9
 #define NOOB_PLAYER_PROMOTION_EXPERIENCE_RATE_SCALAR 1.25
 
 #define RUN_EXTRA_MONEY_CHEATS 0
@@ -571,4 +578,11 @@
 #else
 	// nothing - no effect
 	#define APPLY_MONEY_CHEAT(_player, _moneyAmount)
+#endif
+
+// If any of these flags is set, several places need to be aware
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE || RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE
+	#define MONEY_AUTO_ADJUSTMENT_SUPPORT 1
+#else
+	#define MONEY_AUTO_ADJUSTMENT_SUPPORT 0
 #endif

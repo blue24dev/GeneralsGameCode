@@ -36,6 +36,10 @@
 #include "GameLogic/Module/CashHackSpecialPower.h"
 //#include "GameLogic/Module/DeliverPayloadAIUpdate.h"
 #include "GameLogic/ObjectCreationList/DeliverPayloadNugget.h"
+#include "GameLogic/ObjectCreationList/GenericObjectCreationNugget.h"
+#include "GameLogic/Module/OCLUpdate.h"
+#include "GameLogic/Module/InstantDeathBehavior.h"
+#include "GameLogic/Module/CreateObjectDie.h"
 
 // It would make sense to consider 'CUSTOM_ATTRIBUTE_CHANGES' sections "MODDD - for me only".
 
@@ -267,100 +271,8 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 
 #if CUSTOM_ATTRIBUTE_CHANGES
 	// Keep track of the vision before my tampering in case stealth detection needs to know what it was
+	// (my 'tampering' has been moved below the iteration through modules since - whoops)
 	Real originalVision = _this->m_visionRange;
-#endif
-
-#if CUSTOM_ATTRIBUTE_CHANGES
-	// This area is called after ThingFactory::parseObjectDefinition's 'ini->initFromINI( thingTemplate...' call,
-	// so any hackish edits to apply to everything can go here.
-	if (_this->isKindOf(KINDOF_STRUCTURE))
-	{
-#if RTS_ZEROHOUR
-		if (_this->isKindOf(KINDOF_FS_SUPERWEAPON))
-		{
-			// superweapons cost a bit more but already take a while to build - less factor there
-			_this->m_buildCost *= 1.25f;
-			_this->m_buildTime *= 1.05f;
-		}
-		else
-#endif
-		if(_this->isKindOf(KINDOF_FS_BASE_DEFENSE))
-		{
-			// to be less spammable since each one's health boost is more noticeable
-			_this->m_buildCost *= 1.15f;
-			_this->m_visionRange *= 1.5f;
-		}
-		else
-		{
-			// all other buildings
-			_this->m_buildTime *= 1.15f;
-			_this->m_visionRange *= 1.25f;
-		}
-	}
-	else
-	{
-		// non-buildings
-		_this->m_buildTime *= 1.08f;
-
-		// enforce a minimum of 180 vision first.
-		// Note this happens before the multiplication so the real effective minimum is higher.
-		// TODO - can you iterate through weapons to see what the longest range is to see if this should be automatically boosted?
-		if (_this->m_visionRange > 0)
-		{
-			if (_this->m_visionRange < 180.0f)
-			{
-				_this->m_visionRange = 180.0f;
-			}
-			_this->m_visionRange *= 1.3f;
-		}
-	}
-
-	// EXTRA SLOW-DOWN FOR EVERYTHING
-	_this->m_buildTime *= 1.35f;
-
-	// Make things that are exclusively dozers cheaper.
-	// This that are dozers and harvesters at the same time (GLA workers) don't need as much of a reduction.
-	if (_this->isKindOf(KINDOF_DOZER))
-	{
-		if (_this->isKindOf(KINDOF_HARVESTER))
-		{
-			// Worker
-			// (200 -> 130)
-			_this->m_buildCost *= 0.65f;
-		}
-		else
-		{
-			// (1000 -> 500)
-			// Normal dozer (vehicle)
-			_this->m_buildCost *= 0.50f;
-		}
-	}
-	else
-	{
-		// Also, if something isn't a dozer and is a harvester (chinook, supply truck), cut the price by 25%.
-		if (_this->isKindOf(KINDOF_HARVESTER) && !(_this->isKindOf(KINDOF_CAN_ATTACK)) )
-		{
-			_this->m_buildCost *= 0.75f;
-		}
-#if RTS_ZEROHOUR
-		// and those
-		else if (_this->isKindOf(KINDOF_FS_SUPPLY_CENTER))
-		{
-			_this->m_buildCost *= 0.75f;
-		}
-		else if (_this->isKindOf(KINDOF_FS_WARFACTORY))
-		{
-			_this->m_buildCost *= 0.75f;
-		}
-#endif
-	}
-
-	// Beware of side effects like revealed fog of war that doesn't un-reveal. This is not well understood.
-	// Checking for being above 0 first appears to fix this. Are negative values used in some places?
-	if (_this->m_shroudClearingRange > 0)
-	{
-		_this->m_shroudClearingRange *= 1.50f;
-	}
 #endif
 
 	makeNonCivilianGarrisonableStructureCapturableHack(_this);
@@ -392,6 +304,20 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	Bool foundActiveShroudUpgrade = false;
 	StealthDetectorUpdateModuleData* stealthDetectorData = nullptr;
 #endif
+
+	// Whether this thing gets a cost reduction for being a renewable income source at the very end.
+	// There is checking kindof's like FS_BLACK_MARKET or FS_SUPPLY_DROP_ZONE, but I'd rather have a more accurate check
+	// in case some mod has something that lacks either of these flags but is clearly able to (primarily?) generate money.
+	// Determining this for hackers and black markets is easy (having AutoDepositUpdate or HackInternetAIUpdate).
+	// For supply drop zones, things are trickier - this is done by a 'OCLUpdate' that creates a plane to deliver the money
+	// crates. However, this has the potential to get even trickier to decide - see the Contra mod's cybernetic's general
+	// supply drop zone - it use a phase of over 4 OCLs that end up producing the money crates.
+	// Then there's the neutral tech structure options as seen in the Contra and Rise of the Reds mods, both are
+	// uncapturable & have crates dropped at regular intervals for whoever grabs them.
+	// Unfortunately, OCL-lookups aren't guaranteed to work here at thing-parsing (what if OCLs haven't been parsed yet?
+	// What if the Thing spawned by an OCL hasn't been parsed yet because it occurs later in the things to be parsed?).
+	// Handling 'OCLUpdate' handling in 'automaticChangesPostINIParsing'.  you know what, all of them, may as well.
+	//Bool renewableMoneySourceCostReduction = false;
 
 	// See if any modules need automatic adjustments.
 	// This is how health changes are applied, since health is stored in a module (ex: 'ActiveBody') instead of on the
@@ -594,7 +520,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 #endif
 		else if( modNameKey == AutoDepositUpdateNameKey )
 		{
-#if RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE
+#if RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE
 			AutoDepositUpdateModuleData* _data = (AutoDepositUpdateModuleData*)data;
 
 			Real timeMulti;
@@ -625,6 +551,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 				_data->m_depositAmount = (Int) ((Real)_data->m_depositAmount / timeMulti);
 			}
 #endif
+			//renewableMoneySourceCostReduction = true;
 		}
 		else if( modNameKey == HackInternetAIUpdateNameKey )
 		{
@@ -645,7 +572,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			_data->m_veteranCashAmount *= 2;
 			_data->m_eliteCashAmount *= 2;
 			_data->m_heroicCashAmount *= 2;
-#if RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE
+#if RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE
 			// double the delay again w/o adjusting cash amount per update to halve the income
 			_data->m_cashUpdateDelay *= 2;
 #if RTS_ZEROHOUR
@@ -658,9 +585,12 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			// [at least 2] times 1.5 -> 3
 			_data->m_xpPerCashUpdate *= 1.5;
 #endif
+			//renewableMoneySourceCostReduction = true;
 		}
 	}
 
+	// (this section now occurs below the module iteration block in case the presence of some module affects the stat
+	// changes below)
 #if CUSTOM_ATTRIBUTE_CHANGES
 	// Temp hack. Add active-shroud-generation to anything that is a stealth detector.
 	// This lets shroud generation be easy to see/test in mods that never use the shroud generating module (including retail).
@@ -709,7 +639,110 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
   }
 	*/
 #endif
+
+#if CUSTOM_ATTRIBUTE_CHANGES
+	// This area is called after ThingFactory::parseObjectDefinition's 'ini->initFromINI( thingTemplate...' call,
+	// so any hackish edits to apply to everything can go here.
+	if (_this->isKindOf(KINDOF_STRUCTURE))
+	{
+#if RTS_ZEROHOUR
+		if (_this->isKindOf(KINDOF_FS_SUPERWEAPON))
+		{
+			// superweapons cost a bit more but already take a while to build - less factor there
+			_this->m_buildCost *= 1.25f;
+			_this->m_buildTime *= 1.05f;
+		}
+		else
+#endif
+		if(_this->isKindOf(KINDOF_FS_BASE_DEFENSE))
+		{
+			// to be less spammable since each one's health boost is more noticeable
+			_this->m_buildCost *= 1.15f;
+			_this->m_visionRange *= 1.5f;
+		}
+		else
+		{
+			// all other buildings
+			_this->m_buildTime *= 1.15f;
+			_this->m_visionRange *= 1.25f;
+		}
+	}
+	else
+	{
+		// non-buildings
+		_this->m_buildTime *= 1.08f;
+
+		// enforce a minimum of 180 vision first.
+		// Note this happens before the multiplication so the real effective minimum is higher.
+		// TODO - can you iterate through weapons to see what the longest range is to see if this should be automatically boosted?
+		if (_this->m_visionRange > 0)
+		{
+			if (_this->m_visionRange < 180.0f)
+			{
+				_this->m_visionRange = 180.0f;
+			}
+			_this->m_visionRange *= 1.3f;
+		}
+	}
+
+	// EXTRA SLOW-DOWN FOR EVERYTHING
+	_this->m_buildTime *= 1.35f;
+
+	// Make things that are exclusively dozers cheaper.
+	// This that are dozers and harvesters at the same time (GLA workers) don't need as much of a reduction.
+	if (_this->isKindOf(KINDOF_DOZER))
+	{
+		if (_this->isKindOf(KINDOF_HARVESTER))
+		{
+			// Worker
+			// (200 -> 130)
+			_this->m_buildCost *= 0.65f;
+		}
+		else
+		{
+			// (1000 -> 500)
+			// Normal dozer (vehicle)
+			_this->m_buildCost *= 0.50f;
+		}
+	}
+	else
+	{
+		// Also, if something isn't a dozer and is a harvester (chinook, supply truck), cut the price by 25%.
+		if (_this->isKindOf(KINDOF_HARVESTER) && !(_this->isKindOf(KINDOF_CAN_ATTACK)) )
+		{
+			_this->m_buildCost *= 0.75f;
+		}
+#if RTS_ZEROHOUR
+		// and those
+		else if (_this->isKindOf(KINDOF_FS_SUPPLY_CENTER))
+		{
+			_this->m_buildCost *= 0.75f;
+		}
+		else if (_this->isKindOf(KINDOF_FS_WARFACTORY))
+		{
+			_this->m_buildCost *= 0.75f;
+		}
+#endif
+	}
+
+	// Beware of side effects like revealed fog of war that doesn't un-reveal. This is not well understood.
+	// Checking for being above 0 first appears to fix this. Are negative values used in some places?
+	if (_this->m_shroudClearingRange > 0)
+	{
+		_this->m_shroudClearingRange *= 1.50f;
+	}
+#endif
+
 }
+
+// prototypes
+void automaticChangesPostINIParsing_things();
+void automaticChangesPostINIParsing_thing(ThingTemplate* _this);
+Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate(ObjectCreationList* ocl, std::set<ObjectCreationList*>& processedOCLList);
+Bool automaticChangesPostINIParsing_thing_hasMoneyCrateCollide(const ThingTemplate* suspectMoneyCrate);
+Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_checkSpawned(const ThingTemplate* spawnedByOCL, std::set<ObjectCreationList*>& processedOCLList);
+void automaticChangesPostINIParsing_OCLs();
+void automaticChangesPostINIParsing_OCL(ObjectCreationList& ocl, std::set<AsciiString>& transportProcessedList);
 
 // What to do after parsing everything else.
 // Ex: 'TheControlBar' is unavailable until this point ('ControlBar::init' handles parsing in 'CommandButton.ini', not 'GameEngine::init'
@@ -717,140 +750,471 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 // For reference, 'ControlBar::init' is reached by 'initSubsystem(TheGameClient...' in 'GameEngine::init', which is called after thing templates are handled.
 void automaticChangesPostINIParsing()
 {
-#if RTS_ZEROHOUR
-	{
-		static NameKeyType OCLSpecialPowerNameKey = NAMEKEY("OCLSpecialPower");
-		ThingTemplateHashMap* templateHashMap = TheThingFactory->getTemplateHashMap();
-		ThingTemplateHashMap::iterator it;
-		for (it = templateHashMap->begin(); it != templateHashMap->end(); ++it)
-		{
-			ThingTemplate* _this = (*it).second;
-
-			//TODO - should overrides be blocked like the '_this->m_reskinnedFrom != nullptr' check elsewhere? Not sure, see if doing this for the base
-			// implicitly carries over to overrides for this post-parsing run-through.
-			// My guess is this should be re-run for things that are reskins of something else,
-			// because ThingFactory.cpp has 'thingTemplate->copyFrom(reskinTmpl);' - I'm lead to believe by the post-parsing point
-			// (all things loaded in), every reskin is an independent copy of the thing it's reskinned from -> changes to the
-			// first encountered parent don't affect the reskinned thing. This is unlike during parsing where changes to a parent
-			// would affect things that are reskins of it because these children would read the then-modified parent to be copied
-			// from when they are parsed later (repeating changes in that case would be redundant).
-
-			Int modIdx;
-			const ModuleInfo& mi = _this->getBehaviorModuleInfo();
-			for (modIdx = 0; modIdx < mi.getCount(); ++modIdx)
-			{
-				AsciiString modName = mi.getNthName(modIdx);
-				const ModuleData* data = mi.getNthData(modIdx);
-				if (modName.isEmpty())
-					continue;
-				NameKeyType modNameKey = NAMEKEY(modName);
-
-				if( modNameKey == OCLSpecialPowerNameKey )
-				{
-					OCLSpecialPowerModuleData* _data = (OCLSpecialPowerModuleData*)data;
-
-					if (_data->m_createLoc == CREATE_AT_LOCATION)
-					{
-						// See if this is an OCL special power that requires the user to place something on the map with a build preview, such as the sneak attack.
-						// In several mods, the 'ReferenceObject' field is either missing or referring to a nonexistent object - sometimes, just the incorrect variant
-						// such as a stealth-gen sneak attack tunnel for the chem general's ability, but that detail is probably negligible.
-						// This field was just for the AI to do finer collision checks with the resulting object, but this is now needed even for player use because of
-						// a TheSuperHacker's change in 'ActionManager::canDoSpecialPowerAtLocation' with RETAIL_COMPATIBLE_CRC=0: the 'reference object' is used to see
-						// if the object is placeable on the game's end so the client saying it's buildable isn't blindly trusted (anti-cheat measure).
-						const ThingTemplate* referenceObjectRef = nullptr;
-						if (!_data->m_referenceThingName.isEmpty())
-						{
-							referenceObjectRef = TheThingFactory->findTemplate( _data->m_referenceThingName );
-						}
-
-						if (referenceObjectRef == nullptr)
-						{
-							// No 'ReferenceObject' field, or whatever was provided wasn't found in the list of game objects - need to figure out what the field should be.
-							// I did find that there is always a CommandButton that can be used to decide what this should be: Command = SPECIAL_POWER_CONSTRUCT or SPECIAL_POWER_CONSTRUCT_FROM_SHORTCUT,
-							// has an 'Object' field that would match the special power's 'ReferenceObject' in retail -> copy it over to apply the fix.
-							// The only issue is, there isn't a way to tell which abilities ever have a button to use them with placement (special power needs a valid 'ReferenceObject')
-							// without checking every single button & coming up empty or finding one of the expected 'Command'.
-							const CommandButton* commandButtons = TheControlBar->getCommandButtons();
-							const CommandButton* commandButton;
-							for( commandButton = commandButtons; commandButton != nullptr; commandButton = commandButton->getNext() )
-							{
-								if (commandButton->getCommandType() == GUI_COMMAND_SPECIAL_POWER_CONSTRUCT || commandButton->getCommandType() == GUI_COMMAND_SPECIAL_POWER_CONSTRUCT_FROM_SHORTCUT)
-								{
-									if (commandButton->getThingTemplate() != nullptr)
-									{
-										referenceObjectRef = commandButton->getThingTemplate();
-										break;
-									}
-								}
-							}
-
-							if (referenceObjectRef != nullptr)
-							{
-								// we got em'.
-								_data->m_referenceThingName = referenceObjectRef->getName();
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-#endif
-
-	{
-		//std::set<ThingTemplate*> wat;
-		std::set<AsciiString> transportProcessedList;
-
-		// Note: why is there a list of all nuggets ever made? that seems redundant with the fact that every nugget belongs
-		// to some OCL and iterating through all OCLs will already reach every nugget.
-		// All I can figure is for 'TheObjectCreationListStore''s deconstructor to be able to handle deleting all the nuggets.
-		// Why not leave this up to each OCL item to deal with its own nugget list instead? I have no idea.
-		ObjectCreationListMap* oclListMap = TheObjectCreationListStore->getItemListMap();
-		ObjectCreationListMap::iterator it;
-		for (it = oclListMap->begin(); it != oclListMap->end(); ++it)
-		{
-			ObjectCreationList& ocl = (*it).second;
-			ObjectCreationNuggetVector* nuggetList = ocl.getNuggetList();
-			ObjectCreationNuggetVector::iterator itN;
-			for (itN = nuggetList->begin(); itN != nuggetList->end(); ++itN)
-			{
-				ObjectCreationNugget* nugget = *itN;
-				if (nugget->getTypeID() == OCL_NUGGET_TYPE_DELIVER_PAYLOAD)
-				{
-					DeliverPayloadNugget* deliverPayloadNugget = (DeliverPayloadNugget*)nugget;
-					const AsciiString& transportName = deliverPayloadNugget->getTransportName();
-					if (transportName.isEmpty())
-					{
-						continue;
-					}
-					// If this thing has previously been checked, don't do it again
-					if (transportProcessedList.contains(transportName))
-					{
-						continue;
-					}
-					transportProcessedList.insert(transportName);
-
-					const ThingTemplate* transportObjectRef = nullptr;
-					transportObjectRef = TheThingFactory->findTemplate( transportName );
-					if (transportObjectRef != nullptr)
-					{
-						// If this thing is ever used as a transport and lacks all three of these flags, add FORCEATTACKABLE
-						// so that left-clicking it to attack will work. No longer has to be force-attack thanks to another small change elsewhere.
-						if (
-							!transportObjectRef->isKindOf(KINDOF_UNATTACKABLE) &&
-							!transportObjectRef->isKindOf(KINDOF_SELECTABLE) &&
-							!transportObjectRef->isKindOf(KINDOF_FORCEATTACKABLE)
-						)
-						{
-							((ThingTemplate*)transportObjectRef)->setKindOf(KINDOF_FORCEATTACKABLE, 1);
-						}
-					}
-				}
-			}
-		}
-	}
-
+	automaticChangesPostINIParsing_things();
+	automaticChangesPostINIParsing_OCLs();
 }
+
+void automaticChangesPostINIParsing_things()
+{
+	ThingTemplateHashMap* templateHashMap = TheThingFactory->getTemplateHashMap();
+	ThingTemplateHashMap::iterator it;
+	for (it = templateHashMap->begin(); it != templateHashMap->end(); ++it)
+	{
+		ThingTemplate* _this = (*it).second;
+		automaticChangesPostINIParsing_thing(_this);
+	}
+}
+
+//MODDD - temp help
+//int g_callDepth;
+
+void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
+{
+	//TODO - should overrides be blocked like the '_this->m_reskinnedFrom != nullptr' check elsewhere? Not sure, see if doing this for the base
+	// implicitly carries over to overrides for this post-parsing run-through.
+	// My guess is this should be re-run for things that are reskins of something else,
+	// because ThingFactory.cpp has 'thingTemplate->copyFrom(reskinTmpl);' - I'm lead to believe by the post-parsing point
+	// (all things loaded in), every reskin is an independent copy of the thing it's reskinned from -> changes to the
+	// first encountered parent don't affect the reskinned thing. This is unlike during parsing where changes to a parent
+	// would affect things that are reskins of it because these children would read the then-modified parent to be copied
+	// from when they are parsed later (repeating changes in that case would be redundant).
+
+	static NameKeyType OCLSpecialPowerNameKey = NAMEKEY("OCLSpecialPower");
+	static NameKeyType AutoDepositUpdateNameKey = NAMEKEY("AutoDepositUpdate");
+	static NameKeyType HackInternetAIUpdateNameKey = NAMEKEY("HackInternetAIUpdate");
+	static NameKeyType OCLUpdateNameKey = NAMEKEY("OCLUpdate");
+
+	Bool renewableMoneySourceCostReduction = false;
+
+	//g_callDepth = 0;
+
+	Int modIdx;
+	const ModuleInfo& mi = _this->getBehaviorModuleInfo();
+	for (modIdx = 0; modIdx < mi.getCount(); ++modIdx)
+	{
+		AsciiString modName = mi.getNthName(modIdx);
+		const ModuleData* data = mi.getNthData(modIdx);
+		if (modName.isEmpty())
+			continue;
+		NameKeyType modNameKey = NAMEKEY(modName);
+
+		if( modNameKey == OCLSpecialPowerNameKey )
+		{
+			OCLSpecialPowerModuleData* _data = (OCLSpecialPowerModuleData*)data;
+
+			if (_data->m_createLoc == CREATE_AT_LOCATION)
+			{
+				// See if this is an OCL special power that requires the user to place something on the map with a build preview, such as the sneak attack.
+				// In several mods, the 'ReferenceObject' field is either missing or referring to a nonexistent object - sometimes, just the incorrect variant
+				// such as a stealth-gen sneak attack tunnel for the chem general's ability, but that detail is probably negligible.
+				// This field was just for the AI to do finer collision checks with the resulting object, but this is now needed even for player use because of
+				// a TheSuperHacker's change in 'ActionManager::canDoSpecialPowerAtLocation' with RETAIL_COMPATIBLE_CRC=0: the 'reference object' is used to see
+				// if the object is placeable on the game's end so the client saying it's buildable isn't blindly trusted (anti-cheat measure).
+				const ThingTemplate* referenceTTRef = nullptr;
+				if (!_data->m_referenceThingName.isEmpty())
+				{
+					referenceTTRef = TheThingFactory->findTemplate( _data->m_referenceThingName );
+				}
+
+				if (referenceTTRef == nullptr)
+				{
+					// No 'ReferenceObject' field, or whatever was provided wasn't found in the list of game objects - need to figure out what the field should be.
+					// I did find that there is always a CommandButton that can be used to decide what this should be: Command = SPECIAL_POWER_CONSTRUCT or SPECIAL_POWER_CONSTRUCT_FROM_SHORTCUT,
+					// has an 'Object' field that would match the special power's 'ReferenceObject' in retail -> copy it over to apply the fix.
+					// The only issue is, there isn't a way to tell which abilities ever have a button to use them with placement (special power needs a valid 'ReferenceObject')
+					// without checking every single button & coming up empty or finding one of the expected 'Command'.
+					const CommandButton* commandButtons = TheControlBar->getCommandButtons();
+					const CommandButton* commandButton;
+					for( commandButton = commandButtons; commandButton != nullptr; commandButton = commandButton->getNext() )
+					{
+						if (commandButton->getCommandType() == GUI_COMMAND_SPECIAL_POWER_CONSTRUCT || commandButton->getCommandType() == GUI_COMMAND_SPECIAL_POWER_CONSTRUCT_FROM_SHORTCUT)
+						{
+							if (commandButton->getThingTemplate() != nullptr)
+							{
+								referenceTTRef = commandButton->getThingTemplate();
+								break;
+							}
+						}
+					}
+
+					if (referenceTTRef != nullptr)
+					{
+						// we got em'.
+						_data->m_referenceThingName = referenceTTRef->getName();
+					}
+				}
+			}
+		}
+		else if ( modNameKey == AutoDepositUpdateNameKey )
+		{
+			// has this at all -> yes for now
+			renewableMoneySourceCostReduction = true;
+		}
+		else if ( modNameKey == HackInternetAIUpdateNameKey )
+		{
+			renewableMoneySourceCostReduction = true;
+		}
+		else if ( modNameKey == OCLUpdateNameKey )
+		{
+			OCLUpdateModuleData* _data = (OCLUpdateModuleData*)data;
+			(void)_data;
+			
+#if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR) || MONEY_AUTO_ADJUSTMENT_SUPPORT
+			// Does this eventually lead to a money crate?
+			// NOTE - have an unexpected problem: a stackoverflow from endless recursion.
+			// See this example from the Contra mod of OCLs:
+			/*
+			ObjectCreationList OCL_RadiationInfantry CreateObject  ObjectNames = RadiationInfantry
+			Object RadiationInfantry Behavior = InstantDeathBehavior ModuleTag_12 OCL        = OCL_FlamingInfantryOnlyDie
+				ObjectCreationList OCL_FlamingInfantryOnlyDie CreateObject ObjectNames = FlamingInfantryOnlyDie
+				Object FlamingInfantryOnlyDie
+						Behavior = InstantDeathBehavior OCL        = OCL_RadiationInfantry
+			// Whenever a ThingTemplate checks for OCLs reached by 'OCL_RadiationInfantry', it will endlessly include this cycle.
+			// I'll use a set of ObjectCreationList pointers to see if an OCL has ever been parsed through any recursion.
+			// Also see something like this from PartitionManager.cpp's 'PartitionManager::getClosestObjects':
+			/*
+			static Int theIterFlag = 1;	// nonzero, thanks
+			++theIterFlag;
+			...
+			<for loop>
+				if (thisMod->friend_getDoneFlag() == theIterFlag)
+					continue;
+				thisMod->friend_setDoneFlag(theIterFlag);
+				<rest of the script>
+			*/
+
+			// Contra's TechReinforcementPad used 'FactionOCL' in the INI instead - not handling that case for now
+			// (would leave 'm_ocl' here null)
+			ObjectCreationList* ocl = (ObjectCreationList*)_data->m_ocl;
+			if (ocl != nullptr)
+			{
+				std::set<ObjectCreationList*> processedOCLList;
+				if (automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate(ocl, processedOCLList))
+				{
+					renewableMoneySourceCostReduction = true;
+				}
+			}
+#endif
+		}
+	}
+
+	// Now to reduce the value of the renewable income source.
+	// Does not apply to limited units that are likely capable of a lot more like the infantry general black lotus in the Contra mod.
+	#if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR)
+	if (
+		renewableMoneySourceCostReduction &&
+		!(_this->isMaxSimultaneousDeterminedBySuperweaponRestriction() || _this->getMaxSimultaneousOfType() == 1)
+	)
+	{
+		// note that tech structures often never define 'BuildCost' (leftover default of 0)
+		//MODDD - TODO - could there be a discrepency between value for targeting by special powers & the actual build value of
+		// something, so things retain the retail value regardless of post-parsing hackery? Just a thought.
+		if (_this->m_buildCost > 0)
+		{
+			_this->m_buildCost *= (Real)RENEWABLE_MONEY_SOURCE_COST_SCALAR;
+		}
+	}
+	#endif
+}
+
+Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_helper(const ThingTemplate* tt, ObjectCreationList* ocl, std::set<ObjectCreationList*>& processedOCLList)
+{
+	Bool leadsToMoneyCrate = false;
+	// If this has a MoneyCrateCollide, we're good
+	if (automaticChangesPostINIParsing_thing_hasMoneyCrateCollide(tt))
+	{
+		// also let this OCL know to look out for being called from something that can spawn money crates
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+		ocl->m_checkForRenewableMoneySource = true;
+#endif
+		leadsToMoneyCrate = true;
+	}
+
+	// check for having some death OCL that leads to a money crate anyway in case OCLs in a deeper chain should be marked
+	// (this is needed to recognize the cyberneteics general supply drop zones as renewable money sources anyway)
+	Bool outcome = automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_checkSpawned(tt, processedOCLList);
+	if (outcome)
+	{
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+		ocl->m_checkForRenewableMoneySource = true;
+#endif
+		leadsToMoneyCrate = true;
+	}
+	return leadsToMoneyCrate;
+}
+
+Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate(ObjectCreationList* ocl, std::set<ObjectCreationList*>& processedOCLList)
+{
+	if (processedOCLList.contains(ocl))
+	{
+		// endless recursion safety - stop, already checked before
+		return false;
+	}
+	processedOCLList.insert(ocl);
+
+	Bool leadsToMoneyCrate = false;
+
+	/*
+	++g_callDepth;
+
+	// (this includes lateral calls too, but oh well, at absurd enough of a number even that shouldn't happen)
+	// proper way is to send this through every call & increase by 1 before making a recursive call
+	if (g_callDepth == 100)
+	{
+		// how?
+		int x;
+		x = 4;
+	}
+	*/
+
+	const ObjectCreationNuggetVector* nuggetList = ocl->getNuggetList();
+	ObjectCreationNuggetVector::const_iterator itN;
+	for (itN = nuggetList->begin(); itN != nuggetList->end(); ++itN)
+	{
+		ObjectCreationNugget* nugget = *itN;
+		if (nugget->getTypeID() == OCL_NUGGET_TYPE_DELIVER_PAYLOAD)
+		{
+			const DeliverPayloadNugget* deliverPayloadNugget = (const DeliverPayloadNugget*)nugget;
+
+			// Oh - so it turns out either the typical direct DeliverPayloadNugget fields can be used, or its 'm_data' field
+			// (a 'DeliverPayloadData' instance) for additional info that may be directly given to the same 'DeliverPayload'
+			// OCL instance - parsing redirects like so in ObjectCreationList.cpp:
+			//   p.add(DeliverPayloadData::getFieldParse(), offsetof( DeliverPayloadNugget, m_data ));
+			// ...is being this much harder to understand really worth not just copying m_data's field parser table rows to
+			// DeliverPayloadData's.  REALLY GUYS.    REALLY.
+			const std::vector<DeliverPayloadNugget::Payload>& payloadSpawnOrders = deliverPayloadNugget->getPayload();
+			if (payloadSpawnOrders.size() > 0)
+			{
+				std::vector<DeliverPayloadNugget::Payload>::const_iterator itPayload;
+				for (itPayload = payloadSpawnOrders.begin(); itPayload != payloadSpawnOrders.end(); ++itPayload)
+				{
+					// Actually one 'Payload' at a time is a 'thing-to-spawn' - 'how-many-of-that-to-spawn' pair.
+					const DeliverPayloadNugget::Payload& payload = *itPayload;
+					if (payload.m_payloadCount > 0 && !payload.m_payloadName.isEmpty())
+					{
+						const ThingTemplate* payloadTTRef = TheThingFactory->findTemplate( payload.m_payloadName );
+						if (payloadTTRef != nullptr)
+						{
+							if (automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_helper(payloadTTRef, ocl, processedOCLList))
+							{
+								leadsToMoneyCrate = true;
+							}
+						}
+					}
+				}
+			}
+			
+			// also, check if 'VisiblePayloadTemplateName' was specified
+			const DeliverPayloadData& plData = deliverPayloadNugget->getDeliverPayloadData();
+			if (!plData.m_visiblePayloadTemplateName.isEmpty())
+			{
+				const ThingTemplate* payloadTTRef = TheThingFactory->findTemplate( plData.m_visiblePayloadTemplateName );
+				if (payloadTTRef != nullptr)
+				{
+					if (automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_helper(payloadTTRef, ocl, processedOCLList))
+					{
+						leadsToMoneyCrate = true;
+					}
+				}
+			}
+		}
+		else if (nugget->getTypeID() == OCL_NUGGET_TYPE_CREATE_OBJECT)
+		{
+			const GenericObjectCreationNugget* genericNugget = (const GenericObjectCreationNugget*)nugget;
+			const std::vector<AsciiString>& names = genericNugget->getNames();
+			std::vector<AsciiString>::const_iterator itNames;
+			for (itNames = names.begin(); itNames != names.end(); ++itNames)
+			{
+				const AsciiString& name = *itNames;
+				const ThingTemplate* ttRef = TheThingFactory->findTemplate( name );
+				if (ttRef != nullptr)
+				{
+					if (automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_helper(ttRef, ocl, processedOCLList))
+					{
+						leadsToMoneyCrate = true;
+					}
+				}
+			}
+		}
+	}
+
+	return leadsToMoneyCrate;
+}
+
+Bool automaticChangesPostINIParsing_thing_hasMoneyCrateCollide(const ThingTemplate* suspectMoneyCrate)
+{
+	static NameKeyType MoneyCrateCollideNameKey = NAMEKEY("MoneyCrateCollide");
+	Int modIdx;
+	const ModuleInfo& mi = suspectMoneyCrate->getBehaviorModuleInfo();
+	for (modIdx = 0; modIdx < mi.getCount(); ++modIdx)
+	{
+		AsciiString modName = mi.getNthName(modIdx);
+		//const ModuleData* data = mi.getNthData(modIdx);
+		if (modName.isEmpty())
+			continue;
+		NameKeyType modNameKey = NAMEKEY(modName);
+
+		if( modNameKey == MoneyCrateCollideNameKey )
+		{
+			// found one
+			return true;
+		}
+	}
+	// didn't find any
+	return false;
+}
+
+// Check: does this thing have 'InstantDeathBehavior' or 'CreateObjectDie' that calls an OCL that then leads to a
+// money crate?
+/*
+Behavior = InstantDeathBehavior ModuleTag_Death01
+	DeathTypes       = ALL
+	FX               = FX_DropPod2
+	OCL              = Cybr_OCL_MoneyDropPod2
+End
+Behavior = CreateObjectDie ModuleTag_06
+	CreationList = Cybr_OCL_MoneyDropPod3
+End
+*/
+Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_checkSpawned(const ThingTemplate* spawnedByOCL, std::set<ObjectCreationList*>& processedOCLList)
+{
+	Bool leadsToMoneyCrate = false;
+	static NameKeyType InstantDeathBehaviorNameKey = NAMEKEY("InstantDeathBehavior");
+	static NameKeyType CreateObjectDieNameKey = NAMEKEY("CreateObjectDie");
+	Int modIdx;
+	const ModuleInfo& mi = spawnedByOCL->getBehaviorModuleInfo();
+	for (modIdx = 0; modIdx < mi.getCount(); ++modIdx)
+	{
+		AsciiString modName = mi.getNthName(modIdx);
+		const ModuleData* data = mi.getNthData(modIdx);
+		if (modName.isEmpty())
+			continue;
+		NameKeyType modNameKey = NAMEKEY(modName);
+
+		if( modNameKey == InstantDeathBehaviorNameKey )
+		{
+			InstantDeathBehaviorModuleData* _data = (InstantDeathBehaviorModuleData*)data;
+
+			// oh good grief you devs sure loved your inheritance back then didn't`cha
+			// TODO - test for this in CreateObjectDie if possible, and test these:
+			/*
+				m_deathTypes(DEATH_TYPE_FLAGS_ALL),
+				m_veterancyLevels(VETERANCY_LEVEL_FLAGS_ALL)
+
+				???
+				// all 'exempt' bits must be clear for us to run.
+				if( !obj->getStatusBits().testForNone( m_exemptStatus ) )
+					return false;
+
+				// all 'required' bits must be set for us to run.
+				if( !obj->getStatusBits().testForAll( m_requiredStatus ) )
+					return false;
+			*/
+			if (_data->m_dieMuxData.m_deathTypes == DEATH_TYPE_FLAGS_ALL)
+			{
+				//_data->m_deathTypes
+				// Strange that this allows for multiple OCLs internally when only a "OCL" field is parsed.
+				// Maybe there can be multiple "OCL" fields and each one adds another OCL to this list?
+				// Regardless, checking all of the list will do.
+				OCLVec::iterator itOCL;
+				for (itOCL = _data->m_ocls.begin(); itOCL != _data->m_ocls.end(); ++itOCL)
+				{
+					// recursive call ahoy
+					ObjectCreationList* ocl = (ObjectCreationList*)(*itOCL);
+					if (ocl != nullptr)
+					{
+						if (automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate(ocl, processedOCLList))
+						{
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+							ocl->m_checkForRenewableMoneySource = true;
+#endif
+							leadsToMoneyCrate = true;
+						}
+					}
+				}
+			}
+		}
+		else if( modNameKey == CreateObjectDieNameKey )
+		{
+			CreateObjectDieModuleData* _data = (CreateObjectDieModuleData*)data;
+
+			// recursive call ahoy
+			ObjectCreationList* ocl = (ObjectCreationList*)_data->m_ocl;
+			if (ocl != nullptr)
+			{
+				if (automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate(ocl, processedOCLList))
+				{
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+					ocl->m_checkForRenewableMoneySource = true;
+#endif
+					leadsToMoneyCrate = true;
+				}
+			}
+		}
+	}
+	return leadsToMoneyCrate;
+}
+
+void automaticChangesPostINIParsing_OCLs()
+{
+	//std::set<ThingTemplate*> wat;
+	std::set<AsciiString> transportProcessedList;
+
+	// Note: why is there also a list of all nuggets ever made (ObjectCreationListStore::m_nuggets)?
+	// That seems redundant with the fact that every nugget belongs to some OCL and iterating through all OCLs will
+	// already reach every nugget.
+	// Note that this should not be confused with 'ObjectCreationList::m_nuggets', which is just the nuggets of one
+	// particular OCL ("ocl.getNuggetList()" in 'automaticChangesPostINIParsing_OCL').
+	// All I can figure is for 'TheObjectCreationListStore''s deconstructor to be able to handle deleting all the nuggets.
+	// Why not leave this up to each OCL item to deal with its own nugget list instead? I have no idea.
+	ObjectCreationListMap* oclListMap = TheObjectCreationListStore->getItemListMap();
+	ObjectCreationListMap::iterator it;
+	for (it = oclListMap->begin(); it != oclListMap->end(); ++it)
+	{
+		ObjectCreationList& ocl = (*it).second;
+		automaticChangesPostINIParsing_OCL(ocl, transportProcessedList);
+	}
+}
+void automaticChangesPostINIParsing_OCL(ObjectCreationList& ocl, std::set<AsciiString>& transportProcessedList)
+{
+	ObjectCreationNuggetVector* nuggetList = ocl.getNuggetList();
+	ObjectCreationNuggetVector::iterator itN;
+	for (itN = nuggetList->begin(); itN != nuggetList->end(); ++itN)
+	{
+		ObjectCreationNugget* nugget = *itN;
+		if (nugget->getTypeID() == OCL_NUGGET_TYPE_DELIVER_PAYLOAD)
+		{
+			const DeliverPayloadNugget* deliverPayloadNugget = (const DeliverPayloadNugget*)nugget;
+			const AsciiString& transportName = deliverPayloadNugget->getTransportName();
+			if (transportName.isEmpty())
+			{
+				continue;
+			}
+			// If this thing has previously been checked, don't do it again
+			if (transportProcessedList.contains(transportName))
+			{
+				continue;
+			}
+			transportProcessedList.insert(transportName);
+
+			const ThingTemplate* transportTTRef = TheThingFactory->findTemplate( transportName );
+			if (transportTTRef != nullptr)
+			{
+				// If this thing is ever used as a transport and lacks all three of these flags, add FORCEATTACKABLE
+				// so that left-clicking it to attack will work. No longer has to be force-attack thanks to another small change elsewhere.
+				if (
+					!transportTTRef->isKindOf(KINDOF_UNATTACKABLE) &&
+					!transportTTRef->isKindOf(KINDOF_SELECTABLE) &&
+					!transportTTRef->isKindOf(KINDOF_FORCEATTACKABLE)
+				)
+				{
+					((ThingTemplate*)transportTTRef)->setKindOf(KINDOF_FORCEATTACKABLE, 1);
+				}
+			}
+		}
+	}
+}
+
 
 #if CUSTOM_ATTRIBUTE_CHANGES
 

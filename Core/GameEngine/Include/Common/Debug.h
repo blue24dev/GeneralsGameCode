@@ -70,6 +70,13 @@ class AsciiString;
 	#define DISABLE_DEBUG_PROFILE 1
 #endif
 
+//MODDD
+// If on, some features normally only for debug builds are enabled for release builds.
+// Not every idea is covered by this - see 'GameMemory.h'.
+// Also, heed include order - see 'PreRTS.h', the 'GameCommon.h' include covers 'GameDefines.h' where most macro settings
+// are, but 'AsciiString.h' is included before 'GameCommon.h' -> things in 'GameDefines.h' do not reach 'AsciiString.h'.
+#define DEBUG_HELP_FOR_RELEASE 1
+
 // These are stolen from the WW3D Debug file. REALLY useful. :-)
 #define STRING_IT(a) #a
 #define TOKEN_IT(a) STRING_IT(,##a)

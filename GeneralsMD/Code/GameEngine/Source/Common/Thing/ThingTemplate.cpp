@@ -1595,7 +1595,7 @@ Int ThingTemplate::calcTimeToBuild( const Player* player) const
 {
 	Int buildTime = getBuildTime() * LOGICFRAMES_PER_SECOND;
 
-#if RUN_BUILD_TIME_CHEATS
+#if RUN_BUILD_TIME_CHEATS || NOOB_MODE
 	buildTime = buildTimeAdjustmentFilter(player, buildTime);
 #endif
 

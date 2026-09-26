@@ -84,6 +84,10 @@ private:
 	// add a ctor/dtor, 'cuz they won't ever be called.
 	struct UnicodeStringData
 	{
+		//MODDD - added back. Removed by TheSuperHackers but I disagree with this - helpful for me in the modern visual studio debugger
+#if defined(RTS_DEBUG) || DEBUG_HELP_FOR_RELEASE
+		const WideChar* m_debugptr;	// just makes it easier to read in the debugger
+#endif
 		unsigned short	m_refCount;						// reference count
 		unsigned short	m_numCharsAllocated;  // length of data allocated
 		// WideChar m_stringdata[];

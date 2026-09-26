@@ -58,15 +58,28 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 	money += getUpgradedSupplyBoost(other);
 
 	//MODDD - money cheat check.
-	// However, require there to be a 'upgrade boost' available, regardless of whether it's been completed or not.
-	// This filteres out crates gifted by support powers in most mods (ex: spend 6000 to drop 5000 for an ally in the Contra mod).
-	// Otherwise, would need to make a specific field/KindOf-value for Objects in the INI to tell the difference.
+	// Question: did this crate come from a renewable income source (supply drop zone), or was it granted for some other
+	// reason (ex: spawned by a sold plane or player-issued supply drop gift in the Contra mod) or simply present in the
+	// map from the beginning for any player to grab?
+	// Could check for providing an upgrade boost (!getMoneyCrateCollideModuleData()->m_upgradeBoost.empty()) since that
+	// catches most cases, but this misses 'TechSupplyDropZoneCrate' from the Contra mod that might still want to be
+	// adjusted, since oil derrick income rate can be.
+	// See 'extra.cpp' for some automatic adjustments that decide whether the money granted by touching a crate will be
+	// adjusted by cheats and/or the 'RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE' setting (whichever is applicable).
+	//if (getObject()->isCreatedByRenewableMoneySource())
+	// TODO - old way for now!
 	if (!getMoneyCrateCollideModuleData()->m_upgradeBoost.empty())
 	{
-		// TODO - is there a way to add this adjustments to crates known only to be spawned by a player-built structure at startup?
-		// if the same crate can be spawned by multiple sources (ex: gifting to other players, on-demand in a campaign/script), that
-		// won't be feasible.
-#if RENEWABLE_MONEY_STRUCTURE_HALF_EFFECTIVE
+		/*
+		// First, decide whether this is 
+		#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
+		if (getObject()->getCreatedByPlayer() == other->getControllingPlayer())
+		{
+
+		}
+		#endif
+		*/
+#if RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE
 		money /= 2;
 #endif
 

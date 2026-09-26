@@ -70,6 +70,10 @@
 
 #include "GameLogic/AIPathfind.h"
 
+//MODDD - new includes since some classes that were defined in this file were moved to separate files
+#include "GameLogic/ObjectCreationList/DeliverPayloadNugget.h"
+#include "GameLogic/ObjectCreationList/GenericObjectCreationNugget.h"
+
 
 #include "Common/CRCDebug.h"
 
@@ -247,7 +251,6 @@ EMPTY_DTOR(AttackNugget)
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 //MODDD - DeliverPayloadNugget class definition moved to its own file DeliverPayloadNugget.h, implementations remain here
-#include "GameLogic/ObjectCreationList/DeliverPayloadNugget.h"
 // ------------------------------------------------------------------------------------------------
 DeliverPayloadNugget::DeliverPayloadNugget() :
 	m_startAtPreferredHeight(true),
@@ -565,8 +568,8 @@ void DeliverPayloadNugget::parse(INI *ini, void *instance, void* /*store*/, cons
  	ini->initFromINIMulti(nugget, p);
 	((ObjectCreationList*)instance)->addObjectCreationNugget(nugget);
 }
-// field declarations moved
-// 'EMPTY_DTOR(DeliverPayloadNugget)' moved
+//MODDD - field declarations moved
+//MODDD - 'EMPTY_DTOR(DeliverPayloadNugget)' moved
 // ------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
@@ -670,19 +673,8 @@ private:
 EMPTY_DTOR(ApplyRandomForceNugget)
 
 //-------------------------------------------------------------------------------------------------
-enum DebrisDisposition CPP_11(: Int)
-{
-	LIKE_EXISTING						= 0x00000001,
-	ON_GROUND_ALIGNED				= 0x00000002,
-	SEND_IT_FLYING					= 0x00000004,
-	SEND_IT_UP							= 0x00000008,
-	SEND_IT_OUT							= 0x00000010,
-	RANDOM_FORCE						= 0x00000020,
-	FLOATING								= 0x00000040,
-	INHERIT_VELOCITY				= 0x00000080,
-	WHIRLING								= 0x00000100
-};
-
+//MODDD - 'enum DebrisDisposition' moved to ObjectCreationList.h
+// (should 'DebrisDispositionNames' be prototyped there? unsure, be aware if other things in this file that depend on DebrisDispositionNames are moved)
 static const char* const DebrisDispositionNames[] =
 {
 	"LIKE_EXISTING",
@@ -708,802 +700,744 @@ static void parseFrictionPerSec( INI* ini, void * /*instance*/, void *store, con
 	*(Real *)store = fricPerFrame;
 }
 
+//MODDD - GenericObjectCreationNugget class definition moved to its own file GenericObjectCreationNugget.h, implementations remain here
 //-------------------------------------------------------------------------------------------------
-class GenericObjectCreationNugget : public ObjectCreationNugget
+GenericObjectCreationNugget::GenericObjectCreationNugget() :
+	m_requiresLivePlayer(FALSE),
+	m_debrisToGenerate(1),
+	m_mass(0),
+	m_extraBounciness(0),
+	m_extraFriction(0),
+	m_disposition(ON_GROUND_ALIGNED),
+	m_dispositionIntensity(0.0f),
+	m_spinRate(-1.0f),
+	m_yawRate(-1.0f),
+	m_rollRate(-1.0f),
+	m_pitchRate(-1.0f),
+	m_nameAreObjects(true),
+	m_okToChangeModelColor(false),
+	m_minLODRequired(STATIC_GAME_LOD_LOW),
+	m_ignorePrimaryObstacle(false),
+	m_inheritsVeterancy(false),
+  m_diesOnBadLand(FALSE),
+	m_skipIfSignificantlyAirborne(false),
+	m_invulnerableTime(0),
+	m_containInsideSourceObject(FALSE),
+  m_minHealth(1.0f),
+	m_maxHealth(1.0f),
+	m_orientInForceDirection(false),
+	m_spreadFormation(false),
+	m_minDistanceAFormation(0.0f),
+	m_minDistanceBFormation(0.0f),
+	m_maxDistanceFormation(0.0f),
+	m_fadeIn(false),
+	m_fadeOut(false),
+	m_fadeFrames(0),
+	m_fadeSoundName(AsciiString::TheEmptyString),
+	m_particleSysName(AsciiString::TheEmptyString),
+	m_putInContainer(AsciiString::TheEmptyString),
+	m_minMag(0.0f),
+	m_maxMag(0.0f),
+	m_minPitch(0.0f),
+	m_maxPitch(0.0f),
+	m_minFrames(0),
+	m_maxFrames(0),
+	m_shadowType(SHADOW_NONE),
+	m_fxFinal(nullptr),
+	m_preserveLayer(true),
+	m_objectCount(0)
 {
-	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE(GenericObjectCreationNugget, "GenericObjectCreationNugget")
-public:
+	m_offset.zero();
+}
 
-	GenericObjectCreationNugget() :
-		m_requiresLivePlayer(FALSE),
-		m_debrisToGenerate(1),
-		m_mass(0),
-		m_extraBounciness(0),
-		m_extraFriction(0),
-		m_disposition(ON_GROUND_ALIGNED),
-		m_dispositionIntensity(0.0f),
-		m_spinRate(-1.0f),
-		m_yawRate(-1.0f),
-		m_rollRate(-1.0f),
-		m_pitchRate(-1.0f),
-		m_nameAreObjects(true),
-		m_okToChangeModelColor(false),
-		m_minLODRequired(STATIC_GAME_LOD_LOW),
-		m_ignorePrimaryObstacle(false),
-		m_inheritsVeterancy(false),
-    m_diesOnBadLand(FALSE),
-		m_skipIfSignificantlyAirborne(false),
-		m_invulnerableTime(0),
-		m_containInsideSourceObject(FALSE),
-    m_minHealth(1.0f),
-		m_maxHealth(1.0f),
-		m_orientInForceDirection(false),
-		m_spreadFormation(false),
-		m_minDistanceAFormation(0.0f),
-		m_minDistanceBFormation(0.0f),
-		m_maxDistanceFormation(0.0f),
-		m_fadeIn(false),
-		m_fadeOut(false),
-		m_fadeFrames(0),
-		m_fadeSoundName(AsciiString::TheEmptyString),
-		m_particleSysName(AsciiString::TheEmptyString),
-		m_putInContainer(AsciiString::TheEmptyString),
-		m_minMag(0.0f),
-		m_maxMag(0.0f),
-		m_minPitch(0.0f),
-		m_maxPitch(0.0f),
-		m_minFrames(0),
-		m_maxFrames(0),
-		m_shadowType(SHADOW_NONE),
-		m_fxFinal(nullptr),
-		m_preserveLayer(true),
-		m_objectCount(0)
+//MODDD - disarming mines gives experience. Removed 'const' on 'primary'
+Object* GenericObjectCreationNugget::create(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames ) const
+{
+	if (primary)
 	{
-		m_offset.zero();
+		if (m_skipIfSignificantlyAirborne && primary->isSignificantlyAboveTerrain())
+			return nullptr;
+
+		return reallyCreate( primary->getPosition(), primary->getTransformMatrix(), primary->getOrientation(), primary, lifetimeFrames );
+	}
+	else
+	{
+		DEBUG_CRASH(("You must have a primary source for this effect"));
+	}
+	return nullptr;
+}
+
+//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
+Object* GenericObjectCreationNugget::create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames ) const
+{
+	if (primary)
+	{
+		const Matrix3D *xfrm = nullptr;
+		if( angle == INVALID_ANGLE )
+		{
+			//Vast majority of OCL's don't care about the angle, so if it comes in invalid, default the angle to 0.
+			angle = 0.0f;
+		}
+		return reallyCreate( primary, xfrm, angle, primaryObj, lifetimeFrames );
+	}
+	else
+	{
+		DEBUG_CRASH(("You must have a primary source for this effect"));
+	}
+	return nullptr;
+}
+
+const FieldParse* GenericObjectCreationNugget::getCommonFieldParse()
+{
+	static const FieldParse commonFieldParse[] =
+	{
+		{ "PutInContainer", INI::parseAsciiString, nullptr, offsetof( GenericObjectCreationNugget, m_putInContainer) },
+		{ "ParticleSystem",		INI::parseAsciiString, nullptr, offsetof( GenericObjectCreationNugget, m_particleSysName) },
+		{ "Count",						INI::parseInt,						nullptr, offsetof( GenericObjectCreationNugget, m_debrisToGenerate ) },
+		{ "IgnorePrimaryObstacle", INI::parseBool, nullptr, offsetof(GenericObjectCreationNugget, m_ignorePrimaryObstacle) },
+		{ "OrientInForceDirection", INI::parseBool, nullptr, offsetof(GenericObjectCreationNugget, m_orientInForceDirection) },
+		{ "ExtraBounciness",				INI::parseReal,						nullptr, offsetof( GenericObjectCreationNugget, m_extraBounciness ) },
+		{ "ExtraFriction",				parseFrictionPerSec,						nullptr, offsetof( GenericObjectCreationNugget, m_extraFriction ) },
+		{ "Offset",						INI::parseCoord3D,				nullptr, offsetof( GenericObjectCreationNugget, m_offset ) },
+		{ "Disposition",			INI::parseBitString32,			DebrisDispositionNames, offsetof( GenericObjectCreationNugget, m_disposition ) },
+		{ "DispositionIntensity",	INI::parseReal,						nullptr,	offsetof( GenericObjectCreationNugget, m_dispositionIntensity ) },
+		{ "SpinRate",					INI::parseAngularVelocityReal,	nullptr, offsetof(GenericObjectCreationNugget, m_spinRate) },
+		{ "YawRate",					INI::parseAngularVelocityReal,	nullptr, offsetof(GenericObjectCreationNugget, m_yawRate) },
+		{ "RollRate",					INI::parseAngularVelocityReal,	nullptr, offsetof(GenericObjectCreationNugget, m_rollRate) },
+		{ "PitchRate",				INI::parseAngularVelocityReal,	nullptr, offsetof(GenericObjectCreationNugget, m_pitchRate) },
+		{ "MinForceMagnitude",	INI::parseReal,	nullptr, offsetof(GenericObjectCreationNugget, m_minMag) },
+		{ "MaxForceMagnitude",	INI::parseReal,	nullptr, offsetof(GenericObjectCreationNugget, m_maxMag) },
+		{ "MinForcePitch",	INI::parseAngleReal,	nullptr, offsetof(GenericObjectCreationNugget, m_minPitch) },
+		{ "MaxForcePitch",	INI::parseAngleReal,	nullptr, offsetof(GenericObjectCreationNugget, m_maxPitch) },
+		{ "MinLifetime",					INI::parseDurationUnsignedInt,		nullptr, offsetof( GenericObjectCreationNugget, m_minFrames ) },
+		{ "MaxLifetime",					INI::parseDurationUnsignedInt,		nullptr, offsetof( GenericObjectCreationNugget, m_maxFrames ) },
+		{ "SpreadFormation",			INI::parseBool,	nullptr, offsetof(GenericObjectCreationNugget, m_spreadFormation) },
+		{ "MinDistanceAFormation",	INI::parseReal, nullptr, offsetof(GenericObjectCreationNugget, m_minDistanceAFormation) },
+		{ "MinDistanceBFormation",	INI::parseReal, nullptr, offsetof(GenericObjectCreationNugget, m_minDistanceBFormation) },
+		{ "MaxDistanceFormation",	INI::parseReal, nullptr, offsetof(GenericObjectCreationNugget, m_maxDistanceFormation) },
+		{ "FadeIn",			INI::parseBool,	nullptr, offsetof(GenericObjectCreationNugget, m_fadeIn) },
+		{ "FadeOut",			INI::parseBool,	nullptr, offsetof(GenericObjectCreationNugget, m_fadeOut) },
+		{ "FadeTime",	INI::parseDurationUnsignedInt,	nullptr, offsetof(GenericObjectCreationNugget, m_fadeFrames) },
+		{ "FadeSound", INI::parseAsciiString, nullptr, offsetof( GenericObjectCreationNugget, m_fadeSoundName) },
+		{ "PreserveLayer", INI::parseBool, nullptr, offsetof( GenericObjectCreationNugget, m_preserveLayer) },
+		{ "DiesOnBadLand",	INI::parseBool, nullptr, offsetof(GenericObjectCreationNugget, m_diesOnBadLand) },
+		{ nullptr, nullptr, nullptr, 0 }
+	};
+	return commonFieldParse;
+}
+
+void GenericObjectCreationNugget::parseObject(INI *ini, void *instance, void* /*store*/, const void* /*userData*/)
+{
+	static const FieldParse myFieldParse[] =
+	{
+		{ "ContainInsideSourceObject", INI::parseBool, nullptr, offsetof( GenericObjectCreationNugget, m_containInsideSourceObject) },
+		{ "ObjectNames",				parseDebrisObjectNames,		nullptr, 0 },
+		{ "ObjectCount",				INI::parseInt,  nullptr, offsetof(GenericObjectCreationNugget, m_objectCount) },
+		{ "InheritsVeterancy",	INI::parseBool, nullptr, offsetof(GenericObjectCreationNugget, m_inheritsVeterancy) },
+		{ "SkipIfSignificantlyAirborne", INI::parseBool, nullptr, offsetof(GenericObjectCreationNugget, m_skipIfSignificantlyAirborne) },
+		{ "InvulnerableTime",		INI::parseDurationUnsignedInt, nullptr, offsetof(GenericObjectCreationNugget, m_invulnerableTime) },
+		{ "MinHealth",					INI::parsePercentToReal, nullptr, offsetof(GenericObjectCreationNugget, m_minHealth) },
+		{ "MaxHealth",					INI::parsePercentToReal, nullptr, offsetof(GenericObjectCreationNugget, m_maxHealth) },
+		{ "RequiresLivePlayer",	INI::parseBool, nullptr, offsetof(GenericObjectCreationNugget, m_requiresLivePlayer) },
+		{ nullptr, nullptr, nullptr, 0 }
+	};
+
+	MultiIniFieldParse p;
+	p.add(getCommonFieldParse());
+	p.add(myFieldParse);
+
+	GenericObjectCreationNugget* nugget = newInstance(GenericObjectCreationNugget);
+	nugget->m_nameAreObjects = true;
+
+	ini->initFromINIMulti(nugget, p);
+
+	((ObjectCreationList*)instance)->addObjectCreationNugget(nugget);
+}
+
+void GenericObjectCreationNugget::parseDebris(INI *ini, void *instance, void* /*store*/, const void* /*userData*/)
+{
+	static const FieldParse myFieldParse[] =
+	{
+		{ "ModelNames",							parseDebrisObjectNames,							nullptr,					0 },
+		{ "Mass",										INI::parsePositiveNonZeroReal,			nullptr,					offsetof( GenericObjectCreationNugget, m_mass ) },
+		{ "AnimationSet",						parseAnimSet,												nullptr,					offsetof( GenericObjectCreationNugget, m_animSets) },
+		{ "FXFinal",								INI::parseFXList,										nullptr,					offsetof( GenericObjectCreationNugget, m_fxFinal) },
+		{ "OkToChangeModelColor",		INI::parseBool,											nullptr,					offsetof(GenericObjectCreationNugget, m_okToChangeModelColor) },
+		{ "MinLODRequired",					INI::parseStaticGameLODLevel,				nullptr,					offsetof(GenericObjectCreationNugget, m_minLODRequired) },
+		{ "Shadow",									INI::parseBitString32,							TheShadowNames,	offsetof( GenericObjectCreationNugget, m_shadowType ) },
+		{ "BounceSound",						INI::parseAudioEventRTS,						nullptr,					offsetof( GenericObjectCreationNugget, m_bounceSound) },
+		{ nullptr, nullptr, nullptr, 0 }
+	};
+
+	MultiIniFieldParse p;
+	p.add(getCommonFieldParse());
+	p.add(myFieldParse);
+
+	GenericObjectCreationNugget* nugget = newInstance(GenericObjectCreationNugget);
+	nugget->m_nameAreObjects = false;
+
+	ini->initFromINIMulti(nugget, p);
+
+	DEBUG_ASSERTCRASH(nugget->m_mass > 0.0f, ("Zero masses are not allowed for debris!"));
+	((ObjectCreationList*)instance)->addObjectCreationNugget(nugget);
+}
+
+void GenericObjectCreationNugget::parseAnimSet(INI *ini, void * /*instance*/, void* store, const void* /*userData*/)
+{
+	AnimSet anim;
+	anim.m_animInitial = ini->getNextAsciiString();
+	anim.m_animFlying = ini->getNextAsciiString();
+	anim.m_animFinal = ini->getNextAsciiString();
+	((std::vector<AnimSet>*)store)->push_back(anim);
+}
+
+void GenericObjectCreationNugget::doStuffToObj(
+	Object* obj,
+	const AsciiString& modelName,
+	const Coord3D *pos,
+	const Matrix3D *mtx,
+	Real orientation,
+	const Object *sourceObj,
+	UnsignedInt lifetimeFrames
+) const
+{
+	obj->setProducer(sourceObj);
+
+	static NameKeyType key_LifetimeUpdate = NAMEKEY("LifetimeUpdate");
+	LifetimeUpdate* lup = (LifetimeUpdate*)obj->findUpdateModule(key_LifetimeUpdate);
+	if( lup )
+	{
+		if( lifetimeFrames )
+		{
+			//Passed in override, use this value for a specific lifetime!!!
+			lup->setLifetimeRange( lifetimeFrames, lifetimeFrames );
+		}
+		else if( m_maxFrames > 0 )
+		{
+			// They will both be zero if no lifetime was specified in the OCL.  It could be in the Object so don't mess with it.
+			// So the OCL listing will override the Object listing for lifetime, but ONLY if there is one.
+			lup->setLifetimeRange(m_minFrames, m_maxFrames);
+		}
 	}
 
-	//MODDD - disarming mines gives experience. Removed 'const' on 'primary'
-	virtual Object* create(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const override
+	if (!m_nameAreObjects)
 	{
-		if (primary)
+		for (DrawModule** dm = obj->getDrawable()->getDrawModules(); *dm; ++dm)
 		{
-			if (m_skipIfSignificantlyAirborne && primary->isSignificantlyAboveTerrain())
-				return nullptr;
-
-			return reallyCreate( primary->getPosition(), primary->getTransformMatrix(), primary->getOrientation(), primary, lifetimeFrames );
-		}
-		else
-		{
-			DEBUG_CRASH(("You must have a primary source for this effect"));
-		}
-		return nullptr;
-	}
-
-	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
-	virtual Object* create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const override
-	{
-		if (primary)
-		{
-			const Matrix3D *xfrm = nullptr;
-			if( angle == INVALID_ANGLE )
+			DebrisDrawInterface* di = (*dm)->getDebrisDrawInterface();
+			if (di)
 			{
-				//Vast majority of OCL's don't care about the angle, so if it comes in invalid, default the angle to 0.
-				angle = 0.0f;
-			}
-			return reallyCreate( primary, xfrm, angle, primaryObj, lifetimeFrames );
-		}
-		else
-		{
-			DEBUG_CRASH(("You must have a primary source for this effect"));
-		}
-		return nullptr;
-	}
-
-	static const FieldParse* getCommonFieldParse()
-	{
-		static const FieldParse commonFieldParse[] =
-		{
-			{ "PutInContainer", INI::parseAsciiString, nullptr, offsetof( GenericObjectCreationNugget, m_putInContainer) },
-			{ "ParticleSystem",		INI::parseAsciiString, nullptr, offsetof( GenericObjectCreationNugget, m_particleSysName) },
-			{ "Count",						INI::parseInt,						nullptr, offsetof( GenericObjectCreationNugget, m_debrisToGenerate ) },
-			{ "IgnorePrimaryObstacle", INI::parseBool, nullptr, offsetof(GenericObjectCreationNugget, m_ignorePrimaryObstacle) },
-			{ "OrientInForceDirection", INI::parseBool, nullptr, offsetof(GenericObjectCreationNugget, m_orientInForceDirection) },
-			{ "ExtraBounciness",				INI::parseReal,						nullptr, offsetof( GenericObjectCreationNugget, m_extraBounciness ) },
-			{ "ExtraFriction",				parseFrictionPerSec,						nullptr, offsetof( GenericObjectCreationNugget, m_extraFriction ) },
-			{ "Offset",						INI::parseCoord3D,				nullptr, offsetof( GenericObjectCreationNugget, m_offset ) },
-			{ "Disposition",			INI::parseBitString32,			DebrisDispositionNames, offsetof( GenericObjectCreationNugget, m_disposition ) },
-			{ "DispositionIntensity",	INI::parseReal,						nullptr,	offsetof( GenericObjectCreationNugget, m_dispositionIntensity ) },
-			{ "SpinRate",					INI::parseAngularVelocityReal,	nullptr, offsetof(GenericObjectCreationNugget, m_spinRate) },
-			{ "YawRate",					INI::parseAngularVelocityReal,	nullptr, offsetof(GenericObjectCreationNugget, m_yawRate) },
-			{ "RollRate",					INI::parseAngularVelocityReal,	nullptr, offsetof(GenericObjectCreationNugget, m_rollRate) },
-			{ "PitchRate",				INI::parseAngularVelocityReal,	nullptr, offsetof(GenericObjectCreationNugget, m_pitchRate) },
-			{ "MinForceMagnitude",	INI::parseReal,	nullptr, offsetof(GenericObjectCreationNugget, m_minMag) },
-			{ "MaxForceMagnitude",	INI::parseReal,	nullptr, offsetof(GenericObjectCreationNugget, m_maxMag) },
-			{ "MinForcePitch",	INI::parseAngleReal,	nullptr, offsetof(GenericObjectCreationNugget, m_minPitch) },
-			{ "MaxForcePitch",	INI::parseAngleReal,	nullptr, offsetof(GenericObjectCreationNugget, m_maxPitch) },
-			{ "MinLifetime",					INI::parseDurationUnsignedInt,		nullptr, offsetof( GenericObjectCreationNugget, m_minFrames ) },
-			{ "MaxLifetime",					INI::parseDurationUnsignedInt,		nullptr, offsetof( GenericObjectCreationNugget, m_maxFrames ) },
-			{ "SpreadFormation",			INI::parseBool,	nullptr, offsetof(GenericObjectCreationNugget, m_spreadFormation) },
-			{ "MinDistanceAFormation",	INI::parseReal, nullptr, offsetof(GenericObjectCreationNugget, m_minDistanceAFormation) },
-			{ "MinDistanceBFormation",	INI::parseReal, nullptr, offsetof(GenericObjectCreationNugget, m_minDistanceBFormation) },
-			{ "MaxDistanceFormation",	INI::parseReal, nullptr, offsetof(GenericObjectCreationNugget, m_maxDistanceFormation) },
-			{ "FadeIn",			INI::parseBool,	nullptr, offsetof(GenericObjectCreationNugget, m_fadeIn) },
-			{ "FadeOut",			INI::parseBool,	nullptr, offsetof(GenericObjectCreationNugget, m_fadeOut) },
-			{ "FadeTime",	INI::parseDurationUnsignedInt,	nullptr, offsetof(GenericObjectCreationNugget, m_fadeFrames) },
-			{ "FadeSound", INI::parseAsciiString, nullptr, offsetof( GenericObjectCreationNugget, m_fadeSoundName) },
-			{ "PreserveLayer", INI::parseBool, nullptr, offsetof( GenericObjectCreationNugget, m_preserveLayer) },
-			{ "DiesOnBadLand",	INI::parseBool, nullptr, offsetof(GenericObjectCreationNugget, m_diesOnBadLand) },
-			{ nullptr, nullptr, nullptr, 0 }
-		};
-		return commonFieldParse;
-	}
-
-	static void parseObject(INI *ini, void *instance, void* /*store*/, const void* /*userData*/)
-	{
-		static const FieldParse myFieldParse[] =
-		{
-			{ "ContainInsideSourceObject", INI::parseBool, nullptr, offsetof( GenericObjectCreationNugget, m_containInsideSourceObject) },
-			{ "ObjectNames",				parseDebrisObjectNames,		nullptr, 0 },
-			{ "ObjectCount",				INI::parseInt,  nullptr, offsetof(GenericObjectCreationNugget, m_objectCount) },
-			{ "InheritsVeterancy",	INI::parseBool, nullptr, offsetof(GenericObjectCreationNugget, m_inheritsVeterancy) },
-			{ "SkipIfSignificantlyAirborne", INI::parseBool, nullptr, offsetof(GenericObjectCreationNugget, m_skipIfSignificantlyAirborne) },
-			{ "InvulnerableTime",		INI::parseDurationUnsignedInt, nullptr, offsetof(GenericObjectCreationNugget, m_invulnerableTime) },
-			{ "MinHealth",					INI::parsePercentToReal, nullptr, offsetof(GenericObjectCreationNugget, m_minHealth) },
-			{ "MaxHealth",					INI::parsePercentToReal, nullptr, offsetof(GenericObjectCreationNugget, m_maxHealth) },
-			{ "RequiresLivePlayer",	INI::parseBool, nullptr, offsetof(GenericObjectCreationNugget, m_requiresLivePlayer) },
-			{ nullptr, nullptr, nullptr, 0 }
-		};
-
-		MultiIniFieldParse p;
-		p.add(getCommonFieldParse());
-		p.add(myFieldParse);
-
-		GenericObjectCreationNugget* nugget = newInstance(GenericObjectCreationNugget);
-		nugget->m_nameAreObjects = true;
-
-		ini->initFromINIMulti(nugget, p);
-
-		((ObjectCreationList*)instance)->addObjectCreationNugget(nugget);
-	}
-
-	static void parseDebris(INI *ini, void *instance, void* /*store*/, const void* /*userData*/)
-	{
-		static const FieldParse myFieldParse[] =
-		{
-			{ "ModelNames",							parseDebrisObjectNames,							nullptr,					0 },
-			{ "Mass",										INI::parsePositiveNonZeroReal,			nullptr,					offsetof( GenericObjectCreationNugget, m_mass ) },
-			{ "AnimationSet",						parseAnimSet,												nullptr,					offsetof( GenericObjectCreationNugget, m_animSets) },
-			{ "FXFinal",								INI::parseFXList,										nullptr,					offsetof( GenericObjectCreationNugget, m_fxFinal) },
-			{ "OkToChangeModelColor",		INI::parseBool,											nullptr,					offsetof(GenericObjectCreationNugget, m_okToChangeModelColor) },
-			{ "MinLODRequired",					INI::parseStaticGameLODLevel,				nullptr,					offsetof(GenericObjectCreationNugget, m_minLODRequired) },
-			{ "Shadow",									INI::parseBitString32,							TheShadowNames,	offsetof( GenericObjectCreationNugget, m_shadowType ) },
-			{ "BounceSound",						INI::parseAudioEventRTS,						nullptr,					offsetof( GenericObjectCreationNugget, m_bounceSound) },
-			{ nullptr, nullptr, nullptr, 0 }
-		};
-
-		MultiIniFieldParse p;
-		p.add(getCommonFieldParse());
-		p.add(myFieldParse);
-
-		GenericObjectCreationNugget* nugget = newInstance(GenericObjectCreationNugget);
-		nugget->m_nameAreObjects = false;
-
-		ini->initFromINIMulti(nugget, p);
-
-		DEBUG_ASSERTCRASH(nugget->m_mass > 0.0f, ("Zero masses are not allowed for debris!"));
-		((ObjectCreationList*)instance)->addObjectCreationNugget(nugget);
-	}
-
-	static void parseAnimSet(INI *ini, void * /*instance*/, void* store, const void* /*userData*/)
-	{
-		AnimSet anim;
-		anim.m_animInitial = ini->getNextAsciiString();
-		anim.m_animFlying = ini->getNextAsciiString();
-		anim.m_animFinal = ini->getNextAsciiString();
-		((std::vector<AnimSet>*)store)->push_back(anim);
-	}
-
-protected:
-
-	void doStuffToObj(
-		Object* obj,
-		const AsciiString& modelName,
-		const Coord3D *pos,
-		const Matrix3D *mtx,
-		Real orientation,
-		const Object *sourceObj,
-		UnsignedInt lifetimeFrames
-	) const
-	{
-		obj->setProducer(sourceObj);
-
-		static NameKeyType key_LifetimeUpdate = NAMEKEY("LifetimeUpdate");
-		LifetimeUpdate* lup = (LifetimeUpdate*)obj->findUpdateModule(key_LifetimeUpdate);
-		if( lup )
-		{
-			if( lifetimeFrames )
-			{
-				//Passed in override, use this value for a specific lifetime!!!
-				lup->setLifetimeRange( lifetimeFrames, lifetimeFrames );
-			}
-			else if( m_maxFrames > 0 )
-			{
-				// They will both be zero if no lifetime was specified in the OCL.  It could be in the Object so don't mess with it.
-				// So the OCL listing will override the Object listing for lifetime, but ONLY if there is one.
-				lup->setLifetimeRange(m_minFrames, m_maxFrames);
-			}
-		}
-
-		if (!m_nameAreObjects)
-		{
-			for (DrawModule** dm = obj->getDrawable()->getDrawModules(); *dm; ++dm)
-			{
-				DebrisDrawInterface* di = (*dm)->getDebrisDrawInterface();
-				if (di)
+				di->setModelName(modelName, m_okToChangeModelColor ? obj->getIndicatorColor() : 0, m_shadowType);
+				if (!m_animSets.empty())
 				{
-					di->setModelName(modelName, m_okToChangeModelColor ? obj->getIndicatorColor() : 0, m_shadowType);
-					if (!m_animSets.empty())
-					{
-						Int which = GameLogicRandomValue(0, m_animSets.size()-1);
-						di->setAnimNames(m_animSets[which].m_animInitial, m_animSets[which].m_animFlying, m_animSets[which].m_animFinal, m_fxFinal);
-					}
+					Int which = GameLogicRandomValue(0, m_animSets.size()-1);
+					di->setAnimNames(m_animSets[which].m_animInitial, m_animSets[which].m_animFlying, m_animSets[which].m_animFinal, m_fxFinal);
 				}
 			}
 		}
+	}
 
-		Coord3D offset = m_offset;
+	Coord3D offset = m_offset;
+	if (mtx)
+		adjustVector(&offset, mtx);
+
+	Coord3D chunkPos;
+	chunkPos.x = pos->x + offset.x;
+	chunkPos.y = pos->y + offset.y;
+	chunkPos.z = pos->z + offset.z;
+
+	if (!m_particleSysName.isEmpty())
+	{
+		const ParticleSystemTemplate *tmp = TheParticleSystemManager->findTemplate(m_particleSysName);
+		ParticleSystem *sys = TheParticleSystemManager->createParticleSystem(tmp);
+		if (sys)
+		{
+			sys->attachToObject(obj);
+		}
+	}
+
+	if (m_ignorePrimaryObstacle)
+	{
+		PhysicsBehavior* p = obj->getPhysics();
+		if (p)
+			p->setIgnoreCollisionsWith(sourceObj);
+	}
+
+	// set its beginning health
+	BodyModuleInterface *body = obj->getBodyModule();
+	Real healthPercent = GameLogicRandomValueReal( m_minHealth, m_maxHealth );
+	if (body)
+		body->setInitialHealth(healthPercent * 100.0f);
+
+	// If they have a SlavedUpdate, then I have to tell them who their daddy is from now on.
+	for (BehaviorModule** update = obj->getBehaviorModules(); *update; ++update)
+	{
+		SlavedUpdateInterface* sdu = (*update)->getSlavedUpdateInterface();
+		if (sdu != nullptr)
+		{
+			sdu->onEnslave( sourceObj );
+			break;
+		}
+	}
+
+	if (m_inheritsVeterancy && sourceObj && obj->getExperienceTracker()->isTrainable())
+	{
+		DEBUG_LOG(("Object %s inherits veterancy level %d from %s",
+			obj->getTemplate()->getName().str(), sourceObj->getVeterancyLevel(), sourceObj->getTemplate()->getName().str()));
+		VeterancyLevel v = sourceObj->getVeterancyLevel();
+
+		// TheSuperHackers @bugfix Caball009 22/04/2026 Disable audiovisual cues for a veterancy level change because this object was just created.
+		// Otherwise the cues would be at an incorrect position, because the object's matrix is not set yet.
+		obj->getExperienceTracker()->setVeterancyLevel(v, FALSE);
+
+		//In order to make things easier for the designers, we are going to transfer the unit name
+		//to the ejected thing... so the designer can control the pilot with the scripts.
+		TheScriptEngine->transferObjectName( sourceObj->getName(), obj );
+	}
+
+	if ( m_invulnerableTime > 0 )
+	{
+		obj->goInvulnerable( m_invulnerableTime );
+	}
+
+	if( BitIsSet( m_disposition, INHERIT_VELOCITY ) && sourceObj )
+	{
+		const PhysicsBehavior *sourcePhysics = sourceObj->getPhysics();
+		PhysicsBehavior *objectPhysics = obj->getPhysics();
+		if( sourcePhysics && objectPhysics )
+		{
+			objectPhysics->applyForce( sourcePhysics->getVelocity() );
+		}
+	}
+
+	if( BitIsSet( m_disposition, LIKE_EXISTING ) )
+	{
 		if (mtx)
-			adjustVector(&offset, mtx);
-
-		Coord3D chunkPos;
-		chunkPos.x = pos->x + offset.x;
-		chunkPos.y = pos->y + offset.y;
-		chunkPos.z = pos->z + offset.z;
-
-		if (!m_particleSysName.isEmpty())
+			obj->setTransformMatrix(mtx);
+		else
+			obj->setOrientation(orientation);
+		obj->setPosition(&chunkPos);
+		if (sourceObj && sourceObj->isAboveTerrain())
 		{
-			const ParticleSystemTemplate *tmp = TheParticleSystemManager->findTemplate(m_particleSysName);
-			ParticleSystem *sys = TheParticleSystemManager->createParticleSystem(tmp);
-			if (sys)
-			{
-				sys->attachToObject(obj);
-			}
+			PhysicsBehavior* physics = obj->getPhysics();
+			if (physics)
+				physics->setAllowToFall(true);
 		}
 
-		if (m_ignorePrimaryObstacle)
-		{
-			PhysicsBehavior* p = obj->getPhysics();
-			if (p)
-				p->setIgnoreCollisionsWith(sourceObj);
-		}
-
-		// set its beginning health
-		BodyModuleInterface *body = obj->getBodyModule();
-		Real healthPercent = GameLogicRandomValueReal( m_minHealth, m_maxHealth );
-		if (body)
-			body->setInitialHealth(healthPercent * 100.0f);
-
-		// If they have a SlavedUpdate, then I have to tell them who their daddy is from now on.
-		for (BehaviorModule** update = obj->getBehaviorModules(); *update; ++update)
-		{
-			SlavedUpdateInterface* sdu = (*update)->getSlavedUpdateInterface();
-			if (sdu != nullptr)
-			{
-				sdu->onEnslave( sourceObj );
-				break;
-			}
-		}
-
-		if (m_inheritsVeterancy && sourceObj && obj->getExperienceTracker()->isTrainable())
-		{
-			DEBUG_LOG(("Object %s inherits veterancy level %d from %s",
-				obj->getTemplate()->getName().str(), sourceObj->getVeterancyLevel(), sourceObj->getTemplate()->getName().str()));
-			VeterancyLevel v = sourceObj->getVeterancyLevel();
-
-			// TheSuperHackers @bugfix Caball009 22/04/2026 Disable audiovisual cues for a veterancy level change because this object was just created.
-			// Otherwise the cues would be at an incorrect position, because the object's matrix is not set yet.
-			obj->getExperienceTracker()->setVeterancyLevel(v, FALSE);
-
-			//In order to make things easier for the designers, we are going to transfer the unit name
-			//to the ejected thing... so the designer can control the pilot with the scripts.
-			TheScriptEngine->transferObjectName( sourceObj->getName(), obj );
-		}
-
-		if ( m_invulnerableTime > 0 )
-		{
-			obj->goInvulnerable( m_invulnerableTime );
-		}
-
-		if( BitIsSet( m_disposition, INHERIT_VELOCITY ) && sourceObj )
-		{
-			const PhysicsBehavior *sourcePhysics = sourceObj->getPhysics();
-			PhysicsBehavior *objectPhysics = obj->getPhysics();
-			if( sourcePhysics && objectPhysics )
-			{
-				objectPhysics->applyForce( sourcePhysics->getVelocity() );
-			}
-		}
-
-		if( BitIsSet( m_disposition, LIKE_EXISTING ) )
-		{
-			if (mtx)
-				obj->setTransformMatrix(mtx);
-			else
-				obj->setOrientation(orientation);
-			obj->setPosition(&chunkPos);
-			if (sourceObj && sourceObj->isAboveTerrain())
-			{
-				PhysicsBehavior* physics = obj->getPhysics();
-				if (physics)
-					physics->setAllowToFall(true);
-			}
-
-      //Lorenzen sez:
-      //Since the sneak attack is a structure created with an ocl, it bypasses a lot of the
-      //goodness that it would have gotten from dozerAI::build( the normal way to make structures )
-      // but, since it is a building... lets stamp it down in the pathfind map, here.
-      if ( obj->isKindOf( KINDOF_STRUCTURE ) )
-      {
-	      // Flatten the terrain underneath the object, then adjust to the flattened height. jba.
-	      TheTerrainLogic->flattenTerrain(obj);
-	      Coord3D adjustedPos = *obj->getPosition();
-	      adjustedPos.z = TheTerrainLogic->getGroundHeight(pos->x, pos->y);
-	      obj->setPosition(&adjustedPos);
-	      // Note - very important that we add to map AFTER we flatten terrain. jba.
-	      TheAI->pathfinder()->addObjectToPathfindMap( obj );
-
-      }
-
-
-
-
-
-
-
-		}
-
-		if( BitIsSet( m_disposition, ON_GROUND_ALIGNED ) )
-		{
-			chunkPos.z = 99999.0f;
-			PathfindLayerEnum layer = TheTerrainLogic->getHighestLayerForDestination(&chunkPos);
-			obj->setOrientation(GameLogicRandomValueReal(0.0f, 2 * PI));
-			chunkPos.z = TheTerrainLogic->getLayerHeight( chunkPos.x, chunkPos.y, layer );
-			// ensure we are slightly above the bridge, to account for fudge & sloppy art
-			if (layer != LAYER_GROUND)
-				chunkPos.z += 1.0f;
-			obj->setLayer(layer);
-			obj->setPosition(&chunkPos);
-		}
-
-		if( BitIsSet( m_disposition, SEND_IT_OUT ) )
-		{
-			obj->setOrientation(GameLogicRandomValueReal(0.0f, 2 * PI));
-			chunkPos.z = TheTerrainLogic->getGroundHeight( chunkPos.x, chunkPos.y );
-			obj->setPosition(&chunkPos);
-			PhysicsBehavior* objUp = obj->getPhysics();
-			if (objUp)
-			{
-
-				if (!m_nameAreObjects)
-					objUp->setMass( m_mass );
-
-				objUp->setExtraFriction(m_extraFriction);
-
-				Coord3D force;
-				Real horizForce = 4.0f * m_dispositionIntensity;		// 2
-				force.x = GameLogicRandomValueReal( -horizForce, horizForce );
-				force.y = GameLogicRandomValueReal( -horizForce, horizForce );
-				force.z = 0;
-
-				objUp->applyForce(&force);
-				if (m_orientInForceDirection)
-					orientation = atan2(force.y, force.x);
-
-			}
-		}
-
-		if( BitIsSet( m_disposition, SEND_IT_FLYING | SEND_IT_UP | RANDOM_FORCE ) )
-		{
-			if (mtx)
-			{
-				DUMPMATRIX3D(mtx);
-				obj->setTransformMatrix(mtx);
-			}
-			obj->setPosition(&chunkPos);
-			DUMPCOORD3D(&chunkPos);
-			PhysicsBehavior* objUp = obj->getPhysics();
-			if (objUp)
-			{
-
-				if (!m_nameAreObjects)
-				{
-					DUMPREAL(m_mass);
-					objUp->setMass( m_mass );
-				}
-				DEBUG_ASSERTCRASH(objUp->getMass() > 0.0f, ("Zero masses are not allowed for obj!"));
-
-				objUp->setExtraBounciness(m_extraBounciness);
-				objUp->setExtraFriction(m_extraFriction);
-				objUp->setAllowBouncing(true);
-				objUp->setBounceSound(&m_bounceSound);
-				DUMPREAL(m_extraBounciness);
-				DUMPREAL(m_extraFriction);
-
-				// if omitted from INI, calc it based on intensity.
-				Real spinRate		= m_spinRate >= 0.0f ? m_spinRate : (PI/32.0f) * m_dispositionIntensity;
-
-				// Treat these as overrides.
-				Real yawRate		= m_yawRate		>= 0.0f ? m_yawRate		: spinRate;
-				Real rollRate		= m_rollRate	>= 0.0f ? m_rollRate	: spinRate;
-				Real pitchRate	= m_pitchRate >= 0.0f ? m_pitchRate : spinRate;
-
-				DUMPREAL(spinRate);
-				DUMPREAL(yawRate);
-				DUMPREAL(rollRate);
-				DUMPREAL(pitchRate);
-
-				Real yaw = GameLogicRandomValueReal( -yawRate, yawRate );
-				Real roll = GameLogicRandomValueReal( -rollRate, rollRate );
-				Real pitch = GameLogicRandomValueReal( -pitchRate, pitchRate );
-				DUMPREAL(yaw);
-				DUMPREAL(roll);
-				DUMPREAL(pitch);
-
-				Coord3D force;
-				if( BitIsSet( m_disposition, SEND_IT_FLYING ) )
-				{
-					Real horizForce = 4.0f * m_dispositionIntensity;		// 2
-					Real vertForce = 3.0f * m_dispositionIntensity;		// 3
-					force.x = GameLogicRandomValueReal( -horizForce, horizForce );
-					force.y = GameLogicRandomValueReal( -horizForce, horizForce );
-					force.z = GameLogicRandomValueReal( vertForce * 0.33f, vertForce );
-					DUMPREAL(horizForce);
-					DUMPREAL(vertForce);
-					DUMPCOORD3D(&force);
-				}
-				else if (BitIsSet(m_disposition, SEND_IT_UP) )
-				{
-					Real horizForce = 2.0f * m_dispositionIntensity;
-					Real vertForce = 4.0f * m_dispositionIntensity;
-
-					force.x = GameLogicRandomValueReal( -horizForce, horizForce );
-					force.y = GameLogicRandomValueReal( -horizForce, horizForce );
-					force.z = GameLogicRandomValueReal( vertForce * 0.75f, vertForce );
-					DUMPREAL(horizForce);
-					DUMPREAL(vertForce);
-					DUMPCOORD3D(&force);
-				}
-				else
-				{
-					calcRandomForce(m_minMag, m_maxMag, m_minPitch, m_maxPitch, &force);
-					DUMPREAL(m_minMag);
-					DUMPREAL(m_maxMag);
-					DUMPREAL(m_minPitch);
-					DUMPREAL(m_maxPitch);
-					DUMPCOORD3D(&force);
-				}
-				objUp->applyForce(&force);
-				if (m_orientInForceDirection)
-				{
-					orientation = atan2(force.y, force.x);
-				}
-				DUMPREAL(orientation);
-				objUp->setAngles(orientation, 0, 0);
-				objUp->setYawRate(yaw);
-				objUp->setRollRate(roll);
-				objUp->setPitchRate(pitch);
-				DUMPCOORD3D(objUp->getAcceleration());
-				DUMPCOORD3D(objUp->getVelocity());
-				DUMPMATRIX3D(obj->getTransformMatrix());
-
-			}
-		}
-		if( BitIsSet( m_disposition, WHIRLING ) )
-		{
-			PhysicsBehavior* objUp = obj->getPhysics();
-			if (objUp)
-			{
-				Real yaw = GameLogicRandomValueReal( -m_dispositionIntensity, m_dispositionIntensity );
-				Real roll = GameLogicRandomValueReal( -m_dispositionIntensity, m_dispositionIntensity );
-				Real pitch = GameLogicRandomValueReal( -m_dispositionIntensity, m_dispositionIntensity );
-
-				objUp->setYawRate(yaw);
-				objUp->setRollRate(roll);
-				objUp->setPitchRate(pitch);
-			}
-		}
-
-		if( BitIsSet( m_disposition, FLOATING ) )
-		{
-			static NameKeyType key = NAMEKEY( "FloatUpdate" );
-			FloatUpdate *floatUpdate = (FloatUpdate *)obj->findUpdateModule( key );
-
-			if( floatUpdate )
-				floatUpdate->setEnabled( TRUE );
-
-		}
-
-		if( m_containInsideSourceObject )
-		{
-			// The Obj has been totally made, so stuff it inside ourselves if desired.
-			if( sourceObj->getContain()  &&  sourceObj->getContain()->isValidContainerFor(obj, TRUE))
-			{
-				sourceObj->getContain()->addToContain( obj );
-
-				// Need to hide if they are hidden.
-				if( sourceObj->getDrawable() && obj->getDrawable() && sourceObj->getDrawable()->isDrawableEffectivelyHidden() )
-					obj->getDrawable()->setDrawableHidden( TRUE );
-			}
-			else
-			{
-				DEBUG_CRASH(("A OCL with ContainInsideSourceObject failed the contain and is killing the new object."));
-				// If we fail to contain it, we can't just leave it.  Stillborn it.
-#if EXTRA_DEBUG_HELP
-				g_destroyObjectSource.push_back(47);
-#endif
-				TheGameLogic->destroyObject(obj);
-			}
-		}
-
-
-
-    if ( m_diesOnBadLand && obj )
+    //Lorenzen sez:
+    //Since the sneak attack is a structure created with an ocl, it bypasses a lot of the
+    //goodness that it would have gotten from dozerAI::build( the normal way to make structures )
+    // but, since it is a building... lets stamp it down in the pathfind map, here.
+    if ( obj->isKindOf( KINDOF_STRUCTURE ) )
     {
-	    // if we land in the water, we die. alas.
-	    const Coord3D* riderPos = obj->getPosition();
-	    Real waterZ, terrainZ;
-	    if (TheTerrainLogic->isUnderwater(riderPos->x, riderPos->y, &waterZ, &terrainZ)
-			    && riderPos->z <= waterZ + 10.0f
-			    && obj->getLayer() == LAYER_GROUND)
-	    {
-		    // don't call kill(); do it manually, so we can specify DEATH_FLOODED
-		    DamageInfo damageInfo;
-		    damageInfo.in.m_damageType = DAMAGE_WATER;	// use this instead of UNRESISTABLE so we don't get a dusty damage effect
-		    damageInfo.in.m_deathType = DEATH_FLOODED;
-		    damageInfo.in.m_sourceID = INVALID_ID;
-		    damageInfo.in.m_amount = HUGE_DAMAGE_AMOUNT;
-		    obj->attemptDamage( &damageInfo );
-	    }
-
-	    // Kill if materialized on impassable ground
-	    Int cellX = REAL_TO_INT( obj->getPosition()->x / PATHFIND_CELL_SIZE );
-	    Int cellY = REAL_TO_INT( obj->getPosition()->y / PATHFIND_CELL_SIZE );
-
-	    PathfindCell* cell = TheAI->pathfinder()->getCell( obj->getLayer(), cellX, cellY );
-	    PathfindCell::CellType cellType = cell ? cell->getType() : PathfindCell::CELL_IMPASSABLE;
-
-	    // If we land outside the map, we die too.
-	    // Otherwise we exist outside the PartitionManger like a cheater.
-	  if( obj->isOffMap()
-      || (cellType == PathfindCell::CELL_CLIFF)
-      || (cellType == PathfindCell::CELL_WATER)
-      || (cellType == PathfindCell::CELL_IMPASSABLE) )
-	    {
-		    // We are sorry, for reasons beyond our control, we are experiencing technical difficulties. Please die.
-		    obj->kill();
-	    }
-
-  // Note: for future enhancement of this feature, we should test the object against the cell type he is on,
-  // using obj->getAI()->hasLocomotorForSurface( __ ). We cshould not assume here that the object can not
-  // find happiness on cliffs or water or whatever.
-
+	    // Flatten the terrain underneath the object, then adjust to the flattened height. jba.
+	    TheTerrainLogic->flattenTerrain(obj);
+	    Coord3D adjustedPos = *obj->getPosition();
+	    adjustedPos.z = TheTerrainLogic->getGroundHeight(pos->x, pos->y);
+	    obj->setPosition(&adjustedPos);
+	    // Note - very important that we add to map AFTER we flatten terrain. jba.
+	    TheAI->pathfinder()->addObjectToPathfindMap( obj );
 
     }
 
 
 
 
+
+
+
 	}
 
-	Object* reallyCreate(const Coord3D *pos, const Matrix3D *mtx, Real orientation, const Object *sourceObj, UnsignedInt lifetimeFrames ) const
+	if( BitIsSet( m_disposition, ON_GROUND_ALIGNED ) )
 	{
-		static const ThingTemplate* debrisTemplate = TheThingFactory->findTemplate("GenericDebris");
+		chunkPos.z = 99999.0f;
+		PathfindLayerEnum layer = TheTerrainLogic->getHighestLayerForDestination(&chunkPos);
+		obj->setOrientation(GameLogicRandomValueReal(0.0f, 2 * PI));
+		chunkPos.z = TheTerrainLogic->getLayerHeight( chunkPos.x, chunkPos.y, layer );
+		// ensure we are slightly above the bridge, to account for fudge & sloppy art
+		if (layer != LAYER_GROUND)
+			chunkPos.z += 1.0f;
+		obj->setLayer(layer);
+		obj->setPosition(&chunkPos);
+	}
 
-		if (m_names.size() <= 0)
-			return nullptr;
-
-		if (m_requiresLivePlayer && (!sourceObj || !sourceObj->getControllingPlayer() || !sourceObj->getControllingPlayer()->isPlayerActive()))
-			return nullptr; // don't spawn useful objects for dead players.  Avoid the zombie units from Yuri's.
-
-		// Object type debris might need this information to process visual UpgradeModules.
-		Team *debrisOwner = ThePlayerList->getNeutralPlayer() ? ThePlayerList->getNeutralPlayer()->getDefaultTeam() : nullptr;
-
-		if( sourceObj && sourceObj->getControllingPlayer() )
-			debrisOwner = sourceObj->getControllingPlayer()->getDefaultTeam();
-
-		Object* container = nullptr;
-		Object *firstObject = nullptr;
-		if (!m_putInContainer.isEmpty())
+	if( BitIsSet( m_disposition, SEND_IT_OUT ) )
+	{
+		obj->setOrientation(GameLogicRandomValueReal(0.0f, 2 * PI));
+		chunkPos.z = TheTerrainLogic->getGroundHeight( chunkPos.x, chunkPos.y );
+		obj->setPosition(&chunkPos);
+		PhysicsBehavior* objUp = obj->getPhysics();
+		if (objUp)
 		{
-			const ThingTemplate* containerTmpl = TheThingFactory->findTemplate(m_putInContainer);
-			if (containerTmpl)
-			{
-				container = TheThingFactory->newObject( containerTmpl, debrisOwner );
-				if( !container )
-				{
-					DEBUG_CRASH( ("OCL::reallyCreate() failed to create container %s.", m_putInContainer.str() ) );
-					return firstObject;
-				}
-				firstObject = container;
-				container->setProducer(sourceObj);
-			}
+
+			if (!m_nameAreObjects)
+				objUp->setMass( m_mass );
+
+			objUp->setExtraFriction(m_extraFriction);
+
+			Coord3D force;
+			Real horizForce = 4.0f * m_dispositionIntensity;		// 2
+			force.x = GameLogicRandomValueReal( -horizForce, horizForce );
+			force.y = GameLogicRandomValueReal( -horizForce, horizForce );
+			force.z = 0;
+
+			objUp->applyForce(&force);
+			if (m_orientInForceDirection)
+				orientation = atan2(force.y, force.x);
+
 		}
+	}
 
-
-		for (Int nn = 0; nn < m_debrisToGenerate; nn++)
+	if( BitIsSet( m_disposition, SEND_IT_FLYING | SEND_IT_UP | RANDOM_FORCE ) )
+	{
+		if (mtx)
 		{
-			Int pick = GameLogicRandomValue(0, m_names.size() - 1);
+			DUMPMATRIX3D(mtx);
+			obj->setTransformMatrix(mtx);
+		}
+		obj->setPosition(&chunkPos);
+		DUMPCOORD3D(&chunkPos);
+		PhysicsBehavior* objUp = obj->getPhysics();
+		if (objUp)
+		{
 
-			const ThingTemplate* tmpl;
-			if (m_nameAreObjects)
-				tmpl = TheThingFactory->findTemplate(m_names[pick]);
-			else
-			{	//this is using the generic debris type so it's probably safe to
-				//remove if requested by the GameLOD manager.
-				if (TheGameLODManager->isDebrisSkipped())
-					continue;
-
-				tmpl = debrisTemplate;
-			}
-			DEBUG_ASSERTCRASH(tmpl, ("Object %s not found",m_names[pick].str()));
-			if (!tmpl)
-				continue;
-
-			Object *debris = TheThingFactory->newObject( tmpl, debrisOwner );
-			if( !debris )
+			if (!m_nameAreObjects)
 			{
-				DEBUG_CRASH( ("OCL::reallyCreate() failed to create debris %s.", tmpl->getName().str() ) );
+				DUMPREAL(m_mass);
+				objUp->setMass( m_mass );
+			}
+			DEBUG_ASSERTCRASH(objUp->getMass() > 0.0f, ("Zero masses are not allowed for obj!"));
+
+			objUp->setExtraBounciness(m_extraBounciness);
+			objUp->setExtraFriction(m_extraFriction);
+			objUp->setAllowBouncing(true);
+			objUp->setBounceSound(&m_bounceSound);
+			DUMPREAL(m_extraBounciness);
+			DUMPREAL(m_extraFriction);
+
+			// if omitted from INI, calc it based on intensity.
+			Real spinRate		= m_spinRate >= 0.0f ? m_spinRate : (PI/32.0f) * m_dispositionIntensity;
+
+			// Treat these as overrides.
+			Real yawRate		= m_yawRate		>= 0.0f ? m_yawRate		: spinRate;
+			Real rollRate		= m_rollRate	>= 0.0f ? m_rollRate	: spinRate;
+			Real pitchRate	= m_pitchRate >= 0.0f ? m_pitchRate : spinRate;
+
+			DUMPREAL(spinRate);
+			DUMPREAL(yawRate);
+			DUMPREAL(rollRate);
+			DUMPREAL(pitchRate);
+
+			Real yaw = GameLogicRandomValueReal( -yawRate, yawRate );
+			Real roll = GameLogicRandomValueReal( -rollRate, rollRate );
+			Real pitch = GameLogicRandomValueReal( -pitchRate, pitchRate );
+			DUMPREAL(yaw);
+			DUMPREAL(roll);
+			DUMPREAL(pitch);
+
+			Coord3D force;
+			if( BitIsSet( m_disposition, SEND_IT_FLYING ) )
+			{
+				Real horizForce = 4.0f * m_dispositionIntensity;		// 2
+				Real vertForce = 3.0f * m_dispositionIntensity;		// 3
+				force.x = GameLogicRandomValueReal( -horizForce, horizForce );
+				force.y = GameLogicRandomValueReal( -horizForce, horizForce );
+				force.z = GameLogicRandomValueReal( vertForce * 0.33f, vertForce );
+				DUMPREAL(horizForce);
+				DUMPREAL(vertForce);
+				DUMPCOORD3D(&force);
+			}
+			else if (BitIsSet(m_disposition, SEND_IT_UP) )
+			{
+				Real horizForce = 2.0f * m_dispositionIntensity;
+				Real vertForce = 4.0f * m_dispositionIntensity;
+
+				force.x = GameLogicRandomValueReal( -horizForce, horizForce );
+				force.y = GameLogicRandomValueReal( -horizForce, horizForce );
+				force.z = GameLogicRandomValueReal( vertForce * 0.75f, vertForce );
+				DUMPREAL(horizForce);
+				DUMPREAL(vertForce);
+				DUMPCOORD3D(&force);
+			}
+			else
+			{
+				calcRandomForce(m_minMag, m_maxMag, m_minPitch, m_maxPitch, &force);
+				DUMPREAL(m_minMag);
+				DUMPREAL(m_maxMag);
+				DUMPREAL(m_minPitch);
+				DUMPREAL(m_maxPitch);
+				DUMPCOORD3D(&force);
+			}
+			objUp->applyForce(&force);
+			if (m_orientInForceDirection)
+			{
+				orientation = atan2(force.y, force.x);
+			}
+			DUMPREAL(orientation);
+			objUp->setAngles(orientation, 0, 0);
+			objUp->setYawRate(yaw);
+			objUp->setRollRate(roll);
+			objUp->setPitchRate(pitch);
+			DUMPCOORD3D(objUp->getAcceleration());
+			DUMPCOORD3D(objUp->getVelocity());
+			DUMPMATRIX3D(obj->getTransformMatrix());
+
+		}
+	}
+	if( BitIsSet( m_disposition, WHIRLING ) )
+	{
+		PhysicsBehavior* objUp = obj->getPhysics();
+		if (objUp)
+		{
+			Real yaw = GameLogicRandomValueReal( -m_dispositionIntensity, m_dispositionIntensity );
+			Real roll = GameLogicRandomValueReal( -m_dispositionIntensity, m_dispositionIntensity );
+			Real pitch = GameLogicRandomValueReal( -m_dispositionIntensity, m_dispositionIntensity );
+
+			objUp->setYawRate(yaw);
+			objUp->setRollRate(roll);
+			objUp->setPitchRate(pitch);
+		}
+	}
+
+	if( BitIsSet( m_disposition, FLOATING ) )
+	{
+		static NameKeyType key = NAMEKEY( "FloatUpdate" );
+		FloatUpdate *floatUpdate = (FloatUpdate *)obj->findUpdateModule( key );
+
+		if( floatUpdate )
+			floatUpdate->setEnabled( TRUE );
+
+	}
+
+	if( m_containInsideSourceObject )
+	{
+		// The Obj has been totally made, so stuff it inside ourselves if desired.
+		if( sourceObj->getContain()  &&  sourceObj->getContain()->isValidContainerFor(obj, TRUE))
+		{
+			sourceObj->getContain()->addToContain( obj );
+
+			// Need to hide if they are hidden.
+			if( sourceObj->getDrawable() && obj->getDrawable() && sourceObj->getDrawable()->isDrawableEffectivelyHidden() )
+				obj->getDrawable()->setDrawableHidden( TRUE );
+		}
+		else
+		{
+			DEBUG_CRASH(("A OCL with ContainInsideSourceObject failed the contain and is killing the new object."));
+			// If we fail to contain it, we can't just leave it.  Stillborn it.
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource.push_back(47);
+#endif
+			TheGameLogic->destroyObject(obj);
+		}
+	}
+
+
+
+  if ( m_diesOnBadLand && obj )
+  {
+	  // if we land in the water, we die. alas.
+	  const Coord3D* riderPos = obj->getPosition();
+	  Real waterZ, terrainZ;
+	  if (TheTerrainLogic->isUnderwater(riderPos->x, riderPos->y, &waterZ, &terrainZ)
+			  && riderPos->z <= waterZ + 10.0f
+			  && obj->getLayer() == LAYER_GROUND)
+	  {
+		  // don't call kill(); do it manually, so we can specify DEATH_FLOODED
+		  DamageInfo damageInfo;
+		  damageInfo.in.m_damageType = DAMAGE_WATER;	// use this instead of UNRESISTABLE so we don't get a dusty damage effect
+		  damageInfo.in.m_deathType = DEATH_FLOODED;
+		  damageInfo.in.m_sourceID = INVALID_ID;
+		  damageInfo.in.m_amount = HUGE_DAMAGE_AMOUNT;
+		  obj->attemptDamage( &damageInfo );
+	  }
+
+	  // Kill if materialized on impassable ground
+	  Int cellX = REAL_TO_INT( obj->getPosition()->x / PATHFIND_CELL_SIZE );
+	  Int cellY = REAL_TO_INT( obj->getPosition()->y / PATHFIND_CELL_SIZE );
+
+	  PathfindCell* cell = TheAI->pathfinder()->getCell( obj->getLayer(), cellX, cellY );
+	  PathfindCell::CellType cellType = cell ? cell->getType() : PathfindCell::CELL_IMPASSABLE;
+
+	  // If we land outside the map, we die too.
+	  // Otherwise we exist outside the PartitionManger like a cheater.
+	if( obj->isOffMap()
+    || (cellType == PathfindCell::CELL_CLIFF)
+    || (cellType == PathfindCell::CELL_WATER)
+    || (cellType == PathfindCell::CELL_IMPASSABLE) )
+	  {
+		  // We are sorry, for reasons beyond our control, we are experiencing technical difficulties. Please die.
+		  obj->kill();
+	  }
+
+// Note: for future enhancement of this feature, we should test the object against the cell type he is on,
+// using obj->getAI()->hasLocomotorForSurface( __ ). We cshould not assume here that the object can not
+// find happiness on cliffs or water or whatever.
+
+
+  }
+
+
+
+
+}
+
+Object* GenericObjectCreationNugget::reallyCreate(const Coord3D *pos, const Matrix3D *mtx, Real orientation, const Object *sourceObj, UnsignedInt lifetimeFrames ) const
+{
+	static const ThingTemplate* debrisTemplate = TheThingFactory->findTemplate("GenericDebris");
+
+	if (m_names.size() <= 0)
+		return nullptr;
+
+	if (m_requiresLivePlayer && (!sourceObj || !sourceObj->getControllingPlayer() || !sourceObj->getControllingPlayer()->isPlayerActive()))
+		return nullptr; // don't spawn useful objects for dead players.  Avoid the zombie units from Yuri's.
+
+	// Object type debris might need this information to process visual UpgradeModules.
+	Team *debrisOwner = ThePlayerList->getNeutralPlayer() ? ThePlayerList->getNeutralPlayer()->getDefaultTeam() : nullptr;
+
+	if( sourceObj && sourceObj->getControllingPlayer() )
+		debrisOwner = sourceObj->getControllingPlayer()->getDefaultTeam();
+
+	Object* container = nullptr;
+	Object *firstObject = nullptr;
+	if (!m_putInContainer.isEmpty())
+	{
+		const ThingTemplate* containerTmpl = TheThingFactory->findTemplate(m_putInContainer);
+		if (containerTmpl)
+		{
+			container = TheThingFactory->newObject( containerTmpl, debrisOwner );
+			if( !container )
+			{
+				DEBUG_CRASH( ("OCL::reallyCreate() failed to create container %s.", m_putInContainer.str() ) );
 				return firstObject;
 			}
-			if( !firstObject )
+			firstObject = container;
+			container->setProducer(sourceObj);
+		}
+	}
+
+
+	for (Int nn = 0; nn < m_debrisToGenerate; nn++)
+	{
+		Int pick = GameLogicRandomValue(0, m_names.size() - 1);
+
+		const ThingTemplate* tmpl;
+		if (m_nameAreObjects)
+			tmpl = TheThingFactory->findTemplate(m_names[pick]);
+		else
+		{	//this is using the generic debris type so it's probably safe to
+			//remove if requested by the GameLOD manager.
+			if (TheGameLODManager->isDebrisSkipped())
+				continue;
+
+			tmpl = debrisTemplate;
+		}
+		DEBUG_ASSERTCRASH(tmpl, ("Object %s not found",m_names[pick].str()));
+		if (!tmpl)
+			continue;
+
+		Object *debris = TheThingFactory->newObject( tmpl, debrisOwner );
+		if( !debris )
+		{
+			DEBUG_CRASH( ("OCL::reallyCreate() failed to create debris %s.", tmpl->getName().str() ) );
+			return firstObject;
+		}
+		if( !firstObject )
+		{
+			firstObject = debris;
+		}
+		debris->setProducer(sourceObj);
+		if (m_preserveLayer && sourceObj != nullptr && container == nullptr)
+		{
+			PathfindLayerEnum layer = sourceObj->getLayer();
+			if (layer != LAYER_GROUND)
+				debris->setLayer(layer);
+		}
+
+		if (container != nullptr && container->getContain() != nullptr && container->getContain()->isValidContainerFor(debris, true))
+			container->getContain()->addToContain(debris);
+
+		// if we want the objects being created to appear in a spread formation
+		// PLEASE NOTE --> if/when the object placement logic is modified so that
+		// objects that are placed in the same location are no longer placed in a
+		// diagonal line but rather in random locations nearby, this logic will no
+		// longer be necessary and can be taken out -- amit
+		if (m_spreadFormation)
+		{
+			FindPositionOptions fpOptions;
+			fpOptions.minRadius = GameLogicRandomValueReal(m_minDistanceAFormation, m_minDistanceBFormation);
+			fpOptions.maxRadius = m_maxDistanceFormation;
+			fpOptions.flags = FPF_USE_HIGHEST_LAYER;
+
+			// TheSuperHackers @bugfix Caball009 12/01/2026 Position variable needs to be initialized before use.
+			// The non-deterministic behavior for retail clients cannot be fixed, so this will remain a source of potential mismatches for unpatched clients.
+			// Fall back to the center position if no valid position was found, so that the behavior is deterministic for patched clients.
+			Coord3D resultPos = *pos;
+
+			if (!ThePartitionManager->findPositionAround(pos, &fpOptions, &resultPos))
 			{
-				firstObject = debris;
-			}
-			debris->setProducer(sourceObj);
-			if (m_preserveLayer && sourceObj != nullptr && container == nullptr)
-			{
-				PathfindLayerEnum layer = sourceObj->getLayer();
-				if (layer != LAYER_GROUND)
-					debris->setLayer(layer);
-			}
-
-			if (container != nullptr && container->getContain() != nullptr && container->getContain()->isValidContainerFor(debris, true))
-				container->getContain()->addToContain(debris);
-
-			// if we want the objects being created to appear in a spread formation
-			// PLEASE NOTE --> if/when the object placement logic is modified so that
-			// objects that are placed in the same location are no longer placed in a
-			// diagonal line but rather in random locations nearby, this logic will no
-			// longer be necessary and can be taken out -- amit
-			if (m_spreadFormation)
-			{
-				FindPositionOptions fpOptions;
-				fpOptions.minRadius = GameLogicRandomValueReal(m_minDistanceAFormation, m_minDistanceBFormation);
-				fpOptions.maxRadius = m_maxDistanceFormation;
-				fpOptions.flags = FPF_USE_HIGHEST_LAYER;
-
-				// TheSuperHackers @bugfix Caball009 12/01/2026 Position variable needs to be initialized before use.
-				// The non-deterministic behavior for retail clients cannot be fixed, so this will remain a source of potential mismatches for unpatched clients.
-				// Fall back to the center position if no valid position was found, so that the behavior is deterministic for patched clients.
-				Coord3D resultPos = *pos;
-
-				if (!ThePartitionManager->findPositionAround(pos, &fpOptions, &resultPos))
-				{
-					DEBUG_ASSERTCRASH(resultPos == *pos, ("Position should not have been changed"));
+				DEBUG_ASSERTCRASH(resultPos == *pos, ("Position should not have been changed"));
 
 #if RETAIL_COMPATIBLE_CRC
-					DEBUG_CRASH(("A mismatch is likely to happen if this code path is used in a match with unpatched clients."));
+				DEBUG_CRASH(("A mismatch is likely to happen if this code path is used in a match with unpatched clients."));
 #endif
-				}
-				doStuffToObj( debris, m_names[pick], &resultPos, mtx, orientation, sourceObj, lifetimeFrames );
 			}
-			else
-			{
-				// do stuff to contained objects too
-				doStuffToObj( debris, m_names[pick], pos, mtx, orientation, sourceObj, lifetimeFrames );
-			}
-
-			if (m_fadeIn)
-			{
-				AudioEventRTS fadeAudioEvent(m_fadeSoundName);
-				fadeAudioEvent.setObjectID(sourceObj->getID());
-				TheAudio->addAudioEvent(&fadeAudioEvent);
-				debris->getDrawable()->fadeIn(m_fadeFrames);
-			}
-
-			if (m_fadeOut)
-			{
-				AudioEventRTS fadeAudioEvent(m_fadeSoundName);
-				fadeAudioEvent.setObjectID(sourceObj->getID());
-				TheAudio->addAudioEvent(&fadeAudioEvent);
-				debris->getDrawable()->fadeOut(m_fadeFrames);
-			}
+			doStuffToObj( debris, m_names[pick], &resultPos, mtx, orientation, sourceObj, lifetimeFrames );
 		}
+		else
+		{
+			// do stuff to contained objects too
+			doStuffToObj( debris, m_names[pick], pos, mtx, orientation, sourceObj, lifetimeFrames );
+		}
+
+		if (m_fadeIn)
+		{
+			AudioEventRTS fadeAudioEvent(m_fadeSoundName);
+			fadeAudioEvent.setObjectID(sourceObj->getID());
+			TheAudio->addAudioEvent(&fadeAudioEvent);
+			debris->getDrawable()->fadeIn(m_fadeFrames);
+		}
+
+		if (m_fadeOut)
+		{
+			AudioEventRTS fadeAudioEvent(m_fadeSoundName);
+			fadeAudioEvent.setObjectID(sourceObj->getID());
+			TheAudio->addAudioEvent(&fadeAudioEvent);
+			debris->getDrawable()->fadeOut(m_fadeFrames);
+		}
+	}
 
 #if !(RETAIL_COMPATIBLE_CRC || PRESERVE_NO_XP_FROM_OCL_KILLS)
-		//MODDD - added null check. 'firstObject' can be null during the Generals ZH shell map, at least in the ProGen mod.
-		if (firstObject != nullptr)
-		{
-			ObjectID sinkID = sourceObj->getExperienceTracker()->getExperienceSink();
-			firstObject->getExperienceTracker()->setExperienceSink(sinkID != INVALID_ID ? sinkID : sourceObj->getID());
-		}
+	//MODDD - added null check. 'firstObject' can be null during the Generals ZH shell map, at least in the ProGen mod.
+	if (firstObject != nullptr)
+	{
+		ObjectID sinkID = sourceObj->getExperienceTracker()->getExperienceSink();
+		firstObject->getExperienceTracker()->setExperienceSink(sinkID != INVALID_ID ? sinkID : sourceObj->getID());
+	}
 #endif
 
-		if (container)
-			doStuffToObj( container, AsciiString::TheEmptyString, pos, mtx, orientation, sourceObj, lifetimeFrames );
+	if (container)
+		doStuffToObj( container, AsciiString::TheEmptyString, pos, mtx, orientation, sourceObj, lifetimeFrames );
 
-		return firstObject;
-	}
+	return firstObject;
+}
 
-	static void parseDebrisObjectNames( INI* ini, void *instance, void *store, const void* /*userData*/ )
+void GenericObjectCreationNugget::parseDebrisObjectNames( INI* ini, void *instance, void *store, const void* /*userData*/ )
+{
+	GenericObjectCreationNugget* debrisNugget = (GenericObjectCreationNugget*)instance;
+	for (const char* token = ini->getNextToken(); token; token = ini->getNextTokenOrNull())
 	{
-		GenericObjectCreationNugget* debrisNugget = (GenericObjectCreationNugget*)instance;
-		for (const char* token = ini->getNextToken(); token; token = ini->getNextTokenOrNull())
-		{
-			if (TheGlobalData->m_preloadAssets)
-				debrisModelNamesGlobalHack.push_back(token);
-			debrisNugget->m_names.push_back(AsciiString(token));
+		if (TheGlobalData->m_preloadAssets)
+			debrisModelNamesGlobalHack.push_back(token);
+		debrisNugget->m_names.push_back(AsciiString(token));
 
 #if RETAIL_COMPATIBLE_CRC
-			token = ini->getNextTokenOrNull();
+		token = ini->getNextTokenOrNull();
 #endif
-		}
 	}
-
-private:
-	struct AnimSet
-	{
-		AsciiString								m_animInitial;
-		AsciiString								m_animFlying;
-		AsciiString								m_animFinal;
-	};
-	std::vector<AsciiString>	m_names;
-	AsciiString								m_putInContainer;
-	std::vector<AnimSet>			m_animSets;
-	const FXList*							m_fxFinal;
-	AsciiString								m_particleSysName;
-	Int												m_debrisToGenerate;
-	Real											m_mass;
-	Real											m_extraBounciness;
-	Real											m_extraFriction;
-	Coord3D										m_offset;
-	DebrisDisposition					m_disposition;
-	Real											m_dispositionIntensity;
-	Real											m_spinRate;
-	Real											m_yawRate;
-	Real											m_rollRate;
-	Real											m_pitchRate;
-	Real											m_minMag, m_maxMag;
-	Real											m_minPitch, m_maxPitch;
-	UnsignedInt								m_minFrames, m_maxFrames;
-	ShadowType								m_shadowType;
-	StaticGameLODLevel				m_minLODRequired;
-	UnsignedInt								m_invulnerableTime;
-	Real											m_minHealth;
-	Real											m_maxHealth;
-	UnsignedInt								m_fadeFrames;
-	AsciiString								m_fadeSoundName;
-	Real											m_minDistanceAFormation;
-	Real											m_minDistanceBFormation;
-	Real											m_maxDistanceFormation;
-	Int												m_objectCount; // how many objects will there be?
-	AudioEventRTS							m_bounceSound;
-	Bool											m_requiresLivePlayer;
-	Bool											m_containInsideSourceObject; ///< The created stuff will be added to the Contain module of the SourceObject
-	Bool											m_preserveLayer;
-	Bool											m_nameAreObjects;
-	Bool											m_okToChangeModelColor;
-	Bool											m_orientInForceDirection;
-	Bool											m_spreadFormation;
-	Bool											m_fadeIn;
-	Bool											m_fadeOut;
-	Bool											m_ignorePrimaryObstacle;
-	Bool											m_inheritsVeterancy;
-  Bool                      m_diesOnBadLand;
-	Bool											m_skipIfSignificantlyAirborne;
-
-};
-EMPTY_DTOR(GenericObjectCreationNugget)
+}
+//MODDD - field declarations moved
+//MODDD - 'EMPTY_DTOR(GenericObjectCreationNugget)' moved
+//-------------------------------------------------------------------------------------------------
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -1634,6 +1568,12 @@ void ObjectCreationListStore::addObjectCreationNugget(ObjectCreationNugget* nugg
 	NameKeyType key = TheNameKeyGenerator->nameToKey(c);
 	ObjectCreationList& ocl = TheObjectCreationListStore->m_ocls[key];
 	ocl.clear();
+
+	//MODDD - extra debugging feature - let an OCL be aware of its own name without any context
+#if defined(RTS_DEBUG) || DEBUG_HELP_FOR_RELEASE
+	ocl.m_nameFromINI.set(c);
+#endif
+
 	ini->initFromINI(&ocl, TheObjectCreationListFieldParse);
 }
 
