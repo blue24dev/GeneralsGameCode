@@ -18,5 +18,17 @@
 
 #pragma once
 
-#include "CppMacros.h"
-#include "CppTypes.h"
+#ifdef __cplusplus
+
+	#include "CppMacros.h"
+	#include "CppTypes.h"
+
+#else
+
+	#if !(defined(_MSC_VER) && _MSC_VER < 1300)
+		#include <stdbool.h>
+	#endif
+
+#endif // __cplusplus
+
+#include "stdint_adapter.h"

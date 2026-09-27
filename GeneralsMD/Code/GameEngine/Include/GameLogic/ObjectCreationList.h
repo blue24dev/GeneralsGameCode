@@ -46,7 +46,23 @@ class Object;
 enum OCLNuggetType CPP_11(: Int)
 {
 	OCL_NUGGET_TYPE_GENERIC,
-	OCL_NUGGET_TYPE_DELIVER_PAYLOAD
+	OCL_NUGGET_TYPE_DELIVER_PAYLOAD,
+	OCL_NUGGET_TYPE_CREATE_OBJECT,
+	OCL_NUGGET_TYPE_CREATE_DEBRIS
+};
+
+//MODDD - moved enum from ObjectCreationList.cpp to here
+enum DebrisDisposition CPP_11(: Int)
+{
+	LIKE_EXISTING						= 0x00000001,
+	ON_GROUND_ALIGNED				= 0x00000002,
+	SEND_IT_FLYING					= 0x00000004,
+	SEND_IT_UP							= 0x00000008,
+	SEND_IT_OUT							= 0x00000010,
+	RANDOM_FORCE						= 0x00000020,
+	FLOATING								= 0x00000040,
+	INHERIT_VELOCITY				= 0x00000080,
+	WHIRLING								= 0x00000100
 };
 
 //MODDD - moved typedefs that were inside classes to here
@@ -141,9 +157,20 @@ class ObjectCreationList
 {
 
 public:
+
+	//MODDD - constructor
+	ObjectCreationList()
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+		:
+		m_checkForRenewableMoneySource(false)
+#endif
+	{
+		// empty
+	}
 	
 	//MODDD - getter for hackery
 	ObjectCreationNuggetVector* getNuggetList() { return &m_nuggets; }
+	const ObjectCreationNuggetVector* getNuggetList() const { return &m_nuggets; }
 
 	/**
 		Toss the contents.
@@ -185,6 +212,17 @@ public:
 	}
 
 protected:
+
+public:
+	//MODDD - extra debugging feature - let an OCL be aware of its own name without any context
+#if defined(RTS_DEBUG) || DEBUG_HELP_FOR_RELEASE
+	AsciiString m_nameFromINI;
+#endif
+
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	//MODDD - something for hackery
+	bool m_checkForRenewableMoneySource;
+#endif
 
 private:
 
