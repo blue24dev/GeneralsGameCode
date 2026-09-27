@@ -21,8 +21,6 @@
 // NewHeightMap.h : header file
 //
 
-#include "Lib/BaseType.h"
-
 //MODDD - added 'TNewHeightInfo_s' name
 typedef struct TNewHeightInfo_s {
 	Int xExtent;
