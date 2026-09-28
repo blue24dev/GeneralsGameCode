@@ -1088,8 +1088,8 @@ ObjectID ChinookAIUpdate::getBuildingToNotPathAround() const
 AIFreeToExitType ChinookAIUpdate::getAiFreeToExit(const Object* exiter) const
 {
 #if RETAIL_COMPATIBLE_CRC
-	 if (m_flightStatus == CHINOOK_LANDED
-				|| (m_flightStatus == CHINOOK_DOING_COMBAT_DROP && exiter->isKindOf(KINDOF_CAN_RAPPEL)))
+	 if (m_flightStatus == CHINOOK_LANDED ||
+				(m_flightStatus == CHINOOK_DOING_COMBAT_DROP && exiter->isKindOf(KINDOF_CAN_RAPPEL)))
 #else
 	if (m_flightStatus == CHINOOK_LANDED)
 #endif
@@ -1561,10 +1561,10 @@ void ChinookAIUpdate::privateAttackObject( Object *victim, Int maxShotsToFire, C
 				  // If I am an overlord with a gattling upgrade, I do not tell it to fire if it is disabled
 				  if ( passenger->isKindOf( KINDOF_PORTABLE_STRUCTURE ) )
 				  {
-					  if( passenger->isDisabledByType( DISABLED_HACKED )
-						  || passenger->isDisabledByType( DISABLED_EMP )
-						  || passenger->isDisabledByType( DISABLED_SUBDUED )
-						  || passenger->isDisabledByType( DISABLED_PARALYZED) )
+					  if( passenger->isDisabledByType( DISABLED_HACKED ) ||
+						  passenger->isDisabledByType( DISABLED_EMP ) ||
+						  passenger->isDisabledByType( DISABLED_SUBDUED ) ||
+						  passenger->isDisabledByType( DISABLED_PARALYZED) )
 						  continue;
 				  }
 
@@ -1594,12 +1594,12 @@ void ChinookAIUpdate::private___TellPortableStructureToAttackWithMe( Object *vic
 	{
     //--------- THE GATTLING UPGRADE OR THE GUYS IN THE BUNKER_NOT_A_BUNKER-------------
     Object *rider = (Object*)contain->friend_getRider();
-		if ( rider
-      && rider->isKindOf( KINDOF_PORTABLE_STRUCTURE )
-      && !rider->isDisabledByType( DISABLED_HACKED )
-			&& !rider->isDisabledByType( DISABLED_EMP )
-			&& !rider->isDisabledByType( DISABLED_SUBDUED )
-			&& !rider->isDisabledByType( DISABLED_PARALYZED) )
+		if ( rider &&
+      rider->isKindOf( KINDOF_PORTABLE_STRUCTURE ) &&
+      !rider->isDisabledByType( DISABLED_HACKED ) &&
+			!rider->isDisabledByType( DISABLED_EMP ) &&
+			!rider->isDisabledByType( DISABLED_SUBDUED ) &&
+			!rider->isDisabledByType( DISABLED_PARALYZED) )
     {
 			AIUpdateInterface *riderAI = rider->getAIUpdateInterface();
 			if( riderAI )
@@ -1649,10 +1649,10 @@ void ChinookAIUpdate::privateForceAttackObject( Object *victim, Int maxShotsToFi
 				  // If I am an overlord with a gattling upgrade, I do not tell it to fire if it is disabled
 				  if ( passenger->isKindOf( KINDOF_PORTABLE_STRUCTURE ) )
 				  {
-					  if( passenger->isDisabledByType( DISABLED_HACKED )
-						  || passenger->isDisabledByType( DISABLED_EMP )
-						  || passenger->isDisabledByType( DISABLED_SUBDUED )
-						  || passenger->isDisabledByType( DISABLED_PARALYZED) )
+					  if( passenger->isDisabledByType( DISABLED_HACKED ) ||
+						  passenger->isDisabledByType( DISABLED_EMP ) ||
+						  passenger->isDisabledByType( DISABLED_SUBDUED ) ||
+						  passenger->isDisabledByType( DISABLED_PARALYZED) )
 						  continue;
 				  }
 
@@ -1668,12 +1668,12 @@ void ChinookAIUpdate::privateForceAttackObject( Object *victim, Int maxShotsToFi
 
       //--------- THE GATTLING UPGRADE OR THE GUYS IN THE BUNKER_NOT_A_BUNKER-------------
       Object *rider = (Object*)contain->friend_getRider();
-			if ( rider
-        && rider->isKindOf( KINDOF_PORTABLE_STRUCTURE )
-        && !rider->isDisabledByType( DISABLED_HACKED )
-				&& !rider->isDisabledByType( DISABLED_EMP )
-				&& !rider->isDisabledByType( DISABLED_SUBDUED )
-				&& !rider->isDisabledByType( DISABLED_PARALYZED) )
+			if ( rider &&
+        rider->isKindOf( KINDOF_PORTABLE_STRUCTURE ) &&
+        !rider->isDisabledByType( DISABLED_HACKED ) &&
+				!rider->isDisabledByType( DISABLED_EMP ) &&
+				!rider->isDisabledByType( DISABLED_SUBDUED ) &&
+				!rider->isDisabledByType( DISABLED_PARALYZED) )
       {
 				AIUpdateInterface *riderAI = rider->getAIUpdateInterface();
 				if( riderAI )
@@ -1727,10 +1727,10 @@ void ChinookAIUpdate::privateAttackPosition( const Coord3D *pos, Int maxShotsToF
           // If I am an overlord with a gattling upgrade, I do not tell it ti fire if it is disabled
 				  if ( passenger->isKindOf( KINDOF_PORTABLE_STRUCTURE ) )
 				  {
-					  if( passenger->isDisabledByType( DISABLED_HACKED )
-						  || passenger->isDisabledByType( DISABLED_EMP)
-						  || passenger->isDisabledByType( DISABLED_SUBDUED)
-						  || passenger->isDisabledByType( DISABLED_PARALYZED) )
+					  if( passenger->isDisabledByType( DISABLED_HACKED ) ||
+						  passenger->isDisabledByType( DISABLED_EMP) ||
+						  passenger->isDisabledByType( DISABLED_SUBDUED) ||
+						  passenger->isDisabledByType( DISABLED_PARALYZED) )
 						  continue;
 				  }
 
@@ -1745,12 +1745,12 @@ void ChinookAIUpdate::privateAttackPosition( const Coord3D *pos, Int maxShotsToF
 
       //--------- THE GATTLING UPGRADE OR THE GUYS IN THE BUNKER_NOT_A_BUNKER-------------
       Object *rider = (Object*)contain->friend_getRider();
-			if ( rider
-        && rider->isKindOf( KINDOF_PORTABLE_STRUCTURE )
-        && !rider->isDisabledByType( DISABLED_HACKED )
-				&& !rider->isDisabledByType( DISABLED_EMP )
-				&& !rider->isDisabledByType( DISABLED_SUBDUED )
-				&& !rider->isDisabledByType( DISABLED_PARALYZED) )
+			if ( rider &&
+        rider->isKindOf( KINDOF_PORTABLE_STRUCTURE ) &&
+        !rider->isDisabledByType( DISABLED_HACKED ) &&
+				!rider->isDisabledByType( DISABLED_EMP ) &&
+				!rider->isDisabledByType( DISABLED_SUBDUED ) &&
+				!rider->isDisabledByType( DISABLED_PARALYZED) )
       {
 				AIUpdateInterface *riderAI = rider->getAIUpdateInterface();
 				if( riderAI )

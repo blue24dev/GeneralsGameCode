@@ -236,17 +236,9 @@ void ExperienceTracker::addExperiencePoints( Int experienceGain, Bool canScaleFo
 
 	Int levelIndex = 0;
 	//MODDD - replaced 'm_parent' with 'experienceReqSource' per above
-	// ---
-	/*
-	while( ( (levelIndex + 1) < LEVEL_COUNT)
-		&&  m_currentExperience >= m_parent->getTemplate()->getExperienceRequired(levelIndex + 1)
+	while( ( (levelIndex + 1) < LEVEL_COUNT) &&
+		m_currentExperience >= experienceReqSource->getTemplate()->getExperienceRequired(levelIndex + 1)
 		)
-	*/
-	// ---
-	while( ( (levelIndex + 1) < LEVEL_COUNT)
-		&&  m_currentExperience >= experienceReqSource->getTemplate()->getExperienceRequired(levelIndex + 1)
-		)
-	// ---
 	{
 		// If there is a higher level to qualify for, and I qualify for it, advance the index
 		levelIndex++;
@@ -284,8 +276,8 @@ void ExperienceTracker::setExperienceAndLevel( Int experienceIn, Bool provideFee
 	m_currentExperience = experienceIn;
 
 	Int levelIndex = 0;
-	while( ( (levelIndex + 1) < LEVEL_COUNT)
-		&&  m_currentExperience >= m_parent->getTemplate()->getExperienceRequired(levelIndex + 1)
+	while( ( (levelIndex + 1) < LEVEL_COUNT) &&
+		m_currentExperience >= m_parent->getTemplate()->getExperienceRequired(levelIndex + 1)
 		)
 	{
 		// If there is a level to qualify for, and I qualify for it, advance the index

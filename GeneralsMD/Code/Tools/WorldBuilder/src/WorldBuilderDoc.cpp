@@ -334,7 +334,8 @@ void CWorldBuilderDoc::Serialize(CArchive& ar)
 			pStrm->absoluteSeek(0);
 			try {
 				DataChunkInput file( pStrm );
-				if (file.isValidFileType()) {	// Backwards compatible files aren't valid data chunk files.
+				if (file.isValidFileType()) {
+					// Backwards compatible files aren't valid data chunk files.
 					// Read the waypoints.
 					file.registerParser( "WaypointsList", AsciiString::TheEmptyString, ParseWaypointDataChunk );
 					if (!file.parse(this)) {
@@ -1063,7 +1064,8 @@ void CWorldBuilderDoc::OnTsCanonical()
 
 		WorldHeightMapEdit *htMapEditCopy = GetHeightMap()->duplicate();
 		if (htMapEditCopy == nullptr) return;
-		if (htMapEditCopy->optimizeTiles()) {  // does all the work.
+		if (htMapEditCopy->optimizeTiles()) {
+			// does all the work.
 			IRegion2D partialRange = {0,0,0,0};
 			updateHeightMap(htMapEditCopy, false, partialRange);
 			WBDocUndoable *pUndo = new WBDocUndoable(this, htMapEditCopy);
@@ -1103,7 +1105,8 @@ void CWorldBuilderDoc::OnFileResize()
 	Coord3D objOffset;
 	Coord3D absChange;
 	if (htMapEditCopy->resize(hi.xExtent, hi.yExtent, hi.initialHeight, hi.borderWidth,
-		hi.anchorTop, hi.anchorBottom, hi.anchorLeft, hi.anchorRight, &objOffset, &absChange)) {  // does all the work.
+		hi.anchorTop, hi.anchorBottom, hi.anchorLeft, hi.anchorRight, &objOffset, &absChange)) {
+			// does all the work.
 		WBDocUndoable *pUndo = new WBDocUndoable(this, htMapEditCopy, &objOffset, &absChange);
 		this->AddAndDoUndoable(pUndo);
 		REF_PTR_RELEASE(pUndo); // belongs to this now.
@@ -1131,7 +1134,8 @@ void CWorldBuilderDoc::OnTsRemap()
 	if (m_heightMap) {
 		WorldHeightMapEdit *htMapEditCopy = GetHeightMap()->duplicate();
 		if (htMapEditCopy == nullptr) return;
-		if (htMapEditCopy->remapTextures()) {  // does all the work.
+		if (htMapEditCopy->remapTextures()) {
+			// does all the work.
 			IRegion2D partialRange = {0,0,0,0};
 			updateHeightMap(htMapEditCopy, false, partialRange);
 			WBDocUndoable *pUndo = new WBDocUndoable(this, htMapEditCopy);
@@ -2624,7 +2628,8 @@ void CWorldBuilderDoc::OnRemoveclifftexmapping()
 
 			WorldHeightMapEdit *htMapEditCopy = GetHeightMap()->duplicate();
 			if (htMapEditCopy == nullptr) return;
-			if (htMapEditCopy->removeCliffMapping()) {  // does all the work.
+			if (htMapEditCopy->removeCliffMapping()) {
+				// does all the work.
 				IRegion2D partialRange = {0,0,0,0};
 				updateHeightMap(htMapEditCopy, false, partialRange);
 				WBDocUndoable *pUndo = new WBDocUndoable(this, htMapEditCopy);
