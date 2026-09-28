@@ -156,6 +156,12 @@ void InstantDeathBehavior::onDie( const DamageInfo *damageInfo )
 		const OCLVec& v = d->m_ocls;
 		DEBUG_ASSERTCRASH(idx>=0&&idx<v.size(),("bad idx"));
 		const ObjectCreationList* ocl = v[idx];
+		//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+		if (getObject()->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
+			ObjectCreationList::create_RECoMCCiO(ocl, getObject(), nullptr, 0, getObject()->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex);
+		else
+#endif
 		ObjectCreationList::create(ocl, getObject(), nullptr);
 	}
 

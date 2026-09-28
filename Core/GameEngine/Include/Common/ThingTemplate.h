@@ -788,6 +788,11 @@ private:
 
 	//MODDD
 	Bool m_hasInactiveBodyModule;
+	//MODDD - for hackery
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	public: Bool m_isRenewableMoneyOCLSource;
+	private:
+#endif
 
 	// ---- Byte-sized things
 	Byte					m_radarPriority;						///< does object appear on radar, and if so at what priority

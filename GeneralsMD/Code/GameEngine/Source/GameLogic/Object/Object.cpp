@@ -768,6 +768,10 @@ void Object::initConstructor(const ThingTemplate* tt)
 
 	//MODDD - NEW. well gee, I would certainly hope not this early
 	m_calledForDeletion = false;
+	//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = -1;
+#endif
 	
 	// Force the thing template to use the most overridden version of itself - jkmcd
 	// Note that after this, the object will be using m_template, which forces the usage of the
