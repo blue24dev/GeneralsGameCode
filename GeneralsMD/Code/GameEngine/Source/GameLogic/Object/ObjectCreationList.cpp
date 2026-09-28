@@ -111,6 +111,14 @@ Object* ObjectCreationNugget::create( Object* primary, const Object* secondary, 
 	return create( primary, primary ? primary->getPosition() : nullptr, secondary ? secondary->getPosition() : nullptr, INVALID_ANGLE, lifetimeFrames );
 }
 
+//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+Object* ObjectCreationNugget::create_RECoMCCiO( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+{
+	return create_RECoMCCiO( primary, primary ? primary->getPosition() : nullptr, secondary ? secondary->getPosition() : nullptr, INVALID_ANGLE, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+}
+#endif
+
 //-------------------------------------------------------------------------------------------------
 //MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
 //void ObjectCreationNugget::create( Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames ) const
@@ -274,9 +282,30 @@ Object* DeliverPayloadNugget::create(Object *primaryObj, const Coord3D *primary,
 	return create( primaryObj, primary, secondary, true, lifetimeFrames );
 }
 
+//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+Object* DeliverPayloadNugget::create_RECoMCCiO(Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+{
+	return create_RECoMCCiO( primaryObj, primary, secondary, true, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+}
+#endif
+
 //MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
 // (default arg on 'lifetimeFrames' removed - see new '.h' file)
+//MODDD - adding 'runExtraChecksOnMoneyCrateCollideInObjs_playerIndex' to the main overload, letting it redirect to this to avoid copy/pasting a huge method
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+// original main overload for redirection
 Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames ) const
+{
+	return create_RECoMCCiO(primaryObj, primary, secondary, createOwner, lifetimeFrames, -1);
+}
+
+// main overload modified
+Object* DeliverPayloadNugget::create_RECoMCCiO(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+#else
+// original main overload untouched
+Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames ) const
+#endif
 {
 	if (!primaryObj || !primary || !secondary)
 	{
@@ -405,6 +434,15 @@ Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary,
 			transport = (Object*)primaryObj;
 		}
 
+		//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+		if (runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
+		{
+			// pass it on
+			transport->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
+		}
+#endif
+
 		// Notify special power tracking
 		SpecialPowerCompletionDie *die = transport->findSpecialPowerCompletionDie();
 		if (die)
@@ -458,6 +496,15 @@ Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary,
 				for (int i = 0; i < it->m_payloadCount; ++i)
 				{
 					Object* payload = TheThingFactory->newObject( payloadTmpl, owner );
+					//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+					if (runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
+					{
+						// pass it on
+						payload->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
+					}
+#endif
+
 					payload->setPosition(&startPos);
 					payload->setProducer(transport);
 
@@ -767,6 +814,25 @@ Object* GenericObjectCreationNugget::create(Object* primary, const Object* secon
 	return nullptr;
 }
 
+//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+Object* GenericObjectCreationNugget::create_RECoMCCiO(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+{
+	if (primary)
+	{
+		if (m_skipIfSignificantlyAirborne && primary->isSignificantlyAboveTerrain())
+			return nullptr;
+
+		return reallyCreate_RECoMCCiO( primary->getPosition(), primary->getTransformMatrix(), primary->getOrientation(), primary, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+	}
+	else
+	{
+		DEBUG_CRASH(("You must have a primary source for this effect"));
+	}
+	return nullptr;
+}
+#endif
+
 //MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
 Object* GenericObjectCreationNugget::create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames ) const
 {
@@ -786,6 +852,28 @@ Object* GenericObjectCreationNugget::create(Object* primaryObj, const Coord3D *p
 	}
 	return nullptr;
 }
+
+//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+Object* GenericObjectCreationNugget::create_RECoMCCiO(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+{
+	if (primary)
+	{
+		const Matrix3D *xfrm = nullptr;
+		if( angle == INVALID_ANGLE )
+		{
+			//Vast majority of OCL's don't care about the angle, so if it comes in invalid, default the angle to 0.
+			angle = 0.0f;
+		}
+		return reallyCreate_RECoMCCiO( primary, xfrm, angle, primaryObj, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+	}
+	else
+	{
+		DEBUG_CRASH(("You must have a primary source for this effect"));
+	}
+	return nullptr;
+}
+#endif
 
 const FieldParse* GenericObjectCreationNugget::getCommonFieldParse()
 {
@@ -1281,7 +1369,20 @@ void GenericObjectCreationNugget::doStuffToObj(
 
 }
 
+//MODDD - adding 'runExtraChecksOnMoneyCrateCollideInObjs_playerIndex' to the main overload, letting it redirect to this to avoid copy/pasting a huge method
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+// original main overload for redirection
 Object* GenericObjectCreationNugget::reallyCreate(const Coord3D *pos, const Matrix3D *mtx, Real orientation, const Object *sourceObj, UnsignedInt lifetimeFrames ) const
+{
+	return reallyCreate_RECoMCCiO(pos, mtx, orientation, sourceObj, lifetimeFrames, -1);
+}
+
+// main overload modified
+Object* GenericObjectCreationNugget::reallyCreate_RECoMCCiO(const Coord3D *pos, const Matrix3D *mtx, Real orientation, const Object *sourceObj, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+#else
+// original main overload untouched
+Object* GenericObjectCreationNugget::reallyCreate(const Coord3D *pos, const Matrix3D *mtx, Real orientation, const Object *sourceObj, UnsignedInt lifetimeFrames ) const
+#endif
 {
 	static const ThingTemplate* debrisTemplate = TheThingFactory->findTemplate("GenericDebris");
 
@@ -1341,6 +1442,16 @@ Object* GenericObjectCreationNugget::reallyCreate(const Coord3D *pos, const Matr
 			DEBUG_CRASH( ("OCL::reallyCreate() failed to create debris %s.", tmpl->getName().str() ) );
 			return firstObject;
 		}
+
+		//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+		if (runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
+		{
+			// pass it on
+			debris->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
+		}
+#endif
+
 		if( !firstObject )
 		{
 			firstObject = debris;
@@ -1502,6 +1613,23 @@ Object* ObjectCreationList::createInternal( Object* primaryObj, const Coord3D *p
 	return theFirstObject;
 }
 
+//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+Object* ObjectCreationList::createInternal_RECoMCCiO( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+{
+	DEBUG_ASSERTCRASH(primaryObj != nullptr, ("You should always call OCLs with a non-null primary Obj, even for positional calls, to get team ownership right"));
+	Object *theFirstObject = nullptr;
+	for (ObjectCreationNuggetVector::const_iterator i = m_nuggets.begin(); i != m_nuggets.end(); ++i)
+	{
+		Object *curObj =  (*i)->create_RECoMCCiO( primaryObj, primary, secondary, angle, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+		if (theFirstObject==nullptr) {
+			theFirstObject = curObj;
+		}
+	}
+	return theFirstObject;
+}
+#endif
+
 //-------------------------------------------------------------------------------------------------
 //MODDD - disarming mines gives experience. Removed 'const' on 'primary'
 Object* ObjectCreationList::createInternal( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames ) const
@@ -1517,6 +1645,23 @@ Object* ObjectCreationList::createInternal( Object* primary, const Object* secon
 	}
 	return theFirstObject;
 }
+
+//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+Object* ObjectCreationList::createInternal_RECoMCCiO( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+{
+	DEBUG_ASSERTCRASH(primary != nullptr, ("You should always call OCLs with a non-null primary Obj, even for positional calls, to get team ownership right"));
+	Object *theFirstObject = nullptr;
+	for (ObjectCreationNuggetVector::const_iterator i = m_nuggets.begin(); i != m_nuggets.end(); ++i)
+	{
+		Object *curObj =  (*i)->create_RECoMCCiO( primary, secondary, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+		if (theFirstObject==nullptr) {
+			theFirstObject = curObj;
+		}
+	}
+	return theFirstObject;
+}
+#endif
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------

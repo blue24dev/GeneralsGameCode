@@ -95,7 +95,16 @@ void CreateObjectDie::onDie( const DamageInfo * damageInfo )
 
 	Object *damageDealer = TheGameLogic->findObjectByID( damageInfo->in.m_sourceID );
 
+//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	Object *newObject;
+		if (getObject()->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
+			newObject = ObjectCreationList::create_RECoMCCiO( data->m_ocl, getObject(), damageDealer, 0, getObject()->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+		else
+			newObject = ObjectCreationList::create( data->m_ocl, getObject(), damageDealer );
+#else
 	Object *newObject = ObjectCreationList::create( data->m_ocl, getObject(), damageDealer );
+#endif
 	if (!newObject)
 		return;
 

@@ -39,8 +39,18 @@ public:
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
 	virtual Object* create(Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const override;
 
+	//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	virtual Object* create_RECoMCCiO(Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const override;
+#endif
+
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
 	virtual Object* create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 ) const override;
+	
+	//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	virtual Object* create_RECoMCCiO(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const override;
+#endif
 
 	static void parsePayload( INI* ini, void *instance, void *store, const void* /*userData*/ );
 

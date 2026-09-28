@@ -1076,6 +1076,9 @@ ThingTemplate::ThingTemplate() :
 
 	//MODDD
 	m_hasInactiveBodyModule = false;
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	m_isRenewableMoneyOCLSource = false;
+#endif
 
 }
 
