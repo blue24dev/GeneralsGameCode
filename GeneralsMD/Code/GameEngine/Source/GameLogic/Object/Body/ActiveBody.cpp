@@ -644,6 +644,7 @@ void ActiveBody::attemptDamage( DamageInfo *damageInfo )
 					fclose(outputFile);
 				}
 				//MODDD - TEMP FIX - being bound by a 'srcPlayer' check should not be needed!!
+				else
 				{
 					obj->getControllingPlayer()->setAttackedBy(srcPlayer->getPlayerIndex());
 				}
