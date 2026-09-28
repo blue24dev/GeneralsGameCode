@@ -91,7 +91,10 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 		// (there's still pre-source-code-release co-op maps using the civilian player as a participating 'player', but
 		// this shouldn't cause too much extra weirdness anyway)
 		PlayerIndex collectingPlayerIndex = other->getControllingPlayer()->getPlayerIndex();
-		if (collectingPlayerIndex == sourcePlayerIndex || (fromTechStructure && sourcePlayerIndex == ThePlayerList->isPlayerUnaffiliated(ThePlayerList->getNthPlayer(collectingPlayerIndex))))
+		if (
+			collectingPlayerIndex == sourcePlayerIndex ||
+			(fromTechStructure && ThePlayerList->isPlayerUnaffiliated(ThePlayerList->getNthPlayer(sourcePlayerIndex)))
+		)
 		{
 			APPLY_MONEY_CHEAT(other->getControllingPlayer(), money)
 		}
