@@ -923,6 +923,25 @@ private:
 	AsciiString										m_commandSetStringOverride;///< To allow specific object to switch command sets
 
 	UnsignedInt										m_safeOcclusionFrame;	///<flag used by occlusion renderer so it knows when objects have exited their production building.
+	
+	//MODDD - new
+	Bool objectInitLockLocal;
+	Bool objectInitLockLocalTemp;
+	// How much money has been spent on this unit for easier refund logic.
+	// For now, only used by buildings (things with construction sites) to make refund logic easier.
+	// Not expected for normal units (come from a factory / instantly appear) or buildings after they are constructed.
+	// Selling an already completed structure doesn't use this, though could if you want that to.
+	Int m_moneySpentOnMe;
+	Bool m_hasHijackerCollide;
+	// Creating a new boolean just to track whether this object is going to be removed soon (set as soon as 'onDie' or
+	// 'GameLogic::destoryObject' is called on this).
+	// Not going to trust tinkering with other things for safety - untrackable bugs from bad memory involving 'm_stateMap' is a nightmare.
+public:
+	Bool m_calledForDeletion;
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	Int m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
+#endif
+	private:
 
 	// --------- BYTE-SIZED THINGS GO HERE
 	Bool													m_isSelectable;
@@ -936,19 +955,6 @@ private:
 	Bool													m_singleUseCommandUsed;
 	Bool													m_isReceivingDifficultyBonus;
 
-	//MODDD - new
-	Bool objectInitLockLocal;
-	Bool objectInitLockLocalTemp;
-	// How much money has been spent on this unit for easier refund logic.
-	// For now, only used by buildings (things with construction sites) to make refund logic easier.
-	// Not expected for normal units (come from a factory / instantly appear) or buildings after they are constructed.
-	// Selling an already completed structure doesn't use this, though could if you want that to.
-	Int m_moneySpentOnMe;
-	Bool m_hasHijackerCollide;
-	// Creating a new boolean just to track whether this object is going to be removed soon (set as soon as 'onDie' or
-	// 'GameLogic::destoryObject' is called on this).
-	// Not going to trust tinkering with other things for safety - untrackable bugs from bad memory involving 'm_stateMap' is a nightmare.
-	public: Bool m_calledForDeletion;
 };
 
 // deleteInstance is not meant to be used with Object in order to require the use of TheGameLogic->destroyObject()

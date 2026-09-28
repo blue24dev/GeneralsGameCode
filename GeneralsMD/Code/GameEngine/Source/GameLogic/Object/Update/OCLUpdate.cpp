@@ -42,6 +42,9 @@
 #include "GameLogic/Module/OCLUpdate.h"
 #include "GameLogic/TerrainLogic.h"
 
+//MODDD - needed now in case of some preprocessor setting choices
+#include "Common/ThingTemplate.h"
+
 //-------------------------------------------------------------------------------------------------
 void parseFactionObjectCreationList( INI *ini, void *instance, void *store, const void *userData )
 {
@@ -220,6 +223,30 @@ UpdateSleepTime OCLUpdate::update()
 		// Use the non faction OCL information
 		else
 		{
+			//MODDD - if this will produce money crates (renewable income source), let the object delivering the OCL know
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+			if (getObject()->getTemplate()->m_isRenewableMoneyOCLSource)
+			{
+				Int playerIndexToSend = getObject()->getControllingPlayer()->getPlayerIndex();
+				// HACK - if this is a call sourced from a tech structure, the renewable-income-half-effectiveness reduction is reduced (that's not confusing to say).
+				// Checking for some things besides 'TECH_BUILDING' because Contra's "TechSupplyDropZone" lacks that and has FS_SUPPLY_DROPZONE (a faction-structure KindOf flag).
+				// That means just looking for being a non-faction-structure wouldn't work.
+				// Checking for belonging to the civilian player might also work (for uncapturable flat buildings that are more like designations
+				// for routine money crate drops, that makes sense), but consider some Co-Op maps made before the source code release.
+				// They can repurpose the civilian player to be the baked-in enemy computer player (special bonuses just for being that would be strange).
+				KindOfMaskType tempMask;
+				tempMask.set(KINDOF_TECH_BUILDING);
+				tempMask.set(KINDOF_CONSERVATIVE_BUILDING);
+				tempMask.set(KINDOF_CLICK_THROUGH);
+				tempMask.set(KINDOF_NO_COLLIDE);
+				if (getObject()->isAnyKindOf(tempMask))
+				{
+					playerIndexToSend |= (1 << 31);
+				}
+				ObjectCreationList::create_RECoMCCiO( data->m_ocl, getObject(), &creationCoord, getObject()->getPosition(), getObject()->getOrientation(), 0, playerIndexToSend );
+			}
+			else
+#endif
 			ObjectCreationList::create( data->m_ocl, getObject(), &creationCoord, getObject()->getPosition(), getObject()->getOrientation() );
 		}
 	}

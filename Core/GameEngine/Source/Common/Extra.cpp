@@ -523,32 +523,36 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 #if RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE
 			AutoDepositUpdateModuleData* _data = (AutoDepositUpdateModuleData*)data;
 
-			Real timeMulti;
+			Real scalar;
 			// Note: a check for not being a faction structure, like ('not' of this)
 			//   Bool Object::isFactionStructure() -> isAnyKindOf( KINDOFMASK_FS );
 			// could work too
+			// Actually, beware: Contra's forever-neutral-controlled (uncapturable) 'TechSupplyDropZone' still has 'FS_SUPPLY_DROPZONE'.
 			if (!_this->isKindOf(KINDOF_TECH_BUILDING))
 			{
-				// normal: double the amount of time
-				timeMulti = 2.0f;
+				// normal: half as efficient
+				scalar = 0.5f;
 			}
 			else
 			{
-				// For tech buildings, increase the time by 50% instead (1.5x).
+				// For tech buildings, less steep of a reduction.
 				// This makes tech buildings more rewarding to have since they're impacted less by the income rate reduction than player-built sources.
-				timeMulti = 1.5f;
+				scalar = 0.75;
 			}
 
-			// if the delay is less than 5 seconds, go ahead and double it
+			// 1000 / ? = 1500
+			// 1000 = 1500 * ?
+
+			// check - if the delay is low enough, adjust the duration instead
 			if (_data->m_depositFrame / LOGICFRAMES_PER_SECOND < 5)
 			{
-				//_data->m_depositFrame *= timeMulti;
-				_data->m_depositFrame = (UnsignedInt) ((Real)_data->m_depositFrame * timeMulti);
+				// duration increased (dividing by the below-1 scalar increases the duration)
+				_data->m_depositFrame = (UnsignedInt) ((Real)_data->m_depositFrame / scalar);
 			}
 			else
 			{
-				// otherwise, leave the rate unaffected but half the amount instead
-				_data->m_depositAmount = (Int) ((Real)_data->m_depositAmount / timeMulti);
+				// duration is unaffected, adjust the amount per deposit
+				_data->m_depositAmount = (Int) ((Real)_data->m_depositAmount * scalar);
 			}
 #endif
 			//renewableMoneySourceCostReduction = true;
@@ -784,7 +788,13 @@ void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
 	static NameKeyType HackInternetAIUpdateNameKey = NAMEKEY("HackInternetAIUpdate");
 	static NameKeyType OCLUpdateNameKey = NAMEKEY("OCLUpdate");
 
+#if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR)
 	Bool renewableMoneySourceCostReduction = false;
+#endif
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	// more specific check for supply drop zones (know to let OCLs know they're for adjusted-value moeny crates)
+	Bool renewableMoneyOCLSource = false;
+#endif
 
 	//g_callDepth = 0;
 
@@ -847,12 +857,16 @@ void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
 		}
 		else if ( modNameKey == AutoDepositUpdateNameKey )
 		{
+#if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR)
 			// has this at all -> yes for now
 			renewableMoneySourceCostReduction = true;
+#endif
 		}
 		else if ( modNameKey == HackInternetAIUpdateNameKey )
 		{
+#if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR)
 			renewableMoneySourceCostReduction = true;
+#endif
 		}
 		else if ( modNameKey == OCLUpdateNameKey )
 		{
@@ -891,7 +905,13 @@ void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
 				std::set<ObjectCreationList*> processedOCLList;
 				if (automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate(ocl, processedOCLList))
 				{
+#if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR)
 					renewableMoneySourceCostReduction = true;
+#endif
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+					// this too
+					renewableMoneyOCLSource = true;
+#endif
 				}
 			}
 #endif
@@ -900,7 +920,7 @@ void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
 
 	// Now to reduce the value of the renewable income source.
 	// Does not apply to limited units that are likely capable of a lot more like the infantry general black lotus in the Contra mod.
-	#if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR)
+#if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR)
 	if (
 		renewableMoneySourceCostReduction &&
 		!(_this->isMaxSimultaneousDeterminedBySuperweaponRestriction() || _this->getMaxSimultaneousOfType() == 1)
@@ -914,7 +934,13 @@ void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
 			_this->m_buildCost *= (Real)RENEWABLE_MONEY_SOURCE_COST_SCALAR;
 		}
 	}
-	#endif
+#endif
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	if (renewableMoneyOCLSource)
+	{
+		_this->m_isRenewableMoneyOCLSource = true;
+	}
+#endif
 }
 
 Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_helper(const ThingTemplate* tt, ObjectCreationList* ocl, std::set<ObjectCreationList*>& processedOCLList)

@@ -50,6 +50,7 @@ MoneyCrateCollide::~MoneyCrateCollide()
 
 }
 
+#include "Common/PlayerList.h"
 //-------------------------------------------------------------------------------------------------
 Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 {
@@ -57,6 +58,7 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 
 	money += getUpgradedSupplyBoost(other);
 
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
 	//MODDD - money cheat check.
 	// Question: did this crate come from a renewable income source (supply drop zone), or was it granted for some other
 	// reason (ex: spawned by a sold plane or player-issued supply drop gift in the Contra mod) or simply present in the
@@ -66,25 +68,50 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 	// adjusted, since oil derrick income rate can be.
 	// See 'extra.cpp' for some automatic adjustments that decide whether the money granted by touching a crate will be
 	// adjusted by cheats and/or the 'RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE' setting (whichever is applicable).
-	//if (getObject()->isCreatedByRenewableMoneySource())
-	// TODO - old way for now!
-	if (!getMoneyCrateCollideModuleData()->m_upgradeBoost.empty())
+	if (getObject()->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
 	{
-		/*
-		// First, decide whether this is 
-		#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
-		if (getObject()->getCreatedByPlayer() == other->getControllingPlayer())
+		// First, decide whether this is the same player that caused the crate to be created (ex: supply drop zone owner)
+		// as the player that has a unit touching the crate to collect it for them
+		Int sourcePlayerIndex = getObject()->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
+		Bool fromTechStructure;
+		// Note that 'playerIndex' can have a flag baked into it indicating whether this crate was produced by a neutral tech
+		// structure, captured or not (in case of non-capturable flat areas, like neutral supply drop zones in several mods).
+		if (sourcePlayerIndex & (1 << 31))
 		{
-
+			sourcePlayerIndex &= ~(1 << 31);
+			fromTechStructure = true;
 		}
-		#endif
-		*/
-#if RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE
-		money /= 2;
+		else
+		{
+			fromTechStructure = false;
+		}
+
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
+		// run cheats if the collector is the same as the source, or if this is a tech structure and the source player is neutral/civilian
+		// (there's still pre-source-code-release co-op maps using the civilian player as a participating 'player', but
+		// this shouldn't cause too much extra weirdness anyway)
+		PlayerIndex collectingPlayerIndex = other->getControllingPlayer()->getPlayerIndex();
+		if (collectingPlayerIndex == sourcePlayerIndex || (fromTechStructure && sourcePlayerIndex == ThePlayerList->isPlayerUnaffiliated(ThePlayerList->getNthPlayer(collectingPlayerIndex))))
+		{
+			APPLY_MONEY_CHEAT(other->getControllingPlayer(), money)
+		}
 #endif
 
-		APPLY_MONEY_CHEAT(other->getControllingPlayer(), money)
+		// Regardless of whether the crate was picked up by the intended player, the half-effective setting still applies
+#if RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE
+		Real moneyScalar;
+		if (!fromTechStructure)
+		{
+			moneyScalar = 0.5f;
+		}
+		else
+		{
+			moneyScalar = 0.75f;
+		}
+		money = (UnsignedInt)((Real)money * moneyScalar);
+#endif
 	}
+#endif
 
 	other->getControllingPlayer()->getMoney()->deposit( money );
 	other->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( money );

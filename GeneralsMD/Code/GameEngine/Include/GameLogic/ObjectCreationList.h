@@ -114,6 +114,14 @@ public:
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
 	virtual Object* create( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const = 0;
 
+	//MODDD - also, instead of expecting every single ObjectCreationNugget subclass to implement this, letting a default redirect to the normal 'create' overload
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	virtual Object* create_RECoMCCiO( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+	{
+		return create(primaryObj, primary, secondary, angle, lifetimeFrames);
+	}
+#endif
+
 	/**
 		the object-based version... by default, just call the location-based implementation.
 		Note that primary can be null, so you must check for this.
@@ -121,12 +129,26 @@ public:
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primary'
 	virtual Object* create( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const;
 
+	//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	virtual Object* create_RECoMCCiO( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const;
+#endif
+
 	/**
 		A variation used by DeliverPayload -- the createOwner Bool specifies whether we are creating the transport
 		object, or using the existing one.
 	*/
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
 	virtual Object* create( Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 ) const;
+
+	//MODDD - also, instead of expecting every single ObjectCreationNugget subclass to implement this, letting a default redirect to the normal 'create' overload
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	virtual Object* create_RECoMCCiO( Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Bool createOwner, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+	{
+		return create(primaryObj, primary, secondary, createOwner, lifetimeFrames);
+	}
+#endif
+
 };
 EMPTY_DTOR(ObjectCreationNugget)
 
@@ -200,6 +222,16 @@ public:
 		return nullptr;
 	}
 
+	//MODDD - overload to take a bool for being for a renewable income source (eventually produces money crates)
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	static Object* create_RECoMCCiO(const ObjectCreationList* ocl, Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex )
+	{
+		if (ocl)
+			return ocl->createInternal_RECoMCCiO( primaryObj, primary, secondary, angle, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+		return nullptr;
+	}
+#endif
+
 	// Kris: August 23, 2003
 	// All OCLs return the first object that is created (or null if not applicable).
 	/// inline convenience method to avoid having to check for null.
@@ -210,6 +242,16 @@ public:
 			return ocl->createInternal( primary, secondary, lifetimeFrames );
 		return nullptr;
 	}
+
+	//MODDD - overload to take a bool for being for a renewable income source (eventually produces money crates)
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	static Object* create_RECoMCCiO( const ObjectCreationList* ocl, Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex )
+	{
+		if (ocl)
+			return ocl->createInternal_RECoMCCiO( primary, secondary, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+		return nullptr;
+	}
+#endif
 
 protected:
 
@@ -232,8 +274,19 @@ private:
 	Object* createInternal(Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 ) const;
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
 	Object* createInternal(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const;
+
+	//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	Object* createInternal_RECoMCCiO(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex) const;
+#endif
+
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primary'
 	Object* createInternal(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const;
+	
+	//MODDD
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	Object* createInternal_RECoMCCiO(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const;
+#endif
 
 	// note, this list doesn't own the nuggets; all nuggets are owned by the Store.
 	//MODDD - moved to above all class definitions in this file
