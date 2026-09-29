@@ -171,6 +171,16 @@ class INI
 	INI& operator=(const INI&) FUNCTION_DELETE;
 
 public:
+
+	typedef UnsignedInt LoadFlags;
+	enum LoadFlags_ CPP_11( : UnsignedInt)
+	{
+		LoadFlags_SearchSubDirs = 1 << 0,
+		LoadFlags_ExpectFileFound = 1 << 1,
+	};
+
+public:
+
 	INI();
 
 	// TheSuperHackers @feature xezon 19/08/2025
@@ -178,12 +188,14 @@ public:
 	// For example "Data\INI\Armor" loads "Data\INI\Armor.ini" and all *.ini files in "Data\INI\Armor".
 	// Throws if not a single INI file is found or one is not read correctly.
 	//MODDD - new optional param 'myTypeTable'
-	UnsignedInt loadFileDirectory( AsciiString fileDirName, INILoadType loadType, Xfer *pXfer, Bool subdirs = TRUE, const BlockParse* myTypeTable = nullptr );
+	UnsignedInt loadFileDirectory( AsciiString fileDirName, INILoadType loadType, Xfer *pXfer,
+		LoadFlags loadFlags = LoadFlags_SearchSubDirs | LoadFlags_ExpectFileFound, const BlockParse* myTypeTable = nullptr );
 
 	// Load INI files from a directory (and its subdirectories).
 	// Throws if one INI file is not read correctly.
 	//MODDD - new optional param 'myTypeTable'
-	UnsignedInt loadDirectory( AsciiString dirName, INILoadType loadType, Xfer *pXfer, Bool subdirs = TRUE, const BlockParse* myTypeTable = nullptr );
+	UnsignedInt loadDirectory( AsciiString dirName, INILoadType loadType, Xfer *pXfer,
+		LoadFlags loadFlags = LoadFlags_SearchSubDirs, const BlockParse* myTypeTable = nullptr );
 
 	// Load one specific INI file by name.
 	// Throws if the INI file is not found or is not read correctly.
