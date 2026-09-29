@@ -876,34 +876,41 @@ void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
 			
 #if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR) || MONEY_AUTO_ADJUSTMENT_SUPPORT
 			// Does this eventually lead to a money crate?
-			// NOTE - have an unexpected problem: a stackoverflow from endless recursion.
-			// See this example from the Contra mod of OCLs:
-			/*
-			ObjectCreationList OCL_RadiationInfantry CreateObject  ObjectNames = RadiationInfantry
-			Object RadiationInfantry Behavior = InstantDeathBehavior ModuleTag_12 OCL        = OCL_FlamingInfantryOnlyDie
-				ObjectCreationList OCL_FlamingInfantryOnlyDie CreateObject ObjectNames = FlamingInfantryOnlyDie
-				Object FlamingInfantryOnlyDie
-						Behavior = InstantDeathBehavior OCL        = OCL_RadiationInfantry
-			// Whenever a ThingTemplate checks for OCLs reached by 'OCL_RadiationInfantry', it will endlessly include this cycle.
-			// I'll use a set of ObjectCreationList pointers to see if an OCL has ever been parsed through any recursion.
-			// Also see something like this from PartitionManager.cpp's 'PartitionManager::getClosestObjects':
-			/*
-			static Int theIterFlag = 1;	// nonzero, thanks
-			++theIterFlag;
-			...
-			<for loop>
-				if (thisMod->friend_getDoneFlag() == theIterFlag)
-					continue;
-				thisMod->friend_setDoneFlag(theIterFlag);
-				<rest of the script>
-			*/
-
+			// ---
 			// Contra's TechReinforcementPad used 'FactionOCL' in the INI instead - not handling that case for now
 			// (would leave 'm_ocl' here null)
 			ObjectCreationList* ocl = (ObjectCreationList*)_data->m_ocl;
 			if (ocl != nullptr)
 			{
+				
+				// NOTE - have an unexpected problem: a stackoverflow from endless recursion.
+				// See this example from the Contra mod of OCLs:
+				/*
+				ObjectCreationList OCL_RadiationInfantry CreateObject  ObjectNames = RadiationInfantry
+				Object RadiationInfantry Behavior = InstantDeathBehavior ModuleTag_12 OCL        = OCL_FlamingInfantryOnlyDie
+					ObjectCreationList OCL_FlamingInfantryOnlyDie CreateObject ObjectNames = FlamingInfantryOnlyDie
+					Object FlamingInfantryOnlyDie
+							Behavior = InstantDeathBehavior OCL        = OCL_RadiationInfantry
+				// Whenever a ThingTemplate checks for OCLs reached by 'OCL_RadiationInfantry', it will endlessly include this cycle.
+				// I'll use a set of ObjectCreationList pointers to see if an OCL has ever been parsed through any recursion.
+				// Also see something like this from PartitionManager.cpp's 'PartitionManager::getClosestObjects':
+				/*
+				static Int theIterFlag = 1;	// nonzero, thanks
+				++theIterFlag;
+				...
+				<for loop>
+					if (thisMod->friend_getDoneFlag() == theIterFlag)
+						continue;
+					thisMod->friend_setDoneFlag(theIterFlag);
+					<rest of the script>
+				*/
+				// NOTE - since then, adding a test for InstantDeathBehavior, "m_deathTypes == DEATH_TYPE_FLAGS_ALL"
+				// appears to have stopped this and likely any other examples alone for Contra. The recursion issue
+				// was encountered before this check was added.
+				// Could argue this 'processedOCLList' could be removed as an endless recursion with no-condition death
+				// modules should not be possible - wouldn't that lead to some unit in-game that never truly ends?.
 				std::set<ObjectCreationList*> processedOCLList;
+
 				if (automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate(ocl, processedOCLList))
 				{
 #if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR)

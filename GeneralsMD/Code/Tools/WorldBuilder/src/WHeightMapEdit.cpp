@@ -753,15 +753,15 @@ void WorldHeightMapEdit::saveToFile(DataChunkOutput &chunkWriter)
 			Int j;
 			for (j=1; j<MAX_GLOBAL_LIGHTS; j++)
 			{	//save state of new lights added in version 3.
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].ambient.red);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].ambient.green);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].ambient.blue);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].diffuse.red);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].diffuse.green);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].diffuse.blue);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].lightPos.x);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].lightPos.y);
-				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i][j].lightPos.z);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].ambient.red);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].ambient.green);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].ambient.blue);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].diffuse.red);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].diffuse.green);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].diffuse.blue);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].lightPos.x);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].lightPos.y);
+				chunkWriter.writeReal(TheGlobalData->m_terrainObjectsLighting[i+TIME_OF_DAY_FIRST][j].lightPos.z);
 			}
 			for (j=1; j<MAX_GLOBAL_LIGHTS; j++)
 			{
@@ -1038,12 +1038,14 @@ void WorldHeightMapEdit::blendTile(Int xIndex, Int yIndex, Int srcXIndex, Int sr
 	if (textureClass < 0) {
 		textureClass = getTextureClass(srcXIndex, srcYIndex);	//index into globalTextureClass
 	}
-	if (textureClass >= 0) {	//get index of sub-tile that would show up here if we continued tiling src.
+	if (textureClass >= 0) {
+		//get index of sub-tile that would show up here if we continued tiling src.
 		blendTileNdx = getBlendTileNdxForClass(xIndex, yIndex, textureClass);
 		DEBUG_ASSERTCRASH((blendTileNdx/4 < m_numBitmapTiles),("oops"));	//check it falls into one of the 64x64 tiles of textures used on map.
 	}
 
-	if (curTileNdx == blendTileNdx) {//destination already contains continuation of source tile so no blend needed.
+	if (curTileNdx == blendTileNdx) {
+		//destination already contains continuation of source tile so no blend needed.
 		m_tileNdxes[ndx] = blendTileNdx;
 		m_blendTileNdxes[ndx] = 0;
 		m_extraBlendTileNdxes[ndx] = 0;
@@ -1121,7 +1123,8 @@ void WorldHeightMapEdit::blendSpecificTiles(Int xIndex, Int yIndex, Int srcXInde
 	}
 
 	Bool flipped = false;
-	if (srcYIndex == yIndex) {	//same vertical coordinates so horizontal blend
+	if (srcYIndex == yIndex) {
+		//same vertical coordinates so horizontal blend
 		blendInfo.horiz = true;
 		blendInfo.inverted = (srcXIndex < xIndex); //blend from opaque at left to transparent at right.
 		//check if this blend tile will end up in a third blend layer and if so, copy flip state
@@ -1133,7 +1136,8 @@ void WorldHeightMapEdit::blendSpecificTiles(Int xIndex, Int yIndex, Int srcXInde
 		blendInfo.inverted = (srcYIndex < yIndex);	//invert if blend from bottom to top
 		if (baseBlendInfo && baseNeedsFlip)
 			blendInfo.inverted |= FLIPPED_MASK;
-	} else {	//diagonal blends
+	} else {
+		//diagonal blends
 		if (srcXIndex > xIndex) {
 			blendInfo.rightDiagonal = true;
 		} else {
@@ -1141,7 +1145,8 @@ void WorldHeightMapEdit::blendSpecificTiles(Int xIndex, Int yIndex, Int srcXInde
 		}
 		blendInfo.inverted = (srcYIndex < yIndex);
 		blendInfo.longDiagonal = longDiagonal;
-		if (longDiagonal) {	// Flip it.
+		if (longDiagonal) {
+			// Flip it.
 			blendInfo.inverted = !blendInfo.inverted;
 			blendInfo.rightDiagonal = !blendInfo.rightDiagonal;
 			blendInfo.leftDiagonal = !blendInfo.leftDiagonal;
@@ -1167,13 +1172,15 @@ void WorldHeightMapEdit::blendSpecificTiles(Int xIndex, Int yIndex, Int srcXInde
 		Int ndx = (yIndex*m_width)+xIndex;
 		m_tileNdxes[ndx] = curTileNdx;
 		if (TheGlobalData->m_use3WayTerrainBlends && m_blendTileNdxes[ndx] != 0)
-		{	//this tile already has a blend applied to it.  So we put the new blend into the
+		{
+			//this tile already has a blend applied to it.  So we put the new blend into the
 			//secondary layer.
 			m_extraBlendTileNdxes[ndx]=newNdx;
 			//force the primary layer to flip if the extra blend layer needs flip.
 			//we only do this on vertical/horizontal base blends because they work in either flip cases.
 			if (flipped && !baseIsDiagonal)
-			{	//Find a new tile so as not to affect other cells using the base one.
+			{
+				//Find a new tile so as not to affect other cells using the base one.
 				TBlendTileInfo tempBlendTileInfo=m_blendedTiles[m_blendTileNdxes[ndx]];
 				tempBlendTileInfo.inverted |= FLIPPED_MASK;
 				Short newNdx = findOrCreateBlendTile(&tempBlendTileInfo);
@@ -1497,7 +1504,8 @@ Bool WorldHeightMapEdit::floodFill(Int xIndex, Int yIndex, Int textureClass, Boo
 					setTileNdx(i, j, textureClass, false);
 					m_blendTileNdxes[ndx] = blendNdx;
 					m_cliffInfoNdxes[ndx] = 0; // remove any cliff adjustment as we are doing a new texture.
-				} else {	//adjust blended tiles so the blend texture matches the new filled texture
+				} else {
+					//adjust blended tiles so the blend texture matches the new filled texture
 					/* Check blend */
 					if (blendNdx == 0) continue; // no blend.
 					TBlendTileInfo blendInfo = m_blendedTiles[blendNdx];
@@ -1713,7 +1721,8 @@ Bool WorldHeightMapEdit::optimizeTiles()
 				curBlendInfo.blendNdx = getBlendTileNdxForClass(x,y,curBlendInfo.blendNdx);
 
 				if (curBlendInfo.blendNdx == m_tileNdxes[i])
-				{	//Tile index same as blend index would mean same texture
+				{
+					//Tile index same as blend index would mean same texture
 					//blending into itself.  Should not happen.
 					newBlendNdx = 0;
 				}
