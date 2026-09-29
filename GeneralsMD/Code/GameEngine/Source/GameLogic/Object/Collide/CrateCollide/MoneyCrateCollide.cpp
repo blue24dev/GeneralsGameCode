@@ -70,6 +70,7 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 	// adjusted by cheats and/or the 'RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE' setting (whichever is applicable).
 	if (getObject()->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
 	{
+		Real moneyScalar = 1.0f;
 		// First, decide whether this is the same player that caused the crate to be created (ex: supply drop zone owner)
 		// as the player that has a unit touching the crate to collect it for them
 		Int sourcePlayerIndex = getObject()->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
@@ -89,27 +90,30 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 		// run cheats if the collector is the same as the source, or if this is a tech structure and the source player is neutral/civilian
 		// (there's still pre-source-code-release co-op maps using the civilian player as a participating 'player', but
-		// this shouldn't cause too much extra weirdness anyway)
-		PlayerIndex collectingPlayerIndex = other->getControllingPlayer()->getPlayerIndex();
+		// this shouldn't cause too much extra weirdness)
+		const PlayerIndex collectingPlayerIndex = other->getControllingPlayer()->getPlayerIndex();
 		if (
 			collectingPlayerIndex == sourcePlayerIndex ||
 			(fromTechStructure && ThePlayerList->isPlayerUnaffiliated(ThePlayerList->getNthPlayer(sourcePlayerIndex)))
 		)
 		{
-			APPLY_MONEY_CHEAT(other->getControllingPlayer(), money)
+			// Actually, since another scalar is being applied, get the scalar from this and apply it at the end to reduce
+			// round-off error ('APPLY_MONEY_CHEAT' saves to 'money', which includes truncating to an int).
+			//APPLY_MONEY_CHEAT(other->getControllingPlayer(), money)
+			// 'moneyScalarAdjustmentFilter' comes from breaking down APPLY_MONEY_CHEAT -> getCheatAdjustedMoneyAmount
+			moneyScalar *= moneyScalarAdjustmentFilter(other->getControllingPlayer());
 		}
 #endif
 
 		// Regardless of whether the crate was picked up by the intended player, the half-effective setting still applies
 #if RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE
-		Real moneyScalar;
 		if (!fromTechStructure)
 		{
-			moneyScalar = 0.5f;
+			moneyScalar *= 0.5f;
 		}
 		else
 		{
-			moneyScalar = 0.75f;
+			moneyScalar *= 0.75f;
 		}
 		money = (UnsignedInt)((Real)money * moneyScalar);
 #endif
