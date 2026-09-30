@@ -1049,7 +1049,8 @@ ThingTemplate::ThingTemplate() :
 	m_templateID = 0;
 	m_kindof = KINDOFMASK_NONE;
 	//m_defaultOwningSide = "";	// unnecessary
-	m_isBuildFacility = FALSE;
+	//MODDD - removed
+	//m_isBuildFacility = FALSE;
 	m_isPrerequisite = FALSE;
 	m_placementViewAngle = 0.0f;
 	m_factoryExitWidth = 0.0f;
@@ -1296,7 +1297,9 @@ ThingTemplate::~ThingTemplate()
 //=============================================================================
 void ThingTemplate::resolveNames()
 {
-	Int i, j;
+	//MODDD 'j' removed
+	//Int i, j;
+	Int i;
 
 	//Kris: July 31, 2003
 	//NOTE: Make sure that all code in this function supports caching properly. For example,
@@ -1317,6 +1320,12 @@ void ThingTemplate::resolveNames()
 		m_prereqInfo[i].resolveNames();
 	}
 
+	//MODDD - NOTE - ??? What in the world is this?
+	// Why is this trying to figure out what's a 'build facility' by seeing what this (effectively every thing-template
+	// in the game) ever listed as a prerequisite?
+	// Why not just check KINDOFs for anything that needs the 'isBuildFacility' check (only a defeat condition ever uses this)?
+	//MODDD - disabled
+	/*
 	const Int MAX_BF = 32;
 	const ThingTemplate* tmpls[MAX_BF];
 	for (i = 0; i < m_prereqInfo.size(); i++)
@@ -1337,6 +1346,7 @@ void ThingTemplate::resolveNames()
 		// Command centers are considered factories. jba.
 		m_isBuildFacility = true;
 	}
+	*/
 
 	// keep a pointer to portrait and button image if present for speed later
 	if( TheMappedImageCollection )

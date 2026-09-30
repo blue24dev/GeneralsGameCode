@@ -295,6 +295,8 @@ public:
 	static void parseReal( INI *ini, void *instance, void *store, const void* userData );
 	static void parsePositiveNonZeroReal( INI *ini, void *instance, void *store, const void* userData );
 	static void parseBool( INI *ini, void *instance, void *store, const void* userData );
+	//MODDD - extra form just in case
+	static void parseBoolToByte( INI *ini, void *instance, void *store, const void* userData );
 	static void parseBitInInt32( INI *ini, void *instance, void *store, const void* userData );
 	static void parseAsciiString( INI *ini, void *instance, void *store, const void* userData );
 	static void parseQuotedAsciiString( INI *ini, void *instance, void *store, const void* userData );
@@ -410,6 +412,8 @@ public:
 	static Int scanLookupList(const char* token, ConstLookupListRecArray lookupList);
 
 	static Bool scanBool(const char* token);
+	//MODDD
+	static UnsignedByte scanBoolToByte(const char* token);
 
 protected:
 

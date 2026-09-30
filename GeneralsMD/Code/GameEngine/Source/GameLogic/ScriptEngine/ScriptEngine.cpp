@@ -7055,6 +7055,12 @@ void ScriptEngine::setTimer( ScriptAction *pAction, Bool millisecondTimer, Bool 
 			Real randomValue = pAction->getParameter(2)->getReal();
 			value = GameLogicRandomValue(value, randomValue);
 		}
+
+		//MODDD
+#if defined(SCRIPT_TIMINGS_SCALAR)
+		value *= (Real)SCRIPT_TIMINGS_SCALAR;
+#endif
+
 		m_counters[counterNdx].value = REAL_TO_INT_CEIL(ConvertDurationFromMsecsToFrames(value*1000));
 	} else {
 		Int value = pAction->getParameter(1)->getInt();
@@ -7062,6 +7068,12 @@ void ScriptEngine::setTimer( ScriptAction *pAction, Bool millisecondTimer, Bool 
 			Int randomValue = pAction->getParameter(2)->getInt();
 			value = GameLogicRandomValue(value, randomValue);
 		}
+
+		//MODDD
+#if defined(SCRIPT_TIMINGS_SCALAR)
+		value = (Int)((Real)value * (Real)SCRIPT_TIMINGS_SCALAR);
+#endif
+
 		m_counters[counterNdx].value = value;
 	}
 	m_counters[counterNdx].isCountdownTimer = true;
@@ -7278,6 +7290,12 @@ void ScriptEngine::executeScript( Script *pScript )
 	Int delaySeconds = pScript->getDelayEvalSeconds();
 
 	if (delaySeconds>0) {
+		
+	//MODDD
+#if defined(SCRIPT_TIMINGS_SCALAR)
+	delaySeconds = (Int)((Real)delaySeconds * (Real)SCRIPT_TIMINGS_SCALAR);
+#endif
+
 		pScript->setFrameToEvaluate(TheGameLogic->getFrame()+delaySeconds*LOGICFRAMES_PER_SECOND);
 	}
 #ifdef DEBUG_LOGGING

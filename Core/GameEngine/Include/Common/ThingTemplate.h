@@ -604,7 +604,9 @@ public:
 	const FieldParse* getFieldParse() const { return s_objectFieldParseTable; }
 	const FieldParse* getReskinFieldParse() const { return s_objectReskinFieldParseTable; }
 
-	Bool isBuildFacility() const { return m_isBuildFacility; }
+	//MODDD - removed
+	//Bool isBuildFacility() const { return m_isBuildFacility; }
+
 	Real getPlacementViewAngle() const { return m_placementViewAngle; }
 
 	Real getFactoryExitWidth() const { return m_factoryExitWidth; }
@@ -778,7 +780,10 @@ private:
   Bool          m_maxSimultaneousDeterminedBySuperweaponRestriction; ///< If true, override value in m_maxSimultaneousOfType with value from GameInfo::getSuperweaponRestriction()
 	Bool					m_isPrerequisite;							///< Is this thing considered in a prerequisite for any other thing?
 	Bool					m_isBridge;										///< True if this model is a bridge.
- 	Bool					m_isBuildFacility;						///< is this the build facility for something? (calculated based on other template's prereqs)
+
+	//MODDD - removed
+ 	//Bool					m_isBuildFacility;						///< is this the build facility for something? (calculated based on other template's prereqs)
+
 	Bool					m_isTrainable;								///< Whether or not I can even gain experience
 	Bool          m_enterGuard;									///< Whether or not I can enter objects when guarding
 	Bool          m_hijackGuard;								///< Whether or not I can hijack objects when guarding

@@ -2384,7 +2384,8 @@ void Player::setUnitsShouldIdleOrResume(Bool idle)
 //-------------------------------------------------------------------------------
 void sellBuildings( Object *obj, void *userData )
 {
-  if( obj->isFactionStructure() || obj->isKindOf( KINDOF_COMMANDCENTER ) || obj->isKindOf( KINDOF_FS_POWER ) )
+	//MODDD - the others KINDOF_COMMANDCENTER and KINDOF_FS_POWER are now covered by 'isFactionStructure'
+  if( obj->isFactionStructure() /*|| obj->isKindOf( KINDOF_COMMANDCENTER ) || obj->isKindOf( KINDOF_FS_POWER )*/ )
   {
     TheBuildAssistant->sellObject( obj );
   }
