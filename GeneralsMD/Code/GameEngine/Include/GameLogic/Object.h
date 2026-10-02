@@ -216,12 +216,17 @@ public:
 	ObjectID getID() const { return m_id; }												///< this object's unique ID
 	void friend_bindToDrawable( Drawable *draw );									///< set drawable association. for use ONLY by GameLogic!
 	Drawable* getDrawable() const { return m_drawable; }					///< drawable (if any) bound to obj
-
+	
 	ObjectID getProducerID() const { return m_producerID; }
 	void setProducer(const Object* obj);
 
 	ObjectID getBuilderID() const { return m_builderID; }
 	void setBuilder( const Object *obj );
+
+	//MODDD - variants of 'Thing::isKindOf' methods for redirecting to what a GLA hole wants to rebuild into (if applicable)
+	Bool isKindOf_allowRebuildHoleRedirect(KindOfType t) const;
+	Bool isKindOfMulti_allowRebuildHoleRedirect(const KindOfMaskType& mustBeSet, const KindOfMaskType& mustBeClear) const;
+	Bool isAnyKindOf_allowRebuildHoleRedirect(const KindOfMaskType& anyKindOf) const;
 
 	void enterGroup( AIGroup *group );							///< become a member of the AIGroup
 	void leaveGroup();												///< leave our current AIGroup
@@ -335,6 +340,7 @@ public:
 	//MODDD
 	StealthDetectorUpdate*          getStealthDetector() const { return m_stealthDetector; }
 	LockWeaponCreate*          getLockWeaponCreate() const { return m_lockWeaponCreate; }
+	RebuildHoleBehaviorInterface*          getRebuildHoleBehavior() const { return m_rebuildHoleBehavior; }
 
 	SpawnBehaviorInterface* getSpawnBehaviorInterface() const;
 	ProjectileUpdateInterface* getProjectileUpdateInterface() const;
@@ -683,6 +689,10 @@ public:
 	//Checks any timers and clears disabled statii that have expired.
 	void checkDisabledStatus();
 
+	//MODDD - new
+	Bool isTemporaryBuilder() const;
+	void setIsTemporaryBuilder(Bool isTemporaryBuilder);
+
 	//When an AIAttackState is over, it needs to clean up any weapons that might be in leech range mode
 	//or else those weapons will have unlimited range!
 	void clearLeechRangeModeForAllWeapons();
@@ -864,6 +874,7 @@ private:
 	//MODDD
 	StealthDetectorUpdate*        m_stealthDetector;
 	LockWeaponCreate*             m_lockWeaponCreate;
+	RebuildHoleBehaviorInterface* m_rebuildHoleBehavior;
 
 	AIUpdateInterface*						m_ai;	///< ai interface (if any), cached for handy access. (duplicate of entry in the module array!)
 	PhysicsBehavior*							m_physics;	///< physics interface (if any), cached for handy access. (duplicate of entry in the module array!)
@@ -933,6 +944,7 @@ private:
 	// Selling an already completed structure doesn't use this, though could if you want that to.
 	Int m_moneySpentOnMe;
 	Bool m_hasHijackerCollide;
+	Bool m_isTemporaryBuilder;
 	// Creating a new boolean just to track whether this object is going to be removed soon (set as soon as 'onDie' or
 	// 'GameLogic::destoryObject' is called on this).
 	// Not going to trust tinkering with other things for safety - untrackable bugs from bad memory involving 'm_stateMap' is a nightmare.
@@ -941,6 +953,7 @@ public:
 #if MONEY_AUTO_ADJUSTMENT_SUPPORT
 	Int m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
 #endif
+
 	private:
 
 	// --------- BYTE-SIZED THINGS GO HERE

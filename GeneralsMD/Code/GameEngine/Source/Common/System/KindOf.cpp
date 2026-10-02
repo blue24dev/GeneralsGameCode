@@ -174,6 +174,12 @@ const char* const KindOfMaskType::s_bitNameList[] =
 static_assert(ARRAY_SIZE(KindOfMaskType::s_bitNameList) == KindOfMaskType::NumBits + 1, "Incorrect array size");
 
 static const Int fsList[] = {
+	//MODDD - why not be part of the faction-list when command centers are only ever for actual playable factions?
+	// Almost like this should've been "FS_COMMANDCENTER" instead.
+	KINDOF_COMMANDCENTER,
+	//MODDD - how in the blazes wasn't KINDOF_FS_POWER part of this list???
+	KINDOF_FS_POWER,
+
 	KINDOF_FS_FACTORY,
 	KINDOF_FS_BASE_DEFENSE,
 	KINDOF_FS_TECHNOLOGY,
@@ -189,7 +195,7 @@ static const Int fsList[] = {
 	KINDOF_FS_WARFACTORY,
 	KINDOF_FS_AIRFIELD,
 	//MODDD - added
-	KINDOF_FS_NAVALFACTORY,
+	KINDOF_FS_NAVALFACTORY
 };
 
 KindOfMaskType KINDOFMASK_NONE;	// inits to all zeroes

@@ -286,6 +286,8 @@ UpdateSleepTime RebuildHoleBehavior::update()
 
 					// we want to prevent the player from selecting and doing things with this worker
 					worker->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_UNSELECTABLE ) );
+					//MODDD - let the game know that this worker is not essential for victory.
+					worker->setIsTemporaryBuilder(TRUE);
 
 					//
 					// we want to prevent the player and the AI from selecting or targeting the hole

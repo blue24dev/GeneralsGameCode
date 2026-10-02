@@ -92,7 +92,8 @@ public:
 	UnsignedInt		m_blackMarketCheckFrames;
   EvaMessage    m_enemyDetectionEvaEvent;
   EvaMessage    m_ownDetectionEvaEvent;
-  Bool					m_innateStealth;
+	//MODDD - type changed from Bool to UnsignedByte to store a wildcard that's neither true/false in case this isn't specified by INI
+  UnsignedByte	m_innateStealth;
 	Bool					m_orderIdleEnemiesToAttackMeUponReveal;
 	Bool					m_teamDisguised;
 	Bool					m_useRiderStealth;

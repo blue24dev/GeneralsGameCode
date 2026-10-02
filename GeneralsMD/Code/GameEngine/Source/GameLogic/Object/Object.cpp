@@ -284,6 +284,7 @@ Object::Object( const ThingTemplate *tt ) :
 	//MODDD
 	m_stealthDetector(nullptr),
 	m_lockWeaponCreate(nullptr),
+	m_rebuildHoleBehavior(nullptr),
 
 	m_partitionData(nullptr),
 	m_radarData(nullptr),
@@ -349,6 +350,7 @@ Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& 
 	//MODDD
 	m_stealthDetector(nullptr),
 	m_lockWeaponCreate(nullptr),
+	m_rebuildHoleBehavior(nullptr),
 
 	m_partitionData(nullptr),
 	m_radarData(nullptr),
@@ -408,6 +410,8 @@ Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& 
 
 	// since this won't be filled by save data this route
 	this->m_moneySpentOnMe = 0;
+	// a safe assumption until proven otherwise
+	this->m_isTemporaryBuilder = FALSE;
 
 	createBehaviorModules_PRE(tt);
 
@@ -612,6 +616,14 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 		{
 			DEBUG_ASSERTCRASH( m_lockWeaponCreate == nullptr, ("Duplicate LockWeaponCreate!") );
 			m_lockWeaponCreate = lockWeaponCreate;
+		}
+		
+		//MODDD
+		RebuildHoleBehaviorInterface* rebuildHoleBehavior = newMod->getRebuildHoleBehaviorInterface();
+		if ( rebuildHoleBehavior )
+		{
+			DEBUG_ASSERTCRASH( m_rebuildHoleBehavior == nullptr, ("Duplicate RebuildHoleBehavior!") );
+			m_rebuildHoleBehavior = rebuildHoleBehavior;
 		}
 
 	  CollideModuleInterface* containTest = newMod->getCollide();
@@ -3214,6 +3226,18 @@ void Object::checkDisabledStatus()
 	}
 }
 
+//MODDD - new
+Bool Object::isTemporaryBuilder() const
+{
+	return m_isTemporaryBuilder;
+}
+
+//MODDD - new
+void Object::setIsTemporaryBuilder(Bool isTemporaryBuilder)
+{
+	m_isTemporaryBuilder = isTemporaryBuilder;
+}
+
 //-------------------------------------------------------------------------------------------------
 void Object::pauseAllSpecialPowers( const Bool disabling ) const
 {
@@ -5565,6 +5589,7 @@ void Object::xfer( Xfer *xfer )
 
 	//MODDD - new
 	xfer->xferInt( &m_moneySpentOnMe );
+	xfer->xferBool( &m_isTemporaryBuilder );
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -7990,6 +8015,51 @@ RadarPriorityType Object::getRadarPriority() const
 	// return the priority we're going to use
 	return priority;
 
+}
+
+//MODDD - variants of 'Thing::isKindOf' methods for redirecting to what a GLA hole wants to rebuild into (if applicable).
+// Anything that needs this functionality knows it's dealing with an 'Object' more specifically than a 'Thing' (module
+// caching is typically for Objects), so here will work fine
+Bool Object::isKindOf_allowRebuildHoleRedirect(KindOfType t) const
+{
+	if (getRebuildHoleBehavior() != nullptr)
+	{
+		// what a hole is rebuilding into should never be null, unless this is placed on its own as a map prop maybe?
+		const ThingTemplate* rebuildTemplate = getRebuildHoleBehavior()->getRebuildTemplate();
+		if (rebuildTemplate != nullptr)
+		{
+			return rebuildTemplate->isKindOf(t);
+		}
+	}
+	return getTemplate()->isKindOf(t);
+}
+
+//MODDD - see note above
+Bool Object::isKindOfMulti_allowRebuildHoleRedirect(const KindOfMaskType& mustBeSet, const KindOfMaskType& mustBeClear) const
+{
+	if (getRebuildHoleBehavior() != nullptr)
+	{
+		const ThingTemplate* rebuildTemplate = getRebuildHoleBehavior()->getRebuildTemplate();
+		if (rebuildTemplate != nullptr)
+		{
+			return rebuildTemplate->isKindOfMulti(mustBeSet, mustBeClear);
+		}
+	}
+	return getTemplate()->isKindOfMulti(mustBeSet, mustBeClear);
+}
+
+//MODDD - see note above
+Bool Object::isAnyKindOf_allowRebuildHoleRedirect( const KindOfMaskType& anyKindOf ) const
+{
+	if (getRebuildHoleBehavior() != nullptr)
+	{
+		const ThingTemplate* rebuildTemplate = getRebuildHoleBehavior()->getRebuildTemplate();
+		if (rebuildTemplate != nullptr)
+		{
+			return rebuildTemplate->isAnyKindOf( anyKindOf );
+		}
+	}
+	return getTemplate()->isAnyKindOf( anyKindOf );
 }
 
 // ------------------------------------------------------------------------------------------------
