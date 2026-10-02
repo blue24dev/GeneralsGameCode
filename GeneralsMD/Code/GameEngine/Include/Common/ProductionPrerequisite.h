@@ -94,7 +94,8 @@ public:
 	*/
 	const ThingTemplate *getExistingBuildFacilityTemplate( const Player *player ) const;
 
-	Int getAllPossibleBuildFacilityTemplates(const ThingTemplate* tmpls[], Int maxtmpls) const;
+	//MODDD - no longer used
+	//Int getAllPossibleBuildFacilityTemplates(const ThingTemplate* tmpls[], Int maxtmpls) const;
 
 private:
 
