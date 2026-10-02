@@ -85,10 +85,17 @@ StealthUpdateModuleData::StealthUpdateModuleData()
 	// See comments in Extra.cpp around the check for 'StealthUpdate' for more info.
 	//MODDD - changing it to a bogus '0xFF' so somewhere else can decide what to do if this default persists (never
 	// defined by the INI module)
+	// No longer need this hack-around - changed type to 'Int' to just set to '0xFF' plainly
+	// ---
+	/*
 	m_innateStealth   = true;
-	// setting it to '0xff' ('Bool' is a Byte internally) won't cut it, so, memcpy it is to force it.
+	// setting it to '0xFF' ('Bool' is a Byte internally) won't cut it, so, memcpy it is to force it.
 	const Byte tempByte = 0xFF;
 	memcpy(&m_innateStealth, &tempByte, sizeof(Byte));
+	*/
+	// ---
+	m_innateStealth = 0xFFu;
+	// ---
 
 	m_disguiseTransitionFrames = 0;
 	m_disguiseRevealTransitionFrames = 0;
@@ -125,7 +132,8 @@ void StealthUpdateModuleData::buildFieldParse(MultiIniFieldParse& p)
 		{ "DisguiseRevealFX",							INI::parseFXList,								nullptr, offsetof( StealthUpdateModuleData, m_disguiseRevealFX ) },
 		{ "DisguiseTransitionTime",				INI::parseDurationUnsignedInt,  nullptr, offsetof( StealthUpdateModuleData, m_disguiseTransitionFrames ) },
 		{ "DisguiseRevealTransitionTime",	INI::parseDurationUnsignedInt,  nullptr, offsetof( StealthUpdateModuleData, m_disguiseRevealTransitionFrames ) },
-		{ "InnateStealth",								INI::parseBool,									nullptr, offsetof( StealthUpdateModuleData, m_innateStealth ) },
+		//MODDD - 'INI::parseBool' -> 'INI::parseBoolToByte'
+		{ "InnateStealth",								INI::parseBoolToByte,						nullptr, offsetof( StealthUpdateModuleData, m_innateStealth ) },
 		{ "UseRiderStealth",							INI::parseBool,									nullptr, offsetof( StealthUpdateModuleData, m_useRiderStealth ) },
     { "EnemyDetectionEvaEvent",				Eva::parseEvaMessageFromIni,  	nullptr, offsetof( StealthUpdateModuleData, m_enemyDetectionEvaEvent ) },
     { "OwnDetectionEvaEvent",		  		Eva::parseEvaMessageFromIni,  	nullptr, offsetof( StealthUpdateModuleData, m_ownDetectionEvaEvent ) },

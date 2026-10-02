@@ -308,6 +308,10 @@
 // in VS6 appear to be rather painful)
 //#define RENEWABLE_MONEY_SOURCE_COST_SCALAR 1
 
+// An extra multiple to apply to all script timers and the delays for repeatedly evaluated scripts (ex: evaluate script every 15 seconds).
+// As stated above, it is best to leave undefined if no effect is intended instead of leaving it defined as '1'.
+//#define SCRIPT_TIMINGS_SCALAR 1
+
 // If set, AI players will act as though the map script action "Set the delay between building teams" was set to this value.
 // Map scripts trying to set this will be ignored.
 // Note that a value of 0 does indeed force the setting to 0 - set to -1 or leave undefined to use retail behavior
@@ -539,6 +543,7 @@
 #define RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE 1
 #define RENEWABLE_MONEY_SOURCE_COST_SCALAR 0.8
 #define FORCE_AI_TEAM_BUILD_DELAY_SECONDS 0
+#define SCRIPT_TIMINGS_SCALAR 1.25
 
 #define REMOVE_FOG_OF_WAR 0
 #define REMOVE_FOG_OF_WAR_ALT 0

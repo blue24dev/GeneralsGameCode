@@ -378,15 +378,15 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 
 #if RTS_ZEROHOUR
 			// check for the new default - set based off 'useRiderStealth'
-			if (_data->m_innateStealth == 0xFF)
+			if (_data->m_innateStealth == 0xFFu)
 			{
 				if (_data->m_useRiderStealth)
 				{
-					_data->m_innateStealth = FALSE;
+					_data->m_innateStealth = 0;
 				}
 				else
 				{
-					_data->m_innateStealth = TRUE;
+					_data->m_innateStealth = 1;
 				}
 			}
 #endif
@@ -1428,10 +1428,13 @@ UnsignedInt specialPowerReloadTimeAdjustmentFilter(const Object* obj, UnsignedIn
 	}
 	else
 	{
+		// an extra 2 minutes for the love of fuckin' christ
+		// ---
 		// shared ability - ex: spy satelite (just 1 no matter how many command centers you make), any special powers from promotion points.
 		// 'obj' is always NULL here, as shared abilities typically stand alone from whatever structure happens to be needed to link to them
 		// (in nearly every case, it's the command center anyway).
 		// ...
+		_reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
 	}
 	return _reloadTime;
 }

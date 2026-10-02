@@ -671,6 +671,13 @@ void INI::parseBool( INI* ini, void * /*instance*/, void *store, const void* /*u
 	*(Bool*)store = INI::scanBool(ini->getNextToken());
 }
 
+//MODDD - copy of above that expects a bool and turns it into a '0'/'1' for the expected UnsignedByte instead of Bool.
+// There likely isn't any difference in the underlying implementation of this but just in case.
+void INI::parseBoolToByte( INI* ini, void * /*instance*/, void *store, const void* /*userData*/ )
+{
+	*(UnsignedByte*)store = INI::scanBoolToByte(ini->getNextToken());
+}
+
 //-------------------------------------------------------------------------------------------------
 /** Parse Bool from buffer; if true, or in MASK, otherwise and out MASK. The buffer token must
 	* be in the form of a string "Yes" or "No" (case is ignored) */
@@ -700,6 +707,23 @@ void INI::parseBitInInt32( INI *ini, void *instance, void *store, const void* us
 		DEBUG_CRASH(("invalid boolean token %s -- expected Yes or No",token));
 		throw INI_INVALID_DATA;
 		return false;	// keep compiler happy
+	}
+
+}
+
+//MODDD - see explanation elsewhere
+UnsignedByte INI::scanBoolToByte(const char* token)
+{
+	// translate string yes/no into TRUE/FALSE
+	if( stricmp( token, "yes" ) == 0 )
+		return 1;
+	else if( stricmp( token, "no" ) == 0 )
+		return 0;
+	else
+	{
+		DEBUG_CRASH(("invalid boolean token %s -- expected Yes or No",token));
+		throw INI_INVALID_DATA;
+		return 0;	// keep compiler happy
 	}
 
 }

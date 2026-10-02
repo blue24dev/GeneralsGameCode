@@ -1710,30 +1710,45 @@ Bool Team::hasAnyBuildings() const
 {
 	for (DLINK_ITERATOR<Object> iter = iterate_TeamMemberList(); !iter.done(); iter.advance())
 	{
-		if (iter.cur()->isEffectivelyDead())
+		//MODDD - may as well cache 'iter.cur()'
+		const Object* obj = iter.cur();
+
+		if (obj->isEffectivelyDead())
 			continue;
 
-		if (iter.cur()->isDestroyed())
+		if (obj->isDestroyed())
+			continue;
+		
+		//MODDD - if this is under-construction, don't count it for victory (why have to hunt and peck for 0% build sites
+		// at the end of a game?). Notice the addition of a DOZER kindof for finishing anything under construction or
+		// adding new buildings anyway.
+		// Also, going to go ahead and say if something is under-construction, it shouldn't count for any victory condition
+		// no matter whether it's a structure or unit.
+		// As of retail, only structures use this status, but making this broad in case mods do something weird.
+		if (obj->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ))
+			continue;
+		
+		//MODDD - if this is something temporarily spawned to help rebuild a structure that will immediately disapepar,
+		// does not count.
+		// Otherwise, allowing a temporary hole-rebuild worker to keep a player in the game can cause a strange situation:
+		// Say a player only has a GLA hole for a base defense remaining that's being rebuilt.
+		// When it finishes, the temporarily-spawned worker will disappear and the player is knocked out of the game
+		// (everything self-destructs from having nothing left required to keep them in the game).
+		// Also, I'd rather this be a dedicated flag than try to piggyback off 'STATUS_UNSELECTABLE' above to avoid
+		// causing some campaign/scripted scenario to suddenly end in defeat for a reason that wouldn't have happened
+		// in retail (possibly breaking existing maps).
+		if (obj->isTemporaryBuilder())
 			continue;
 
 		//MODDD - add a check for a DOZER too. It's capable of adding new buildings, so why not.
-		if (iter.cur()->isKindOf(KINDOF_DOZER))
-		{
+		if (obj->isKindOf(KINDOF_DOZER))
 			return true;
-		}
 
-		if (iter.cur()->isKindOf(KINDOF_STRUCTURE))
-		{
-			//MODDD - not so fast. If this is an in-progress building, don't count it for victory.
-			// If there are dozers that could possibly finish it, that will be enough to keep the player in the game
-			// (see an addition above).
-			if (iter.cur()->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ))
-			{
-				continue;
-			}
-
+		//MODDD - using the new '_allowRebuildHoleRedirect' variant to let GLA holes offer what they rebuild to in place
+		// of themselves for a theoretical "when I'm a real boy" version instead.
+		// Why kick a player out of the game when they have something that will 'regrow' on its own, after all.
+		if (obj->isKindOf_allowRebuildHoleRedirect(KINDOF_STRUCTURE))
 			return true;
-		}
 	}
 	return false;
 }
@@ -1743,31 +1758,31 @@ Bool Team::hasAnyBuildings(KindOfMaskType kindOf) const
 {
 	for (DLINK_ITERATOR<Object> iter = iterate_TeamMemberList(); !iter.done(); iter.advance())
 	{
-		if (iter.cur()->isEffectivelyDead())
+		//MODDD - may as well cache 'iter.cur()'
+		const Object* obj = iter.cur();
+
+		if (obj->isEffectivelyDead())
 			continue;
 
-		if (iter.cur()->isDestroyed())
+		if (obj->isDestroyed())
+			continue;
+		
+		//MODDD
+		if (obj->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ))
 			continue;
 
-		//MODDD - add a check for a DOZER too. It's capable of adding new buildings, so why not.
-		if (iter.cur()->isKindOf(KINDOF_DOZER))
-		{
+		//MODDD
+		if (obj->isTemporaryBuilder())
+			continue;
+
+		//MODDD
+		if (obj->isKindOf(KINDOF_DOZER))
 			return true;
-		}
 
 		kindOf.set(KINDOF_STRUCTURE);
-		if (iter.cur()->isKindOfMulti(kindOf, KINDOFMASK_NONE))
-		{
-			//MODDD - not so fast. If this is an in-progress building, don't count it for victory.
-			// If there are dozers that could possibly finish it, that will be enough to keep the player in the game
-			// (see an addition above).
-			if (iter.cur()->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ))
-			{
-				continue;
-			}
-
+		//MODDD - '_allowRebuildHoleRedirect' variant
+		if (obj->isKindOfMulti_allowRebuildHoleRedirect(kindOf, KINDOFMASK_NONE))
 			return true;
-		}
 	}
 	return false;
 }
@@ -1777,20 +1792,23 @@ Bool Team::hasAnyUnits() const
 {
 	for (DLINK_ITERATOR<Object> iter = iterate_TeamMemberList(); !iter.done(); iter.advance())
 	{
-		if (iter.cur()->isEffectivelyDead())
+		//MODDD - may as well cache 'iter.cur()'
+		const Object* obj = iter.cur();
+
+		if (obj->isEffectivelyDead())
 			continue;
 
-		if (iter.cur()->isDestroyed())
+		if (obj->isDestroyed())
 			continue;
 
 		// If it's a structure, it's not  a unit.
-		if (iter.cur()->isKindOf(KINDOF_STRUCTURE)) continue;
+		if (obj->isKindOf(KINDOF_STRUCTURE)) continue;
 
 		// If it's a projectile, it's not  a unit.
-		if (iter.cur()->isKindOf(KINDOF_PROJECTILE)) continue;
+		if (obj->isKindOf(KINDOF_PROJECTILE)) continue;
 
 		// If it's a mine, it's not  a unit.
-		if (iter.cur()->isKindOf(KINDOF_MINE)) continue;
+		if (obj->isKindOf(KINDOF_MINE)) continue;
 
 		return true;
 	}
@@ -2570,9 +2588,63 @@ Bool Team::hasAnyBuildFacility() const
 {
 	for (DLINK_ITERATOR<Object> iter = iterate_TeamMemberList(); !iter.done(); iter.advance())
 	{
-		const ThingTemplate *objtmpl = iter.cur()->getTemplate();
-		if (objtmpl->isBuildFacility())
+		//MODDD - may as well cache 'iter.cur()'
+		const Object* obj = iter.cur();
+
+		//MODDD - not used now
+		//const ThingTemplate *objtmpl = iter.cur()->getTemplate();
+
+		//MODDD - NOTE - why is this so barren compared to any other 'Team::hasAny...' methods?
+		// Not even checks for being not-dead/destroyed? Truly mystifying.
+		// ------------
+		if (obj->isEffectivelyDead())
+			continue;
+
+		if (obj->isDestroyed())
+			continue;
+		
+		if (obj->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ))
+			continue;
+		
+		if (obj->isTemporaryBuilder())
+			continue;
+		// ------------
+		
+		//MODDD - replacing this with all of below (mostly from 'Team::hasAnyBuildings')
+		// ------------------------
+		//if (objtmpl->isBuildFacility())
+		//	return true;
+		// ------------------------
+		// Check for having a kindof that means this is structure should keep the player in the game.
+		// Going by what kinds of things were marked 'build facilities' in retail, that's anything that's ever a prerequisite
+		// for anything else, even if it's only buildings for buildings (ex: power plant for the supply center).
+		// Some other notes on KindOfs in general:
+		// ---
+		// It looks to me like FS_FACTORY should always go alongside anything that has FS_BARRACKS, WARFACTORY, or AIRFIELD, but it could also go to things that happen to generate a unit without being a dedicated production structure (no idea if any mods actually do this - even Rise of the Red's europe research facility is both FS_FACTORY and WARFACTORY).
+		// Interestingly enough as of retail, supply centers have only KINDOF_FS_SUPPLY_CENTER and none of the other factory-related kindofs, even though they can build supply gatherer units (and the GLA one builds workers). Your guess is as good as mine what the point of a broad FS_FACTORY kindof is then.
+		// As for FS_TECHNOLOGY, maybe that's just some kinds of hacking/EMP vulnerability? Things like the strat center / black market already have FS_ADVANCED TECH instead and several base defenses use FS_TECHNOLOGY so that's likely not productive to include.
+		// Why do all US defenses get FS_TECHNOLOGY but the china gattling cannon doesn't? GOOD QUESTION!
+		// Kindofs for renewable income sources (black market, etc.) won't be included since these weren't prerequisites for anything in retail and so would never be considered 'build facilities'.
+		// ---
+		// Note that 'KINDOF_STRUCTURE' could also be required in addition to all this, but the original 'build facility'
+		// criteria didn't go out of its way to forbid non-structures anyway.
+		KindOfMaskType bits;
+		// A dozer-type (including worker) can create new structures even if there aren't any currently, so it counts
+		bits.set(KINDOF_DOZER);
+		bits.set(KINDOF_FS_POWER);
+		bits.set(KINDOF_FS_FACTORY);
+		bits.set(KINDOF_FS_SUPPLY_CENTER);
+		bits.set(KINDOF_FS_ADVANCED_TECH);
+		bits.set(KINDOF_FS_BARRACKS);
+		bits.set(KINDOF_FS_WARFACTORY);
+		bits.set(KINDOF_FS_AIRFIELD);
+		bits.set(KINDOF_FS_NAVALFACTORY);
+
+		if (obj->isAnyKindOf_allowRebuildHoleRedirect(bits))
+		{
 			return true;
+		}
+		// ------------------------
 	}
 	return false;
 }

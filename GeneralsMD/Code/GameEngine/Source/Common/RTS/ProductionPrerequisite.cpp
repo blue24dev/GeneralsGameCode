@@ -112,6 +112,8 @@ Int ProductionPrerequisite::calcNumPrereqUnitsOwned(const Player *player, Int co
 	return cnt;
 }
 
+//MODDD - no longer used
+/*
 //-----------------------------------------------------------------------------
 Int ProductionPrerequisite::getAllPossibleBuildFacilityTemplates(const ThingTemplate* tmpls[], Int maxtmpls) const
 {
@@ -126,6 +128,7 @@ Int ProductionPrerequisite::getAllPossibleBuildFacilityTemplates(const ThingTemp
 	}
 	return count;
 }
+*/
 
 //-----------------------------------------------------------------------------
 const ThingTemplate *ProductionPrerequisite::getExistingBuildFacilityTemplate( const Player *player ) const

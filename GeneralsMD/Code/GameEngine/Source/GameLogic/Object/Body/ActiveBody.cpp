@@ -633,18 +633,29 @@ void ActiveBody::attemptDamage( DamageInfo *damageInfo )
 				Player *srcPlayer = srcObj->getControllingPlayer();
 
 				//MODDD - debug - is this still possible or linked to something dumb I did?
+				Player* objVictimPlayer = obj->getControllingPlayer();
 				if (srcPlayer == nullptr)
 				{
 					FILE* outputFile = fopen("test_crash_ActiveBody__atemptDamage.txt", "a");
 					printTimeStamp(outputFile);
 				
-					fprintf(outputFile, " - line:635 - object ");
+					fprintf(outputFile, " - line:635 - srcObj ");
 					printObjectIdentifyingInfo(outputFile, srcObj);
 					fprintf(outputFile, " has getControllingPlayer()==nullptr\n");
 					fclose(outputFile);
 				}
+				if (objVictimPlayer == nullptr)
+				{
+					FILE* outputFile = fopen("test_crash_ActiveBody__atemptDamage.txt", "a");
+					printTimeStamp(outputFile);
+				
+					fprintf(outputFile, " - line:635 - obj ");
+					printObjectIdentifyingInfo(outputFile, obj);
+					fprintf(outputFile, " has getControllingPlayer()==nullptr\n");
+					fclose(outputFile);
+				}
 				//MODDD - TEMP FIX - being bound by a 'srcPlayer' check should not be needed!!
-				else
+				if (srcPlayer != nullptr && objVictimPlayer != nullptr)
 				{
 					obj->getControllingPlayer()->setAttackedBy(srcPlayer->getPlayerIndex());
 				}
