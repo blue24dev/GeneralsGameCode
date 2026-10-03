@@ -290,7 +290,8 @@ public:
 	Player* getControllingPlayer() const;
 	Relationship getRelationship(const Object *that) const;
 	//MODDD - new
-	Relationship getRelationshipWithAppearance(const Object *that) const;
+	Relationship getApparentRelationship(const Object *that) const;
+	Relationship getApparentRelationshipResponse(const Object *requesterObj) const;
 
 	//MODDD - convenience relationship checks since they're common
 	Bool isAlly(const Object* other) const;

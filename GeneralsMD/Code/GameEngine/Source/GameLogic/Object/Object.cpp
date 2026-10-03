@@ -2217,6 +2217,16 @@ Relationship Object::getRelationship(const Object *that) const
 
 	if (myTeam && that)
 	{
+		// MODDD - TODO - aren't these forced constant relationship returns a bit sweeping?
+		// I feel this should check to see who the observing player is to see if they should be fooled by using what
+		// this object looks like for the relationship. Seems similar to, if not redundant with the disguise feature.
+		// IDEA - integrate these defector checks into the new 'getApparentRelationship' in addition to the disguise
+		// check already there. Record the player this object is defecting from to treat as the current player this is
+		// disguised as & use that for relationship checks with any enemies (i.e., enemies of the player we're defecting
+		// from still think we're an enemy, not a friend just cuz we're defecting from anyone at all!!).
+		// Then remove these defector checks completely and always be a raw '<my player>->relationshipWith(<their player>)'.
+		// Several references to 'getRelationship' can be changed to 'getApparentRelationship', perhaps most areas with
+		// the exception of the AI / game engine needing the absolute truth at times.
 		if (getIsUndetectedDefector())
 		{
 			return NEUTRAL; // so my AI does not give away my position by auto acquire
@@ -2239,23 +2249,37 @@ Relationship Object::getRelationship(const Object *that) const
 // to instead.
 // ex: a disguised enemy bomb truck wants you/your units to think it belongs to you or an ally of yours, use who it looks
 // like it belongs to for the relationship check with the 'this' object/player requesting it.
-Relationship Object::getRelationshipWithAppearance(const Object *that) const
+// This can be called externally to get the relationship with an object that should be able to fool the caller with
+// disguises like a typical 'this->getReleationship(somethingElseToCheck)' form.
+Relationship Object::getApparentRelationship(const Object *that) const
+{
+	// leave this up to the other object since it will decide whether it should trick you
+	return that->getApparentRelationshipResponse(this);
+}
+
+//MODDD - basically the inner workings for above, leaving the fooling behavior up to 'this' as that seems more sound with
+// object-oriented principles than querying the other('that') object for details over and over.
+// This version should NOT be called externally - call the plain 'getApparentRelationship' with the other object you want
+// to do a relationship check with in the usual order like "this->...(that)".
+// There is also the 'Defector' stuff from the retail 'Object::getRelationship', but that is low priority for now
+// Based off the idea behind 'GarrisonContain::getApparentControllingPlayer'.
+Relationship Object::getApparentRelationshipResponse(const Object *requesterObj) const
 {
 	if (
-		that->testStatus(OBJECT_STATUS_DISGUISED) &&
-		!that->testStatus(OBJECT_STATUS_DETECTED) &&
+		testStatus(OBJECT_STATUS_DISGUISED) &&
+		!testStatus(OBJECT_STATUS_DETECTED) &&
 		// also, require not being allies (friends see the actual owner so the hiding mechanic is ignored then)
-		that->getRelationship(this) != ALLIES
+		getRelationship(requesterObj) != ALLIES
 	)
 	{
 		// disguised & fools me: get the player from what the other's presenting itself as belonging to
-		StealthUpdate *update = that->getStealth();
-		Player* that_playerDisguisedAs = ThePlayerList->getNthPlayer( update->getDisguisedPlayerIndex() );
-		return this->getControllingPlayer()->getRelationship( that_playerDisguisedAs->getDefaultTeam() );
+		StealthUpdate *update = getStealth();
+		Player* playerDisguisedAs = ThePlayerList->getNthPlayer( update->getDisguisedPlayerIndex() );
+		return requesterObj->getControllingPlayer()->getRelationship( playerDisguisedAs->getDefaultTeam() );
 	}
 	
 	// not disguised - no trickery. A normal relationship check works.
-	return this->getRelationship(that);
+	return requesterObj->getRelationship(this);
 }
 
 //MODDD
