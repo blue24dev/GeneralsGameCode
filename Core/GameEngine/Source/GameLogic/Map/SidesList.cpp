@@ -719,6 +719,10 @@ void SidesList::addPlayerByTemplate(AsciiString playerTemplateName)
 		playerDisplayName.translate(playerName);
 		isHuman = true;
 		// special-case "civilian"...
+		// ---
+		//MODDD - NOTE - I'm tempted to replace this with a 'playerTemplateName == "FactionCivilian"' check, but want to be careful
+		// of breaking things in some established maps that bank on weird edge cases being shifted from doing this.
+		// ---
 		if (playerName == "PlyrCivilian")
 			isHuman = false;
 	}
@@ -744,6 +748,56 @@ void SidesList::addPlayerByTemplate(AsciiString playerTemplateName)
 	d.setAsciiString(TheKey_teamOwner, playerName);
 	d.setBool(TheKey_teamIsSingleton, true);
 	addTeam(&d);
+}
+
+//MODDD - new. Utility to get what the automatic name for the given PlayerTemplate would be
+// (ex: template of name FactionGLA -> PlyrGLA).
+// Really just a smaller piece of what 'addPlayerByTemplate' decides for itself.
+AsciiString SidesList::getPlayerNameForTemplate(const PlayerTemplate* playerTemplate)
+{
+	const AsciiString& playerTemplateName = playerTemplate->getName();
+	AsciiString playerName;
+	if (playerTemplateName.isEmpty())
+	{
+		playerName.set("");	// magic code for "neutral"
+	}
+	else
+	{
+		playerName.set("Plyr");
+		if (playerTemplateName.startsWith("Faction"))
+		{
+			playerName.concat(playerTemplateName.str() + 7);
+		}
+		else
+		{
+			playerName.concat(playerTemplateName);
+		}
+	}
+	return playerName;
+}
+
+//MODDD - and another variant to replace the expected "Faction" prefix with "Skirmish" instead
+AsciiString SidesList::getSkirmishPlayerNameForTemplate(const PlayerTemplate* playerTemplate)
+{
+	const AsciiString& playerTemplateName = playerTemplate->getName();
+	AsciiString playerName;
+	if (playerTemplateName.isEmpty())
+	{
+		playerName.set("");	// magic code for "neutral"
+	}
+	else
+	{
+		playerName.set("Skirmish");
+		if (playerTemplateName.startsWith("Faction"))
+		{
+			playerName.concat(playerTemplateName.str() + 7);
+		}
+		else
+		{
+			playerName.concat(playerTemplateName);
+		}
+	}
+	return playerName;
 }
 
 Bool SidesList::validateSides()

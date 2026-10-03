@@ -1426,8 +1426,6 @@ UnsignedInt specialPowerReloadTimeAdjustmentFilter(const Object* obj, UnsignedIn
 	}
 	else
 	{
-		// an extra 2 minutes for the love of fuckin' christ
-		// ---
 		// shared ability - ex: spy satelite (just 1 no matter how many command centers you make), any special powers from promotion points.
 		// 'obj' is always NULL here, as shared abilities typically stand alone from whatever structure happens to be needed to link to them
 		// (in nearly every case, it's the command center anyway).

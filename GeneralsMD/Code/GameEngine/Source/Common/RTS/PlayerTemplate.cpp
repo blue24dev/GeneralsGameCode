@@ -301,6 +301,13 @@ Int PlayerTemplateStore::getTemplateNumByName(AsciiString name) const
 //-----------------------------------------------------------------------------
 const PlayerTemplate* PlayerTemplateStore::findPlayerTemplate(NameKeyType namekey) const
 {
+	//MODDD - NOTE - for reference, these maps from the original generals show up in a raw file search of "BiowarComm":
+	//   CHI06, Cliff, GLA01, USA05
+	// (no hits for zero hour, as expected)
+	// A way to check for being a retail Generals campaign map to do these checks would be nice - years and years of mods
+	// built on top of the base game since with no awareness of these old names doing these checks anyway is awfully silly.
+	// You know what? Macro setting time!
+#if PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_GENERALS
 // begin ugly, hokey code to quietly load old maps...
 	static NameKeyType a0 = NAMEKEY("FactionAmerica");
 	static NameKeyType a1 = NAMEKEY("FactionAmericaChooseAGeneral");
@@ -327,6 +334,7 @@ const PlayerTemplate* PlayerTemplateStore::findPlayerTemplate(NameKeyType nameke
 	else if (namekey == g1 || namekey == g2 || namekey == g3 || namekey == g4)
 		namekey = g0;
 // end ugly, hokey code to quietly load old maps...
+#endif
 
 	#ifdef RTS_DEBUG
 	AsciiString nn = KEYNAME(namekey);
@@ -338,6 +346,24 @@ const PlayerTemplate* PlayerTemplateStore::findPlayerTemplate(NameKeyType nameke
 		#endif
 		if ((*it).getNameKey() == namekey)
 			return &(*it);
+	}
+	return nullptr;
+}
+
+//MODDD - New. Get the first PlayerTemplate that has the requested 'Side' value from "PlayerTemplate.ini".
+// This isn't to be confused with sides as in 'TheSidesList' (each is something that decides ownership for who any one human/computer player owns).
+// The Side field should be unique across all PlayerTemplate's, so assuming there's one thing to return should always be OK.
+const PlayerTemplate* PlayerTemplateStore::findPlayerTemplateWithSideFieldValue(const AsciiString& sideName) const
+{
+	for (int i = 0; i < ThePlayerTemplateStore->getPlayerTemplateCount(); i++)
+	{
+		const PlayerTemplate* pt = ThePlayerTemplateStore->getNthPlayerTemplate(i);
+		if (!pt)
+			continue;
+		if (sideName == pt->getSide())
+		{
+			return pt;
+		}
 	}
 	return nullptr;
 }

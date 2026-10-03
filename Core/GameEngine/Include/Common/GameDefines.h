@@ -234,6 +234,31 @@
 // 
 // -------------------------------------------------------------
 
+// This controls whether to preserve some name redirection fixes from an earlier point in the original Generals
+// (non-Zero Hour) development seen throughout the as-is state of the source code, typically in the world builder
+// when loading a map.
+// Ex: "Fundamentalist" -> "GLA"
+//     "FactionGLAWarlordCommand" -> "FactionGLA"
+//     "AmericaTankLeopard" -> "AmericaTankCrusader"
+// Some old faction names are seen in a few retail Generals campaign maps, as well as Cliff.map.
+// Raw string searches on map files don't appear to be reliable so this list may not be exhaustive, but I doubt skirmish
+// maps have much room for references this specific anyway.
+// Basically this setting only needs to be on if you're playing the retail Generals campaign maps or some old
+// demonstration/test maps present in the original Generals - anything new to Zero Hour or introduced by mods should be
+// fine without these ancient quick-fixes.
+#define PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_GENERALS 0
+
+// This refers to a Zero Hour addition to try and automatically replace objects in a map referring to a template
+// starting with "GC_" that has since been removed with a non-"GC_" variant if it exists.
+// This can sound confusing since the retail game comes with several "GC_" things that are perfectly valid to refer to,
+// such as 'GC_Slth_GLACommandCenter'. This quickfix refers to checking for a non-GC variant only if a template doesn't
+// exist and happens to begin with "GC_" to try again without the "GC_" prefix.
+// The only example I could find after loading every single Zero Hour generals challenge and campaign map was
+// "MD_GLA02_CINE.map". It had 2 "GC_Demo_GLAVehicleCombatBike"s that were redirected to "Demo_GLAVehicleCombatBike".
+// I'm pretty sure any weirdly named maps like "_CINE" are from earlier stages of development and not even seen if the
+// game is played normally so it should always be safe to have this setting turned off.
+#define PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_ZEROHOUR_GC 0
+
 // Setting to play maps intended for specific/single-player scenarios through the skirmish/network menu.
 // This is needed because there is no way for the game to automatically tell which maps were intended for
 // skirmish/network, generals challenge, or the campaign, so how to handle the map has to be hardcoded into

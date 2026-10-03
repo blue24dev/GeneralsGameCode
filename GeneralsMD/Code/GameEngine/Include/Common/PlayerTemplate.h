@@ -215,6 +215,8 @@ public:
 
 	const PlayerTemplate* getNthPlayerTemplate(Int i) const;
 	const PlayerTemplate* findPlayerTemplate(NameKeyType namekey) const;
+	//MODDD - new
+	const PlayerTemplate* findPlayerTemplateWithSideFieldValue(const AsciiString& sideName) const;
 	Int getPlayerTemplateCount() const { return m_playerTemplates.size(); }
 	Int getTemplateNumByName(AsciiString name) const;
 

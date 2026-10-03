@@ -2121,6 +2121,8 @@ Parameter *Parameter::ReadParameter(DataChunkInput &file)
 		pParm->m_string = file.readAsciiString();
 	}
 
+	//MODDD - option to exclude
+#if PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_GENERALS
 	if (pParm->getParameterType() == OBJECT_TYPE)
 	{
 		// quick hack to make loading models with "Fundamentalist" switch to "GLA"
@@ -2146,6 +2148,7 @@ Parameter *Parameter::ReadParameter(DataChunkInput &file)
 			pParm->m_string.set("Upgrade_InfantryCaptureBuilding");
 		}
 	}
+#endif
 
 	if (pParm->getParameterType() == OBJECT_STATUS)
 	{
@@ -2175,6 +2178,9 @@ Parameter *Parameter::ReadParameter(DataChunkInput &file)
 					found = true;
 					break;
 				}
+
+				//MODDD - option to exclude
+#if PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_GENERALS
 				if( !pParm->m_string.compareNoCase( "CRUSHER" ) )
 				{
 					//????
@@ -2214,6 +2220,7 @@ Parameter *Parameter::ReadParameter(DataChunkInput &file)
 					}
 					DEBUG_CRASH(("Unable to find Kindof SMALL_MISSILE', please call KrisM (x36844).", pParm->m_string.str()));
 				}
+#endif
 
 			}
 			if (!found)

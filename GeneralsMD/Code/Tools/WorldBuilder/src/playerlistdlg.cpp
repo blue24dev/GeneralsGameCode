@@ -32,6 +32,8 @@
 #include "GameLogic/SidesList.h"
 #include "GameClient/GameText.h"
 #include "Common/UnicodeString.h"
+//MODDD
+#include "GameClient/ChallengeGenerals.h"
 
 static const char* NEUTRAL_NAME_STR = "(neutral)";
 
@@ -880,14 +882,21 @@ void PlayerListDlg::OnChangePlayerdisplayname()
 	updateTheUI();
 }
 
-static void addSide(SidesList *sides, AsciiString faction,
-										AsciiString playerName, const wchar_t *playerUName)
+//MODDD - removing the third param. Display name is always the same as the internal player name so why not
+// handle that here?
+//static void addSide(SidesList *sides, AsciiString faction,
+//										AsciiString playerName, const wchar_t *playerUName)
+static void addSide(SidesList *sides, AsciiString faction, AsciiString playerName)
 {
 	if (!sides->findSideInfo(playerName)) {
 
 		Dict newPlayerDict;
 		UnicodeString playerUStr;
-		playerUStr = playerUName;
+
+		//MODDD - deciding here now
+		//playerUStr = playerUName;
+		playerUStr.translate(playerName);
+
 		newPlayerDict.setAsciiString(TheKey_playerName, playerName);
 		newPlayerDict.setBool(TheKey_playerIsHuman, false);
 		newPlayerDict.setUnicodeString(TheKey_playerDisplayName, playerUStr);
@@ -906,21 +915,55 @@ static void addSide(SidesList *sides, AsciiString faction,
 
 void PlayerListDlg::OnAddskirmishplayers()
 {
-	// PlyrCivilian
+	//MODDD - replacing the hardcoded 'addSide' calls with something that's more flexible to the PlayerTemplate's currently
+	// loaded in case of mods, though most tend to use existing (retail) 'Faction...' names internally anyway, possibly
+	// just for compatibility with the auto-populated sides by this very script block.
+	// ------------------------------------------------
+	// Needed for a lookup to see if a faction(PlayerTemplate) has info in 'ChallengeMode.ini' indicating whether it is
+	// locked or not ("StartsLocked"). This is how retail knows to hide the boss general from the skirmish
+	// who-to-play-as dropdown. Lacking a starting building also hides the faction (how civilian & observer factions are
+	// hidden). The Contra mod also uses this: boss factions deliberately lack this -> hidden.
+	// Note that the worldbuilder doesn't call 'initSubsystem(TheGameClient...' which would've handled initializing
+	// challenge generals info.
+	TheChallengeGenerals = createChallengeGenerals();
+ 	TheChallengeGenerals->init();
 
-	addSide(&m_sides, "FactionCivilian", "PlyrCivilian", L"PlyrCivilian");
-	addSide(&m_sides, "FactionAmerica", "SkirmishAmerica", L"SkirmishAmerica");
-	addSide(&m_sides, "FactionChina", "SkirmishChina", L"SkirmishChina");
-	addSide(&m_sides, "FactionGLA", "SkirmishGLA", L"SkirmishGLA");
+	// First, add the civilian player.
+	// Note that 'TheSidesList->addPlayerByTemplate' includes creating a team for the player - don't want that here.
+	// I'll stick to preserving retail behavior as much as possible for the internals of mutating the sides list.
+	// Also, 'CWorldBuilderDoc::OnNewDocument()' has since been edited to include creating the civilian player when a map
+	// is created anyway - this is fine since already having a side with the expected name blocks redundant creation.
+	// This will still be done in case the player manually deleted the civ side.
+	// Lastly, this uses the normal player name ("Plyr") instead of "Skirmish" below, also to match retail behavior.
+	const PlayerTemplate* ptCiv = ThePlayerTemplateStore->findPlayerTemplateWithSideFieldValue("Civilian");
+	addSide(&m_sides, ptCiv->getName(), TheSidesList->getPlayerNameForTemplate(ptCiv));
 
-	addSide(&m_sides, "FactionAmericaAirForceGeneral", "SkirmishAmericaAirForceGeneral", L"SkirmishAmericaAirForceGeneral");
-	addSide(&m_sides, "FactionAmericaLaserGeneral", "SkirmishAmericaLaserGeneral", L"SkirmishAmericaLaserGeneral");
-	addSide(&m_sides, "FactionAmericaSuperWeaponGeneral", "SkirmishAmericaSuperWeaponGeneral", L"SkirmishAmericaSuperWeaponGeneral");
-	addSide(&m_sides, "FactionChinaTankGeneral", "SkirmishChinaTankGeneral", L"SkirmishChinaTankGeneral");
-	addSide(&m_sides, "FactionChinaNukeGeneral", "SkirmishChinaNukeGeneral", L"SkirmishChinaNukeGeneral");
-	addSide(&m_sides, "FactionChinaInfantryGeneral", "SkirmishChinaInfantryGeneral", L"SkirmishChinaInfantryGeneral");
-	addSide(&m_sides, "FactionGLADemolitionGeneral", "SkirmishGLADemolitionGeneral", L"SkirmishGLADemolitionGeneral");
-	addSide(&m_sides, "FactionGLAToxinGeneral", "SkirmishGLAToxinGeneral", L"SkirmishGLAToxinGeneral");
-	addSide(&m_sides, "FactionGLAStealthGeneral", "SkirmishGLAStealthGeneral", L"SkirmishGLAStealthGeneral");
+	// For the rest of the factions, each follows a pattern of "PlayerTemplate.name:FactionX" -> "Side.name: SkirmishX".
+	// This won't create "SkirmishCivilian" because lacking a starting building blocks the civilian template from
+	// adding a side here. Same case for avoiding "SkirmishObserver".
+	int i;
+	for (i = 0; i < ThePlayerTemplateStore->getPlayerTemplateCount(); ++i)
+	{
+		const PlayerTemplate* pt = ThePlayerTemplateStore->getNthPlayerTemplate(i);
+		if (!pt)
+			continue;
+		
+		if (pt->getStartingBuilding().isEmpty())
+			continue;
+
+		Bool disallowLockedGenerals = TRUE;
+		const GeneralPersona *general = TheChallengeGenerals->getGeneralByTemplateName(pt->getName());
+		Bool startsLocked = general ? !general->isStartingEnabled() : FALSE;
+		if (disallowLockedGenerals && startsLocked)
+			continue;
+
+		// Finally, add the side a player is expected to be able to play as in skirmish
+		addSide(&m_sides, pt->getName(), TheSidesList->getSkirmishPlayerNameForTemplate(pt));
+	}
+
+	// Delete the loaded challenge generals info as TheGameClient's deconstructor would have.
+	delete TheChallengeGenerals;
+	// ------------------------------------------------
+
 	updateTheUI();
 }

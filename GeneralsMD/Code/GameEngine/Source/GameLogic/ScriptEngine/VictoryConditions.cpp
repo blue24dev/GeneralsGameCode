@@ -376,7 +376,7 @@ void VictoryConditions::cachePlayerPtrs()
 		Player *player = ThePlayerList->getNthPlayer(i);
 		DEBUG_LOG(("Checking whether to cache player %d - [%ls], house [%ls]", i, player?player->getPlayerDisplayName().str():L"<NOBODY>", (player&&player->getPlayerTemplate())?player->getPlayerTemplate()->getDisplayName().str():L"<NONE>"));
 
-		//MODDD - simplier check possible
+		//MODDD - simpler check possible
 		//if (player && player != ThePlayerList->getNeutralPlayer() && player->getPlayerTemplate() && player->getPlayerTemplate() != civTemplate && !player->isPlayerObserver())
 		if (player && !ThePlayerList->isPlayerUnaffiliated(player) && !player->isPlayerObserver())
 		{

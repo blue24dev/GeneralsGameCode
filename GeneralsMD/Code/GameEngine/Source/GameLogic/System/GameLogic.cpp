@@ -736,6 +736,8 @@ LoadScreen *GameLogic::getLoadScreen( Bool loadingSaveGame )
 
 }
 
+//MODDD - option to exclude from compile
+#if PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_GENERALS
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
 void handleNameChange( MapObject *mapObj )
@@ -753,6 +755,7 @@ void handleNameChange( MapObject *mapObj )
 		mapObj->setThingTemplate( thingTemplate );
 	}
 }
+#endif
 
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
@@ -2242,9 +2245,13 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 			if (pMapObj->getFlag(FLAG_BRIDGE_FLAGS) || pMapObj->getFlag(FLAG_ROAD_FLAGS)) {
 				continue;	// roads & bridges are special cased in the terrain side.
 			}
+
+			//MODDD - option to exclude from compile
+#if PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_GENERALS
 			//Kris: Added this function so that we can rename objects and preserve them. If the patch
 			//      entry is missing for a particular unit, it doesn't get added to the world.
 			handleNameChange( pMapObj );
+#endif
 
 			// get thing template based from map object name
 			const ThingTemplate *thingTemplate = pMapObj->getThingTemplate();
