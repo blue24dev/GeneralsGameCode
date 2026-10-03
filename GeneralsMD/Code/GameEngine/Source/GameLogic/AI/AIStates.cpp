@@ -7243,7 +7243,7 @@ StateReturnType AIGuardRetaliateState::update()
 		if(innerMachineVictim->getTeam() != m_cachedVictimTeam)
 		{
 			// check the current relationship
-			if (owner->getRelationshipWithAppearance(innerMachineVictim) != ENEMIES)
+			if (owner->getApparentRelationship(innerMachineVictim) != ENEMIES)
 			{
 				// if I'm no longer enemies with this, stop
 				return STATE_FAILURE;
