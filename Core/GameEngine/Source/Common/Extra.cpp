@@ -1434,7 +1434,7 @@ UnsignedInt specialPowerReloadTimeAdjustmentFilter(const Object* obj, UnsignedIn
 		// 'obj' is always NULL here, as shared abilities typically stand alone from whatever structure happens to be needed to link to them
 		// (in nearly every case, it's the command center anyway).
 		// ...
-		_reloadTime += LOGICFRAMES_PER_SECOND * 60 * 2;
+		_reloadTime += (UnsignedInt)(LOGICFRAMES_PER_SECOND * 60 * 1.5f);
 	}
 	return _reloadTime;
 }
