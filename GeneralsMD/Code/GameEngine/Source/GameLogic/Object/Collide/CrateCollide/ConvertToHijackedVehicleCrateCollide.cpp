@@ -170,9 +170,9 @@ Bool ConvertToHijackedVehicleCrateCollide::isValidToExecute( const Object *other
 	}
 	*/
 
-	//MODDD - replaced 'getRelationship' with 'getRelationshipWithAppearance' so this takes a disguise into consideration
+	//MODDD - replaced 'getRelationship' with 'getApparentRelationship' so this takes a disguise into consideration
 	// (don't think you can hijack something that looks like a friendly unit)
-	Relationship r = getObject()->getRelationshipWithAppearance( other );
+	Relationship r = getObject()->getApparentRelationship( other );
 	
 	//Only hijack enemy objects
 	if( r != ENEMIES )
