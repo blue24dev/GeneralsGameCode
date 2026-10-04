@@ -2345,7 +2345,7 @@ Bool ScriptConditions::evaluateSkirmishPlayerTechBuildingWithinDistancePerimeter
 
 	PartitionFilterOnMap filterMapStatus;
 
-	//MODDD
+	//MODDD - 'f3' removed
 	PartitionFilter *filters[] = {
 		&f1,
 		&f2,
