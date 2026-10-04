@@ -187,7 +187,13 @@ UpdateSleepTime StealthDetectorUpdate::update()
 	PartitionFilterRelationship						filterTeam(self, PartitionFilterRelationship::ALLOW_ENEMIES | PartitionFilterRelationship::ALLOW_NEUTRAL );
 	PartitionFilterAcceptByKindOf					filterKindof(data->m_extraDetectKindof, data->m_extraDetectKindofNot);
 	PartitionFilterSameMapStatus					filterMapStatus(getObject());
-	PartitionFilter*											filters[] = { &filterStealthOrStealthGarrisoned, &filterTeam, &filterKindof, &filterMapStatus, nullptr };
+	PartitionFilter*											filters[] = {
+		&filterStealthOrStealthGarrisoned,
+		&filterTeam,
+		&filterKindof,
+		&filterMapStatus,
+		nullptr
+	};
 
 	//MODDD - use the range from the template instead, so this isn't affected by things that modify the vision per-unit
 	// like the currently active battle plan (the value here sourced from unit vision isn't kept in sync with that).
