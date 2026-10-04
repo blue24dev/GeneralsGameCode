@@ -31,7 +31,7 @@ class CButtonShowColor : public CButton
 		virtual ~CButtonShowColor() override;
 
 		//MODDD - new
-		virtual BOOL Create(LPCTSTR lpszCaption, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID) override;
+		virtual void PreSubclassWindow() override;
 		virtual void DrawItem(LPDRAWITEMSTRUCT lpDrawItemStruct) override;
 
 		static COLORREF RGBtoBGR(Int color);

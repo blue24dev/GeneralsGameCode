@@ -252,6 +252,11 @@ PlayerListDlg::PlayerListDlg(CWnd* pParent /*=nullptr*/)
 void PlayerListDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
+
+	//MODDD - alternate way to hook up subclassed UI items for more accuracy, particularly for the now-subclassed combobox
+	DDX_Control(pDX, IDC_PlayerColor, m_colorButton);
+	DDX_Control(pDX, IDC_PLAYERFACTION, m_factionComboBox);
+
 	//{{AFX_DATA_MAP(PlayerListDlg)
 		// NOTE: the ClassWizard will add DDX and DDV calls here
 	//}}AFX_DATA_MAP
@@ -538,16 +543,81 @@ void PlayerListDlg::updateTheUI()
 		factions->ResetContent();
 		if (ThePlayerTemplateStore)
 		{
+			//MODDD - a new first item to be the placeholder for lacking a faction - namely for the neutral player to be able
+			// to switch back to in case this is accidentally changed
+			factions->AddString("<none>");
+
+			//MODDD - instead of being added directly, the actual factions will be added to a temp(memory) list and sorted
+			// here since the styling (CBS_SORT) was removed to do this automatically.
+			// This ensures the new "<none>" item isn't part of the re-ordering, just in case factions with some really weird
+			// symbols are ever added to go above and change the significance of being "item #0" (could get very confusing).
+			std::vector<CString> factionNames;
 			for (i = 0; i < ThePlayerTemplateStore->getPlayerTemplateCount(); i++)
 			{
-				AsciiString nm = ThePlayerTemplateStore->getNthPlayerTemplate(i)->getName();
-				factions->AddString(nm.str());
+				//MODDD - replaced
+				// ---
+				//AsciiString nm = ThePlayerTemplateStore->getNthPlayerTemplate(i)->getName();
+				//factions->AddString(nm.str());
+				// ---
+				factionNames.push_back(ThePlayerTemplateStore->getNthPlayerTemplate(i)->getName().str());
+				// ---
+			}
+
+			//MODDD - new per explanation further above
+			// ---
+			std::sort
+			(
+				factionNames.begin(),
+				factionNames.end(),
+				[](const CString& a, const CString& b)
+				{
+					return (a.CompareNoCase(b) < 0);
+				}
+			);
+
+			// finally, add the ordered faction names to the combobox
+			for (i = 0; i < factionNames.size(); ++i)
+			{
+				factions->AddString(factionNames[i]);
+			}
+			// ---
+		}
+		//MODDD - changing this to handle the special case of the faction string being empty (neutral player by default)
+		// and better handling not finding a faction at all: stating as such in display text separate from any menu
+		// options.
+		// ------------------------
+		//i = factions->FindStringExact(-1, pdict->getAsciiString(TheKey_playerFaction).str());
+		//factions->SetCurSel(i);
+		// ------------------------
+		const AsciiString& playerFaction = pdict->getAsciiString(TheKey_playerFaction);
+		if (playerFaction.isEmpty())
+		{
+			// special case: select the new option #0 just for this
+			factions->SetCurSel(0);
+		}
+		else
+		{
+			// try to find a fitting dropdown option as usual
+			// Note that the first param 'nIndexStart' has been changed from -1 to 0 to skip the first item, since it's
+			// now the placeholder for the empty faction string
+			i = factions->FindStringExact(0, playerFaction.str());
+			if (i != CB_ERR)
+			{
+				// success
+				factions->SetCurSel(i);
+			}
+			else
+			{
+				// error - could not find the faction in the list - let the user know
+				factions->SetCurSel(-1);
+				char errorTextBuf[256];
+				snprintf(errorTextBuf, ARRAY_SIZE(errorTextBuf), "MISSING: %s",playerFaction.str());
+				factions->SetWindowText(errorTextBuf);
 			}
 		}
-		i = factions->FindStringExact(-1, pdict->getAsciiString(TheKey_playerFaction).str());
-		factions->SetCurSel(i);
 	}
-
+	// ------------------------
+	
 	// update allies & enemies
 	CListBox *allieslist = (CListBox*)GetDlgItem(IDC_ALLIESLIST);
 	CListBox *enemieslist = (CListBox*)GetDlgItem(IDC_ENEMIESLIST);
@@ -613,6 +683,12 @@ BOOL PlayerListDlg::OnInitDialog()
 	m_sides = *TheSidesList;
 	m_curPlayerIdx = thePrevCurPlyr;
 
+	//MODDD - why did the original devs do this switch-around thing to copy some info from the original, init the new
+	// subclass UI item with it, and then delete the original?
+	// Seems some things might be lost in translation on doing this, particularly for the now-subclassed IDC_PLAYERFACTION
+	// combobox (rather broken if the retail approach below is used for that).
+	// See a 'DDX_Control' line per item in this dialog's 'DoDataExchange' method for the replacement for this.
+	/*
 	CRect rect;
 	CWnd *item = GetDlgItem(IDC_PlayerColor);
 	if (item) {
@@ -622,6 +698,7 @@ BOOL PlayerListDlg::OnInitDialog()
 		m_colorButton.Create("", style, rect, this, IDC_PlayerColor);
 		item->DestroyWindow();
 	}
+	*/
 
 	//MODDD - new location
 	PopulateColorComboBox();
@@ -818,11 +895,30 @@ void PlayerListDlg::OnEditchangePlayerfaction()
 		// get the text out of the combo. If it is user-typed, sel will be -1, otherwise it will be >=0
 		CString theText;
 		Int sel = faction->GetCurSel();
+
+		//MODDD - changing how this works since index 0 is now a special item for "no faction"
+		/*
 		if (sel >= 0) {
 			faction->GetLBText(sel, theText);
 		} else {
 			faction->GetWindowText(theText);
 		}
+		*/
+		if (sel == 0)
+		{
+			theText = "";
+		}
+		else if (sel != -1)
+		{
+			faction->GetLBText(sel, theText);
+		}
+		else
+		{
+			// if -1, the only possibility is error text (this field is not editable by the user).
+			// Don't try to handle this - stop
+			return;
+		}
+
 		AsciiString name((LPCTSTR)theText);
 
 		Dict *pdict = m_sides.getSideInfo(m_curPlayerIdx)->getDict();
