@@ -182,6 +182,7 @@ BEGIN_MESSAGE_MAP(CComboBoxCustom, CComboBox)
 	ON_WM_LBUTTONUP()
 	ON_WM_SETFOCUS()
 	ON_WM_KILLFOCUS()
+	// An ampersand in front of the 2nd param (function address) here causes a VS6 compile error? strange, no issue in modern VS.
 	ON_CONTROL_REFLECT(CBN_DROPDOWN, CComboBoxCustom::OnCbnDropdown)
 	// Beware - it seems the 'CBN_SELENDOK' one will replace hooks from other files like playerlistdlg.cpp's
 	//   ON_CBN_SELENDOK(... OnEditchangePlayerfaction)

@@ -636,7 +636,7 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 		SlavedUpdateInterface* slavedUpdate = newMod->getSlavedUpdateInterface();
 		if ( slavedUpdate )
 		{
-			DEBUG_ASSERTCRASH( slavedUpdate == nullptr, ("Duplicate SlavedUpdate!") );
+			DEBUG_ASSERTCRASH( m_slavedUpdate == nullptr, ("Duplicate SlavedUpdate!") );
 			m_slavedUpdate = slavedUpdate;
 		}
 		
@@ -644,7 +644,7 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 		SpawnBehaviorInterface* spawnBehavior = newMod->getSpawnBehaviorInterface();
 		if ( spawnBehavior )
 		{
-			DEBUG_ASSERTCRASH( spawnBehavior == nullptr, ("Duplicate SpawnBehavior!") );
+			DEBUG_ASSERTCRASH( m_spawnBehavior == nullptr, ("Duplicate SpawnBehavior!") );
 			m_spawnBehavior = spawnBehavior;
 		}
 

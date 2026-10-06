@@ -125,29 +125,52 @@ Real getShroudClearingRangeForLookAdjusted(const Object* obj)
 
 	if (obj->isKindOf(KINDOF_AIRCRAFT) && !obj->isUsingAirborneLocomotor())
 	{
-		// if this aircraft is grounded, reduce its shroud-clearing range by half
+		// If this aircraft is grounded, reduce its shroud-clearing range by half.
+		// The retail choices are clearly under the assumption it's in the air, but suddenly increasing the sight of the
+		// airfield just for being parked is a tad silly.
 		shroudClearingRange *= 0.5f;
 	}
 
-	// 350 * 1.5
-	
 #if CUSTOM_ATTRIBUTE_CHANGES
-	// boost the final shroud-clearing range, the bigger the bonus the smaller it is (diminishing returns)
-	if (shroudClearingRange < 100)
+	if (!obj->isKindOf(KINDOF_AIRCRAFT))
 	{
-		shroudClearingRange = shroudClearingRange * 1.80f;
-	}
-	else if (shroudClearingRange < 200)
-	{
-		shroudClearingRange = 100 * 1.80f + (shroudClearingRange - 100) * 1.30f;
-	}
-	else if (shroudClearingRange < 300)
-	{
-		shroudClearingRange = 100 * 1.80f + 100 * 1.30f + (shroudClearingRange - 200) * 1.12f;
+		// boost the final shroud-clearing range, the bigger the bonus the smaller it is (diminishing returns)
+		if (shroudClearingRange <= 100)
+		{
+			shroudClearingRange = shroudClearingRange * 2.00f;
+		}
+		else if (shroudClearingRange <= 200)
+		{
+			shroudClearingRange = 100 * 2.00f + (shroudClearingRange - 100) * 1.40f;
+		}
+		else if (shroudClearingRange <= 300)
+		{
+			shroudClearingRange = 100 * 2.00f + 100 * 1.40f + (shroudClearingRange - 200) * 1.10f;
+		}
+		else
+		{
+			shroudClearingRange = 100 * 2.00f + 100 * 1.40f + 100 * 1.10f + (shroudClearingRange - 300);
+		}
 	}
 	else
 	{
-		shroudClearingRange = 100 * 1.80f + 100 * 1.30f + 100 * 1.12f + (shroudClearingRange - 300);
+		// lower the boost for aircraft - often does the job as it comes
+		if (shroudClearingRange <= 100)
+		{
+			shroudClearingRange = shroudClearingRange * 1.50f;
+		}
+		else if (shroudClearingRange <= 200)
+		{
+			shroudClearingRange = 100 * 1.50f + (shroudClearingRange - 100) * 1.20f;
+		}
+		else if (shroudClearingRange <= 300)
+		{
+			shroudClearingRange = 100 * 1.50f + 100 * 1.20f + (shroudClearingRange - 200) * 1.05f;
+		}
+		else
+		{
+			shroudClearingRange = 100 * 1.50f + 100 * 1.20f + 100 * 1.05f + (shroudClearingRange - 300);
+		}
 	}
 #endif
 	return shroudClearingRange;
