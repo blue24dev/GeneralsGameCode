@@ -442,6 +442,12 @@ void PlayerListDlg::OnSelchangePlayers()
 	updateTheUI();
 }
 
+//MODDD - VS6-friendly predicate for 'std::sort'
+static bool compareStringCaseInsensitive(const CString& a, const CString& b)
+{
+	return a.CompareNoCase(b) < 0;
+}
+
 void PlayerListDlg::updateTheUI()
 {
 	char buffer[1024];
@@ -569,10 +575,7 @@ void PlayerListDlg::updateTheUI()
 			(
 				factionNames.begin(),
 				factionNames.end(),
-				[](const CString& a, const CString& b)
-				{
-					return (a.CompareNoCase(b) < 0);
-				}
+				&compareStringCaseInsensitive
 			);
 
 			// finally, add the ordered faction names to the combobox
