@@ -182,7 +182,7 @@ BEGIN_MESSAGE_MAP(CComboBoxCustom, CComboBox)
 	ON_WM_LBUTTONUP()
 	ON_WM_SETFOCUS()
 	ON_WM_KILLFOCUS()
-	//ON_CONTROL_REFLECT(CBN_DROPDOWN, &CComboBoxCustom::OnCbnDropdown)
+	ON_CONTROL_REFLECT(CBN_DROPDOWN, CComboBoxCustom::OnCbnDropdown)
 	// Beware - it seems the 'CBN_SELENDOK' one will replace hooks from other files like playerlistdlg.cpp's
 	//   ON_CBN_SELENDOK(... OnEditchangePlayerfaction)
 	// The others didn't appear to have the effect I wanted anyway.
