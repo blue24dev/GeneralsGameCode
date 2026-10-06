@@ -1225,13 +1225,9 @@ UnsignedInt WeaponTemplate::fireWeaponTemplate
 		}
 
 		firingWeapon->newProjectileFired( sourceObj, projectile, victimObj, victimPos );//The actual logic weapon needs to know this was created.
-
-		ProjectileUpdateInterface* pui = nullptr;
-		for (BehaviorModule** u = projectile->getBehaviorModules(); *u; ++u)
-		{
-			if ((pui = (*u)->getProjectileUpdateInterface()) != nullptr)
-				break;
-		}
+		
+		//MODDD - replaced 'getBehaviorModules' search with a reference to the getter present as of retail (?)
+		ProjectileUpdateInterface* pui = projectile->getProjectileUpdateInterface();
 		if (pui)
 		{
 			VeterancyLevel v = sourceObj->getVeterancyLevel();
@@ -1649,14 +1645,11 @@ void WeaponTemplate::dealDamageInternal(ObjectID sourceID, ObjectID victimID, co
 			// this is much more useful for the AI...
 			if (source && source->isKindOf(KINDOF_PROJECTILE))
 			{
-				for (BehaviorModule** u = source->getBehaviorModules(); *u; ++u)
+				//MODDD - replaced 'getBehaviorModules' search with a reference to the getter present as of retail (?)
+				ProjectileUpdateInterface* pui = source->getProjectileUpdateInterface();
+				if (pui != nullptr)
 				{
-					ProjectileUpdateInterface* pui = (*u)->getProjectileUpdateInterface();
-					if (pui != nullptr)
-					{
-						damageInfo.in.m_sourceID = pui->projectileGetLauncherID();
-						break;
-					}
+					damageInfo.in.m_sourceID = pui->projectileGetLauncherID();
 				}
 			}
 

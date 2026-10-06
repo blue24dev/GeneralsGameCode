@@ -114,6 +114,45 @@ void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCrea
 	}
 }
 
+Real getShroudClearingRangeForLookAdjusted(const Object* obj)
+{
+	Real shroudClearingRange = obj->getShroudClearingRange();
+	// not touching 0 or negative
+	if (shroudClearingRange <= 0)
+	{
+		return shroudClearingRange;
+	}
+
+	if (obj->isKindOf(KINDOF_AIRCRAFT) && !obj->isUsingAirborneLocomotor())
+	{
+		// if this aircraft is grounded, reduce its shroud-clearing range by half
+		shroudClearingRange *= 0.5f;
+	}
+
+	// 350 * 1.5
+	
+#if CUSTOM_ATTRIBUTE_CHANGES
+	// boost the final shroud-clearing range, the bigger the bonus the smaller it is (diminishing returns)
+	if (shroudClearingRange < 100)
+	{
+		shroudClearingRange = shroudClearingRange * 1.80f;
+	}
+	else if (shroudClearingRange < 200)
+	{
+		shroudClearingRange = 100 * 1.80f + (shroudClearingRange - 100) * 1.30f;
+	}
+	else if (shroudClearingRange < 300)
+	{
+		shroudClearingRange = 100 * 1.80f + 100 * 1.30f + (shroudClearingRange - 200) * 1.12f;
+	}
+	else
+	{
+		shroudClearingRange = 100 * 1.80f + 100 * 1.30f + 100 * 1.12f + (shroudClearingRange - 300);
+	}
+#endif
+	return shroudClearingRange;
+}
+
 Int getUpgradedSupplyBoost(const Object* collectingObject, const std::list<upgradePair>* upgradeBoostList)
 {
 	Player *player = collectingObject->getControllingPlayer();
@@ -298,13 +337,15 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 #endif
 	static NameKeyType AutoDepositUpdateNameKey = NAMEKEY("AutoDepositUpdate");
 	static NameKeyType HackInternetAIUpdateNameKey = NAMEKEY("HackInternetAIUpdate");
+	static NameKeyType SpawnBehaviorNameKey = NAMEKEY("SpawnBehavior");
 	
 #if CUSTOM_ATTRIBUTE_CHANGES
 	Bool foundStealthDetectorUpdate = false;
 	Bool foundActiveShroudUpgrade = false;
 	StealthDetectorUpdateModuleData* stealthDetectorData = nullptr;
 #endif
-
+	Bool foundSpawnBehavior = false;
+	
 	// Whether this thing gets a cost reduction for being a renewable income source at the very end.
 	// There is checking kindof's like FS_BLACK_MARKET or FS_SUPPLY_DROP_ZONE, but I'd rather have a more accurate check
 	// in case some mod has something that lacks either of these flags but is clearly able to (primarily?) generate money.
@@ -591,6 +632,18 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 #endif
 			//renewableMoneySourceCostReduction = true;
 		}
+		else if ( modNameKey == SpawnBehaviorNameKey )
+		{
+			foundSpawnBehavior = true;
+		}
+	}
+
+	// This is here to disable the strange hackery of having 'KINDOF_SPAWNS_ARE_THE_WEAPONS' for the stinger soldier as of retail INI,
+	// even though this flag is clearly intended for the thing that handles the spawning (stinger site).
+	// A few other changes elsewhere in the codebase should make this no longer necessary.
+	if (_this->isKindOf(KINDOF_SPAWNS_ARE_THE_WEAPONS) && !foundSpawnBehavior)
+	{
+		_this->setKindOf(KINDOF_SPAWNS_ARE_THE_WEAPONS, 0);
 	}
 
 	// (this section now occurs below the module iteration block in case the presence of some module affects the stat
@@ -729,12 +782,8 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 #endif
 	}
 
-	// Beware of side effects like revealed fog of war that doesn't un-reveal. This is not well understood.
-	// Checking for being above 0 first appears to fix this. Are negative values used in some places?
-	if (_this->m_shroudClearingRange > 0)
-	{
-		_this->m_shroudClearingRange *= 1.50f;
-	}
+	// NOTE - handling 'shroudClearingRange' changes in 'getShroudClearingRangeForLookAdjusted' instead for better control during runtime
+	// (ex: diminishing returns for a range boosted by bonuses during the game)
 #endif
 
 }
@@ -978,7 +1027,9 @@ Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_helper(const Th
 
 Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate(ObjectCreationList* ocl, std::set<ObjectCreationList*>& processedOCLList)
 {
-	if (processedOCLList.contains(ocl))
+	// aaAAA more "VS6-didn't-have-this" shenanigans
+	//if (processedOCLList.contains(ocl))
+	if (processedOCLList.find(ocl) != processedOCLList.end())
 	{
 		// endless recursion safety - stop, already checked before
 		return false;
@@ -1224,7 +1275,8 @@ void automaticChangesPostINIParsing_OCL(ObjectCreationList& ocl, std::set<AsciiS
 				continue;
 			}
 			// If this thing has previously been checked, don't do it again
-			if (transportProcessedList.contains(transportName))
+			//if (transportProcessedList.contains(transportName))
+			if (transportProcessedList.find(transportName) != transportProcessedList.end())
 			{
 				continue;
 			}
@@ -1802,13 +1854,17 @@ void objectContainedByOnDeleteCheck_printLabel(FILE* outputFile, int callSource)
 				return;
 			}
 
-			std::vector<int>::const_iterator it = g_destroyObjectSource.cbegin();
+			// oh brother, now ya tell me VS6 doesn't have the science fictional wonder that is 'cbegin'...
+			// NOTE TO SELF - use a "#if defined(_MSC_VER) && _MSC_VER < 1300" check to compile script only for VS6.
+			// Not worth it in this case, I'll just stick to 'begin', though strangely 'const_iterator' was supported?
+			std::vector<int>::const_iterator it = g_destroyObjectSource.begin();
+
 			// first item, handle separately to not prepend a separator
 			fprintf(outputFile, "%03d", *it);
 			// advance
 			++it;
 
-			for (; it != g_destroyObjectSource.cend(); ++it)
+			for (; it != g_destroyObjectSource.end(); ++it)
 			{
 				fprintf(outputFile, " -> %03d", *it);
 			}

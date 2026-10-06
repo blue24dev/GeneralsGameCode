@@ -9344,13 +9344,11 @@ Int Pathfinder::iterateCellsAlongLine( const ICoord2D &start, const ICoord2D &en
 
 static ObjectID getSlaverID(const Object* o)
 {
-	for (BehaviorModule** update = o->getBehaviorModules(); *update; ++update)
+	//MODDD - replaced 'getBehaviorModules' search with a reference to the new cached getter
+	SlavedUpdateInterface* sdu = o->getSlavedUpdate();
+	if (sdu != nullptr)
 	{
-		SlavedUpdateInterface* sdu = (*update)->getSlavedUpdateInterface();
-		if (sdu != nullptr)
-		{
-			return sdu->getSlaverID();
-		}
+		return sdu->getSlaverID();
 	}
 
 	return INVALID_ID;

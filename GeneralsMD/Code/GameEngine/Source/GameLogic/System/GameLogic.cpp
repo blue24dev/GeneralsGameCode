@@ -4527,6 +4527,12 @@ void GameLogic::update()
 		ThePartitionManager->UPDATE();
 	}
 
+	//MODDD - event for all objects - is this a good place?
+	for( Object *obj = m_objList; obj; obj = obj->getNextObject() )
+	{
+		obj->onUpdatePost();
+	}
+
 	//
 	// End of frame clean-up
 	//

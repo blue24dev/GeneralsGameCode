@@ -25,7 +25,7 @@ public:
 	virtual ~CComboBoxCustom_CEdit() override;
 
 	virtual void PreSubclassWindow() override;
-  void onDropdownShown();
+	void onDropdownShown();
 
 protected:
 	afx_msg HBRUSH CtlColor(CDC* pDC, UINT nCtlColor);

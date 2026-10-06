@@ -30,6 +30,9 @@ extern std::vector<int> g_destroyObjectSource;
 
 //MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
 void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCreateCalls = FALSE);
+
+Real getShroudClearingRangeForLookAdjusted(const Object* obj);
+
 // General utilities I came up with to condense some common script. 'common/GameUtility.h' might also be a good place for this.
 Int getUpgradedSupplyBoost(const Object* collectingObject, const std::list<upgradePair>* upgradeBoostList);
 void automaticThingTemplateChanges(ThingTemplate* _this);

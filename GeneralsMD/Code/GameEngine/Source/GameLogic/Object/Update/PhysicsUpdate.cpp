@@ -239,13 +239,8 @@ static ProjectileUpdateInterface* getPui(Object* obj)
 	if (!obj->isKindOf(KINDOF_PROJECTILE))
 		return nullptr;
 
-	ProjectileUpdateInterface* objPui = nullptr;
-	for (BehaviorModule** u = obj->getBehaviorModules(); *u; ++u)
-	{
-		if ((objPui = (*u)->getProjectileUpdateInterface()) != nullptr)
-			return objPui;
-	}
-	return nullptr;
+	//MODDD - replaced 'getBehaviorModules' search with a reference to the getter present as of retail (?)
+	return obj->getProjectileUpdateInterface();
 }
 
 //-------------------------------------------------------------------------------------------------
