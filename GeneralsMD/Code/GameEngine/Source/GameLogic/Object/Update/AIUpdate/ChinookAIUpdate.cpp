@@ -209,7 +209,7 @@ public:
 		return STATE_CONTINUE;
 	}
 
-	//MODDD - missing param to be an overload?
+	//MODDD - missing param to be an override?
 	virtual void onExit( StateExitType status ) override
 	{
 		Object *owner = getMachineOwner();
