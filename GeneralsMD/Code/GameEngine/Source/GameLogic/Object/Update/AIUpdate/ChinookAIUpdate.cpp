@@ -132,7 +132,7 @@ public:
 	}
 
 	//MODDD - added
-	void onExit( StateExitType status ) override
+	virtual void onExit( StateExitType status ) override
 	{
 		// If I don't plan on leaving the map, may as well let the player order me around
 		Object* obj = getMachineOwner();
@@ -210,7 +210,7 @@ public:
 	}
 
 	//MODDD - missing param to be an overload?
-	void onExit( StateExitType status ) override
+	virtual void onExit( StateExitType status ) override
 	{
 		Object *owner = getMachineOwner();
 		owner->clearStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_RIDER8 ) );
