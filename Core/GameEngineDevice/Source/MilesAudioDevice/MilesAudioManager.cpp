@@ -38,7 +38,6 @@
 /*		7/18/2002 : Initial creation                                           */
 /*---------------------------------------------------------------------------*/
 
-#include <dsound.h>
 #include "Lib/BaseType.h"
 #include "MilesAudioDevice/MilesAudioManager.h"
 
@@ -69,10 +68,11 @@
 #include <Utility/interlocked_adapter.h>
 #include "MilesLoader.h"
 
+#include <dsound.h>
+
 //MODDD
 #include <algorithm>
 #include <iostream>
-
 
 enum { INFINITE_LOOP_COUNT = 1000000 };
 
