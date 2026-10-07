@@ -852,17 +852,18 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,177,274,51,14
     LTEXT           "Allies:",IDC_STATIC,7,133,68,8
     LTEXT           "Enemies:",IDC_STATIC,153,133,78,8
-    LISTBOX         IDC_ALLIESLIST,7,144,129,40,LBS_SORT | LBS_MULTIPLESEL | 
+    //MODDD - removing 'LBS_SORT' from the diplomacy ListBox styles. I think matching the actual player order makes more sense.
+    LISTBOX         IDC_ALLIESLIST,7,144,129,40,/*LBS_SORT |*/ LBS_MULTIPLESEL | 
                     LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
-    LISTBOX         IDC_ENEMIESLIST,153,144,129,40,LBS_SORT | 
+    LISTBOX         IDC_ENEMIESLIST,153,144,129,40,/*LBS_SORT |*/ 
                     LBS_MULTIPLESEL | LBS_NOINTEGRALHEIGHT | WS_VSCROLL | 
                     WS_TABSTOP
     LISTBOX         IDC_PLAYER_ATTITUDE_OUT,7,203,129,40,NOT LBS_NOTIFY | 
-                    LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_NOSEL | WS_VSCROLL | 
+                    /*LBS_SORT |*/ LBS_NOINTEGRALHEIGHT | LBS_NOSEL | WS_VSCROLL | 
                     WS_TABSTOP
     LTEXT           "How Player Regard Others:",IDC_STATIC,7,192,86,8
     LISTBOX         IDC_PLAYER_ATTITUDE_IN,153,203,129,40,NOT LBS_NOTIFY | 
-                    LBS_SORT | LBS_NOINTEGRALHEIGHT | LBS_NOSEL | WS_VSCROLL | 
+                    /*LBS_SORT |*/ LBS_NOINTEGRALHEIGHT | LBS_NOSEL | WS_VSCROLL | 
                     WS_TABSTOP
     LTEXT           "How Others Regard Player:",IDC_STATIC,153,192,94,8
     PUSHBUTTON      "Cancel",IDCANCEL,232,274,50,14
@@ -871,8 +872,10 @@ BEGIN
     EDITTEXT        IDC_PLAYERDISPLAYNAME,82,100,84,14,ES_AUTOHSCROLL
     CONTROL         "Is Player computer-controlled?",IDC_PLAYERISCOMPUTER,
                     "Button",BS_AUTOCHECKBOX | WS_TABSTOP,163,87,110,10
-    COMBOBOX        IDC_PLAYERFACTION,178,110,96,105,CBS_DROPDOWNLIST | 
-                    CBS_SORT | WS_VSCROLL | WS_TABSTOP
+    //MODDD - changing 'CBS_DROPDOWNLIST' to 'CBS_DROPDOWN' to allow text that informs the user of an invalid faction.
+    // Also, removing 'CBS_SORT' to leave sorting items up to the app instead
+    COMBOBOX        IDC_PLAYERFACTION,178,110,96,105,CBS_DROPDOWN | 
+                    /*CBS_SORT |*/ WS_VSCROLL | WS_TABSTOP
     PUSHBUTTON      "",IDC_PlayerColor,8,116,14,12
     COMBOBOX        IDC_PlayerColorCombo,51,116,83,120,CBS_DROPDOWNLIST | 
                     WS_TABSTOP

@@ -285,6 +285,9 @@ Object::Object( const ThingTemplate *tt ) :
 	m_stealthDetector(nullptr),
 	m_lockWeaponCreate(nullptr),
 	m_rebuildHoleBehavior(nullptr),
+	m_slavedUpdate(nullptr),
+	m_spawnBehavior(nullptr),
+	m_projectileUpdate(nullptr),
 
 	m_partitionData(nullptr),
 	m_radarData(nullptr),
@@ -351,6 +354,9 @@ Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& 
 	m_stealthDetector(nullptr),
 	m_lockWeaponCreate(nullptr),
 	m_rebuildHoleBehavior(nullptr),
+	m_slavedUpdate(nullptr),
+	m_spawnBehavior(nullptr),
+	m_projectileUpdate(nullptr),
 
 	m_partitionData(nullptr),
 	m_radarData(nullptr),
@@ -626,6 +632,30 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 			m_rebuildHoleBehavior = rebuildHoleBehavior;
 		}
 
+		//MODDD - how on earth was this not cached, even the devs commented that searching for this was expensive
+		SlavedUpdateInterface* slavedUpdate = newMod->getSlavedUpdateInterface();
+		if ( slavedUpdate )
+		{
+			DEBUG_ASSERTCRASH( m_slavedUpdate == nullptr, ("Duplicate SlavedUpdate!") );
+			m_slavedUpdate = slavedUpdate;
+		}
+		
+		//MODDD - caching something for a getter available as-is (but mysteriously wasn't cached)
+		SpawnBehaviorInterface* spawnBehavior = newMod->getSpawnBehaviorInterface();
+		if ( spawnBehavior )
+		{
+			DEBUG_ASSERTCRASH( m_spawnBehavior == nullptr, ("Duplicate SpawnBehavior!") );
+			m_spawnBehavior = spawnBehavior;
+		}
+
+		//MODDD - caching something for a getter available as-is (but mysteriously wasn't cached)
+		ProjectileUpdateInterface* projectileUpdate = newMod->getProjectileUpdateInterface();
+		if ( projectileUpdate )
+		{
+			DEBUG_ASSERTCRASH( projectileUpdate == nullptr, ("Duplicate ProjectileUpdate!") );
+			m_projectileUpdate = projectileUpdate;
+		}
+
 	  CollideModuleInterface* containTest = newMod->getCollide();
 		if (containTest != nullptr)
 		{
@@ -784,6 +814,7 @@ void Object::initConstructor(const ThingTemplate* tt)
 #if MONEY_AUTO_ADJUSTMENT_SUPPORT
 	m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = -1;
 #endif
+	m_airbornePreviousFrame = false;
 	
 	// Force the thing template to use the most overridden version of itself - jkmcd
 	// Note that after this, the object will be using m_template, which forces the usage of the
@@ -1044,6 +1075,9 @@ void Object::gamePostLoad()
 		}
 	}
 	*/
+
+	// should be able to tell whether this is airborn or not at this point?
+	m_airbornePreviousFrame = this->isUsingAirborneLocomotor();
 }
 
 //MODDD - convenience feature to bundle a few event calls that should be made on offsetting the last parts
@@ -1079,6 +1113,28 @@ Int Object::getMoneySpentOnMe()
 void Object::setMoneySpentOnMe(Int moneySpentOnMe)
 {
 	this->m_moneySpentOnMe = moneySpentOnMe;
+}
+
+//MODDD - new event called for every object
+void Object::onUpdatePost()
+{
+	if (this->isDestroyed() || this->isEffectivelyDead())
+	{
+		return;
+	}
+
+	// Check to see if this object has toggled going airborn between frames - if so, run a shroud update since that can
+	// affect vision now
+	Bool airborneCurrentFrame = this->isUsingAirborneLocomotor();
+	if (airborneCurrentFrame != m_airbornePreviousFrame)
+	{
+		if (this->isKindOf(KINDOF_AIRCRAFT))
+		{
+			handleShroud();
+		}
+	}
+
+	m_airbornePreviousFrame = this->isUsingAirborneLocomotor();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -2550,7 +2606,7 @@ void Object::reactToTransformChange(const Matrix3D* oldMtx, const Coord3D* oldPo
 
 		Region3D mapExtent;
 		TheTerrainLogic->getExtent(&mapExtent);
-		if (mapExtent.isInRegionNoZ(*getPosition()))
+		if (mapExtent.isInRegion(getPosition()->asCoord2D()))
 			m_privateStatus &= ~OFF_MAP;
 		else
 			m_privateStatus |= OFF_MAP;
@@ -3751,7 +3807,7 @@ void Object::friend_notifyOfNewMapBoundary()
 
 	Region3D mapExtent;
 	TheTerrainLogic->getExtent(&mapExtent);
-	if (mapExtent.isInRegionNoZ(*getPosition()))
+	if (mapExtent.isInRegion(getPosition()->asCoord2D()))
 		m_privateStatus &= ~OFF_MAP;
 	else
 		m_privateStatus |= OFF_MAP;
@@ -4261,32 +4317,29 @@ Bool Object::isAbleToAttack() const
 	{
 		if( isDisabledByType( DISABLED_HACKED ) || isDisabledByType( DISABLED_EMP ) )
 			return false;
-
-    if ( isKindOf( KINDOF_INFANTRY ) ) // I must be a stinger soldier or similar
-    {
-      for (BehaviorModule** update = getBehaviorModules(); *update; ++update)//expensive search, limited only to stinger soldiers
-      {
-	      SlavedUpdateInterface* sdu = (*update)->getSlavedUpdateInterface();
-	      if ( sdu )
-	      {
-          ObjectID slaverID = sdu->getSlaverID();
-          if ( slaverID != INVALID_ID )
-          {
-            Object *slaver = TheGameLogic->findObjectByID( slaverID );
-            if ( slaver && slaver->isDisabledByType( DISABLED_SUBDUED ))
-              return FALSE;// if my stinger site is subdued, so am I
-          }
-
-          break;//only expect one slavedupdate, so stop searching
-	      }
-      }
-    }
-
-
+		
+		//MODDD - replacing stinger soldier 'KINDOF_SPAWNS_ARE_THE_WEAPONS' and 'INFANTRY' combo with just being a spawn for something
+		// Moving this block of script that depended on a combo of the aforementioned KINDOFs (KINDOF_INFANTRY check in here) to only
+		// check for being enslaved to something - this check is now a lot cheaper to address the original comment's 'expensive search' concern
 	}
-
-
-
+	
+	//MODDD - replacing stinger soldier 'KINDOF_SPAWNS_ARE_THE_WEAPONS' and 'INFANTRY' combo with just being a spawn for something
+	// Block from above moved to here. Note that this change means this will affect other enslaved things such as drones, the original
+	// intent was acutely for stinger soldiers here.
+	// ------------
+	SlavedUpdateInterface* sdu = getSlavedUpdate();
+	if ( sdu )
+	{
+    ObjectID slaverID = sdu->getSlaverID();
+    if ( slaverID != INVALID_ID )
+    {
+      Object *slaver = TheGameLogic->findObjectByID( slaverID );
+      if ( slaver && slaver->isDisabledByType( DISABLED_SUBDUED ))
+        return FALSE;// if my stinger site is subdued, so am I
+    }
+	}
+	// ------------
+	
 	//We can't fire if all our weapons are disabled!
 	//Currently, only turreted weapons can be disabled.
 	//ONLY DO THIS CHECK IF OUR UNIT DOESN'T HAVE THE
@@ -5624,6 +5677,9 @@ void Object::xfer( Xfer *xfer )
 	//MODDD - new
 	xfer->xferInt( &m_moneySpentOnMe );
 	xfer->xferBool( &m_isTemporaryBuilder );
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	xfer->xferInt( &m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+#endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -6324,8 +6380,15 @@ Real Object::determineNonJammableShroudClearingRange( Real shroudClearingRangeJa
 	Bool useGroundLogic;
 	if(!isUsingAirborneLocomotor()) {
 		if (isStealthDetector) {
-			// ground stealth detector - 100% of the sight range is unjammable
-			return shroudClearingRangeJammable;
+			// ground stealth detector - after the first threshold, 80% of the sight range is unjammable (much better than the normal tapering)
+			//return shroudClearingRangeJammable;
+			if (shroudClearingRangeJammable < 150) {
+				return shroudClearingRangeJammable;
+			}
+			if (shroudClearingRangeJammable < 500) {
+				return 150 + 0.80f * (shroudClearingRangeJammable - 150);
+			}
+			return 430;
 		} else {
 			useGroundLogic = TRUE;
 		}
@@ -6474,7 +6537,9 @@ void Object::look()
 			// garrisoned buildings weren't looking, we were just seeing the leftover last look of the guy inside.
 			// Otherwise we'd just have enclosingContainer control looking which is the 'correct' answer.
 
-			Real shroudClearingRange = getShroudClearingRange();
+			//MODDD - '...ForLook' variant used instead
+			Real shroudClearingRange = getShroudClearingRangeForLook();
+
 			if( shroudClearingRange > 0.0f )
 			{
 				PlayerMaskType lookingMask = 0;
@@ -6804,16 +6869,33 @@ void Object::setVisionRange( Real newVisionRange )
 	m_visionRange = newVisionRange;
 }
 
-//-------------------------------------------------------------------------------------------------
+//MODDD - original name, now use for a simple getter for the field instead
 Real Object::getShroudClearingRange() const
 {
-	Real shroudClearingRange=m_shroudClearingRange;
+	return m_shroudClearingRange;
+}
+
+//MODDD - original variant of 'getShroudClearingRange' renamed to be the '...ForLook' one, with a small addition.
+// Not that it's too important, but this means the 'DEBUG' script only runs for the actual look call, not just
+// several other places that are more interested in the internal attribute (being tiny for being under-construction
+// would not be helpful for a strategy center trying to boost everything's sight range).
+//-------------------------------------------------------------------------------------------------
+Real Object::getShroudClearingRangeForLook() const
+{
+	//MODDD - initial assignment removed, never used now
+	//Real shroudClearingRange=m_shroudClearingRange;
+	Real shroudClearingRange;
 
 	if( getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ) )
 	{
 		//structures under construction have limited vision range.  For now, base it
 		//on the geometry extents so the structure can only see itself.
 		shroudClearingRange = getGeometryInfo().getBoundingCircleRadius();
+	}
+	//MODDD - let there change the shroud clearing range based on the state of the object if wanted
+	else
+	{
+		shroudClearingRange = getShroudClearingRangeForLookAdjusted(this);
 	}
 
 #if defined(RTS_DEBUG)
@@ -7611,6 +7693,8 @@ SpecialPowerModuleInterface* Object::findAnyShortcutSpecialPowerModuleInterface(
 	return nullptr;
 }
 
+//MODDD - getters no longer implemented here, see Object.h where they refer to cached fields instead
+#if 0
 // ------------------------------------------------------------------------------------------------
 /** Get spawn behavior interface from object */
 // ------------------------------------------------------------------------------------------------
@@ -7640,6 +7724,7 @@ ProjectileUpdateInterface* Object::getProjectileUpdateInterface() const
 	}
 	return nullptr;
 }
+#endif
 
 //MODDD - convenience feature.
 // See notes in 'getStealthOwnerStealthUpdateStrict' - this can return 'null' in bikes that use the rider for stealth

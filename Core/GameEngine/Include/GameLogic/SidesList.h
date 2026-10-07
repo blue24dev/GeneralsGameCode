@@ -43,6 +43,8 @@ class BuildListInfo;
 class RenderObjClass;
 class ScriptList;
 class Shadow;
+//MODDD
+class PlayerTemplate;
 
 // ----------------------------------------------------------------------------------------------
 /**
@@ -177,6 +179,10 @@ public:
 	Bool validateSides();
 
 	void addPlayerByTemplate(AsciiString playerTemplateName);
+
+	//MODDD - new
+	AsciiString getPlayerNameForTemplate(const PlayerTemplate* playerTemplate);
+	AsciiString getSkirmishPlayerNameForTemplate(const PlayerTemplate* playerTemplate);
 
 	enum
 	{

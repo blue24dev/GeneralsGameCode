@@ -438,6 +438,8 @@ void CWorldBuilderDoc::Serialize(CArchive& ar)
 	}
 }
 
+//MODDD - option to exclude... nope, 'ScriptDialog::patchScriptParametersForGC' still uses this
+//#if PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_ZEROHOUR_GC ...
 AsciiString ConvertToNonGCName(AsciiString name, Bool checkTemplate=true)
 {
 	const char* replacePrefix = "GC_";
@@ -457,6 +459,8 @@ AsciiString ConvertToNonGCName(AsciiString name, Bool checkTemplate=true)
 	return swapName;
 }
 
+//MODDD - option to exclude
+#if PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_GENERALS
 AsciiString ConvertName(AsciiString name)
 {
 	const char* replacePrefix = "Fundamentalist";
@@ -488,6 +492,7 @@ AsciiString ConvertFaction(AsciiString name)
 	}
 	return AsciiString::TheEmptyString;
 }
+#endif
 
 void CWorldBuilderDoc::validate()
 {
@@ -511,6 +516,8 @@ void CWorldBuilderDoc::validate()
 		const PlayerTemplate* pt = ThePlayerTemplateStore->findPlayerTemplate(NAMEKEY(tmplname));
 		if (!pt) {
 			DEBUG_LOG(("Player '%s' Faction '%s' could not be found in sides list!", playername.str(), tmplname.str()));
+			//MODDD - option to exclude
+#if PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_GENERALS
 			if (tmplname.startsWith("FactionFundamentalist")) {
 				swapName = ConvertFaction(tmplname);
 				if (swapName != AsciiString::TheEmptyString) {
@@ -518,8 +525,11 @@ void CWorldBuilderDoc::validate()
 					pSide->getDict()->setAsciiString(TheKey_playerFaction, swapName);
 				}
 			}
+#endif
 		}
 
+		//MODDD - option to exclude
+#if PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_GENERALS
 		BuildListInfo *pBuild = pSide->getBuildList();
 		while (pBuild) {
 			AsciiString name = pBuild->getTemplateName();
@@ -532,9 +542,12 @@ void CWorldBuilderDoc::validate()
 			}
 			pBuild = pBuild->getNext();
 		}
+#endif
 	}
 
 
+//MODDD - option to exclude
+#if PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_GENERALS
 #define FIX_TEAM(key)																	\
 	type = teamDict->getAsciiString(key, &exists);			\
 	if (exists) {																				\
@@ -563,6 +576,7 @@ void CWorldBuilderDoc::validate()
 		FIX_TEAM(TheKey_teamUnitType6)
 		FIX_TEAM(TheKey_teamUnitType7)
 	}
+#endif
 
 	MapObject *pMapObj;
 	for (pMapObj = MapObject::getFirstMapObject(); pMapObj; pMapObj = pMapObj->getNext())
@@ -584,6 +598,7 @@ void CWorldBuilderDoc::validate()
 			Bool exists = false;
 			swapName = swapDict.getAsciiString(NAMEKEY(name), &exists);
 
+#if PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_GENERALS
 			// quick hack to make loading models with "Fundamentalist" switch to "GLA"
 			if (name.startsWith("Fundamentalist")) {
 				swapName = ConvertName(name);
@@ -592,7 +607,10 @@ void CWorldBuilderDoc::validate()
 					exists = true;
 				}
 			}
+#endif
 
+			//MODDD - option to exclude
+#if PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_ZEROHOUR_GC
 			// quick hack to remove "GC_" objects from Generals mission disk maps.
 			if (name.startsWith("GC_")) {
 				swapName = ConvertToNonGCName(name);
@@ -601,6 +619,7 @@ void CWorldBuilderDoc::validate()
 					exists = true;
 				}
 			}
+#endif
 
 			if (!exists) {
 				ReplaceUnitDialog dlg;
@@ -649,6 +668,8 @@ void CWorldBuilderDoc::validate()
 					const PlayerTemplate* pt = ThePlayerTemplateStore->findPlayerTemplate(NAMEKEY(tmplname));
 					if (!pt) {
 						DEBUG_LOG(("Player '%s' Faction '%s' could not be found in sides list!", playername.str(), tmplname.str()));
+						//MODDD - option to exclude
+#if PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_GENERALS
 						if (tmplname.startsWith("FactionFundamentalist")) {
 							swapName = ConvertFaction(tmplname);
 							if (swapName != AsciiString::TheEmptyString) {
@@ -656,6 +677,7 @@ void CWorldBuilderDoc::validate()
 								pSide->getDict()->setAsciiString(TheKey_playerFaction, swapName);
 							}
 						}
+#endif
 					}
 				} else {
 					needToFixTeams = true;
@@ -1280,7 +1302,18 @@ BOOL CWorldBuilderDoc::OnNewDocument()
 	PolygonTrigger::deleteTriggers();
 
 	TheSidesList->clear();
+	//MODDD - NOTE - this includes adding the neutral player as side #0 when not already present (guaranteed coming just after 'clear').
 	TheSidesList->validateSides();
+	
+	//MODDD - I feel adding the civilian player is fine - just an extra chore that is expected in maps 99.999% of the time anyway.
+	// Note that this finds the PlayerTemplate that has "side=Civilian" instead of assuming it's the "FactionCivilian" one.
+	// There are still other places that expect the "FactionCivilian" player template name, so, be aware of that.
+	// More normal-looking way:
+	//   TheSidesList->addPlayerByTemplate("FactionCivilian");
+	const PlayerTemplate* pt = ThePlayerTemplateStore->findPlayerTemplateWithSideFieldValue("Civilian");
+	TheSidesList->addPlayerByTemplate(pt->getName());
+	// addplayerdialog.cpp would suggest calling 'validateSides' again on adding a player template, but I really don't think
+	// adding one to a freshly made map warrants it
 
 	WbView3d * p3View = Get3DView();
 	if (p3View) {

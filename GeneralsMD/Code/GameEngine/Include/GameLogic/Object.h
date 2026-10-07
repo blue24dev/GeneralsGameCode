@@ -199,6 +199,7 @@ public:
 	Bool isInitLockedHard();
 	Int getMoneySpentOnMe();
 	void setMoneySpentOnMe(Int moneySpentOnMe);
+	void onUpdatePost();
 	// ---
 
 	void onDestroy();																							///< run during TheGameLogic::destroyObject
@@ -342,9 +343,11 @@ public:
 	StealthDetectorUpdate*          getStealthDetector() const { return m_stealthDetector; }
 	LockWeaponCreate*          getLockWeaponCreate() const { return m_lockWeaponCreate; }
 	RebuildHoleBehaviorInterface*          getRebuildHoleBehavior() const { return m_rebuildHoleBehavior; }
+	SlavedUpdateInterface*          getSlavedUpdate() const { return m_slavedUpdate; }
 
-	SpawnBehaviorInterface* getSpawnBehaviorInterface() const;
-	ProjectileUpdateInterface* getProjectileUpdateInterface() const;
+	//MODDD - present as-is but now refer to cached references instead (I'd prefer without the 'Interface' part of the names but this is merge conflict candy as it is)
+	SpawnBehaviorInterface* getSpawnBehaviorInterface() const { return m_spawnBehavior; }
+	ProjectileUpdateInterface* getProjectileUpdateInterface() const { return m_projectileUpdate; }
 
 	//MODDD
 	StealthUpdate*          getStealthOwnerStealthStrict() const;
@@ -491,6 +494,8 @@ public:
 	Real getShroudRange() const;				///< How far can you shroud?  Even more dynamic since it'll start at zero for everyone.
 	void setShroudRange( Real newShroudRange );	///< Access to setting someone's shrouding distance
 	Real getShroudClearingRange() const;				///< How far do you clear shroud?
+	//MODDD - new variant
+	Real getShroudClearingRangeForLook() const;
 	void setShroudClearingRange( Real newShroudClearingRange );	///< Access to setting someone's clear shroud distance
 	void setVisionSpied(Bool setting, Int byWhom);///< Change who is looking through our eyes
 
@@ -876,6 +881,11 @@ private:
 	StealthDetectorUpdate*        m_stealthDetector;
 	LockWeaponCreate*             m_lockWeaponCreate;
 	RebuildHoleBehaviorInterface* m_rebuildHoleBehavior;
+	SlavedUpdateInterface*        m_slavedUpdate;
+
+	//MODDD - for the modified as-is getters
+	SpawnBehaviorInterface*       m_spawnBehavior;
+	ProjectileUpdateInterface*    m_projectileUpdate;
 
 	AIUpdateInterface*						m_ai;	///< ai interface (if any), cached for handy access. (duplicate of entry in the module array!)
 	PhysicsBehavior*							m_physics;	///< physics interface (if any), cached for handy access. (duplicate of entry in the module array!)
@@ -954,6 +964,7 @@ public:
 #if MONEY_AUTO_ADJUSTMENT_SUPPORT
 	Int m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
 #endif
+	Bool m_airbornePreviousFrame;
 
 	private:
 

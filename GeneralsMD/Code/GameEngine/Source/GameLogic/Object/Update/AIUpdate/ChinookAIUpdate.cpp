@@ -132,7 +132,7 @@ public:
 	}
 
 	//MODDD - added
-	void onExit( StateExitType status ) override
+	virtual void onExit( StateExitType status ) override
 	{
 		// If I don't plan on leaving the map, may as well let the player order me around
 		Object* obj = getMachineOwner();
@@ -184,7 +184,7 @@ public:
 		/*
 		Region3D mapRegion;
 		TheTerrainLogic->getExtentIncludingBorder( &mapRegion );
-		if( !mapRegion.isInRegionNoZ( *owner->getPosition() ) )
+		if( !mapRegion.isInRegion( owner->getPosition()->asCoord2D() ) )
 		*/
 		// ---
 		// Actually, nevermind this replacement too. A temporary state is used instead while the chinook moves to the destination,
@@ -209,8 +209,8 @@ public:
 		return STATE_CONTINUE;
 	}
 
-	//MODDD - missing param to be an overload?
-	void onExit( StateExitType status ) override
+	//MODDD - missing param to be an override?
+	virtual void onExit( StateExitType status ) override
 	{
 		Object *owner = getMachineOwner();
 		owner->clearStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_RIDER8 ) );

@@ -23,6 +23,8 @@
 
 #include "GameLogic/SidesList.h"
 #include "CButtonShowColor.h"
+//MODDD
+#include "CComboBoxCustom.h"
 
 /////////////////////////////////////////////////////////////////////////////
 // PlayerListDlg dialog
@@ -63,6 +65,8 @@ protected:
 	SidesList			m_sides;
 	Int					m_curPlayerIdx;
 	CButtonShowColor	m_colorButton;
+	//MODDD
+	CComboBoxCustom m_factionComboBox;
 
 	void updateTheUI();
 	void PopulateColorComboBox();

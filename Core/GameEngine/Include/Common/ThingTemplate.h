@@ -660,7 +660,13 @@ protected:
 	const PerUnitSoundMap* getAllPerUnitSounds() const { return &m_perUnitSounds; }
 	void validateAudio();
 	const AudioEventRTS* getAudio(ThingTemplateAudioType t) const { return m_audioarray.m_audio[t] ? m_audioarray.m_audio[t].Peek() : &s_audioEventNoSound; }
-  Bool hasAudio(ThingTemplateAudioType t) const { return m_audioarray.m_audio[t] != nullptr; }
+
+	//MODDD - I fail to see why this shouldn't be public, especially since the 'ThingTemplateAudioType' enum is widely available anyway.
+	// Let anywhere else check if a particular kind of audio is missing in case there's a more commonly defined fallback to try instead
+	// (ex: attack-air -> generic-attack if that's missing).
+public:
+	Bool hasAudio(ThingTemplateAudioType t) const { return m_audioarray.m_audio[t] != nullptr; }
+protected:
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	/** Table for parsing the object fields */

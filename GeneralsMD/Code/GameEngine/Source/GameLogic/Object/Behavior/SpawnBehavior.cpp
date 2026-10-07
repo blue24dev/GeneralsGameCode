@@ -144,6 +144,8 @@ void SpawnBehavior::onDie( const DamageInfo *damageInfo )
 	if( modData->m_dieMuxData.isDieApplicable( getObject(), damageInfo ) == FALSE )
 		return;
 
+	//MODDD - NOTE - this comment was in the wrong place
+	// Go through all my spawns and see if they have a SlavedUpdate I can tell I was killed to
 	for( objectIDListIterator iter = m_spawnIDs.begin();
 				iter != m_spawnIDs.end();
 				iter++
@@ -152,15 +154,11 @@ void SpawnBehavior::onDie( const DamageInfo *damageInfo )
 		Object *currentSpawn = TheGameLogic->findObjectByID( (*iter) );
 		if( currentSpawn )
 		{
-			// Go through all my spawns and see if they have a SlavedUpdate I can tell I was killed to
-			for (BehaviorModule** update = currentSpawn->getBehaviorModules(); *update; ++update)
+			//MODDD - replaced 'getBehaviorModules' search with a reference to the new cached getter
+			SlavedUpdateInterface* sdu = currentSpawn->getSlavedUpdate();
+			if (sdu != nullptr)
 			{
-				SlavedUpdateInterface* sdu = (*update)->getSlavedUpdateInterface();
-				if (sdu != nullptr)
-				{
-					sdu->onSlaverDie( damageInfo );
-					break;
-				}
+				sdu->onSlaverDie( damageInfo );
 			}
 
 			// our spawner has died, we must invalidate the ID now in the spawned object
@@ -669,14 +667,11 @@ Bool SpawnBehavior::createSpawn()
 	newSpawn->setProducer(parent);
 
 	// If they have a SlavedUpdate, then I have to tell them who their daddy is from now on.
-	for (BehaviorModule** update = newSpawn->getBehaviorModules(); *update; ++update)
+	//MODDD - replaced 'getBehaviorModules' search with a reference to the new cached getter
+	SlavedUpdateInterface* sdu = newSpawn->getSlavedUpdate();
+	if (sdu != nullptr)
 	{
-		SlavedUpdateInterface* sdu = (*update)->getSlavedUpdateInterface();
-		if (sdu != nullptr)
-		{
-			sdu->onEnslave( parent );
-			break;
-		}
+		sdu->onEnslave( parent );
 	}
 
 	m_spawnIDs.push_back( newSpawn->getID() );
@@ -815,6 +810,8 @@ void SpawnBehavior::startSpawning()
 // ------------------------------------------------------------------------------------------------
 void SpawnBehavior::onDamage( DamageInfo *info )
 {
+	// MODDD - NOTE - this comment was in the wrong place
+	// Go through all my spawns and see if they have a SlavedUpdate I can tell I was hurt to
 	for( objectIDListIterator iter = m_spawnIDs.begin();
 				iter != m_spawnIDs.end();
 				iter++
@@ -823,15 +820,11 @@ void SpawnBehavior::onDamage( DamageInfo *info )
 		Object *currentSpawn = TheGameLogic->findObjectByID( (*iter) );
 		if( currentSpawn )
 		{
-			// Go through all my spawns and see if they have a SlavedUpdate I can tell I was hurt to
-			for (BehaviorModule** update = currentSpawn->getBehaviorModules(); *update; ++update)
+			//MODDD - replaced 'getBehaviorModules' search with a reference to the new cached getter
+			SlavedUpdateInterface* sdu = currentSpawn->getSlavedUpdate();
+			if (sdu != nullptr)
 			{
-				SlavedUpdateInterface* sdu = (*update)->getSlavedUpdateInterface();
-				if (sdu != nullptr)
-				{
-					sdu->onSlaverDamage( info );
-					break;
-				}
+				sdu->onSlaverDamage( info );
 			}
 		}
 	}
@@ -914,14 +907,11 @@ void SpawnBehavior::computeAggregateStates()
 		{
 			//m_selfTaskingSpawnCount += ( currentSpawn->isSelf);
 
-			for (BehaviorModule** update = currentSpawn->getBehaviorModules(); *update; ++update)
+			//MODDD - replaced 'getBehaviorModules' search with a reference to the new cached getter
+			SlavedUpdateInterface* sdu = currentSpawn->getSlavedUpdate();
+			if (sdu != nullptr)
 			{
-				SlavedUpdateInterface* sdu = (*update)->getSlavedUpdateInterface();
-				if (sdu != nullptr)
-				{
-					m_selfTaskingSpawnCount += ( sdu->isSelfTasking());
-					break;
-				}
+				m_selfTaskingSpawnCount += ( sdu->isSelfTasking());
 			}
 
 

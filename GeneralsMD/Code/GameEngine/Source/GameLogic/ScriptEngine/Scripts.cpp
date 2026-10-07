@@ -126,8 +126,19 @@ void SignalUIInteraction(Int interaction)
 
 // Changing the order or meaning of either of these will require you to update the maps
 // in a meaningful way. If there are new entries, add them to the end, rather than the middle.
-const char *Surfaces[] = { "Ground", "Air", "Ground or Air" };
-const char *ShakeIntensities[] = { "Subtle", "Normal", "Strong", "Severe", "Cine_Extreme", "Cine_Insane" };
+const char *Surfaces[] = {
+	"Ground",
+	"Air",
+	"Ground or Air"
+};
+const char *ShakeIntensities[] = {
+	"Subtle",
+	"Normal",
+	"Strong",
+	"Severe",
+	"Cine_Extreme",
+	"Cine_Insane"
+};
 
 enum { K_SCRIPT_LIST_DATA_VERSION_1 = 1,
 			K_SCRIPT_GROUP_DATA_VERSION_1 = 1,
@@ -2121,6 +2132,8 @@ Parameter *Parameter::ReadParameter(DataChunkInput &file)
 		pParm->m_string = file.readAsciiString();
 	}
 
+	//MODDD - option to exclude
+#if PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_GENERALS
 	if (pParm->getParameterType() == OBJECT_TYPE)
 	{
 		// quick hack to make loading models with "Fundamentalist" switch to "GLA"
@@ -2146,6 +2159,7 @@ Parameter *Parameter::ReadParameter(DataChunkInput &file)
 			pParm->m_string.set("Upgrade_InfantryCaptureBuilding");
 		}
 	}
+#endif
 
 	if (pParm->getParameterType() == OBJECT_STATUS)
 	{
@@ -2175,6 +2189,9 @@ Parameter *Parameter::ReadParameter(DataChunkInput &file)
 					found = true;
 					break;
 				}
+
+				//MODDD - option to exclude
+#if PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_GENERALS
 				if( !pParm->m_string.compareNoCase( "CRUSHER" ) )
 				{
 					//????
@@ -2214,6 +2231,7 @@ Parameter *Parameter::ReadParameter(DataChunkInput &file)
 					}
 					DEBUG_CRASH(("Unable to find Kindof SMALL_MISSILE', please call KrisM (x36844).", pParm->m_string.str()));
 				}
+#endif
 
 			}
 			if (!found)

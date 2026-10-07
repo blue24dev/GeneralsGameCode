@@ -22,12 +22,18 @@
 #include "CButtonShowColor.h"
 
 
-//MODDD - new, override of a MFC event to conveniently add the 'BS_OWNERDRAW' style
-BOOL CButtonShowColor::Create(LPCTSTR lpszCaption, DWORD dwStyle, const RECT& rect, CWnd* pParentWnd, UINT nID)
+//MODDD - NOTE - overriding the 'Create' method from the parent MFC class is possible, but now unreliable.
+// Some places are being changed to use 'DDX_Control' instead of calling 'Create' on UI item subclass instances
+// (see playerlistdlg.cpp for an example of this). The 'Create' call is never made, not even internally in MFC.
+
+// Can be treated as reliable init - called when using the new 'DDX_Control' way & the existing manual 'Create' call
+void CButtonShowColor::PreSubclassWindow()
 {
-	//MODDD - style added to avoid the pressed-in button appearance
-	dwStyle |= BS_OWNERDRAW;
-	return CButton::Create(lpszCaption, dwStyle, rect, pParentWnd, nID);
+	// Style added to avoid the pressed-in button appearance. Doing it here is the same as doing it in WorldBuilder.rc
+	// for the UI element definition there.
+	UINT nStyle = this->GetButtonStyle();
+	nStyle |= BS_OWNERDRAW;
+	this->SetButtonStyle(nStyle);
 }
 
 //MODDD - new
