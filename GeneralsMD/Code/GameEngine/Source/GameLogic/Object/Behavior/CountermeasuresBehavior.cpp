@@ -121,26 +121,23 @@ void CountermeasuresBehavior::reportMissileForCountermeasures( Object *missile )
 		if( GameLogicRandomValueReal( 0.0f, 1.0f ) < data->m_evasionRate )
 		{
 			//This missile will be diverted!
-			ProjectileUpdateInterface* pui = nullptr;
-			for( BehaviorModule** u = missile->getBehaviorModules(); *u; ++u )
+			//MODDD - replaced 'getBehaviorModules' search with a reference to the getter present as of retail (?)
+			ProjectileUpdateInterface* pui = missile->getProjectileUpdateInterface();
+			if( pui != nullptr )
 			{
-				if( (pui = (*u)->getProjectileUpdateInterface()) != nullptr )
-				{
-					//Make sure the missile diverts after a delay. The delay needs to be larger than
-					//the countermeasure reaction time or else the missile won't have a countermeasure to divert to!
-					DEBUG_ASSERTCRASH( data->m_countermeasureReactionFrames < data->m_missileDecoyFrames,
-						("MissileDecoyDelay needs to be less than CountermeasureReactionTime in order to function properly.") );
-					pui->setFramesTillCountermeasureDiversionOccurs( data->m_missileDecoyFrames );
-					m_divertedMissiles++;
+				//Make sure the missile diverts after a delay. The delay needs to be larger than
+				//the countermeasure reaction time or else the missile won't have a countermeasure to divert to!
+				DEBUG_ASSERTCRASH( data->m_countermeasureReactionFrames < data->m_missileDecoyFrames,
+					("MissileDecoyDelay needs to be less than CountermeasureReactionTime in order to function properly.") );
+				pui->setFramesTillCountermeasureDiversionOccurs( data->m_missileDecoyFrames );
+				m_divertedMissiles++;
 
-					if( m_activeCountermeasures == 0 && m_reactionFrame == 0 )
-					{
-						//We need to launch our first volley of countermeasures, but we can't do it now. If we
-						//do, it'll look too artificial. Instead, we need to set up a timer to fake a reaction
-						//delay.
-						m_reactionFrame = TheGameLogic->getFrame() + data->m_countermeasureReactionFrames;
-					}
-					break;
+				if( m_activeCountermeasures == 0 && m_reactionFrame == 0 )
+				{
+					//We need to launch our first volley of countermeasures, but we can't do it now. If we
+					//do, it'll look too artificial. Instead, we need to set up a timer to fake a reaction
+					//delay.
+					m_reactionFrame = TheGameLogic->getFrame() + data->m_countermeasureReactionFrames;
 				}
 			}
 		}

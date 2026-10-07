@@ -11,6 +11,8 @@ set(WORLDBUILDER_SRC
     "src/BuildListTool.cpp"
     "src/CameraOptions.cpp"
     "src/CButtonShowColor.cpp"
+    #MODDD - new
+    "src/CComboBoxCustom.cpp"
     "src/CellWidth.cpp"
     "src/CFixTeamOwnerDialog.cpp"
     "src/ContourOptions.cpp"
@@ -116,6 +118,8 @@ set(WORLDBUILDER_SRC
     "include/BuildListTool.h"
     "include/CameraOptions.h"
     "include/CButtonShowColor.h"
+    #MODDD - new
+    "include/CComboBoxCustom.h"
     "include/CellWidth.h"
     "include/CFixTeamOwnerDialog.h"
     "include/ContourOptions.h"

@@ -1080,7 +1080,13 @@ Bool ScriptConditions::evaluateEnemySighted(Parameter *pItemParm, Parameter *pAl
 	// and only on-map (or not)
 	PartitionFilterSameMapStatus filterMapStatus(theObj);
 
-	PartitionFilter *filters[] = { &filterTeam, &filterAlive, &filterStealth, &filterMapStatus, nullptr };
+	PartitionFilter *filters[] = {
+		&filterTeam,
+		&filterAlive,
+		&filterStealth,
+		&filterMapStatus,
+		nullptr
+	};
 
 	Real visionRange = theObj->getVisionRange();
 
@@ -1126,7 +1132,12 @@ Bool ScriptConditions::evaluateTypeSighted(Parameter *pItemParm, Parameter *pTyp
 	// and only on-map (or not)
 	PartitionFilterSameMapStatus filterMapStatus(theObj);
 
-	PartitionFilter *filters[] = { &filterAlive, &filterStealth, &filterMapStatus, nullptr };
+	PartitionFilter *filters[] = {
+		&filterAlive,
+		&filterStealth,
+		&filterMapStatus,
+		nullptr
+	};
 
 	Real visionRange = theObj->getVisionRange();
 
@@ -2272,7 +2283,12 @@ Bool ScriptConditions::evaluateSkirmishSuppliesWithinDistancePerimeter(Parameter
 	PartitionFilterPlayerAffiliation f2(player, ALLOW_NEUTRAL, true);
 	PartitionFilterOnMap filterMapStatus;
 
-	PartitionFilter *filters[] = { &f1, &f2, &filterMapStatus, nullptr };
+	PartitionFilter *filters[] = {
+		&f1,
+		&f2,
+		&filterMapStatus,
+		nullptr
+	};
 
 	SimpleObjectIterator *iter = ThePartitionManager->iterateObjectsInRange(&center, distance, FROM_CENTER_2D, filters, ITER_FASTEST);
 	MemoryPoolObjectHolder hold(iter);
@@ -2329,9 +2345,14 @@ Bool ScriptConditions::evaluateSkirmishPlayerTechBuildingWithinDistancePerimeter
 
 	PartitionFilterOnMap filterMapStatus;
 
-	//MODDD
-	//PartitionFilter *filters[] = { &f1, &f2, &f3, &filterMapStatus, nullptr };
-	PartitionFilter *filters[] = { &f1, &f2, &filterMapStatus, nullptr };
+	//MODDD - 'f3' removed
+	PartitionFilter *filters[] = {
+		&f1,
+		&f2,
+		//&f3,
+		&filterMapStatus,
+		nullptr
+	};
 
 	Bool comparison = ThePartitionManager->getClosestObject(&center, radius, FROM_CENTER_2D, filters) != nullptr;
 	pCondition->setCustomData(-1); // false.

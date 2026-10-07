@@ -1058,14 +1058,11 @@ void GenericObjectCreationNugget::doStuffToObj(
 		body->setInitialHealth(healthPercent * 100.0f);
 
 	// If they have a SlavedUpdate, then I have to tell them who their daddy is from now on.
-	for (BehaviorModule** update = obj->getBehaviorModules(); *update; ++update)
+	//MODDD - replaced 'getBehaviorModules' search with a reference to the new cached getter
+	SlavedUpdateInterface* sdu = obj->getSlavedUpdate();
+	if (sdu != nullptr)
 	{
-		SlavedUpdateInterface* sdu = (*update)->getSlavedUpdateInterface();
-		if (sdu != nullptr)
-		{
-			sdu->onEnslave( sourceObj );
-			break;
-		}
+		sdu->onEnslave( sourceObj );
 	}
 
 	if (m_inheritsVeterancy && sourceObj && obj->getExperienceTracker()->isTrainable())

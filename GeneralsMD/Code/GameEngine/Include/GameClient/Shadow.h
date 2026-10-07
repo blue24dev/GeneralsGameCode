@@ -75,7 +75,7 @@ public:
 		// Also added 'public' access modifiers.
 		// This fixes a debug-build error(warning?) about the stack near 'texture_name' in
 		// 'W3DProjectedShadowManager::addShadow' being corrupted because of a call from 'TheW3DShadowManager->addShadow',
-		// seen in 'W3DDebrisDraw::setModelName'. Observed in the Rise of the Reds mod. No idea why not in vanilla Generals ZH.
+		// seen in 'W3DDebrisDraw::setModelName'. Observed in the Rise of the Reds mod. No idea why not in retail Generals ZH.
 		// UPDATE - looks like the super hackers got this since and didn't need to change this to a class. Whoops.
 		// ----------
 		struct	ShadowTypeInfo

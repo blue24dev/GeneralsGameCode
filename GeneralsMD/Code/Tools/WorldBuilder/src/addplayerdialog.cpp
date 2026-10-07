@@ -128,7 +128,11 @@ BOOL AddPlayerDialog::OnInitDialog()
 				factions->AddString(pt->getName().str());
 		}
 	}
-	factions->SetCurSel(0);
+	//MODDD - paranoia. Added a check for having at least 1 item before setting the current selection to the first item.
+	if (factions->GetCount() > 0)
+	{
+		factions->SetCurSel(0);
+	}
 
 	return TRUE;
 }

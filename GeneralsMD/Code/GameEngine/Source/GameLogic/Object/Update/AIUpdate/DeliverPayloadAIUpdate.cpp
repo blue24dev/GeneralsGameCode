@@ -384,7 +384,7 @@ Bool DeliverPayloadAIUpdate::isOffMap() const
 	Region3D mapRegion;
 	TheTerrainLogic->getExtentIncludingBorder( &mapRegion );
 
-	if (!mapRegion.isInRegionNoZ( *getObject()->getPosition() ))
+	if (!mapRegion.isInRegion( getObject()->getPosition()->asCoord2D() ))
 		return true;
 
 	return false;
@@ -853,24 +853,25 @@ StateReturnType DeliveringState::update() // Kick a dude out every so often
 
 						//Are we firing a missile?
 						Bool projectileFired = false;
-						for( BehaviorModule** u = payload->getBehaviorModules(); *u; ++u )
+						//MODDD - replaced 'getBehaviorModules' search with a reference to the getter present as of retail (?)
+						ProjectileUpdateInterface* pui = payload->getProjectileUpdateInterface();
+						if( pui )
 						{
-							ProjectileUpdateInterface* pui = (*u)->getProjectileUpdateInterface();
-							if( pui  )
+							//Missile!
+							const WeaponTemplate *weaponTemplate = ai->getData()->m_visiblePayloadWeaponTemplate;
+							if( !weaponTemplate )
 							{
-								//Missile!
-								const WeaponTemplate *weaponTemplate = ai->getData()->m_visiblePayloadWeaponTemplate;
-								if( !weaponTemplate )
-								{
-									DEBUG_CRASH( ("%s tried to fire missile %s via DeliverPayload, and is missing required weapon template in ObjectCreationList.ini entry.",
-																				owner->getTemplate()->getName().str(), payload->getTemplate()->getName().str() ) );
-									break;
-								}
+								DEBUG_CRASH( ("%s tried to fire missile %s via DeliverPayload, and is missing required weapon template in ObjectCreationList.ini entry.",
+																			owner->getTemplate()->getName().str(), payload->getTemplate()->getName().str() ) );
+								//MODDD - replacing 'break' statement here with an else for the outer block or else there would be some
+								// potentially very different behavior in this route...
+							}
+							else
+							{
 								VeterancyLevel v = owner->getVeterancyLevel();
 								pui->projectileFireAtObjectOrPosition( nullptr, ai->getTargetPos(), weaponTemplate, weaponTemplate->getProjectileExhaust(v) );
 								projectileFired = true;
 								//damageInfo.in.m_sourceID = pui->projectileGetLauncherID();
-								break;
 							}
 						}
 

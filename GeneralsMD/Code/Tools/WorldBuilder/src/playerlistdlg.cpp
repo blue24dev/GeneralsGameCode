@@ -32,6 +32,8 @@
 #include "GameLogic/SidesList.h"
 #include "GameClient/GameText.h"
 #include "Common/UnicodeString.h"
+//MODDD
+#include "GameClient/ChallengeGenerals.h"
 
 static const char* NEUTRAL_NAME_STR = "(neutral)";
 
@@ -250,6 +252,11 @@ PlayerListDlg::PlayerListDlg(CWnd* pParent /*=nullptr*/)
 void PlayerListDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
+
+	//MODDD - alternate way to hook up subclassed UI items for more accuracy, particularly for the now-subclassed combobox
+	DDX_Control(pDX, IDC_PlayerColor, m_colorButton);
+	DDX_Control(pDX, IDC_PLAYERFACTION, m_factionComboBox);
+
 	//{{AFX_DATA_MAP(PlayerListDlg)
 		// NOTE: the ClassWizard will add DDX and DDV calls here
 	//}}AFX_DATA_MAP
@@ -435,6 +442,12 @@ void PlayerListDlg::OnSelchangePlayers()
 	updateTheUI();
 }
 
+//MODDD - VS6-friendly predicate for 'std::sort'
+static bool compareStringCaseInsensitive(const CString& a, const CString& b)
+{
+	return a.CompareNoCase(b) < 0;
+}
+
 void PlayerListDlg::updateTheUI()
 {
 	char buffer[1024];
@@ -536,16 +549,78 @@ void PlayerListDlg::updateTheUI()
 		factions->ResetContent();
 		if (ThePlayerTemplateStore)
 		{
+			//MODDD - a new first item to be the placeholder for lacking a faction - namely for the neutral player to be able
+			// to switch back to in case this is accidentally changed
+			factions->AddString("<none>");
+
+			//MODDD - instead of being added directly, the actual factions will be added to a temp(memory) list and sorted
+			// here since the styling (CBS_SORT) was removed to do this automatically.
+			// This ensures the new "<none>" item isn't part of the re-ordering, just in case factions with some really weird
+			// symbols are ever added to go above and change the significance of being "item #0" (could get very confusing).
+			std::vector<CString> factionNames;
 			for (i = 0; i < ThePlayerTemplateStore->getPlayerTemplateCount(); i++)
 			{
-				AsciiString nm = ThePlayerTemplateStore->getNthPlayerTemplate(i)->getName();
-				factions->AddString(nm.str());
+				//MODDD - replaced
+				// ---
+				//AsciiString nm = ThePlayerTemplateStore->getNthPlayerTemplate(i)->getName();
+				//factions->AddString(nm.str());
+				// ---
+				factionNames.push_back(ThePlayerTemplateStore->getNthPlayerTemplate(i)->getName().str());
+				// ---
+			}
+
+			//MODDD - new per explanation further above
+			// ---
+			std::sort
+			(
+				factionNames.begin(),
+				factionNames.end(),
+				&compareStringCaseInsensitive
+			);
+
+			// finally, add the ordered faction names to the combobox
+			for (i = 0; i < factionNames.size(); ++i)
+			{
+				factions->AddString(factionNames[i]);
+			}
+			// ---
+		}
+		//MODDD - changing this to handle the special case of the faction string being empty (neutral player by default)
+		// and better handling not finding a faction at all: stating as such in display text separate from any menu
+		// options.
+		// ------------------------
+		//i = factions->FindStringExact(-1, pdict->getAsciiString(TheKey_playerFaction).str());
+		//factions->SetCurSel(i);
+		// ------------------------
+		const AsciiString& playerFaction = pdict->getAsciiString(TheKey_playerFaction);
+		if (playerFaction.isEmpty())
+		{
+			// special case: select the new option #0 just for this
+			factions->SetCurSel(0);
+		}
+		else
+		{
+			// try to find a fitting dropdown option as usual
+			// Note that the first param 'nIndexStart' has been changed from -1 to 0 to skip the first item, since it's
+			// now the placeholder for the empty faction string
+			i = factions->FindStringExact(0, playerFaction.str());
+			if (i != CB_ERR)
+			{
+				// success
+				factions->SetCurSel(i);
+			}
+			else
+			{
+				// error - could not find the faction in the list - let the user know
+				factions->SetCurSel(-1);
+				char errorTextBuf[256];
+				snprintf(errorTextBuf, ARRAY_SIZE(errorTextBuf), "MISSING: %s",playerFaction.str());
+				factions->SetWindowText(errorTextBuf);
 			}
 		}
-		i = factions->FindStringExact(-1, pdict->getAsciiString(TheKey_playerFaction).str());
-		factions->SetCurSel(i);
 	}
-
+	// ------------------------
+	
 	// update allies & enemies
 	CListBox *allieslist = (CListBox*)GetDlgItem(IDC_ALLIESLIST);
 	CListBox *enemieslist = (CListBox*)GetDlgItem(IDC_ENEMIESLIST);
@@ -611,6 +686,12 @@ BOOL PlayerListDlg::OnInitDialog()
 	m_sides = *TheSidesList;
 	m_curPlayerIdx = thePrevCurPlyr;
 
+	//MODDD - why did the original devs do this switch-around thing to copy some info from the original, init the new
+	// subclass UI item with it, and then delete the original?
+	// Seems some things might be lost in translation on doing this, particularly for the now-subclassed IDC_PLAYERFACTION
+	// combobox (rather broken if the retail approach below is used for that).
+	// See a 'DDX_Control' line per item in this dialog's 'DoDataExchange' method for the replacement for this.
+	/*
 	CRect rect;
 	CWnd *item = GetDlgItem(IDC_PlayerColor);
 	if (item) {
@@ -620,6 +701,7 @@ BOOL PlayerListDlg::OnInitDialog()
 		m_colorButton.Create("", style, rect, this, IDC_PlayerColor);
 		item->DestroyWindow();
 	}
+	*/
 
 	//MODDD - new location
 	PopulateColorComboBox();
@@ -816,11 +898,30 @@ void PlayerListDlg::OnEditchangePlayerfaction()
 		// get the text out of the combo. If it is user-typed, sel will be -1, otherwise it will be >=0
 		CString theText;
 		Int sel = faction->GetCurSel();
+
+		//MODDD - changing how this works since index 0 is now a special item for "no faction"
+		/*
 		if (sel >= 0) {
 			faction->GetLBText(sel, theText);
 		} else {
 			faction->GetWindowText(theText);
 		}
+		*/
+		if (sel == 0)
+		{
+			theText = "";
+		}
+		else if (sel != -1)
+		{
+			faction->GetLBText(sel, theText);
+		}
+		else
+		{
+			// if -1, the only possibility is error text (this field is not editable by the user).
+			// Don't try to handle this - stop
+			return;
+		}
+
 		AsciiString name((LPCTSTR)theText);
 
 		Dict *pdict = m_sides.getSideInfo(m_curPlayerIdx)->getDict();
@@ -880,14 +981,21 @@ void PlayerListDlg::OnChangePlayerdisplayname()
 	updateTheUI();
 }
 
-static void addSide(SidesList *sides, AsciiString faction,
-										AsciiString playerName, const wchar_t *playerUName)
+//MODDD - removing the third param. Display name is always the same as the internal player name so why not
+// handle that here?
+//static void addSide(SidesList *sides, AsciiString faction,
+//										AsciiString playerName, const wchar_t *playerUName)
+static void addSide(SidesList *sides, AsciiString faction, AsciiString playerName)
 {
 	if (!sides->findSideInfo(playerName)) {
 
 		Dict newPlayerDict;
 		UnicodeString playerUStr;
-		playerUStr = playerUName;
+
+		//MODDD - deciding here now
+		//playerUStr = playerUName;
+		playerUStr.translate(playerName);
+
 		newPlayerDict.setAsciiString(TheKey_playerName, playerName);
 		newPlayerDict.setBool(TheKey_playerIsHuman, false);
 		newPlayerDict.setUnicodeString(TheKey_playerDisplayName, playerUStr);
@@ -906,21 +1014,55 @@ static void addSide(SidesList *sides, AsciiString faction,
 
 void PlayerListDlg::OnAddskirmishplayers()
 {
-	// PlyrCivilian
+	//MODDD - replacing the hardcoded 'addSide' calls with something that's more flexible to the PlayerTemplate's currently
+	// loaded in case of mods, though most tend to use existing (retail) 'Faction...' names internally anyway, possibly
+	// just for compatibility with the auto-populated sides by this very script block.
+	// ------------------------------------------------
+	// Needed for a lookup to see if a faction(PlayerTemplate) has info in 'ChallengeMode.ini' indicating whether it is
+	// locked or not ("StartsLocked"). This is how retail knows to hide the boss general from the skirmish
+	// who-to-play-as dropdown. Lacking a starting building also hides the faction (how civilian & observer factions are
+	// hidden). The Contra mod also uses this: boss factions deliberately lack this -> hidden.
+	// Note that the worldbuilder doesn't call 'initSubsystem(TheGameClient...' which would've handled initializing
+	// challenge generals info.
+	TheChallengeGenerals = createChallengeGenerals();
+ 	TheChallengeGenerals->init();
 
-	addSide(&m_sides, "FactionCivilian", "PlyrCivilian", L"PlyrCivilian");
-	addSide(&m_sides, "FactionAmerica", "SkirmishAmerica", L"SkirmishAmerica");
-	addSide(&m_sides, "FactionChina", "SkirmishChina", L"SkirmishChina");
-	addSide(&m_sides, "FactionGLA", "SkirmishGLA", L"SkirmishGLA");
+	// First, add the civilian player.
+	// Note that 'TheSidesList->addPlayerByTemplate' includes creating a team for the player - don't want that here.
+	// I'll stick to preserving retail behavior as much as possible for the internals of mutating the sides list.
+	// Also, 'CWorldBuilderDoc::OnNewDocument()' has since been edited to include creating the civilian player when a map
+	// is created anyway - this is fine since already having a side with the expected name blocks redundant creation.
+	// This will still be done in case the player manually deleted the civ side.
+	// Lastly, this uses the normal player name ("Plyr") instead of "Skirmish" below, also to match retail behavior.
+	const PlayerTemplate* ptCiv = ThePlayerTemplateStore->findPlayerTemplateWithSideFieldValue("Civilian");
+	addSide(&m_sides, ptCiv->getName(), TheSidesList->getPlayerNameForTemplate(ptCiv));
 
-	addSide(&m_sides, "FactionAmericaAirForceGeneral", "SkirmishAmericaAirForceGeneral", L"SkirmishAmericaAirForceGeneral");
-	addSide(&m_sides, "FactionAmericaLaserGeneral", "SkirmishAmericaLaserGeneral", L"SkirmishAmericaLaserGeneral");
-	addSide(&m_sides, "FactionAmericaSuperWeaponGeneral", "SkirmishAmericaSuperWeaponGeneral", L"SkirmishAmericaSuperWeaponGeneral");
-	addSide(&m_sides, "FactionChinaTankGeneral", "SkirmishChinaTankGeneral", L"SkirmishChinaTankGeneral");
-	addSide(&m_sides, "FactionChinaNukeGeneral", "SkirmishChinaNukeGeneral", L"SkirmishChinaNukeGeneral");
-	addSide(&m_sides, "FactionChinaInfantryGeneral", "SkirmishChinaInfantryGeneral", L"SkirmishChinaInfantryGeneral");
-	addSide(&m_sides, "FactionGLADemolitionGeneral", "SkirmishGLADemolitionGeneral", L"SkirmishGLADemolitionGeneral");
-	addSide(&m_sides, "FactionGLAToxinGeneral", "SkirmishGLAToxinGeneral", L"SkirmishGLAToxinGeneral");
-	addSide(&m_sides, "FactionGLAStealthGeneral", "SkirmishGLAStealthGeneral", L"SkirmishGLAStealthGeneral");
+	// For the rest of the factions, each follows a pattern of "PlayerTemplate.name:FactionX" -> "Side.name: SkirmishX".
+	// This won't create "SkirmishCivilian" because lacking a starting building blocks the civilian template from
+	// adding a side here. Same case for avoiding "SkirmishObserver".
+	int i;
+	for (i = 0; i < ThePlayerTemplateStore->getPlayerTemplateCount(); ++i)
+	{
+		const PlayerTemplate* pt = ThePlayerTemplateStore->getNthPlayerTemplate(i);
+		if (!pt)
+			continue;
+		
+		if (pt->getStartingBuilding().isEmpty())
+			continue;
+
+		Bool disallowLockedGenerals = TRUE;
+		const GeneralPersona *general = TheChallengeGenerals->getGeneralByTemplateName(pt->getName());
+		Bool startsLocked = general ? !general->isStartingEnabled() : FALSE;
+		if (disallowLockedGenerals && startsLocked)
+			continue;
+
+		// Finally, add the side a player is expected to be able to play as in skirmish
+		addSide(&m_sides, pt->getName(), TheSidesList->getSkirmishPlayerNameForTemplate(pt));
+	}
+
+	// Delete the loaded challenge generals info as TheGameClient's deconstructor would have.
+	delete TheChallengeGenerals;
+	// ------------------------------------------------
+
 	updateTheUI();
 }

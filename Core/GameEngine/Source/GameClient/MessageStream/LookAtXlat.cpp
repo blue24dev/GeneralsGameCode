@@ -736,14 +736,11 @@ GameMessageDisposition LookAtTranslator::translateGameMessage(const GameMessage 
 						Bool doLock = true;
 
 						// but don't lock onto projectiles
-						ProjectileUpdateInterface* pui = nullptr;
-						for (BehaviorModule** u = d->getObject()->getBehaviorModules(); *u; ++u)
+						//MODDD - replaced 'getBehaviorModules' search with a reference to the getter present as of retail (?)
+						ProjectileUpdateInterface* pui = d->getObject()->getProjectileUpdateInterface();
+						if (pui != nullptr)
 						{
-							if ((pui = (*u)->getProjectileUpdateInterface()) != nullptr)
-							{
-								doLock = false;
-								break;
-							}
+							doLock = false;
 						}
 
 						if (doLock)

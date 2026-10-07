@@ -708,7 +708,10 @@ void pickAndPlayUnitVoiceResponse( const DrawableList *list, GameMessage::Type m
 				if( !soundToPlayPtr )
 				{
 					//Low priority sounds -- only do this if uninitialized.
-					if( info && info->m_air )
+					//MODDD - adding a check for having this kind of clip - fine to use the normal attack clip as a fallback then.
+					// Example: in retail zero hour, the emperor overlord lacks an attack-air clip -> attacking air doesn't give a voiceline.
+					//if( info && info->m_air )
+					if( info && info->m_air && templ->hasAudio(TTAUDIO_voiceAttackAir) )
 						soundToPlayPtr = templ->getVoiceAttackAir();
 					else
 						soundToPlayPtr = templ->getVoiceAttack();
