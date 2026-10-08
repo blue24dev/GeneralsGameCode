@@ -1507,7 +1507,7 @@ UnsignedInt specialPowerReloadTimeAdjustmentFilter(const Object* obj, UnsignedIn
 		// 'obj' is always NULL here, as shared abilities typically stand alone from whatever structure happens to be needed to link to them
 		// (in nearly every case, it's the command center anyway).
 		// ...
-		_reloadTime += (UnsignedInt)(LOGICFRAMES_PER_SECOND * 60 * 1.5f);
+		//_reloadTime += (UnsignedInt)(LOGICFRAMES_PER_SECOND * 60 * 1.5f);
 	}
 	return _reloadTime;
 }
@@ -1549,10 +1549,10 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 	const Real startModifier = 1.1f;
 	const Real endModifier = 4.0f;
 	*/
-	const UnsignedInt startMin = 16;
+	const UnsignedInt startMin = 12;
 	const UnsignedInt endMin = 60;
 	const Real startModifier = 1.0f;
-	const Real endModifier = 1.25f;
+	const Real endModifier = 2.0f;
 	#endif
 
 	Real scalar = 1.0f;
@@ -1615,12 +1615,12 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 	const Real startModifier = 1.00f;
 	const Real endModifier = 0.76f;
 	*/
-	const UnsignedInt startMin = 16;
+	const UnsignedInt startMin = 12;
 	const UnsignedInt endMin = 60;
 	//const Real startModifier = 1.00f;
 	//const Real endModifier = 0.70f;
 	const Real startModifier = 1.00f;
-	const Real endModifier = 0.90f;
+	const Real endModifier = 0.70f;
 	#endif
 
 	Int _buildTime = buildTime;
@@ -1665,10 +1665,10 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 {
 	#if RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS
 	// AI players receive more experience toward promotions (not individual unit veterancy) per kill over the course of a long game.
-	const UnsignedInt startMin = 16;
+	const UnsignedInt startMin = 12;
 	const UnsignedInt endMin = 60;
 	const Real startModifier = 1.00f;
-	const Real endModifier = 1.50f;
+	const Real endModifier = 2.00f;
 	#endif
 
 	Real _expRateModifier = expRateModifier;
