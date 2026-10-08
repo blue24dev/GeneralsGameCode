@@ -240,7 +240,16 @@ public:
 
 	AsciiString getStats(Real *curTime, Real *script1Time, Real *script2Time);
 
+	//MODDD - NOTE - why does this class have methods deemed 'virtual' that aren't overrides? Nothing subclasses this singleton class
 	virtual void newMap(  );	///< reset script engine for new map
+
+	//MODDD - new
+	void updateScriptsForMapResize(Real xOffset, Real yOffset);
+private:
+	void updateScriptsForMapResize_scripts(Script *pScriptHead, Real xOffset, Real yOffset);
+	void updateScriptsForMapResize_script(Script *pScriptHead, Real xOffset, Real yOffset);
+public:
+
 	virtual const ActionTemplate *getActionTemplate( Int ndx); ///< Get the template for a script action.
 	virtual const ConditionTemplate *getConditionTemplate( Int ndx); ///< Get the template for a script Condition.
 	virtual void startEndGameTimer(); ///< Starts the end game timer after a mission is won or lost.

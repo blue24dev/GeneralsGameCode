@@ -42,6 +42,9 @@
 #include "Common/UnicodeString.h"
 
 
+//MODDD
+#include "GameLogic/ScriptEngine.h"
+
 // base mostly virtual class.
 
 //
@@ -175,7 +178,12 @@ void WBDocUndoable::_Do(Bool fresh) {
 				mPDoc->changeBoundary(i, &iLoc);
 			}
 		}
+		
+		//MODDD - check scripts for any positions that need to be adjusted for the X/Y offset.
+		// same units as objects, shift the same
+		TheScriptEngine->updateScriptsForMapResize(m_objOffset.x, m_objOffset.y);
 	}
+
 	mPNewHeightMapData->dbgVerifyAfterUndo();
 }
 
@@ -217,6 +225,9 @@ void WBDocUndoable::_Undo() {
 			}
 		}
 		// Don't adjust the borders - see note further above.
+
+		//MODDD
+		TheScriptEngine->updateScriptsForMapResize(-m_objOffset.x, -m_objOffset.y);
 	}
 
 	mPOldHeightMapData->dbgVerifyAfterUndo();

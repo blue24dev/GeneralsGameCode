@@ -1239,17 +1239,7 @@ void WaterRenderObjClass::enableWaterGrid(Bool state)
 void WaterRenderObjClass::update()
 {
 	// TheSuperHackers @tweak The water movement time step is now decoupled from the render update.
-	//MODDD - we don't have 'TheFramePacer' here in the map editor you goon!
-	// ---
-	//const Real timeScale = TheFramePacer->getActualLogicTimeScaleOverFpsRatio();
-	// ---
-	Real timeScale;
-	if (TheFramePacer) {
-		timeScale = TheFramePacer->getActualLogicTimeScaleOverFpsRatio();
-	} else {
-		timeScale = (0.0125f * 33 / 5000);
-	}
-	// ---
+	const Real timeScale = TheFramePacer->getActualLogicTimeScaleOverFpsRatio();
 
 	{
 		constexpr const Real MagicOffset = 0.0125f * 33 / 5000; ///< the work of top Munkees; do not question it

@@ -1788,84 +1788,6 @@ Bool WorldHeightMapEdit::optimizeTiles()
 
 
 
-//MODDD - new helpers
-// ------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------------------------------------------
-// ------------------------------------------------------------------------------------------------
-// Go through all script actions and check parameters that are 3D positions.
-// They need to be updated if the resize was from the bottom and/or left at all (the origin point at the bottom-left is fixed
-// -> resizing from there really pushes everything else up/right).
-// If manually given coordinates aren't updated, will be some strange offsets vs. what's expected.
-void updateScriptsForMapResize(Real xOffset, Real yOffset);
-void updateScriptsForMapResize_scripts(Script *pScriptHead, Real xOffset, Real yOffset);
-void updateScriptsForMapResize_script(Script *pScriptHead, Real xOffset, Real yOffset);
-
-void updateScriptsForMapResize(Real xOffset, Real yOffset)
-{
-	if (xOffset == 0 && yOffset == 0)
-	{
-		// no effect on the coords
-		return;
-	}
-
-	int i;
-	for (i=0; i<TheSidesList->getNumSides(); i++) {
-		ScriptList *pSL = TheSidesList->getSideInfo(i)->getScriptList();
-		if (!pSL) continue;
-		updateScriptsForMapResize_scripts(pSL->getScript(), xOffset, yOffset);
-		ScriptGroup *pGroup;
-		for (pGroup = pSL->getScriptGroup(); pGroup; pGroup=pGroup->getNext()) {
-			updateScriptsForMapResize_scripts(pGroup->getScript(), xOffset, yOffset);
-		}
-	}
-}
-
-void updateScriptsForMapResize_scripts(Script *pScriptHead, Real xOffset, Real yOffset)
-{
-	Script *pCurScript;
-	for (pCurScript = pScriptHead; pCurScript; pCurScript=pCurScript->getNext()) {
-		updateScriptsForMapResize_script(pCurScript, xOffset, yOffset);
-	}
-}
-
-void updateScriptsForMapResize_script(Script *pScript, Real xOffset, Real yOffset)
-{
-	ScriptAction* pActionHead = pScript->getAction();
-
-	// Search through every action's parameters for any 3D coordinate-types
-	ScriptAction *pCurAction;
-	for (pCurAction = pActionHead; pCurAction; pCurAction = pCurAction->getNext()) {
-		int numParam = pCurAction->getNumParameters();
-		int iParam;
-		for (iParam = 0; iParam < numParam; ++iParam)
-		{
-			Parameter* parameter = pCurAction->getParameter(iParam);
-			if (parameter->getParameterType() == Parameter::ParameterType::COORD3D)
-			{
-				// copy the coordinate to a var
-				Coord3D paramVal;
-				parameter->getCoord3D(&paramVal);
-				// Before adjusting, check for a special value: coord (0,0,0): at the origin, bottom-left corner exactly.
-				// This is often times used for system objects as an arbitrary point since it doesn't matter where they go, I think.
-				// For safety, going to assume that's intentional and not apply a shift if a position is that.
-				if (paramVal.x == 0 && paramVal.y == 0 && paramVal.z == 0)
-				{
-					// at the origin - skip
-				}
-				else
-				{
-					// adjust - also, no further handling of 'x/yOffset' is expected, should be in the correct units & negated if needed
-					// (add, not minus is intentional here).
-					paramVal.x += xOffset;
-					paramVal.y += yOffset;
-					// save it back
-					parameter->friend_setCoord3D(&paramVal);
-				}
-			}
-		}
-	}
-}
-
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
 // ------------------------------------------------------------------------------------------------
@@ -2069,8 +1991,12 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 
 	optimizeTiles();
 
-	//MODDD - new
-	updateScriptsForMapResize(-xOffset*MAP_XY_FACTOR, -yOffset*MAP_XY_FACTOR);
+	//MODDD - NOTE - it may be tempting to do some things on-resize-success here like apply x/y shifts to positions in
+	// scripts so they refer to the same place on the map after resizing, but that will bypass the undo/redo system.
+	// This method should only be used for things within the height map that need to be adjusted since an entire copy
+	// of the height map is saved per undo action for easy restoration.
+	// See 'CUndoable.cpp': 'WBDocUndoable' for where to adjust things outside the height map during any resize operation,
+	// which should cover the initial action (::Do), undo's, and redo's.
 
 	return(true);
 }

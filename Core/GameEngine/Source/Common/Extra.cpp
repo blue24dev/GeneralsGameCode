@@ -40,6 +40,7 @@
 #include "GameLogic/Module/OCLUpdate.h"
 #include "GameLogic/Module/InstantDeathBehavior.h"
 #include "GameLogic/Module/CreateObjectDie.h"
+#include "GameLogic/Module/MinefieldBehavior.h"
 
 // It would make sense to consider 'CUSTOM_ATTRIBUTE_CHANGES' sections "MODDD - for me only".
 
@@ -361,7 +362,8 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	static NameKeyType AutoDepositUpdateNameKey = NAMEKEY("AutoDepositUpdate");
 	static NameKeyType HackInternetAIUpdateNameKey = NAMEKEY("HackInternetAIUpdate");
 	static NameKeyType SpawnBehaviorNameKey = NAMEKEY("SpawnBehavior");
-	
+	static NameKeyType MinefieldBehaviorNameKey = NAMEKEY("MinefieldBehavior");
+
 #if CUSTOM_ATTRIBUTE_CHANGES
 	Bool foundStealthDetectorUpdate = false;
 	Bool foundActiveShroudUpgrade = false;
@@ -659,6 +661,17 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			foundSpawnBehavior = true;
 		}
+#if DONT_RUN_OVER_NEUTRAL_UNITS
+		else if ( modNameKey == MinefieldBehaviorNameKey )
+		{
+			// don't let mines trigger on neutrals - go go gadget geneva convention
+			MinefieldBehaviorModuleData* _data = (MinefieldBehaviorModuleData*)data;
+			if ((_data->m_detonatedBy & ENEMIES) && (_data->m_detonatedBy & (NEUTRAL | ALLIES)) )
+			{
+				_data->m_detonatedBy = ENEMIES;
+			}
+		}
+#endif
 	}
 
 	// This is here to disable the strange hackery of having 'KINDOF_SPAWNS_ARE_THE_WEAPONS' for the stinger soldier as of retail INI,
@@ -1434,7 +1447,7 @@ Real getHealthMulti(const ThingTemplate* _this)
 				{
 					// This is also to make sure this isn't some system/inner-detail thing
 					KindOfMaskType tempMask;
-					tempMask.set(KINDOF_INFANTRY);
+					//tempMask.set(KINDOF_INFANTRY);
 					tempMask.set(KINDOF_VEHICLE);
 					tempMask.set(KINDOF_AIRCRAFT);
 					tempMask.set(KINDOF_HUGE_VEHICLE);
@@ -1442,6 +1455,11 @@ Real getHealthMulti(const ThingTemplate* _this)
 					{
 						// a non-structure unit (not some weird system/inner-detail thing): have a little more health anyway
 						return 1.30f;
+					}
+					else if (_this->isKindOf(KINDOF_INFANTRY))
+					{
+						// infantry get a better bonus
+						return 1.40f;
 					}
 				}
 			}

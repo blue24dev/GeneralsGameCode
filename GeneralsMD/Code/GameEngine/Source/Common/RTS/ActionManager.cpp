@@ -168,22 +168,27 @@ Bool ActionManager::generalRelationshipCheckForAbility( const Object *obj, const
 // Lastly, the 'rel' param is the 'maximum relationship' needed for this ability to work. Lower value = worse relationship.
 // Ex: rel=NEUTRAL -> must be neutral or enemies with
 //     rel=ENEMIES -> must be enemies with
+// UPDATE - Changing my mind on using this for deciding whether a building is captureable (all other cases like hacking are fine).
+// This is now covered in a new variant - see 'buildingRelationshipCheckForCapture'
 Bool ActionManager::buildingRelationshipCheckForAbility( const Object *obj, const Object* objectTarget, Relationship rel )
 {
+	// note - not including an IMMUNTE_TO_CAPTURE check here, checks for other abilities wouldn't care about that (ex: hacking defenses)
 	if (objectTarget->isFactionStructure())
 	{
-		// typically player built
+		// typically player built - implies abilities can be used on it
 	}
 	else
 	{
-		// not typically player built
+		// Not typically player built - without the capturable flag, imply that abilities shouldn't be able to target it.
+		// Note that this includes typically civilian buildings forced to belong to an enemy player by the map.
+		// The retail game blocked this in several cases for routes that lead here like 'can-hack' ones - preserving that for safety.
 		if (!objectTarget->isKindOf(KINDOF_CAPTURABLE))
 		{
 			return false;
 		}
 	}
 
-	// Don't take from our friends or try to hack them
+	// Don't try to hack friends or neutrals (if enemies only)
 	if (!(obj->getRelationship(objectTarget) <= rel))
 	{
 		return false;
@@ -213,6 +218,43 @@ Bool ActionManager::buildingRelationshipCheckForAbility( const Object *obj, cons
 	if (!(r == ENEMIES || (objectTarget->isKindOf(KINDOF_CAPTURABLE) && r != ALLIES)))
 		return false;
 	*/
+
+	return true;
+}
+
+// MODDD - variant of above just for capturing, mainly to draw attention to the importance of this.
+// It turns out forbidding non-faction, non-'KINDOF_CAPTURABLE' enemy buildings can break expected behavior that mods
+// might rely on. Ex: the Contra mod's china boss general challenge map expects a 'ChineeseSpyPost' owned by an enemy
+// computer player to be captureable, even though it's a normally civilian non-captureable building (lacks CAPTURABLE).
+Bool ActionManager::buildingRelationshipCheckForCapture( const Object *obj, const Object* objectTarget )
+{
+	Relationship relationship = obj->getRelationship(objectTarget);
+	if (relationship == ALLIES)
+	{
+		// no taking from friends
+		return false;
+	}
+
+	// note - not including an IMMUNTE_TO_CAPTURE check here, checks for other abilities wouldn't care about that (ex: hacking defenses)
+	if (objectTarget->isFactionStructure())
+	{
+		// typically player built - always ok to capture for neutrals/enemies
+	}
+	else
+	{
+		// Non-faciton structure. If owned by an enemy, always allow to preserve retail behavior possibly expected by mods
+		if (relationship == ENEMIES)
+		{
+			return true;
+		}
+
+		// For neutrals, still require having KINDOF_CAPTURABLE. Don't want to be too broad in allowing things to be capturable or else
+		// non-gameplay-intended nonsense like steet sights might become captureable.
+		if (!objectTarget->isKindOf(KINDOF_CAPTURABLE))
+		{
+			return false;
+		}
+	}
 
 	return true;
 }
@@ -799,7 +841,9 @@ Bool ActionManager::canEnterObject( const Object *obj, const Object *objectToEnt
 
 		// if our transport slot count is zero, we can't be transported. so punt.
 		/// @todo srj -- seems like we should check always (not just for checkCap), but scared to change now -- check later
-		if( checkCapacity && obj->getTransportSlotCount() == 0 )
+		//MODDD - I agree with this point - if this object is intristically unable to enter transports, why think so just because something is hiding in there?
+		//if( checkCapacity && obj->getTransportSlotCount() == 0 )
+		if( obj->getTransportSlotCount() == 0 )
 		{
 			return FALSE;
 		}
@@ -1201,7 +1245,7 @@ Bool ActionManager::canCaptureBuilding( const Object *obj, const Object *objectT
 		return false;
 	*/
 	// ---
-  if (!buildingRelationshipCheckForAbility(obj, objectToCapture, NEUTRAL))
+  if (!buildingRelationshipCheckForCapture(obj, objectToCapture))
   {
 	  return FALSE;
   }
@@ -1555,6 +1599,8 @@ Bool ActionManager::canDisableBuildingViaHacking( const Object *obj, const Objec
 	// bit further down.
 	// Also, leaving out 'KINDOF_IMMUNE_TO_CAPTURE' - mainly, buildable bunkers and base defenses can be disabled by hacking
 	// (however effective that is, may as well be able to - could punish those with poor anti-infantry).
+	// Also, leaving out 'KINDOF_FS_TECHNOLOGY' - most things GLA are still vulnerable to EMP with or without that flag so
+	// may as well let the same things be disabled with hacking too.
 	/*
 	if( ( !objectToHack->isKindOf( KINDOF_CAPTURABLE ) || objectToHack->isKindOf( KINDOF_REBUILD_HOLE ) ) &&
 		! (objectToHack->isKindOf(KINDOF_FS_TECHNOLOGY) && ! objectToHack->isKindOf(KINDOF_IMMUNE_TO_CAPTURE)) )
@@ -2246,6 +2292,8 @@ Bool ActionManager::canFireWeapon( const Object *obj, const WeaponSlotType slot,
 
 }
 
+//MODDD - NOTE - disabling. Turns out this is unused - 'canEnterObject' covers being able to garrison buildings in the broader case of 'entering an object'.
+/*
 //------------------------------------------------------------------------------------------------
 Bool ActionManager::canGarrison( const Object *obj, const Object *target, CommandSourceType commandSource )
 {
@@ -2283,6 +2331,7 @@ Bool ActionManager::canGarrison( const Object *obj, const Object *target, Comman
 
 	return false;
 }
+*/
 
 //------------------------------------------------------------------------------------------------
 Bool ActionManager::canPlayerGarrison( const Player *player, const Object *target, CommandSourceType commandSource )
