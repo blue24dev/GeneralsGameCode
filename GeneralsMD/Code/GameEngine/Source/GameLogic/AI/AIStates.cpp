@@ -882,8 +882,10 @@ StateReturnType AIStateMachine::updateStateMachine()
 
 			return status;
 		}
-		//MODDD - added if-then, this issue will probably be patched/addressed with a fix from TheSuperHackers rather soon
-		if (m_temporaryState != nullptr)
+
+		// TheSuperHackers @bugfix Okladnoj 08/10/2026 Check that the temporary state still exists as it can be cleared from the state machine within the states update.
+		// This only happens without RETAIL_COMPATIBLE_CRC, where clear() resets the temporary state.
+		if (m_temporaryState)
 		{
 			m_temporaryState->onExit(EXIT_NORMAL);
 			m_temporaryState = nullptr;

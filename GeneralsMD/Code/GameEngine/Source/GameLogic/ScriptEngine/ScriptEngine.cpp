@@ -5712,6 +5712,78 @@ void ScriptEngine::newMap()
 
 }
 
+//MODDD - new
+// Go through all script actions and check parameters that are 3D positions.
+// They need to be updated if the resize was from the bottom and/or left at all (the origin point at the bottom-left is
+// fixed -> resizing from there really pushes everything else up/right).
+// If manually given coordinates aren't updated, there will be some strange offsets observed in-game vs. what's expected.
+// Ex (I suspect): where to spawn the particle cannon effect in zero hour, GLA Campaign #3
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+void ScriptEngine::updateScriptsForMapResize(Real xOffset, Real yOffset)
+{
+	int i;
+	for (i=0; i<TheSidesList->getNumSides(); ++i) {
+		ScriptList *pSL = TheSidesList->getSideInfo(i)->getScriptList();
+		if (!pSL) continue;
+		updateScriptsForMapResize_scripts(pSL->getScript(), xOffset, yOffset);
+		ScriptGroup *pGroup;
+		for (pGroup = pSL->getScriptGroup(); pGroup; pGroup=pGroup->getNext()) {
+			updateScriptsForMapResize_scripts(pGroup->getScript(), xOffset, yOffset);
+		}
+	}
+}
+
+// remaining are private helpers
+void ScriptEngine::updateScriptsForMapResize_scripts(Script *pScriptHead, Real xOffset, Real yOffset)
+{
+	Script *pCurScript;
+	for (pCurScript = pScriptHead; pCurScript; pCurScript=pCurScript->getNext()) {
+		updateScriptsForMapResize_script(pCurScript, xOffset, yOffset);
+	}
+}
+
+void ScriptEngine::updateScriptsForMapResize_script(Script *pScript, Real xOffset, Real yOffset)
+{
+	ScriptAction* pActionHead = pScript->getAction();
+
+	// Search through every action's parameters for any 3D coordinate-types
+	ScriptAction *pCurAction;
+	for (pCurAction = pActionHead; pCurAction; pCurAction = pCurAction->getNext()) {
+		int numParam = pCurAction->getNumParameters();
+		int iParam;
+		for (iParam = 0; iParam < numParam; ++iParam)
+		{
+			Parameter* parameter = pCurAction->getParameter(iParam);
+			if (parameter->getParameterType() == Parameter::ParameterType::COORD3D)
+			{
+				// copy the coordinate to a var
+				Coord3D paramVal;
+				parameter->getCoord3D(&paramVal);
+				// Before adjusting, check for a special value: coord (0,0,0): at the origin, bottom-left corner exactly.
+				// This is often times used for system objects as an arbitrary point since it doesn't matter where they go, I think.
+				// For safety, going to assume that's intentional and not apply a shift if a position is that.
+				if (paramVal.x == 0 && paramVal.y == 0 && paramVal.z == 0)
+				{
+					// at the origin - skip
+				}
+				else
+				{
+					// adjust the positional coord that isn't bogus
+					paramVal.x += xOffset;
+					paramVal.y += yOffset;
+					// save it back
+					parameter->friend_setCoord3D(&paramVal);
+				}
+			}
+		}
+	}
+}
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+// ------------------------------------------------------------------------------------------------
+
 //-------------------------------------------------------------------------------------------------
 /** Update */
 //-------------------------------------------------------------------------------------------------
