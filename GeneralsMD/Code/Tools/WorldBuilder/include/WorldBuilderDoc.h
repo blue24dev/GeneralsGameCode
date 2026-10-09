@@ -61,6 +61,9 @@ protected:
  	Bool								m_needAutosave;			///< True if changes have been made since last autosave.
 	Int									m_curWaypointID;
 
+	//MODDD
+	Coord2D m_offsetSinceSave;
+
 protected:
 	std::vector<ICoord2D> m_boundaries;
 
@@ -77,6 +80,12 @@ protected:
 	void updateWaypointTable();
 	void compressWaypointIds();
 	void updateLWL(MapObject *pWay, MapObject *pSrcWay);
+
+	//MODDD
+	void onSaveSuccess(const AsciiString& existingMapFilePath, const AsciiString& saveMapFilePath);
+	void onSave_copyFile(const AsciiString& existingMapFilePath, const AsciiString& saveMapFilePath, const AsciiString& fileNameToCopy);
+	void onSave_copyTracksFile(const AsciiString& existingMapFilePath, const AsciiString& saveMapFilePath);
+
 public:
 	void addWaypointLink(Int waypointID1, Int waypointID2);
 	void removeWaypointLink(Int waypointID1, Int waypointID2);
@@ -148,6 +157,9 @@ public:
 	void getObjArrowPoint(MapObject *pObj, Coord3D *location);
 
 	void syncViewCenters(Real x, Real y);
+
+	//MODDD
+	void adjustOffsetSinceSave(Real xOffset, Real yOffset);
 
 	Bool needAutoSave() {return m_needAutosave;};
 

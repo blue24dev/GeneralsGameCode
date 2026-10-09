@@ -1085,6 +1085,95 @@ void WaterTracksRenderSystem::loadTracks()
 #endif
 }
 
+//MODDD - new
+// Keep the '.wak' file (if it exists) up to date with coord shifts from map resizes so waves are kept in-sync with
+// terrain/water-area shifts.
+// As the worldbuilder doesn't view / interact with wave information at all, (never loads the ".wak" file as of
+// retail) there isn't anywhere to apply changes to in memory. This is just going to - if it exists - load the ".wak"
+// file, adjust the wave positions per offset to apply, and re-save the file.
+// The file path of the currently loaded map and the path to save to are expected in case a 'Save As' operation is saving
+// the map somewhere other than the path the ".wak" would come from.
+void WaterTracksRenderSystem::updateTracksFileForMapResize(const AsciiString& existingMapFilePath, const AsciiString& saveMapFilePath, Real xOffset, Real yOffset)
+{
+	typedef struct WaterTractsInfo_s
+	{
+		Vector2 startPos;
+		Vector2 endPos;
+		waveType wtype;
+	} WaterTractsInfo_t;
+
+	// basically a blend of 'loadTracks' and 'saveTracks' that applys offsets to the '.wak' file without interacting
+	// with 'WaterTracksObj' ('bindTrack' calls that add more complex track instances to memory from the found sets of info).
+
+	AsciiString fileName;
+	AsciiString outputFileName;
+
+	fileName = existingMapFilePath;
+	FileSystem::removeExtension(fileName);
+	fileName.concat(".wak");
+
+	outputFileName = saveMapFilePath;
+	FileSystem::removeExtension(outputFileName);
+	outputFileName.concat(".wak");
+
+	File *file = TheFileSystem->openFile(fileName.str(), File::READ | File::BINARY);
+	Int trackCount=0;
+
+	WaterTractsInfo_t* waterTractsInfoList = nullptr;
+
+	if (file)
+	{
+		file->seek(-4,File::END);
+		file->read(&trackCount,sizeof(trackCount));
+		file->seek(0, File::START);
+
+		// using basic memory operators like 'new' because this is something very simple with a scope of just this method
+		waterTractsInfoList = new WaterTractsInfo_t[trackCount];
+		// read everything in one call - how devious
+		file->read(&waterTractsInfoList[0],sizeof(WaterTractsInfo_t) * trackCount);
+		file->close();
+	}
+	else
+	{
+		// Check for a weird case: saving to a different folder that already has a '.wak' file, but the map being saved over
+		// there doesn't have one. Delete the existing '.wak' file because the existing one is likely irrelevant to the newly
+		// saved map.
+		// should this simpler approach be used or 'TheLocalFileSystem->doesFileExist(filename)' instead?
+		DWORD dwAttrib = GetFileAttributes(outputFileName.str());
+		if (dwAttrib != INVALID_FILE_ATTRIBUTES)
+		{
+			DeleteFile(outputFileName.str());
+		}
+		return;
+	}
+
+	if (waterTractsInfoList != nullptr)
+	{
+		// go through and apply the offsets
+		for (Int i=0; i<trackCount; ++i)
+		{
+			WaterTractsInfo_t& track = waterTractsInfoList[i];
+			track.startPos.X += xOffset;
+			track.startPos.Y += yOffset;
+			track.endPos.X += xOffset;
+			track.endPos.Y += yOffset;
+		}
+
+		// Finally, save.
+		// Yes, loading files uses the app-provided 'File' class from 'TheFileSystem',
+		// while saving uses the standard C 'FILE' struct / calls... ick.
+		FILE *fp=fopen(outputFileName.str(), "wb");
+		if (fp)
+		{
+			fwrite(&waterTractsInfoList[0],sizeof(WaterTractsInfo_t),trackCount,fp);
+			fwrite(&trackCount,sizeof(trackCount),1,fp);
+			fclose(fp);
+		}
+
+		delete[] waterTractsInfoList;
+	}
+}
+
 /**@todo: this is a quick hack for adding/removing/testing breaking waves inside the client.
 Will need to move this code to an external editor at some pont. */
 #include "GameClient/Display.h"

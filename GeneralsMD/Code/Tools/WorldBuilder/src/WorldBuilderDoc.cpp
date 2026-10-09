@@ -59,6 +59,9 @@
 #include "WorldBuilderView.h"
 #include "MapPreview.h"
 
+//MODDD
+#include "W3DDevice/GameClient/W3DWaterTracks.h"
+
 
 // Can't currently have multiple open... jba.
 #define notONLY_ONE_AT_A_TIME
@@ -135,7 +138,9 @@ CWorldBuilderDoc::CWorldBuilderDoc() :
 	m_curWaypointID(0),
 	m_numWaypointLinks(0),
 	m_waypointTableNeedsUpdate(true),
-	m_linkCenters(true)
+	m_linkCenters(true),
+	//MODDD - though 'OnNewDocument' running initially on starting WorldBuilder should handle init before any use regardless
+	m_offsetSinceSave(0, 0)
 {
 }
 
@@ -752,7 +757,8 @@ BOOL CWorldBuilderDoc::DoSave(LPCTSTR lpszPathName, BOOL bReplace)
 	//MODDD - first, a check. Is there at least one border?
 	// Adding this since it's now possible to delete borders. Ingame probably wouldn't work with this, it likely
 	// needs that first border to determine the ingame playable area.
-	if (this->getNumBoundaries() == 0) {
+	if (this->getNumBoundaries() == 0)
+	{
 		CString error = "Error: map must have at least 1 border to represent the area available in-game.";
 		::AfxMessageBox(error);
 		return FALSE;
@@ -845,6 +851,9 @@ BOOL CWorldBuilderDoc::DoSave(LPCTSTR lpszPathName, BOOL bReplace)
 		return FALSE;
 	}
 
+	//MODDD
+	onSaveSuccess(AsciiString(m_strPathName), AsciiString(newName));
+
 	// reset the title and change the document name
 	if (bReplace)
 		SetPathName(newName);
@@ -852,6 +861,103 @@ BOOL CWorldBuilderDoc::DoSave(LPCTSTR lpszPathName, BOOL bReplace)
 	return TRUE;        // success
 }
 
+//MODDD - new event on successfully saving the map - this is not a 'CDocument' parent class override
+void CWorldBuilderDoc::onSaveSuccess(const AsciiString& existingMapFilePath, const AsciiString& saveMapFilePath)
+{
+	bool updatedWaterTracksFile = false;
+
+	//MODDD - apply the offset if applicable
+	if (!m_offsetSinceSave.is(0))
+	{
+		updatedWaterTracksFile = true;
+		extern WaterTracksRenderSystem *TheWaterTracksRenderSystem;
+		TheWaterTracksRenderSystem->updateTracksFileForMapResize(existingMapFilePath, saveMapFilePath, m_offsetSinceSave.x, m_offsetSinceSave.y);
+		m_offsetSinceSave.zero();
+	}
+
+	// Check to copy some expected files if saving to a different folder
+	if (existingMapFilePath != saveMapFilePath)
+	{
+		// updating the water tracks file already writes the updated copy to the folder being saved to - don't copy if that happened
+		if (!updatedWaterTracksFile)
+		{
+			onSave_copyTracksFile(existingMapFilePath, saveMapFilePath);
+		}
+		onSave_copyFile(existingMapFilePath, saveMapFilePath, AsciiString("map.ini"));
+		onSave_copyFile(existingMapFilePath, saveMapFilePath, AsciiString("map.str"));
+	}
+}
+
+//MODDD - copy the "<map name>.wak" file if present
+void CWorldBuilderDoc::onSave_copyTracksFile(const AsciiString& existingMapFilePath, const AsciiString& saveMapFilePath)
+{
+	AsciiString fileName;
+	AsciiString outputFileName;
+
+	fileName = existingMapFilePath;
+	FileSystem::removeExtension(fileName);
+	fileName.concat(".wak");
+
+	outputFileName = saveMapFilePath;
+	FileSystem::removeExtension(outputFileName);
+	outputFileName.concat(".wak");
+
+	DWORD dwAttrib = GetFileAttributes(fileName.str());
+	if (dwAttrib != INVALID_FILE_ATTRIBUTES)
+	{
+		// source was found - copy it
+		CopyFile(fileName.str(), outputFileName.str(), FALSE);
+	}
+	else
+	{
+		// source wasn't found - delete what's at the output path if something is there
+		DWORD dwAttrib2 = GetFileAttributes(outputFileName.str());
+		if (dwAttrib2 != INVALID_FILE_ATTRIBUTES)
+		{
+			DeleteFile(outputFileName.str());
+		}
+	}
+}
+
+//MODDD - copy a file at the map folder typically called "map.<insert extension here>".
+void CWorldBuilderDoc::onSave_copyFile(const AsciiString& existingMapFilePath, const AsciiString& saveMapFilePath, const AsciiString& fileNameToCopy)
+{
+	AsciiString fileName;
+	AsciiString outputFileName;
+	const char* lastSep;
+
+	fileName = existingMapFilePath;
+	lastSep = fileName.reverseFind('\\');
+	if (lastSep != nullptr)
+	{
+		fileName.truncateTo(lastSep - fileName.str() + 1);
+	}
+	fileName.concat(fileNameToCopy);
+
+	outputFileName = saveMapFilePath;
+	lastSep = outputFileName.reverseFind('\\');
+	if (lastSep != nullptr)
+	{
+		outputFileName.truncateTo(lastSep - outputFileName.str() + 1);
+	}
+	outputFileName.concat(fileNameToCopy);
+
+	DWORD dwAttrib = GetFileAttributes(fileName.str());
+	if (dwAttrib != INVALID_FILE_ATTRIBUTES)
+	{
+		// source was found - copy it
+		CopyFile(fileName.str(), outputFileName.str(), FALSE);
+	}
+	else
+	{
+		// source wasn't found - delete what's at the output path if something is there
+		DWORD dwAttrib2 = GetFileAttributes(outputFileName.str());
+		if (dwAttrib2 != INVALID_FILE_ATTRIBUTES)
+		{
+			DeleteFile(outputFileName.str());
+		}
+	}
+}
 
 /**
 * CWorldBuilderDoc::ParseWaypointDataChunk - read a waypoint chunk.
@@ -1279,6 +1385,9 @@ BOOL CWorldBuilderDoc::OnNewDocument()
 
 	//MODDD - script to choose a starting map size moved to 'CWorldBuilderApp::OnFileNew'
 
+	//MODDD - resetting this - any unsaved resize offsets no longer apply
+	m_offsetSinceSave.zero();
+
 	TNewHeightInfo* hi = WbApp()->getRecentNewHeightInfo();
 
 	//MODDD
@@ -1439,6 +1548,9 @@ BOOL CWorldBuilderDoc::OnOpenDocument(LPCTSTR lpszPathName)
 		return FALSE;
 	}
 #endif
+	
+	//MODDD - resetting this - any unsaved resize offsets no longer apply
+	m_offsetSinceSave.zero();
 
 	// Open document dialog may change working directory,
 	// let the app know what it was for future opens, and change it back.
@@ -2711,3 +2823,9 @@ void CWorldBuilderDoc::findBoundaryNear(Coord3D *pt, float okDistance, Int *outN
 	m_heightMap->findBoundaryNear(pt, okDistance, outNdx, outMod);
 }
 
+//MODDD - new
+void CWorldBuilderDoc::adjustOffsetSinceSave(Real xOffset, Real yOffset)
+{
+	m_offsetSinceSave.x += xOffset;
+	m_offsetSinceSave.y += yOffset;
+}
