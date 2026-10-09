@@ -70,6 +70,7 @@ public:
 	//MODDD
 	Bool generalRelationshipCheckForAbility( const Object *obj, const Object* objectTarget, Relationship rel );
 	Bool buildingRelationshipCheckForAbility( const Object *obj, const Object* objectTarget, Relationship rel );
+	Bool buildingRelationshipCheckForCapture( const Object *obj, const Object* objectTarget );
 
 	//Single unit to unit check
 	Bool canGetRepairedAt( const Object *obj, const Object *repairDest, CommandSourceType commandSource );
@@ -104,7 +105,8 @@ public:
 	Bool canFireWeaponAtLocation( const Object *obj, const Coord3D *loc, CommandSourceType commandSource, const WeaponSlotType slot, const Object *objectInWay );
 	Bool canFireWeaponAtObject( const Object *obj, const Object *target, CommandSourceType commandSource, const WeaponSlotType slot );
   Bool canFireWeapon( const Object *obj, const WeaponSlotType slot, CommandSourceType commandSource );
-	Bool canGarrison( const Object *obj, const Object *target, CommandSourceType commandSource );
+	//MODDD - disabling, unused - see comment there
+	//Bool canGarrison( const Object *obj, const Object *target, CommandSourceType commandSource );
 	Bool canOverrideSpecialPowerDestination( const Object *obj, const Coord3D *loc, SpecialPowerType spType, CommandSourceType commandSource );
 
 	//Player to unit check
