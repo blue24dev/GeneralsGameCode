@@ -41,7 +41,6 @@
 #include "WorldBuilder.h"	// for MAX_OBJECTS_IN_MAP
 #include "Common/UnicodeString.h"
 
-
 //MODDD
 #include "GameLogic/ScriptEngine.h"
 
@@ -126,8 +125,6 @@ WBDocUndoable::WBDocUndoable(CWorldBuilderDoc *pDoc, WorldHeightMapEdit *pNewHtM
 	mPDoc = pDoc; // not ref counted.
 }
 
-
-
 //MODDD
 void WBDocUndoable::_Do(Bool fresh) {
 	if (m_offsetObjects) {
@@ -182,6 +179,11 @@ void WBDocUndoable::_Do(Bool fresh) {
 		//MODDD - check scripts for any positions that need to be adjusted for the X/Y offset.
 		// same units as objects, shift the same
 		TheScriptEngine->updateScriptsForMapResize(m_objOffset.x, m_objOffset.y);
+		// For '.wak' files (wave track data), storing the offset to apply at the time of save instead.
+		// This will be applied at the next save operation - applying to the '.wak' file immediately would be confusing in
+		// the case the user doesn't want to save over the current file (Save As -> new file path) or chooses to test without
+		// saving the map yet (only an updated '.wak' would be an inconsistent state).
+		mPDoc->adjustOffsetSinceSave(m_objOffset.x, m_objOffset.y);
 	}
 
 	mPNewHeightMapData->dbgVerifyAfterUndo();
@@ -228,11 +230,11 @@ void WBDocUndoable::_Undo() {
 
 		//MODDD
 		TheScriptEngine->updateScriptsForMapResize(-m_objOffset.x, -m_objOffset.y);
+		mPDoc->adjustOffsetSinceSave(-m_objOffset.x, -m_objOffset.y);
 	}
 
 	mPOldHeightMapData->dbgVerifyAfterUndo();
 }
-
 
 //
 /// Set the new height map.

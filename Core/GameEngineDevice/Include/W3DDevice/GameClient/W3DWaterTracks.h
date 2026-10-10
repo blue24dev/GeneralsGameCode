@@ -121,6 +121,10 @@ public:
 	void unbindTrack( WaterTracksObj *mod );	///<releases control of track object
 	void saveTracks();									///<save all used tracks to disk
 	void loadTracks();									///<load tracks from disk
+
+	//MODDD - new
+	void updateTracksFileForMapResize(const AsciiString& existingMapFilePath, const AsciiString& saveMapFilePath, Real xOffset, Real yOffset);
+
 	WaterTracksObj *findTrack(Vector2 &start, Vector2 &end, waveType type);
 
 protected:
