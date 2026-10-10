@@ -1620,10 +1620,13 @@ Int ThingTemplate::calcCostToBuild( const Player* player) const
 //-------------------------------------------------------------------------------------------------
 Int ThingTemplate::calcTimeToBuild( const Player* player) const
 {
-	Int buildTime = getBuildTime() * LOGICFRAMES_PER_SECOND;
-
+	//MODDD - cheat filter
 #if RUN_BUILD_TIME_CHEATS || NOOB_MODE
-	buildTime = buildTimeAdjustmentFilter(player, buildTime);
+	// If using cheats, let this filter decide if and how to apply them
+	Int buildTime = buildTimeAdjustmentFilter(player, this);
+#else
+	// retail - nothing special
+	Int buildTime = getBuildTime() * LOGICFRAMES_PER_SECOND;
 #endif
 
 	buildTime *= player->getHandicap()->getHandicap(Handicap::BUILDTIME, this);

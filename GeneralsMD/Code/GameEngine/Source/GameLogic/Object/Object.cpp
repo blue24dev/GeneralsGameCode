@@ -1116,6 +1116,7 @@ void Object::setMoneySpentOnMe(Int moneySpentOnMe)
 }
 
 //MODDD - new event called for every object
+// possible alt name: 'Object::onFramePost'
 void Object::onUpdatePost()
 {
 	if (this->isDestroyed() || this->isEffectivelyDead())
@@ -1124,7 +1125,10 @@ void Object::onUpdatePost()
 	}
 
 	// Check to see if this object has toggled going airborn between frames - if so, run a shroud update since that can
-	// affect vision now
+	// affect vision now.
+	// Not sure if 'isUsingAirborneLocomotor' or 'isSignificantlyAboveTerrain' is best here.
+	// Going with the former to leave it up to the intent so initially rising but technically being on the ground doesn't
+	// flicker to a soon-to-be outdated state (if that works like I think it does).
 	Bool airborneCurrentFrame = this->isUsingAirborneLocomotor();
 	if (airborneCurrentFrame != m_airbornePreviousFrame)
 	{

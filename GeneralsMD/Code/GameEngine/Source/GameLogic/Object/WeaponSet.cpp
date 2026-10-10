@@ -767,6 +767,16 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 		targetAntiMask = WEAPON_ANTI_GROUND;
 	}
 
+	//MODDD - if the check is being done from a player-issued order and we're free to change weapons anytime (not locked
+	// by a button choice - i.e. permanent-lock) - allow if this is something the unit could've picked on its own.
+	// This stops the odd case of a unit denying the player from attacking something even if it would use a different weapon
+	// to attack it if nearby on its own (ex: in the Contra mod, crop dusters before selecting a weapon as it is missing
+	// a 'LockWeaponCreate' module).
+	CommandSourceMask commandSourceFlags = (1 << commandSource);
+	if (commandSource == CMD_FROM_PLAYER && !isCurWeaponLocked())
+	{
+		commandSourceFlags |= (1 << CMD_FROM_AI);
+	}
 
 	//MODDD - block moved from below so this is available earlier. Other changes since too.
 	// ---
@@ -915,7 +925,7 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 			if (checkCmdSource && !(weaponToSkipCmdSourceCheck == i))
 			{
 				CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
-				if( ( okSrcs & (1 << commandSource) ) == 0 )
+				if( ( okSrcs & commandSourceFlags ) == 0 )
 				{
 					if( !( okSrcs & (1 << CMD_DEFAULT_SWITCH_WEAPON) ) )
 					{
@@ -1005,7 +1015,7 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 			if (checkCmdSource && !(weaponToSkipCmdSourceCheck == i))
 			{
 				CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
-				if( ( okSrcs & (1 << commandSource) ) == 0 )
+				if( ( okSrcs & commandSourceFlags ) == 0 )
 				{
 					if( !( okSrcs & (1 << CMD_DEFAULT_SWITCH_WEAPON) ) )
 					{
@@ -1139,6 +1149,17 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 		return TRUE;
 	}
 
+	//MODDD - if the check is being done from a player-issued order and we're free to change weapons anytime (not locked
+	// by a button choice - i.e. permanent-lock) - allow if this is something the unit could've picked on its own.
+	// This stops the odd case of a unit denying the player from attacking something even if it would use a different weapon
+	// to attack it if nearby on its own (ex: in the Contra mod, crop dusters before selecting a weapon as it is missing
+	// a 'LockWeaponCreate' module).
+	CommandSourceMask commandSourceFlags = (1 << cmdSource);
+	if (cmdSource == CMD_FROM_PLAYER && !isCurWeaponLocked())
+	{
+		commandSourceFlags |= (1 << CMD_FROM_AI);
+	}
+
 	Bool found = FALSE;				// A Ready weapon has been found
 	Bool foundBackup = FALSE;	// An unready, but valid weapon has been found
 
@@ -1190,7 +1211,8 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 		{
 			// weapon not allowed to be specified via this command source.
 			CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
-			if( ( okSrcs & (1 << cmdSource) ) == 0 )
+			//MODDD - also, changed '(1 << cmdSource)' to 'commandSourceFlags' to allow intervention if needed
+			if( ( okSrcs & commandSourceFlags ) == 0 )
 			{
 				//MODDD - NOTE. This looks a bit confusing at first glance.
 				// At this point this call's 'cmdSource' not allowed, like being CMD_FROM_PLAYER but the object's WeaponSet's

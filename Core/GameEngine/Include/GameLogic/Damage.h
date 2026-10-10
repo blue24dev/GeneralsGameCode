@@ -194,6 +194,9 @@ enum DeathType CPP_11(: Int)
 	DEATH_EXTRA_8		= 19,
 	DEATH_POISONED_GAMMA = 20,
 
+	//MODDD - new death type: triggered by LifetimeUpdate (weapons in the .ini shouldn't be set to cause this)
+	DEATH_LIFETIME_EXPIRED = 21,
+
 	DEATH_NUM_TYPES
 };
 
@@ -221,6 +224,9 @@ static const char *const TheDeathNames[] =
 	"EXTRA_7",
 	"EXTRA_8",
 	"POISONED_GAMMA",
+
+	//MODDD - new
+	"LIFETIME_EXPIRED",
 
 	nullptr
 };

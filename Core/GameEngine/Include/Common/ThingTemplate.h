@@ -649,7 +649,9 @@ public:
 	friend void automaticThingTemplateChanges(ThingTemplate* _this);
 	friend void automaticChangesPostINIParsing_thing(ThingTemplate* _this);
 
-protected:
+	//MODDD - despite the as-is comment below, letthig these be public now that a few places might benefit from more
+	// direct checks (though, heed the note that you're sure a different accessor shouldn't be used instead)
+//protected:
 
 	//
 	// these are NOT publicly available; you should call calcCostToBuild() or calcTimeToBuild()
@@ -660,11 +662,6 @@ protected:
 	const PerUnitSoundMap* getAllPerUnitSounds() const { return &m_perUnitSounds; }
 	void validateAudio();
 	const AudioEventRTS* getAudio(ThingTemplateAudioType t) const { return m_audioarray.m_audio[t] ? m_audioarray.m_audio[t].Peek() : &s_audioEventNoSound; }
-
-	//MODDD - I fail to see why this shouldn't be public, especially since the 'ThingTemplateAudioType' enum is widely available anyway.
-	// Let anywhere else check if a particular kind of audio is missing in case there's a more commonly defined fallback to try instead
-	// (ex: attack-air -> generic-attack if that's missing).
-public:
 	Bool hasAudio(ThingTemplateAudioType t) const { return m_audioarray.m_audio[t] != nullptr; }
 protected:
 

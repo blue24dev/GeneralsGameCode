@@ -124,6 +124,9 @@ Real getShroudClearingRangeForLookAdjusted(const Object* obj)
 		return shroudClearingRange;
 	}
 
+	// Not sure if 'isUsingAirborneLocomotor' or 'isSignificantlyAboveTerrain' is best here.
+	// Whichever the choice is, make sure this is kept in-sync with 'Object::onUpdatePost()' calling for a shroud-clear
+	// update based on that changing between frames.
 	if (obj->isKindOf(KINDOF_AIRCRAFT) && !obj->isUsingAirborneLocomotor())
 	{
 		// If this aircraft is grounded, reduce its shroud-clearing range by half.
@@ -138,7 +141,7 @@ Real getShroudClearingRangeForLookAdjusted(const Object* obj)
 		// boost the final shroud-clearing range, the bigger the bonus the smaller it is (diminishing returns)
 		if (shroudClearingRange <= 100)
 		{
-			shroudClearingRange = shroudClearingRange * 2.00f;
+			shroudClearingRange = shroudClearingRange * 2.50f;
 		}
 		else if (shroudClearingRange <= 200)
 		{
@@ -158,7 +161,7 @@ Real getShroudClearingRangeForLookAdjusted(const Object* obj)
 		// lower the boost for aircraft - often does the job as it comes
 		if (shroudClearingRange <= 100)
 		{
-			shroudClearingRange = shroudClearingRange * 1.50f;
+			shroudClearingRange = shroudClearingRange * 1.75f;
 		}
 		else if (shroudClearingRange <= 200)
 		{
@@ -666,9 +669,10 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			// don't let mines trigger on neutrals - go go gadget geneva convention
 			MinefieldBehaviorModuleData* _data = (MinefieldBehaviorModuleData*)data;
-			if ((_data->m_detonatedBy & ENEMIES) && (_data->m_detonatedBy & (NEUTRAL | ALLIES)) )
+			// If this mine is detonated by enemies and includes neutrals or allies, make it only enemies (clip neutrals/allies)
+			if ((_data->m_detonatedBy & (1 << ENEMIES)) && (_data->m_detonatedBy & ((1 << NEUTRAL) | (1 << ALLIES))) )
 			{
-				_data->m_detonatedBy = ENEMIES;
+				_data->m_detonatedBy = (1 << ENEMIES);
 			}
 		}
 #endif
@@ -1571,13 +1575,13 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 	if (player->getPlayerType() == PLAYER_COMPUTER)
 	{
 		UnsignedInt frame = TheGameLogic->getFrame();
-		if (frame <= (30 * 60) * startMin)
+		if (frame <= (LOGICFRAMES_PER_SECOND * 60) * startMin)
 		{
 			scalar *= startModifier;
 		}
-		else if(frame <= (30 * 60) * endMin)
+		else if(frame <= (LOGICFRAMES_PER_SECOND * 60) * endMin)
 		{
-			Real fracto = (Real)(frame - ((30 * 60) * startMin)) / (Real)((30 * 60) * (endMin - startMin));
+			Real fracto = (Real)(frame - ((LOGICFRAMES_PER_SECOND * 60) * startMin)) / (Real)((LOGICFRAMES_PER_SECOND * 60) * (endMin - startMin));
 			Real fracto_inv = 1.0f - fracto;
 			
 			scalar *= endModifier + (startModifier - endModifier) * fracto_inv;
@@ -1586,7 +1590,6 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 		{
 			scalar *= endModifier;
 		}
-		return scalar;
 	}
 	#endif
 
@@ -1594,7 +1597,6 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 	if (player->getPlayerType() == PLAYER_HUMAN && ThePlayerList->getSlotIndex(player->getPlayerIndex()) == 1)
 	{
 		scalar *= (Real)NOOB_INCOME_MONEY_SCALAR;
-		return scalar;
 	}
 	#endif
 
@@ -1615,7 +1617,7 @@ UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDepo
 #endif // RUN_EXTRA_MONEY_CHEATS
 
 #if RUN_BUILD_TIME_CHEATS || NOOB_MODE
-Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
+Int buildTimeAdjustmentFilter(const Player* player, const ThingTemplate* tt)
 {
 	#if RUN_BUILD_TIME_CHEATS
 	// AI players can build faster over the course of a long game.
@@ -1625,28 +1627,31 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 	const Real endModifier = 0.76f;
 	#endif
 
-	Int _buildTime = buildTime;
+	Int _buildTime = tt->getBuildTime() * LOGICFRAMES_PER_SECOND;
 
 	#if RUN_BUILD_TIME_CHEATS
 	if (player->getPlayerType() == PLAYER_COMPUTER)
 	{
-		UnsignedInt frame = TheGameLogic->getFrame();
-		if (frame <= (30 * 60) * startMin)
+		// only for units, not structures - no one wants to deal with faster building replacements
+		if (!tt->isKindOf(KINDOF_STRUCTURE))
 		{
-			_buildTime = (Int)((Real)_buildTime * startModifier);
-		}
-		else if(frame <= (30 * 60) * endMin)
-		{
-			Real fracto = (Real)(frame - ((30 * 60) * startMin)) / (Real)((30 * 60) * (endMin - startMin));
-			Real fracto_inv = 1.0f - fracto;
+			UnsignedInt frame = TheGameLogic->getFrame();
+			if (frame <= (LOGICFRAMES_PER_SECOND * 60) * startMin)
+			{
+				_buildTime = (Int)((Real)_buildTime * startModifier);
+			}
+			else if(frame <= (LOGICFRAMES_PER_SECOND * 60) * endMin)
+			{
+				Real fracto = (Real)(frame - ((LOGICFRAMES_PER_SECOND * 60) * startMin)) / (Real)((LOGICFRAMES_PER_SECOND * 60) * (endMin - startMin));
+				Real fracto_inv = 1.0f - fracto;
 			
-			_buildTime = (Int)((Real)buildTime * (endModifier + (startModifier - endModifier) * fracto_inv));
+				_buildTime = (Int)((Real)_buildTime * (endModifier + (startModifier - endModifier) * fracto_inv));
+			}
+			else
+			{
+				_buildTime = (Int)((Real)_buildTime * endModifier);
+			}
 		}
-		else
-		{
-			_buildTime = (Int)((Real)_buildTime * endModifier);
-		}
-		return _buildTime;
 	}
 	#endif
 
@@ -1654,7 +1659,6 @@ Int buildTimeAdjustmentFilter(const Player* player, Int buildTime)
 	if (player->getPlayerType() == PLAYER_HUMAN && ThePlayerList->getSlotIndex(player->getPlayerIndex()) == 1)
 	{
 		_buildTime = (Int)((Real)_buildTime * (Real)NOOB_BUILD_TIME_SCALAR);
-		return _buildTime;
 	}
 	#endif
 
@@ -1679,13 +1683,13 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 	if (player->getPlayerType() == PLAYER_COMPUTER)
 	{
 		UnsignedInt frame = TheGameLogic->getFrame();
-		if (frame <= (30 * 60) * startMin)
+		if (frame <= (LOGICFRAMES_PER_SECOND * 60) * startMin)
 		{
 			_expRateModifier *= startModifier;
 		}
-		else if(frame <= (30 * 60) * endMin)
+		else if(frame <= (LOGICFRAMES_PER_SECOND * 60) * endMin)
 		{
-			Real fracto = (Real)(frame - ((30 * 60) * startMin)) / (Real)((30 * 60) * (endMin - startMin));
+			Real fracto = (Real)(frame - ((LOGICFRAMES_PER_SECOND * 60) * startMin)) / (Real)((LOGICFRAMES_PER_SECOND * 60) * (endMin - startMin));
 			Real fracto_inv = 1.0f - fracto;
 			
 			_expRateModifier *= endModifier + (startModifier - endModifier) * fracto_inv;
@@ -1694,7 +1698,6 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 		{
 			_expRateModifier *= endModifier;
 		}
-		return _expRateModifier;
 	}
 	#endif
 
@@ -1702,7 +1705,6 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 	if (player->getPlayerType() == PLAYER_HUMAN && ThePlayerList->getSlotIndex(player->getPlayerIndex()) == 1)
 	{
 		_expRateModifier *= (Real)NOOB_PLAYER_PROMOTION_EXPERIENCE_RATE_SCALAR;
-		return _expRateModifier;
 	}
 	#endif
 
