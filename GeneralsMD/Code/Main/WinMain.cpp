@@ -320,7 +320,8 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message,
 			//-------------------------------------------------------------------------
 			case WM_NCHITTEST:
 				// Prevent the user from selecting the menu in fullscreen mode
-				if( !TheGlobalData->m_windowed )
+				//MODDD - TheGlobalData->m_windowed -> g_setting_getWindowed()
+				if( !g_setting_getWindowed() )
 					return HTCLIENT;
 				break;
 
@@ -359,7 +360,8 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message,
 					case SC_SIZE:
 					case SC_MAXIMIZE:
 					case SC_MONITORPOWER:
-						if( !TheGlobalData->m_windowed )
+						//MODDD - TheGlobalData->m_windowed -> g_setting_getWindowed()
+						if( !g_setting_getWindowed() )
 							return 1;
 						break;
 				}
@@ -672,7 +674,9 @@ LRESULT CALLBACK WndProc( HWND hWnd, UINT message,
 //In full-screen mode, only pass these messages onto the default windows handler.
 //Appears to fix issues with dual monitor systems but doesn't seem safe?
 ///@todo: Look into proper support for dual monitor systems.
-/*	if (!TheGlobalData->m_windowed)
+/*
+	//MODDD - TheGlobalData->m_windowed -> g_setting_getWindowed()
+	if (!g_setting_getWindowed())
 	switch (message)
 	{
 		case WM_PAINT:
@@ -874,7 +878,8 @@ Int APIENTRY WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance,
 #endif
 
 		// register windows class and create application window
-		if(!TheGlobalData->m_headless && initializeAppWindows(hInstance, nCmdShow, TheGlobalData->m_windowed) == false)
+		//MODDD - TheGlobalData->m_windowed -> g_setting_getWindowed()
+		if(!TheGlobalData->m_headless && initializeAppWindows(hInstance, nCmdShow, g_setting_getWindowed()) == false)
 		{
 			return exitcode;
 		}

@@ -1540,3 +1540,37 @@ AsciiString GlobalData::BuildUserDataPathFromRegistry()
 
 	return myDocumentsDirectory;
 }
+
+//MODDD - current intent of whether the user wants the app to be running in windoweded or fullscreen mode.
+// All external references to 'TheGlobalData->m_windowed' have been replaced with this so that a setting
+// in 'GameData.ini' doesn't overrinde the launch param, but this setting will come from the .ini file or
+// hardcoded default (false) if there isn't a launch param to specify it.
+// Set to a byte with a bogus value that will be overridden if ever specified by the app's launch params.
+static UnsignedByte g_setting_windowed = 0xFFu;
+
+Bool g_setting_getWindowed()
+{
+	// If the setting has never been specified (no launch param nor GameData.ini's been parsed yet), all we can do is
+	// imply 'no'. Keep in mind, this happened even in retail where '->m_windowed' would have its hardcoded 'false'
+	// before parsing as well.
+	// In fact, there is a bug if 'Windowed = yes' is present in GameData.ini and launch params don't specify 'win' nor
+	// 'fullscreen'. It should fall back to the .ini specifying 'Windowed', but because some early parts of (display?)
+	// init happen before parsing GameData.ini, the hardcoded '->m_windowed' of 'false' is seen instead so parts of this
+	// "windowed" mode behave like full-screen (details are from modern Windows, retail Generals .exe):
+	// * No window borders or title bar (only apparent if the game window is smaller than the screen size)
+	// * Windows for other applications can not appear on top of the Generals window
+	// * No way to minimize, not even right-clicking the taskbar icon
+	if (g_setting_windowed == 0xFFu) return FALSE;
+
+	return (g_setting_windowed != 0) ? TRUE : FALSE;
+}
+
+void g_setting_setWindowed(Bool setting_windowed)
+{
+	g_setting_windowed = (setting_windowed != FALSE) ? 1 : 0;
+}
+
+Bool g_setting_getWindowed_everSet()
+{
+	return (g_setting_windowed != 0xFFu);
+}

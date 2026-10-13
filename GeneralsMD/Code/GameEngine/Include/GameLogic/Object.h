@@ -44,7 +44,10 @@
 #include "GameLogic/WeaponBonusConditionFlags.h"
 #include "GameLogic/WeaponSet.h"
 #include "GameLogic/WeaponSetFlags.h"
-#include "GameLogic/Module/StealthUpdate.h"
+//MODDD - forward declaring the class below is enough like everything else does
+//#include "GameLogic/Module/StealthUpdate.h"
+// (some other iclude is needed to know what 'Waypoint' is, though)
+#include "GameLogic/Module/UpdateModule.h"
 
 //-----------------------------------------------------------------------------
 //           Forward References
@@ -100,8 +103,14 @@ class UpgradeModuleInterface;
 class UpgradeTemplate;
 
 //MODDD
+class StealthUpdate;
 class StealthDetectorUpdate;
 class LockWeaponCreate;
+class RebuildHoleBehaviorInterface;
+class SlavedUpdateInterface;
+
+//MODDD
+class Locomotor;
 
 class ObjectHeldHelper;
 class ObjectDisabledHelper;
@@ -199,7 +208,7 @@ public:
 	Bool isInitLockedHard();
 	Int getMoneySpentOnMe();
 	void setMoneySpentOnMe(Int moneySpentOnMe);
-	void onUpdatePost();
+	void onLocomotorChanged(const Locomotor* curLocomotor, const Locomotor* prevLocomotor);
 	// ---
 
 	void onDestroy();																							///< run during TheGameLogic::destroyObject
@@ -634,6 +643,9 @@ public:
 	Bool setWeaponLock( WeaponSlotType weaponSlot, WeaponLockType lockType ){ return m_weaponSet.setWeaponLock( weaponSlot, lockType ); }
 	void releaseWeaponLock(WeaponLockType lockType){ m_weaponSet.releaseWeaponLock(lockType); }
 	Bool isCurWeaponLocked() const { return m_weaponSet.isCurWeaponLocked(); }
+	
+	//MODDD - getter for the specific lock type
+	WeaponLockType getCurWeaponLockType() const { return m_weaponSet.getCurWeaponLockType(); }
 
 	void setArmorSetFlag(ArmorSetType ast);
 	void clearArmorSetFlag(ArmorSetType ast);
@@ -805,6 +817,10 @@ protected:
 
 	virtual void reactToTransformChange(const Matrix3D* oldMtx, const Coord3D* oldPos, Real oldAngle) override;
 
+#if RTS_GENERALS && RETAIL_COMPATIBLE_CRC
+	void removeFromTunnelContain();
+#endif
+
 private:
 
 	// yes, private. No, really. Private. Don't expose.
@@ -964,7 +980,6 @@ public:
 #if MONEY_AUTO_ADJUSTMENT_SUPPORT
 	Int m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
 #endif
-	Bool m_airbornePreviousFrame;
 
 	private:
 

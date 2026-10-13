@@ -86,6 +86,7 @@ static void drawFramerateBar();
 #include "WWMath/wwmath.h"
 #include "WWLib/registry.h"
 #include "WW3D2/ww3d.h"
+#include "WW3D2/Renderer.h"
 #include "WW3D2/predlod.h"
 #include "WW3D2/part_emt.h"
 #include "WW3D2/part_ldr.h"
@@ -553,7 +554,7 @@ void W3DDisplay::setGamma(Real gamma, Real bright, Real contrast, Bool calibrate
 	if (m_windowed)
 		return;	//we don't allow gamma to change in window because it would affect desktop.
 
-	DX8Wrapper::Set_Gamma(gamma,bright,contrast,calibrate, false);
+	Renderer::Set_Gamma(gamma,bright,contrast,calibrate, false);
 }
 
 /** Set resolution of display */
@@ -569,6 +570,12 @@ Bool W3DDisplay::setDisplayMode( UnsignedInt xres, UnsignedInt yres, UnsignedInt
 	{
 		Render2DClass::Set_Screen_Resolution(RectClass(0, 0, xres, yres));
 		Display::setDisplayMode(xres, yres, bitdepth, windowed);
+
+		// TheSuperHackers @tweak Font point sizes are scaled from the resolution, so every glyph
+		// cached for the old resolution is now dead weight. Discard the current glyphs and start
+		// with a clean slate.
+		WW3DAssetManager::Get_Instance()->Free_All_FontChars_Glyph_Caches();
+
 		return TRUE;
 	}
 
@@ -832,7 +839,8 @@ void W3DDisplay::init()
 		WW3D::Set_Thumbnail_Enabled(false);
 		WW3D::Set_Screen_UV_Bias( TRUE );  ///< this makes text look good :)
 
-		setWindowed( TheGlobalData->m_windowed );
+		//MODDD - TheGlobalData->m_windowed -> g_setting_getWindowed()
+		setWindowed( g_setting_getWindowed() );
 
 		// create a 2D renderer helper
 		m_2DRender = NEW Render2DClass;
@@ -986,6 +994,10 @@ void W3DDisplay::reset()
 {
 
 	Display::reset();
+
+	// TheSuperHackers @tweak Discard the current glyphs and start with a clean slate.
+	// This can reduce the memory overhead from glyphs that are no longer needed from here on.
+	WW3DAssetManager::Get_Instance()->Free_All_FontChars_Glyph_Caches();
 
 	// Remove all render objects.
 
@@ -1476,6 +1488,12 @@ void W3DDisplay::gatherDebugStats()
 		Int onScreenParticleCount = TheParticleSystemManager->getOnScreenParticleCount();
 		unibuffer.format( L"Particles: %d in world, %d being displayed", totalParticles, onScreenParticleCount );
 		m_displayStrings[Particles]->setText( unibuffer );
+
+		//display the terrain-conforming particle load
+		unibuffer.format( L"Terrain Particles: %d tris, %d draws",
+			Debug_Statistics::Get_Terrain_Particle_Triangles(),
+			Debug_Statistics::Get_Terrain_Particle_Batches() );
+		m_displayStrings[TerrainParticles]->setText( unibuffer );
 
 		//display the number of objects in the world
 		UnsignedInt objCount = TheGameLogic->getObjectCount();

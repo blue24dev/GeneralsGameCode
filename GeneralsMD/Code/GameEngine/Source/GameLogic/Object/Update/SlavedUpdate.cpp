@@ -49,6 +49,8 @@
 #include "GameLogic/Module/BodyModule.h"
 #include "GameLogic/Module/SlavedUpdate.h"
 #include "GameLogic/Weapon.h"
+//MODDD - include yourself properly
+#include "GameLogic/Module/StealthUpdate.h"
 
 
 #define STRAY_MULTIPLIER 2.0f // Multiplier from stating diestance from tunnel, to max distance from

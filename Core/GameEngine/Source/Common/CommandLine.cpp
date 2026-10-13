@@ -117,7 +117,10 @@ Int parseNoLogOrCrash(char *args[], int)
 //=============================================================================
 Int parseWin(char *args[], int)
 {
-	TheWritableGlobalData->m_windowed = true;
+	//MODDD - set a global independent of this so it can take precedence after parsing 'GameData.ini'.
+	// Otherwise, mods that set "windowed" in 'GameData.ini' will override this launch-set param - rather annoying.
+	//TheWritableGlobalData->m_windowed = true;
+	g_setting_setWindowed(TRUE);
 
 	return 1;
 }
@@ -376,7 +379,9 @@ Int parseNoAudio(char *args[], int)
 //=============================================================================
 Int parseNoWin(char *args[], int)
 {
-	TheWritableGlobalData->m_windowed = false;
+	//MODDD - see 'parseWin' for info
+	//TheWritableGlobalData->m_windowed = false;
+	g_setting_setWindowed(FALSE);
 
 	return 1;
 }
@@ -659,7 +664,9 @@ Int parseParticleEdit(char *args[], int)
 {
 	TheWritableGlobalData->m_particleEdit = TRUE;
 	TheWritableGlobalData->m_winCursors = TRUE;
-	TheWritableGlobalData->m_windowed = TRUE;
+	//MODDD
+	//TheWritableGlobalData->m_windowed = TRUE;
+	g_setting_setWindowed(TRUE);
 
 	return 1;
 }

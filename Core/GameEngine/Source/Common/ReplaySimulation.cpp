@@ -171,7 +171,8 @@ int ReplaySimulation::simulateReplaysInWorkerProcesses(const std::vector<AsciiSt
 			UnicodeString command;
 			command.format(L"\"%s\"%s%s -replay \"%s\"",
 				exePath,
-				TheGlobalData->m_windowed ? L" -win" : L"",
+				//MODDD - TheGlobalData->m_windowed -> g_setting_getWindowed()
+				g_setting_getWindowed() ? L" -win" : L"",
 				TheGlobalData->m_headless ? L" -headless" : L"",
 				filenameWide.str());
 

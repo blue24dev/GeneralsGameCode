@@ -416,6 +416,10 @@ static PoolSizeRec PoolSizes[] =
 	{ "JetAwaitingRunwayState", 64, 32 },
 	{ "JetOrHeliCirclingDeadAirfieldState", 64, 32 },
 	{ "HeliTakeoffOrLandingState", 64, 32 },
+
+	//MODDD
+	{ "HeliTakeoffOrLandingNoAirFieldState", 64, 32 },
+
 	{ "JetOrHeliParkOrientState", 64, 32 },
 	{ "JetOrHeliReloadAmmoState", 64, 32 },
 	{ "SupplyTruckBusyState", 600, 32 },
@@ -640,7 +644,6 @@ static PoolSizeRec PoolSizes[] =
 	{ "Render2DClass", 64, 32 },
 	{ "SurfaceClass", 128, 32 },
 	{ "FontCharsClassCharDataStruct", 1024, 32 },
-	{ "FontCharsBuffer", 16, 4 },
 	{ "FVFInfoClass", 152, 64 },
 	{ "TerrainTracksRenderObjClass", 128, 32 },
 	{ "DynamicIBAccessClass", 32, 32 },

@@ -849,7 +849,7 @@ LegalBuildCode BuildAssistant::isLocationLegalToBuild( const Coord3D *worldPos,
 	/* You just can't never build off the map, regardless of options.  jba. */
 	Region3D mapExtent;
 	TheTerrainLogic->getMaximumPathfindExtent(&mapExtent);
-	if (!mapExtent.isInRegion(worldPos->asCoord2D())) {
+	if (!mapExtent.containsWithin(worldPos->asCoord2D())) {
 		return LBC_RESTRICTED_TERRAIN;
 	}
 
@@ -1551,6 +1551,7 @@ void BuildAssistant::sellObject( Object *obj )
 	}
 
 	// Tell the contain module so it can decide what to do.
+	//MODDD - TODO - should this 'onSelling' be an event for every module? not sure
 	ContainModuleInterface* contain = obj->getContain();
 	if( contain )
 	{

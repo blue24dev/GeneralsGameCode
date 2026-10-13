@@ -57,7 +57,7 @@ Real moneyScalarAdjustmentFilter(const Player* player);
 UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit);
 #endif
 #if RUN_BUILD_TIME_CHEATS || NOOB_MODE
-Int buildTimeAdjustmentFilter(const Player* player, Int buildTime);
+Int buildTimeAdjustmentFilter(const Player* player, const ThingTemplate* tt);
 #endif
 #if RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS || NOOB_MODE
 Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModifier);

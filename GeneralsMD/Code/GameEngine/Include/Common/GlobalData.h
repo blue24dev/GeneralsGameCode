@@ -628,3 +628,8 @@ inline const GlobalData* const& TheGlobalData = TheWritableGlobalData;
 #else
 #define TheGlobalData ((const GlobalData*)TheWritableGlobalData)
 #endif
+
+//MODDD - some new global extras
+Bool g_setting_getWindowed();
+void g_setting_setWindowed(Bool setting_windowed);
+Bool g_setting_getWindowed_everSet();

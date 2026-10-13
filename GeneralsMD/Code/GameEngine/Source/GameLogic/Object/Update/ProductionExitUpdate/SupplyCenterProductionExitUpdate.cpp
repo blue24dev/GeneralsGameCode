@@ -40,6 +40,8 @@
 #include "GameLogic/Module/SupplyTruckAIUpdate.h"
 #include "GameLogic/Object.h"
 //#include "GameLogic/PartitionManager.h"
+//MODDD - include yourself properly
+#include "GameLogic/Module/StealthUpdate.h"
 
 
 //-------------------------------------------------------------------------------------------------

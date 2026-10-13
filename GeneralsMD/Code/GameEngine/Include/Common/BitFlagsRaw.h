@@ -93,6 +93,12 @@ public:
 		memset(&m_bits[0], 0, NUMBITS/8);
 	}
 
+	//MODDD - parameter-less 'set' means set everything
+	void set()
+	{
+		memset(&m_bits[0], 0xFF, NUMBITS/8);
+	}
+
 	Bool anyIntersectionWith(const BitFlagsRaw& that) const
 	{
 		for (int i_byte = 0; i_byte < NUMBITS/8; ++i_byte)

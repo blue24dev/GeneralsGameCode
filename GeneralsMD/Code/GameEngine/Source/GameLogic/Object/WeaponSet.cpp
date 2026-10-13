@@ -749,6 +749,12 @@ CanAttackResult WeaponSet::getAbleToAttackSpecificObject( AbleToAttackType attac
 // that the one provided passing wouldn't be relevant.
 CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType attackType, const Object *source, const Object *victim, const Coord3D *pos, CommandSourceType commandSource, WeaponSlotType specificSlot, Bool broadCheck ) const
 {
+	if (source->getTemplateName() == "Chem_GLAVehicleCropDuster" || source->getTemplateName() == "Tank_ChinaTankEmperor")
+	{
+		int x;
+		x = 4;
+	}
+
 	//MODDD - NOTE - weapon selection point of interest
 	//First determine if we are attacking an object or the ground and get the
 	//appropriate weapon anti mask.
@@ -767,6 +773,16 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 		targetAntiMask = WEAPON_ANTI_GROUND;
 	}
 
+	//MODDD - if the check is being done from a player-issued order and we're free to change weapons anytime (not locked
+	// by a button choice - i.e. permanent-lock) - allow if this is something the unit could've picked on its own.
+	// This stops the odd case of a unit denying the player from attacking something even if it would use a different weapon
+	// to attack it if nearby on its own (ex: in the Contra mod, crop dusters before selecting a weapon as it is missing
+	// a 'LockWeaponCreate' module).
+	CommandSourceMask commandSourceFlags = (1 << commandSource);
+	if (commandSource == CMD_FROM_PLAYER && m_curWeaponLockedStatus != LOCKED_PERMANENTLY)
+	{
+		commandSourceFlags |= (1 << CMD_FROM_AI);
+	}
 
 	//MODDD - block moved from below so this is available earlier. Other changes since too.
 	// ---
@@ -915,7 +931,7 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 			if (checkCmdSource && !(weaponToSkipCmdSourceCheck == i))
 			{
 				CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
-				if( ( okSrcs & (1 << commandSource) ) == 0 )
+				if( ( okSrcs & commandSourceFlags ) == 0 )
 				{
 					if( !( okSrcs & (1 << CMD_DEFAULT_SWITCH_WEAPON) ) )
 					{
@@ -1005,7 +1021,7 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 			if (checkCmdSource && !(weaponToSkipCmdSourceCheck == i))
 			{
 				CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
-				if( ( okSrcs & (1 << commandSource) ) == 0 )
+				if( ( okSrcs & commandSourceFlags ) == 0 )
 				{
 					if( !( okSrcs & (1 << CMD_DEFAULT_SWITCH_WEAPON) ) )
 					{
@@ -1082,6 +1098,12 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 //-------------------------------------------------------------------------------------------------
 Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victim, WeaponChoiceCriteria criteria, CommandSourceType cmdSource)
 {
+	if (obj->getTemplateName() == "Chem_GLAVehicleCropDuster" || obj->getTemplateName() == "Tank_ChinaTankEmperor")
+	{
+		int x;
+		x = 4;
+	}
+
 	//MODDD - NOTE - weapon selection point of interest
 	/*
 		1) The first criteria is weapon fitness.  If the object has two weapons that can fire concurrently,
@@ -1139,6 +1161,20 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 		return TRUE;
 	}
 
+	//MODDD - if the check is being done from a player-issued order and we're free to change weapons anytime (not locked
+	// by a button choice - i.e. permanent-lock) - allow if this is something the unit could've picked on its own.
+	// This stops the odd case of a unit denying the player from attacking something even if it would use a different weapon
+	// to attack it if nearby on its own (ex: in the Contra mod, crop dusters before selecting a weapon as it is missing
+	// a 'LockWeaponCreate' module).
+	// ---
+	// Is only forbidding permanent-locks but temporary locks are ok?  I think so because clicking in the middle of any reason
+	// for being temp-locked would cancel the temp-lock - if that's not how that works this would need revising.
+	CommandSourceMask commandSourceFlags = (1 << cmdSource);
+	if (cmdSource == CMD_FROM_PLAYER && m_curWeaponLockedStatus != LOCKED_PERMANENTLY)
+	{
+		commandSourceFlags |= (1 << CMD_FROM_AI);
+	}
+
 	Bool found = FALSE;				// A Ready weapon has been found
 	Bool foundBackup = FALSE;	// An unready, but valid weapon has been found
 
@@ -1190,7 +1226,8 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 		{
 			// weapon not allowed to be specified via this command source.
 			CommandSourceMask okSrcs = m_curWeaponTemplateSet->getNthCommandSourceMask((WeaponSlotType)i);
-			if( ( okSrcs & (1 << cmdSource) ) == 0 )
+			//MODDD - also, changed '(1 << cmdSource)' to 'commandSourceFlags' to allow intervention if needed
+			if( ( okSrcs & commandSourceFlags ) == 0 )
 			{
 				//MODDD - NOTE. This looks a bit confusing at first glance.
 				// At this point this call's 'cmdSource' not allowed, like being CMD_FROM_PLAYER but the object's WeaponSet's

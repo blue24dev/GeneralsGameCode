@@ -85,7 +85,9 @@ UnsignedInt LifetimeUpdate::calcSleepDelay(UnsignedInt minFrames, UnsignedInt ma
 UpdateSleepTime LifetimeUpdate::update()
 {
 	// Kill (NOT destroy) if time is up
-	getObject()->kill();
+	//MODDD - originaly relied on default params - providing params so the 'deathType' can be 'LIFETIME_EXPIRED' as a specific
+	// to expose this circumstance for the INI (ex: don't ignite toxins in the Contra mod if removed prematurely by cleanup)
+	getObject()->kill(DAMAGE_UNRESISTABLE, DEATH_LIFETIME_EXPIRED);
 	return UPDATE_SLEEP_FOREVER;
 }
 
