@@ -132,6 +132,10 @@ public:
 
 	LocomotorTemplate();
 
+	//MODDD - some getters
+	LocomotorSurfaceTypeMask getSurfaces() const { return m_surfaces; }
+	Real getMinSpeed() const { return m_minSpeed; }
+
 	/// field table for loading the values from an INI
 	const FieldParse* getFieldParse() const;
 

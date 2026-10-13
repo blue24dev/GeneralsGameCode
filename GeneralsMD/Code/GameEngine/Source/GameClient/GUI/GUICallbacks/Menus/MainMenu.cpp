@@ -1477,7 +1477,8 @@ WindowMsgHandledType MainMenuSystem( GameWindow *window, UnsignedInt msg,
 
 				// If we ever want to add a dialog before we exit out of the game, uncomment this line and kill the quitCallback() line below.
 //#if defined(RTS_DEBUG)
-				if (TheGlobalData->m_windowed)
+				//MODDD - TheGlobalData->m_windowed -> g_setting_getWindowed()
+				if (g_setting_getWindowed())
 				{
 					quitCallback();
 //#else

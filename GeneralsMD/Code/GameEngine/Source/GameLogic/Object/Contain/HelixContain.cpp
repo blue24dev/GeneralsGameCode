@@ -45,6 +45,8 @@
 #include "GameLogic/PartitionManager.h"
 #include "GameLogic/GameLogic.h"
 #include "GameLogic/Weapon.h"
+//MODDD - include yourself properly
+#include "GameLogic/Module/StealthUpdate.h"
 
 
 

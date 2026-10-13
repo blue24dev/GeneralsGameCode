@@ -833,7 +833,8 @@ void W3DDisplay::init()
 		WW3D::Set_Thumbnail_Enabled(false);
 		WW3D::Set_Screen_UV_Bias( TRUE );  ///< this makes text look good :)
 
-		setWindowed( TheGlobalData->m_windowed );
+		//MODDD - TheGlobalData->m_windowed -> g_setting_getWindowed()
+		setWindowed( g_setting_getWindowed() );
 
 		// create a 2D renderer helper
 		m_2DRender = NEW Render2DClass;

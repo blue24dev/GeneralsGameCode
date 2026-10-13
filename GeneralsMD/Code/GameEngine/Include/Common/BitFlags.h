@@ -194,6 +194,12 @@ public:
 	{
 		m_bits.reset();
 	}
+	
+	//MODDD - parameter-less 'set' means set everything
+	void set()
+	{
+		m_bits.set();
+	}
 
 	Int countIntersection(const BitFlags& that) const
 	{

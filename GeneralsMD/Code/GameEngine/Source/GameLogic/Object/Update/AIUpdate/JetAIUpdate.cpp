@@ -47,6 +47,9 @@
 #include "GameLogic/PartitionManager.h"
 #include "GameLogic/Weapon.h"
 
+//MODDD
+#include "GameLogic/Module/ContainModule.h"
+
 const Real BIGNUM = 99999.0f;
 
 
@@ -78,6 +81,10 @@ enum JetAIStateType CPP_11(: Int)
 	RETURN_TO_DEAD_AIRFIELD,
 	CIRCLING_DEAD_AIRFIELD,
 
+	//MODDD - new
+	TAKING_OFF_NOAIRFIELD,
+	LANDING_NOAIRFIELD,
+
 	JETAISTATETYPE_LAST
 };
 
@@ -95,6 +102,31 @@ void JetAIUpdate::setFlag( FlagType f, Bool v)
 		m_flags |= (1<<f);
 	else
 		m_flags &= ~(1<<f);
+}
+
+//MODDD - new
+Bool JetAIUpdate::canLandToPickUpObjectWantingToEnter()
+{
+	return movesLikeHelicopter();
+}
+
+//MODDD - NEW - tell if this behaves like a perpetually hovering aircraft than a jet (circling around / expecting a
+// parking space at an air field).
+// Mainly this is for letting comanches land to allow pilots to enter without needing weird INI hack-arounds like the
+// ProGen mod does.
+// Beats me why the original devs didn't make a separate 'HelicopterAIUpdate', particularly start with that and
+// subclass that for 'ChinookAIUpdate' with supply truck behavior with a mux or something.
+// In fact, look at 'JetAIUpdate::makeStateMachine' choosing to use 'JetAIStateMachine' or 'HeliAIStateMachine' based
+// off of 'm_needsRunway' and not much else involves that! Why would this ever not be coordinated with PRODUCED_AT_HELIPAD?
+// The point of this is to decide if the aircraft should be able to land to take a pilot even if it's using 'JetAIUpdate'
+// instead of 'ChinookAIUpdate'. If it isn't forced to be circling around a point when stopped, that's likely a good
+// enough sign.
+//MODDD - TODO - deciding this has since been cached at startup - if this can change significantly during the lifetime
+// of a particular game object, how to handle that would need to be done here - ex: check if an upgrade / some ability
+// changes the decision.
+Bool JetAIUpdate::movesLikeHelicopter() const
+{
+	return getJetAIUpdateModuleData()->m_movesLikeHelicopter;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1157,6 +1189,158 @@ public:
 };
 EMPTY_DTOR(HeliTakeoffOrLandingState)
 
+//MODDD - NEW. Alternative to 'HeliTakeoffOrLandingState' that doesn't need a particular air field / parking space,
+// like a chinook landing to take a unit trying to enter it.
+// Ended up turning into a near-clone of ChinookAIUpdate.cpp's 'ChinookTakeoffOrLandingState'.
+//MODDD - NOTE - I don't understand why the original checked for 'KINDOF_PRODUCED_AT_HELIPAD'. This & the original state
+// is only ever used by helicopters so isn't that enough to imply this isn't a jet?
+class HeliTakeoffOrLandingNoAirFieldState : public State
+{
+	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE(HeliTakeoffOrLandingNoAirFieldState, "HeliTakeoffOrLandingNoAirFieldState")
+protected:
+	// snapshot interface
+	virtual void crc( Xfer *xfer ) override
+	{
+		// empty. jba.
+	}
+
+	virtual void xfer( Xfer *xfer ) override
+	{
+		// version
+		XferVersion currentVersion = 1;
+		XferVersion version = currentVersion;
+		xfer->xferVersion( &version, currentVersion );
+
+		// set on create. xfer->xferBool(&m_landing);
+		xfer->xferCoord3D(&m_destLoc);
+	}
+	virtual void loadPostProcess() override
+	{
+		// empty. jba.
+	}
+
+private:
+	Coord3D		m_destLoc;
+	Bool			m_landing;
+public:
+	HeliTakeoffOrLandingNoAirFieldState( StateMachine *machine, Bool landing ) : m_landing(landing),
+		State( machine, "HeliTakeoffOrLandingNoAirFieldState" )
+		{
+			m_destLoc.zero();
+		}
+
+	virtual StateReturnType onEnter() override
+	{
+		Object* obj = getMachineOwner();
+		JetAIUpdate* jetAI = (JetAIUpdate*)obj->getAIUpdateInterface();
+		if( !jetAI )
+			return STATE_FAILURE;
+		
+		// kill any drift...
+		obj->getPhysics()->scrubVelocity2D(0);
+
+		jetAI->friend_setTakeoffInProgress(!m_landing);
+		jetAI->friend_setLandingInProgress(m_landing);
+		jetAI->friend_setAllowAirLoco(true);
+		jetAI->chooseLocomotorSet(LOCOMOTORSET_NORMAL);
+
+		Locomotor* loco = jetAI->getCurLocomotor();
+		DEBUG_ASSERTCRASH(loco, ("no loco"));
+		loco->setUsePreciseZPos(true);
+		loco->setUltraAccurate(true);
+
+		m_destLoc = *obj->getPosition();
+		const Bool onlyHealthyBridges = true;	// ignore dead bridges.
+		PathfindLayerEnum layerAtDest = TheTerrainLogic->getHighestLayerForDestination(&m_destLoc, onlyHealthyBridges);
+		m_destLoc.z = TheTerrainLogic->getLayerHeight(m_destLoc.x, m_destLoc.y, layerAtDest);
+		if (m_landing)
+		{
+			Coord3D tmp;
+			FindPositionOptions options;
+			options.maxRadius = obj->getGeometryInfo().getBoundingCircleRadius() * 100.0f;
+			if (ThePartitionManager->findPositionAround(&m_destLoc, &options, &tmp))
+			{
+				m_destLoc = tmp;
+				TheAI->pathfinder()->adjustToLandingDestination(obj, &m_destLoc);
+			}
+			// recalc, since it may have changed. note that findPositionAround() will ALWAYS
+			// return a position on the ground proper, so if our initial search start pos was
+			// above a bridge, this will put us below the bridge, which would be unfortunate.
+			// so recheck to be sure. (note that the partitionmgr is 2d-only, so if it sez that
+			// the position on the ground at that xy is clear, it will be clear for both the
+			// ground proper and the bridge itself.) also note: don't call objectInteractsWithBridgeLayer(),
+			// since it assumes that things that aren't close in z shouldn't interact.
+			tmp = m_destLoc;
+			tmp.z = obj->getPosition()->z;
+			layerAtDest = TheTerrainLogic->getHighestLayerForDestination(&tmp, onlyHealthyBridges);
+			m_destLoc.z = TheTerrainLogic->getLayerHeight(m_destLoc.x, m_destLoc.y, layerAtDest);
+			obj->setLayer(layerAtDest);
+		}
+		else
+		{
+			m_destLoc.z += loco->getPreferredHeight();
+			obj->setLayer(LAYER_GROUND);
+		}
+
+		return STATE_CONTINUE;
+	}
+
+	virtual StateReturnType update() override
+	{
+		Object* obj = getMachineOwner();
+		if (obj->isEffectivelyDead())
+			return STATE_FAILURE;
+		
+		JetAIUpdate* jetAI = (JetAIUpdate*)obj->getAIUpdateInterface();
+
+		jetAI->setLocomotorGoalPositionExplicit(m_destLoc);
+
+		const Real THRESH = 3.0f;
+		const Real THRESH_SQR = THRESH*THRESH;
+		if (calcDistSqr(*obj->getPosition(), m_destLoc) <= THRESH_SQR)
+			return STATE_SUCCESS;
+
+		return STATE_CONTINUE;
+	}
+
+	virtual void onExit( StateExitType status ) override
+	{
+		Object* obj = getMachineOwner();
+		JetAIUpdate* ai = (JetAIUpdate*)obj->getAIUpdateInterface();
+		
+		ai->friend_setTakeoffInProgress(false);
+		ai->friend_setLandingInProgress(false);
+
+		// Paranoia checks - sometimes onExit is called when we are
+		// shutting down, and not all pieces are valid.  CurLocomotor
+		// is definitely null in some cases. jba.
+		Locomotor* loco = ai->getCurLocomotor();
+		if (loco)
+		{
+			loco->setUsePreciseZPos(false);
+			loco->setUltraAccurate(false);
+			// don't restore lift if dead -- this may fight with JetSlowDeathBehavior!
+			if (!obj->isEffectivelyDead())
+				loco->setMaxLift(BIGNUM);
+		}
+
+		if (m_landing)
+		{
+			ai->friend_setAllowAirLoco(false);
+			ai->chooseLocomotorSet(LOCOMOTORSET_TAXIING);
+		}
+		else
+		{
+			// when takeoff is complete, always go back to layer-ground, rather than
+			// some bridge layer.
+			obj->setLayer(LAYER_GROUND);
+		}
+	}
+
+};
+EMPTY_DTOR(HeliTakeoffOrLandingNoAirFieldState)
+
+
 //-------------------------------------------------------------------------------------------------
 class JetOrHeliParkOrientState : public State
 {
@@ -1715,7 +1899,14 @@ public:
 		}
 		setAdjustsDestination(false);		// precision is necessary
 
-		return AIInternalMoveToState::onEnter();
+		//MODDD - if this state's going to run, seems fine to set this flag
+		//return AIInternalMoveToState::onEnter();
+		StateReturnType ret = AIInternalMoveToState::onEnter();
+		if (ret != STATE_FAILURE)
+		{
+			jetAI->setFlag(JetAIUpdate::AIRFIELD_DESTINATION, true);
+		}
+		return ret;
 	}
 };
 EMPTY_DTOR(JetOrHeliReturnForLandingState)
@@ -1783,12 +1974,20 @@ HeliAIStateMachine::HeliAIStateMachine(Object *owner, AsciiString name) : AIStat
 	defineState( LANDING, newInstance(HeliTakeoffOrLandingState)( this, true ), RELOAD_AMMO, AI_IDLE );
 	defineState( RELOAD_AMMO, newInstance(JetOrHeliReloadAmmoState)( this ), AI_IDLE, AI_IDLE );
 #else
-	defineState( LANDING, newInstance(HeliTakeoffOrLandingState)( this, true ), RELOAD_AMMO, TAKING_OFF );
-	defineState( RELOAD_AMMO, newInstance(JetOrHeliReloadAmmoState)( this ), AI_IDLE, TAKING_OFF );
+	//MODDD - I disagree with this change, or at least it isn't as necessary now.
+	// (fail states reverted to AI_IDLE instead of being TAKING_OFF)
+	//defineState( LANDING, newInstance(HeliTakeoffOrLandingState)( this, true ), RELOAD_AMMO, TAKING_OFF );
+	//defineState( RELOAD_AMMO, newInstance(JetOrHeliReloadAmmoState)( this ), AI_IDLE, TAKING_OFF );
+	defineState( LANDING, newInstance(HeliTakeoffOrLandingState)( this, true ), RELOAD_AMMO, AI_IDLE );
+	defineState( RELOAD_AMMO, newInstance(JetOrHeliReloadAmmoState)( this ), AI_IDLE, AI_IDLE );
 #endif
 	defineState( RETURN_TO_DEAD_AIRFIELD, newInstance(JetOrHeliReturningToDeadAirfieldState)( this ), CIRCLING_DEAD_AIRFIELD, RETURN_TO_DEAD_AIRFIELD );
 	defineState( CIRCLING_DEAD_AIRFIELD, newInstance(JetOrHeliCirclingDeadAirfieldState)( this ), AI_IDLE, AI_IDLE );
 	defineState( TAXI_FROM_HANGAR, newInstance(JetOrHeliTaxiState)( this, FROM_HANGAR ), AI_IDLE, AI_IDLE );
+
+	//MODDD - new
+	defineState( TAKING_OFF_NOAIRFIELD, newInstance(HeliTakeoffOrLandingNoAirFieldState)( this, false ), AI_IDLE, AI_IDLE );
+	defineState( LANDING_NOAIRFIELD, newInstance(HeliTakeoffOrLandingNoAirFieldState)( this, true ), AI_IDLE, TAKING_OFF );
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1821,6 +2020,9 @@ JetAIUpdateModuleData::JetAIUpdateModuleData()
 	m_lockonFreq = 0.5;
 	m_lockonAngleSpin = 720;
 	m_returnToBaseIdleTime = 0;
+
+	//MODDD
+	m_movesLikeHelicopter = false;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1996,6 +2198,15 @@ UpdateSleepTime JetAIUpdate::update()
 
 	Object* jet = getObject();
 
+	//MODDD - pilot-for-veterancy support
+	// ---
+	Bool waitingToEnterOrExit = false;
+	// If this is a helicopter, check to see if it should land because a pilot wants to enter it.
+	// Actually, allow this check anytime. Even a jet can choose not to take off if a pilot is running to it.
+	const ContainModuleInterface* contain = getObject()->getContain();
+	waitingToEnterOrExit = contain && contain->hasObjectsWantingToEnterOrExit();
+	// ---
+
 	ParkingPlaceBehaviorInterface* pp = getPP(getObject()->getProducerID());
 
 	// If idle & out of ammo, return
@@ -2006,14 +2217,24 @@ UpdateSleepTime JetAIUpdate::update()
 	// srj sez: not 100% sure on this. calling RELOAD_AMMO "idle" allows us to get healed while reloading,
 	// but might have other side effects we didn't want. if this does prove to cause a bug, be sure
 	// that jets (and ESPECIALLY comanches) are still getting healed at airfields.
-	if (AIUpdateInterface::isIdle() || getStateMachine()->getCurrentStateID() == RELOAD_AMMO)
+	//MODDD - replacing occurrences of "getStateMachine()->getCurrentStateID() == RELOAD_AMMO" with "isReloading()".
+	if (AIUpdateInterface::isIdle() || isReloading())
 	{
 		if (pp != nullptr)
 		{
 			if (!getFlag(ALLOW_AIR_LOCO) &&
-					!getFlag(HAS_PENDING_COMMAND) &&
+						//MODDD - I don't think the 'HAS_PENDING_COMMAND' check here is necessary.
+						// if this is a helicopter at full health, not taking off for that reason will cause it to stay on the ground
+						// until told to move (ex: using the 'stop' button while it's grounded for repairs).
+						// Final idea: check for being the reloading state exactly here, since that's exactly what blocks handling
+						// 'HAS_PENDING_COMMAND' further down - that disallowing progression if we're in a reload state is the dead lock.
+						//!getFlag(HAS_PENDING_COMMAND) &&
+						(isReloading() || !getFlag(HAS_PENDING_COMMAND)) &&
 						jet->isKindOf(KINDOF_PRODUCED_AT_HELIPAD) &&
-						jet->getBodyModule()->getHealth() == jet->getBodyModule()->getMaxHealth())
+						jet->getBodyModule()->getHealth() == jet->getBodyModule()->getMaxHealth() &&
+					//MODDD - also require knowing this is landed at the airfield, and nothing wanting to enter this
+					getFlag(AIRFIELD_DESTINATION) && !waitingToEnterOrExit
+			)
 			{
 				// we're completely healed, so take off again
 				pp->setHealee(jet, false);
@@ -2038,8 +2259,19 @@ UpdateSleepTime JetAIUpdate::update()
 			}
 			else
 			{
-				pp->setHealee(jet, !getFlag(ALLOW_AIR_LOCO));
+				//MODDD - also require knowing that the helicopter landed at an air field to heal, since it could land just
+				// to let a pilot enter (healing from having an associated air field while out in the middle of nowhere would
+				// be strange).
+				// No issue requiring this for everything - should be the only reason jets ever land anyway so this is always set
+				// when grounded then.
+				pp->setHealee(jet, !getFlag(ALLOW_AIR_LOCO) && getFlag(AIRFIELD_DESTINATION));
 			}
+		}
+		//MODDD - new 'else' section to know not to heal if the air field disappears.
+		// See 'ChinookAIUpdate::update()': "setAirfieldForHealing(INVALID_ID);".
+		else
+		{
+			setFlag(AIRFIELD_DESTINATION, false);
 		}
 
 		// note that we might still have weapons with ammo, but still be forced to return to reload.
@@ -2058,13 +2290,17 @@ UpdateSleepTime JetAIUpdate::update()
 			// srj sez: if we are reloading ammo, wait will we are done before processing the pending command.
 			getStateMachine()->getCurrentStateID() != RELOAD_AMMO)
 		{
-			m_returnToBaseFrame = 0;
+			//MODDD - if a pilot is running to this parked jet, don't lift off!
+			if (!waitingToEnterOrExit)
+			{
+				m_returnToBaseFrame = 0;
 
-			AICommandParms parms(AICMD_MOVE_TO_POSITION, CMD_FROM_AI);	// values don't matter, will be wiped by next line
-			m_mostRecentCommand.reconstitute(parms);
-			setFlag(HAS_PENDING_COMMAND, false);
+				AICommandParms parms(AICMD_MOVE_TO_POSITION, CMD_FROM_AI);	// values don't matter, will be wiped by next line
+				m_mostRecentCommand.reconstitute(parms);
+				setFlag(HAS_PENDING_COMMAND, false);
 
- 			aiDoCommand(&parms);
+ 				aiDoCommand(&parms);
+			}
 		}
 		else if (m_returnToBaseFrame != 0 && now >= m_returnToBaseFrame && getFlag(ALLOW_AIR_LOCO))
 		{
@@ -2078,6 +2314,7 @@ UpdateSleepTime JetAIUpdate::update()
 		{
 			m_returnToBaseFrame = now + d->m_returnToBaseIdleTime;
 		}
+
 	}
 	else
 	{
@@ -2096,6 +2333,36 @@ UpdateSleepTime JetAIUpdate::update()
 			getStateMachine()->setState(RETURNING_FOR_LANDING);
 		}
 	}
+
+	//MODDD - based off a block in 'ChinookAIUpdate::update' that also checks 'waitingToEnterOrExit' several times
+	// Also, keep in mind 'isIdle()' will fail if currently docked at an air field for repairs
+	// ------------------------
+	if (movesLikeHelicopter() && AIUpdateInterface::isIdle() && !getFlag(HAS_PENDING_COMMAND))
+	{
+		if (waitingToEnterOrExit)
+		{
+			// since this must be idle, I don't think checking for '!getFlag(LANDING_IN_PROGRESS)' is needed
+			if (getFlag(ALLOW_AIR_LOCO))
+			{
+				getStateMachine()->clear();
+				setLastCommandSource( CMD_FROM_AI );
+				getStateMachine()->setState( LANDING_NOAIRFIELD );
+			}
+		}
+		else
+		{
+			// if nothing wants to enter and I'm landing or already on the ground, take off.
+			// Also, it appears if a helicopter is landed at an air field for repairs, it is in the RELOAD_AMMO state instead
+			// (being landed for healing shouldn't be interrupted by no one wanting to enter the helicopter)
+			if (!getFlag(ALLOW_AIR_LOCO))
+			{
+				getStateMachine()->clear();
+				setLastCommandSource( CMD_FROM_AI );
+				getStateMachine()->setState( TAKING_OFF_NOAIRFIELD );
+			}
+		}
+	}
+	// ------------------------
 
 	Real minHeight = friend_getMinHeight();
 	if( pp )
@@ -2598,6 +2865,14 @@ void JetAIUpdate::aiDoCommand(const AICommandParms* parms)
 
 	if (!isAllowedToRespondToAiCommands(parms))
 		return;
+	
+	//MODDD - similar to 'ChinookAIUpdate::aiDoCommand' calling 'setAirfieldForHealing(INVALID_ID)',
+	// most new AI commands reset this.
+	// Note that the 'stop' button sends AICMD_IDLE (can check if it's player-issued instead of AI/autonomous too).
+	if (parms->m_cmd != AICMD_IDLE && parms->m_cmd != AICMD_BUSY && parms->m_cmd != AICMD_FOLLOW_EXITPRODUCTION_PATH)
+	{
+		setFlag(AIRFIELD_DESTINATION, false);
+	}
 
 	// note that we always store this, even if nothing will be "pending".
 	m_mostRecentCommand.store(*parms);
@@ -2608,7 +2883,8 @@ void JetAIUpdate::aiDoCommand(const AICommandParms* parms)
 		setFlag(HAS_PENDING_COMMAND, true);
 		return;
 	}
-	else if (parms->m_cmd == AICMD_IDLE && getStateMachine()->getCurrentStateID() == RELOAD_AMMO)
+	//MODDD - replacing occurrences of "getStateMachine()->getCurrentStateID() == RELOAD_AMMO" with "isReloading()".
+	else if (parms->m_cmd == AICMD_IDLE && isReloading())
 	{
 		// uber-special-case... if we are told to idle, but are reloading ammo, ignore it for now,
 		// since we're already doing "nothing" and responding to this will cease our reload...

@@ -1551,6 +1551,7 @@ void BuildAssistant::sellObject( Object *obj )
 	}
 
 	// Tell the contain module so it can decide what to do.
+	//MODDD - TODO - should this 'onSelling' be an event for every module? not sure
 	ContainModuleInterface* contain = obj->getContain();
 	if( contain )
 	{

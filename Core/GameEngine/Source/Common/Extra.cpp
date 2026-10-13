@@ -11,12 +11,22 @@
 #include "Common/Upgrade.h"
 #include "GameNetwork/GameInfo.h"
 #include "GameClient/ControlBar.h"
+
 #include "GameLogic/Weapon.h"
 #include "GameLogic/Object.h"
+#include "GameLogic/Locomotor.h"
 #include "GameLogic/ObjectCreationList.h"
 #include "GameLogic/GameLogic.h"
-#include "GameLogic/Module/AutoDepositUpdate.h"
+
+#include "GameLogic/ObjectCreationList/DeliverPayloadNugget.h"
+#include "GameLogic/ObjectCreationList/GenericObjectCreationNugget.h"
+
+#include "GameLogic/Module/AIUpdate.h"
+#include "GameLogic/Module/JetAIUpdate.h"
 #include "GameLogic/Module/HackInternetAIUpdate.h"
+#include "GameLogic/Module/AutoDepositUpdate.h"
+//#include "GameLogic/Module/DeliverPayloadAIUpdate.h"
+
 #include "GameLogic/Module/BodyModule.h"
 #include "GameLogic/Module/CreateModule.h"
 #include "GameLogic/Module/SpecialPowerModule.h"
@@ -34,13 +44,11 @@
 #include "GameLogic/Module/SpecialAbilityUpdate.h"
 #include "GameLogic/Module/ActiveShroudUpgrade.h"
 #include "GameLogic/Module/CashHackSpecialPower.h"
-//#include "GameLogic/Module/DeliverPayloadAIUpdate.h"
-#include "GameLogic/ObjectCreationList/DeliverPayloadNugget.h"
-#include "GameLogic/ObjectCreationList/GenericObjectCreationNugget.h"
 #include "GameLogic/Module/OCLUpdate.h"
 #include "GameLogic/Module/InstantDeathBehavior.h"
 #include "GameLogic/Module/CreateObjectDie.h"
 #include "GameLogic/Module/MinefieldBehavior.h"
+#include "GameLogic/Module/TransportContain.h"
 
 // It would make sense to consider 'CUSTOM_ATTRIBUTE_CHANGES' sections "MODDD - for me only".
 
@@ -302,6 +310,47 @@ void makeNonCivilianGarrisonableStructureCapturableHack(ThingTemplate* _this)
 	}
 }
 
+//MODDD - check if it's suspected this thing moves like a helicopter (implys it already has KINDOF_AIRCRAFT).
+// Check its locomotors to see if there is one for moving through the air with a min-speed of 0.
+// That's something I expect to be able to land to take a pilot even if it doesn't use 'ChinookAIUpdate'.
+Bool movesLikeHelicopterCheck(const ThingTemplate* _thing, const AIUpdateModuleData* aiUpdateModuleData)
+{
+	// (old stuff from when this checked for the object every time)
+	// this requirement should be ok, but just in case of mods doing something weird, leaving it out
+	//if (getObject()->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+	
+	// want to get the locomotor this thing normally uses for movement, not necessarily the current one
+	// (ex: sitting jets often use a different one that isn't reliable for what this is checking for)
+	//const Locomotor* loc = getCurLocomotor();
+
+	// old way using the current object to get locomotor info:
+	//const LocomotorTemplateVector* locTemplateVector = getObject()->getAI()->getAIUpdateModuleData()->findLocomotorTemplateVector(LOCOMOTORSET_NORMAL);
+	// ---
+	// Keeping track of this 'LocomotorTemplateVector' and the 'LocomotorSet' class can be confusing.
+	// See 'AIUpdate::chooseLocomotorSetExplicit'. It builds the current LocomotorSet instance out of the fitting template
+	// vector for that module data. I can only assume there is a vector of locomotors per condition (NORMAL/PANIC/etc.) so that
+	// a unit's mood can impact what group of locomotors it can choose between (the 'NORMAL' vector = one for land, one for water, etc.).
+	// TODO - 'LOCOMOTORSET_NORMAL_UPGRADED'? how does a unit decide to use that one instead?
+	// that check can be for runtime (JetAIUpdate::movesLikeHelicopter) to check for a separte cached value for that set then
+	const LocomotorTemplateVector* locTemplateVector = aiUpdateModuleData->findLocomotorTemplateVector(LOCOMOTORSET_NORMAL);
+
+	LocomotorTemplateVector::const_iterator itr;
+	for (itr = locTemplateVector->begin(); itr != locTemplateVector->end(); ++itr)
+	{
+		const LocomotorTemplate* testLoc = (*itr);
+		if (testLoc->getSurfaces() & LOCOMOTORSURFACE_AIR)
+		{
+			// if this one has a min speed of 0, good enough for me
+			if (testLoc->getMinSpeed() == 0)
+			{
+				return true;
+			}
+			//break;
+		}
+	}
+	return false;
+}
+
 // Go through a ThingTemplate that's recently been parsed from the INI files
 // (ex: 'AmericaVehicle.ini' -> 'Object AmericaVehicleHumvee')
 // and see if it has any stats or modules that should be adjusted for either bug fixes or additional attribute edits
@@ -367,12 +416,30 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	static NameKeyType SpawnBehaviorNameKey = NAMEKEY("SpawnBehavior");
 	static NameKeyType MinefieldBehaviorNameKey = NAMEKEY("MinefieldBehavior");
 
+	static NameKeyType TransportContainNameKey = NAMEKEY("TransportContain");
+	static NameKeyType OverlordContainNameKey = NAMEKEY("OverlordContain");
+	static NameKeyType HelixContainNameKey = NAMEKEY("HelixContain");
+	static NameKeyType RiderChangeContainNameKey = NAMEKEY("RiderChangeContain");
+	static NameKeyType CaveContainNameKey = NAMEKEY("CaveContain");
+	static NameKeyType GarrisonContainNameKey = NAMEKEY("GarrisonContain");
+	static NameKeyType HealContainNameKey = NAMEKEY("HealContain");
+	static NameKeyType InternetHackContainNameKey = NAMEKEY("InternetHackContain");
+	static NameKeyType MobNexusContainNameKey = NAMEKEY("MobNexusContain");
+	static NameKeyType ParachuteContainNameKey = NAMEKEY("ParachuteContain");
+	static NameKeyType RailedTransportContainNameKey = NAMEKEY("RailedTransportContain");
+	static NameKeyType TunnelContainNameKey = NAMEKEY("TunnelContain");
+	static NameKeyType JetAIUpdateNameKey = NAMEKEY("JetAIUpdate");
+
 #if CUSTOM_ATTRIBUTE_CHANGES
 	Bool foundStealthDetectorUpdate = false;
 	Bool foundActiveShroudUpgrade = false;
 	StealthDetectorUpdateModuleData* stealthDetectorData = nullptr;
 #endif
 	Bool foundSpawnBehavior = false;
+	Bool foundContainBehavior = false;
+	// what a specific check
+	Bool foundJetAIUpdateBehavior = false;
+	AIUpdateModuleData* aiUpdateModuleData = nullptr;
 	
 	// Whether this thing gets a cost reduction for being a renewable income source at the very end.
 	// There is checking kindof's like FS_BLACK_MARKET or FS_SUPPLY_DROP_ZONE, but I'd rather have a more accurate check
@@ -676,6 +743,60 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			}
 		}
 #endif
+		else if ( modNameKey == TransportContainNameKey )
+		{
+			foundContainBehavior = true;
+		}
+		else if ( modNameKey == OverlordContainNameKey )
+		{
+			foundContainBehavior = true;
+		}
+		else if ( modNameKey == HelixContainNameKey )
+		{
+			foundContainBehavior = true;
+		}
+		else if ( modNameKey == RiderChangeContainNameKey )
+		{
+			foundContainBehavior = true;
+		}
+		else if ( modNameKey == CaveContainNameKey )
+		{
+			foundContainBehavior = true;
+		}
+		else if ( modNameKey == GarrisonContainNameKey )
+		{
+			foundContainBehavior = true;
+		}
+		else if ( modNameKey == HealContainNameKey )
+		{
+			foundContainBehavior = true;
+		}
+		else if ( modNameKey == InternetHackContainNameKey )
+		{
+			foundContainBehavior = true;
+		}
+		else if ( modNameKey == MobNexusContainNameKey )
+		{
+			foundContainBehavior = true;
+		}
+		else if ( modNameKey == ParachuteContainNameKey )
+		{
+			foundContainBehavior = true;
+		}
+		else if ( modNameKey == RailedTransportContainNameKey )
+		{
+			foundContainBehavior = true;
+		}
+		else if ( modNameKey == TunnelContainNameKey )
+		{
+			foundContainBehavior = true;
+		}
+		else if ( modNameKey == JetAIUpdateNameKey )
+		{
+			foundJetAIUpdateBehavior = true;
+			aiUpdateModuleData = (AIUpdateModuleData*)data;
+		}
+
 	}
 
 	// This is here to disable the strange hackery of having 'KINDOF_SPAWNS_ARE_THE_WEAPONS' for the stinger soldier as of retail INI,
@@ -684,6 +805,46 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	if (_this->isKindOf(KINDOF_SPAWNS_ARE_THE_WEAPONS) && !foundSpawnBehavior)
 	{
 		_this->setKindOf(KINDOF_SPAWNS_ARE_THE_WEAPONS, 0);
+	}
+
+	// This checks to see if a helicopter lacks a contain behavior (ex: comanche from retail).
+	// A contain of some kind is needed at a bare minimum so its 'objectEnterExitInfo' map is available for the
+	// helicopter's AIUpdate to see if something is trying to enter it so it knows to land.
+	// For things that don't need to respond to a request for entry (ex: vehicles: crusader tank lacks a contain behavior
+	// too), this isn't an issue.
+	//KindOfMaskType kindOfTest;
+	//kindOfTest.set(KINDOF_AIRCRAFT);
+	// now jets too, so a jet can wait on taking off autonomously (ex: resuming guard mode after reload) if a pilot is
+	// running towards it.
+	//kindOfTest.set(KINDOF_PRODUCED_AT_HELIPAD);
+	//if (!foundContainBehavior && _this->isAllKindOf(kindOfTest))
+
+	if (_this->isKindOf(KINDOF_AIRCRAFT) && foundJetAIUpdateBehavior)
+	{
+		// TODO - check the toxin general cropduster aircraft in the Contra mod.
+		// does it trip this and think it moves like a helicopter cuz of a ground locomotor? not sure
+		if (movesLikeHelicopterCheck(_this, aiUpdateModuleData))
+		{
+			((JetAIUpdateModuleData*)aiUpdateModuleData)->m_movesLikeHelicopter = true;
+		}
+
+		if (!foundContainBehavior)
+		{
+			// Add a bogus 'TransportContain' with a capacity of 0 slots that forbids everything - that should do it.
+			static AsciiString TransportContainName = AsciiString("TransportContain");
+			AsciiString moduleTag = AsciiString("Module_BOGUSTRANSPORT12345");
+			// would've used 'getBehaviorModuleInfo()', but this is a non-const reference that allows items to be added
+			ModuleInfo& mi = _this->m_behaviorModuleInfo;
+			ModuleData* data = TheModuleFactory->newModuleDataFromINI(nullptr, TransportContainName, MODULETYPE_BEHAVIOR, moduleTag);
+		
+			TransportContainModuleData* _data = (TransportContainModuleData*)data;
+			_data->m_slotCapacity = 0;
+			_data->m_allowInsideKindOf.clear();
+			_data->m_forbidInsideKindOf.set();
+			_data->m_numberOfExitPaths = 0;
+
+			mi.addModuleInfo(_this, TransportContainName, moduleTag, data, TransportContain::getInterfaceMask(), false, false);
+		}
 	}
 
 	// (this section now occurs below the module iteration block in case the presence of some module affects the stat
@@ -728,7 +889,9 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			}
 			mdCast->m_newShroudRange = testRange * 0.75f;
 
-			mi2.addModuleInfo(_this, ActiveShroudUpgradeName, moduleTag, data, (MODULEINTERFACE_UPDATE), false);
+			// ?
+			//mi2.addModuleInfo(_this, ActiveShroudUpgradeName, moduleTag, data, (MODULEINTERFACE_UPDATE), false, false);
+			mi2.addModuleInfo(_this, ActiveShroudUpgradeName, moduleTag, data, ActiveShroudUpgrade::getInterfaceMask(), false, false);
 
 			//BehaviorModule* newMod = (BehaviorModule*)TheModuleFactory->newModule(this, modName, data, MODULETYPE_BEHAVIOR);
 			//*curB++ = newMod;

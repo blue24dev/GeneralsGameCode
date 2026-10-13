@@ -1445,7 +1445,25 @@ void OpenContain::onObjectWantsToEnterOrExit(Object* obj, ObjectEnterExitType wa
 	}
 	else
 	{
-		m_objectEnterExitInfo[id] = wants;
+		//MODDD - if this is an enemy that wants to enter (ex: hijacker), don't add!
+		// Now that it's possible to hijackers to hijack things that can contain other things, don't want this
+		// to allow hijackers to keep enemy jets or chinooks grounded while they politely wait to be hijacked...
+		Bool pass;
+		if (wants == WANTS_TO_ENTER)
+		{
+			// must be friends for that
+			pass = (getObject()->getRelationship(obj) == ALLIES);
+		}
+		else
+		{
+			// exiting is always fine
+			pass = true;
+		}
+
+		if (pass)
+		{
+			m_objectEnterExitInfo[id] = wants;
+		}
 	}
 }
 

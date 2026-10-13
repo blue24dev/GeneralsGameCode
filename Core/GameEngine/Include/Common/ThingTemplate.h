@@ -411,6 +411,12 @@ public:
 	{
 		return TEST_KINDOFMASK_ANY(m_kindof, anyKindOf);
 	}
+
+	//MODDD
+	Bool isAllKindOf( const KindOfMaskType& mask ) const
+	{
+		return TEST_KINDOFMASK_ALL(m_kindof, mask);
+	}
 	
 	//MODDD - new, for hackery
 	void setKindOf(KindOfType t, Int val)

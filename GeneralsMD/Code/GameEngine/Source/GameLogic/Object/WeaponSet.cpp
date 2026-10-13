@@ -749,6 +749,12 @@ CanAttackResult WeaponSet::getAbleToAttackSpecificObject( AbleToAttackType attac
 // that the one provided passing wouldn't be relevant.
 CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType attackType, const Object *source, const Object *victim, const Coord3D *pos, CommandSourceType commandSource, WeaponSlotType specificSlot, Bool broadCheck ) const
 {
+	if (source->getTemplateName() == "Chem_GLAVehicleCropDuster" || source->getTemplateName() == "Tank_ChinaTankEmperor")
+	{
+		int x;
+		x = 4;
+	}
+
 	//MODDD - NOTE - weapon selection point of interest
 	//First determine if we are attacking an object or the ground and get the
 	//appropriate weapon anti mask.
@@ -773,7 +779,7 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 	// to attack it if nearby on its own (ex: in the Contra mod, crop dusters before selecting a weapon as it is missing
 	// a 'LockWeaponCreate' module).
 	CommandSourceMask commandSourceFlags = (1 << commandSource);
-	if (commandSource == CMD_FROM_PLAYER && !isCurWeaponLocked())
+	if (commandSource == CMD_FROM_PLAYER && m_curWeaponLockedStatus != LOCKED_PERMANENTLY)
 	{
 		commandSourceFlags |= (1 << CMD_FROM_AI);
 	}
@@ -1092,6 +1098,12 @@ CanAttackResult WeaponSet::getAbleToUseWeaponAgainstTarget( AbleToAttackType att
 //-------------------------------------------------------------------------------------------------
 Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victim, WeaponChoiceCriteria criteria, CommandSourceType cmdSource)
 {
+	if (obj->getTemplateName() == "Chem_GLAVehicleCropDuster" || obj->getTemplateName() == "Tank_ChinaTankEmperor")
+	{
+		int x;
+		x = 4;
+	}
+
 	//MODDD - NOTE - weapon selection point of interest
 	/*
 		1) The first criteria is weapon fitness.  If the object has two weapons that can fire concurrently,
@@ -1154,8 +1166,11 @@ Bool WeaponSet::chooseBestWeaponForTarget(const Object* obj, const Object* victi
 	// This stops the odd case of a unit denying the player from attacking something even if it would use a different weapon
 	// to attack it if nearby on its own (ex: in the Contra mod, crop dusters before selecting a weapon as it is missing
 	// a 'LockWeaponCreate' module).
+	// ---
+	// Is only forbidding permanent-locks but temporary locks are ok?  I think so because clicking in the middle of any reason
+	// for being temp-locked would cancel the temp-lock - if that's not how that works this would need revising.
 	CommandSourceMask commandSourceFlags = (1 << cmdSource);
-	if (cmdSource == CMD_FROM_PLAYER && !isCurWeaponLocked())
+	if (cmdSource == CMD_FROM_PLAYER && m_curWeaponLockedStatus != LOCKED_PERMANENTLY)
 	{
 		commandSourceFlags |= (1 << CMD_FROM_AI);
 	}

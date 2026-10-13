@@ -62,6 +62,8 @@ public:
 	Real										m_lockonAngleSpin;								///< how many times to spin around it
 	Real										m_lockonBlinky;
 	UnsignedInt							m_returnToBaseIdleTime;						///< if we're idle for this long, return to base
+	//MODDD - extra cached feature decided by the engine, not provided by INI
+	Bool m_movesLikeHelicopter;
 
 	JetAIUpdateModuleData();
 	static void buildFieldParse(MultiIniFieldParse& p);
@@ -70,10 +72,27 @@ public:
 //-------------------------------------------------------------------------------------------------
 class JetAIUpdate : public AIUpdateInterface
 {
-
 	MEMORY_POOL_GLUE_WITH_USERLOOKUP_CREATE( JetAIUpdate, "JetAIUpdate" )
 	MAKE_STANDARD_MODULE_MACRO_WITH_MODULE_DATA( JetAIUpdate, JetAIUpdateModuleData )
+		
+public:
+	//MODDD - moved to here
+	enum FlagType
+	{
+		HAS_PENDING_COMMAND,
+		ALLOW_AIR_LOCO,
+		HAS_PRODUCER_LOCATION,
+		TAKEOFF_IN_PROGRESS,
+		LANDING_IN_PROGRESS,
+		USE_SPECIAL_RETURN_LOCO,
+		ALLOW_CIRCLING,
+		ALLOW_INTERRUPT_AND_RESUME_OF_CUR_STATE_FOR_RELOAD,
+		TAXI_IN_PROGRESS,
+		//MODDD - new
+		AIRFIELD_DESTINATION
+	};
 
+private:
 	virtual UpdateSleepTime update() override;
 
 public:
@@ -90,6 +109,11 @@ public:
  	virtual void aiDoCommand(const AICommandParms* parms) override;
 	virtual Bool chooseLocomotorSet(LocomotorSetType wst) override;
 	virtual void setLocomotorGoalNone() override;
+	
+	//MODDD - new
+	virtual Bool canLandToPickUpObjectWantingToEnter() override;
+	virtual Bool movesLikeHelicopter() const;
+
 	virtual Bool isIdle() const override;
 	virtual Bool isTaxiingToParking() const override; //only applies to jets interacting with runways.
 	virtual Bool isReloading() const;
@@ -144,18 +168,7 @@ protected:
 
 private:
 
-	enum FlagType
-	{
-		HAS_PENDING_COMMAND,
-		ALLOW_AIR_LOCO,
-		HAS_PRODUCER_LOCATION,
-		TAKEOFF_IN_PROGRESS,
-		LANDING_IN_PROGRESS,
-		USE_SPECIAL_RETURN_LOCO,
-		ALLOW_CIRCLING,
-		ALLOW_INTERRUPT_AND_RESUME_OF_CUR_STATE_FOR_RELOAD,
-		TAXI_IN_PROGRESS
-	};
+	//MODDD - 'enum FlagType' moved above
 
 	Coord3D									m_producerLocation;		///< remember this, so that if our producer dies, we have a place to circle aimlessly
 	AICommandParmsStorage		m_mostRecentCommand;
@@ -173,6 +186,8 @@ private:
 	void getProducerLocation();
 	void buildLockonDrawableIfNecessary();
 	void doLandingCommand(Object *airfield, CommandSourceType cmdSource);
+	//MODDD - allow more access
+public:
 	Bool getFlag(FlagType f) const;
 	void setFlag(FlagType f, Bool v);
 };

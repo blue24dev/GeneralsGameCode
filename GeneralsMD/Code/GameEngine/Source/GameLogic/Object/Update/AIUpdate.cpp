@@ -71,6 +71,8 @@
 #include "GameLogic/Weapon.h"
 #include "Common/Radar.h"									// For TheRadar
 
+//MODDD - include yourself properly
+#include "GameLogic/Module/StealthUpdate.h"
 //MODDD
 #include "GameLogic/Module/OpenContain.h"
 
@@ -891,6 +893,9 @@ void AIUpdateInterface::chooseGoodLocomotorFromCurrentSet()
 
 	if (prevLoco != m_curLocomotor)
 	{
+		//MODDD - new event to let the host object know the locomotor has been changed
+		getObject()->onLocomotorChanged(m_curLocomotor, prevLoco);
+
 		// make sure the group's speed will be recalculated
 		if (getGroup())
 			getGroup()->recomputeGroupSpeed();

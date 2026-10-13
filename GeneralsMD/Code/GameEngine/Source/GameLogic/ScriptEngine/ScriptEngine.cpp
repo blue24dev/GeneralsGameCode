@@ -690,7 +690,10 @@ ScriptEngine::~ScriptEngine()
 //-------------------------------------------------------------------------------------------------
 void ScriptEngine::init()
 {
-	if (TheGlobalData->m_windowed)
+	//MODDD - TheGlobalData->m_windowed -> g_setting_getWindowed()
+	//MODDD - also, indentation of this as-is leads me to believe there were supposed to be brackets here - added them for this if-then
+	if (g_setting_getWindowed())
+	{
 		if (TheGlobalData->m_scriptDebug) {
 			st_DebugDLL = LoadLibrary("DebugWindow.dll");
 		} else {
@@ -709,6 +712,7 @@ void ScriptEngine::init()
 				proc();
 			}
 		}
+	} //MODDD - complementary end-bracket
 
 	if (st_ParticleDLL) {
 		FARPROC proc = GetProcAddress(st_ParticleDLL, "CreateParticleSystemDialog");

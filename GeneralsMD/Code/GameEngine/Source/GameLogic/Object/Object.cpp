@@ -111,6 +111,9 @@
 // (duplicate)
 //#include "GameLogic/Module/PowerPlantUpdate.h"
 
+//MODDD - include yourself properly
+#include "GameLogic/Module/StealthUpdate.h"
+
 //MODDD
 #include "GameLogic/ObjectCreationList.h"
 #include "GameLogic/Module/StealthDetectorUpdate.h"
@@ -642,7 +645,7 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 			DEBUG_ASSERTCRASH( m_slavedUpdate == nullptr, ("Duplicate SlavedUpdate!") );
 			m_slavedUpdate = slavedUpdate;
 		}
-		
+
 		//MODDD - caching something for a getter available as-is (but mysteriously wasn't cached)
 		SpawnBehaviorInterface* spawnBehavior = newMod->getSpawnBehaviorInterface();
 		if ( spawnBehavior )
@@ -817,7 +820,6 @@ void Object::initConstructor(const ThingTemplate* tt)
 #if MONEY_AUTO_ADJUSTMENT_SUPPORT
 	m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = -1;
 #endif
-	m_airbornePreviousFrame = false;
 	
 	// Force the thing template to use the most overridden version of itself - jkmcd
 	// Note that after this, the object will be using m_template, which forces the usage of the
@@ -1078,9 +1080,6 @@ void Object::gamePostLoad()
 		}
 	}
 	*/
-
-	// should be able to tell whether this is airborn or not at this point?
-	m_airbornePreviousFrame = this->isUsingAirborneLocomotor();
 }
 
 //MODDD - convenience feature to bundle a few event calls that should be made on offsetting the last parts
@@ -1118,30 +1117,50 @@ void Object::setMoneySpentOnMe(Int moneySpentOnMe)
 	this->m_moneySpentOnMe = moneySpentOnMe;
 }
 
-//MODDD - new event called for every object
-// possible alt name: 'Object::onFramePost'
-void Object::onUpdatePost()
+//MODDD - event on changing the locomotor - includes the current and previous ones.
+// 'curLocomotor' is the same as running 'this->getAI()->getCurLocomotor()' - it is provided as a param for convenience.
+// Either being null/not-null isn't necessarily guaranteed - see 'AIUpdate.cpp' where this is called from.
+void Object::onLocomotorChanged(const Locomotor* curLocomotor, const Locomotor* prevLocomotor)
 {
-	if (this->isDestroyed() || this->isEffectivelyDead())
-	{
-		return;
-	}
-
 	// Check to see if this object has toggled going airborn between frames - if so, run a shroud update since that can
 	// affect vision now.
 	// Not sure if 'isUsingAirborneLocomotor' or 'isSignificantlyAboveTerrain' is best here.
 	// Going with the former to leave it up to the intent so initially rising but technically being on the ground doesn't
 	// flicker to a soon-to-be outdated state (if that works like I think it does).
-	Bool airborneCurrentFrame = this->isUsingAirborneLocomotor();
-	if (airborneCurrentFrame != m_airbornePreviousFrame)
+	// Also assuming this should only apply to 'AIRCRAFT' things - the eventual check to half shroud if on the ground only
+	// applies to AIRCRAFT-marked things.
+	if (this->isKindOf(KINDOF_AIRCRAFT))
 	{
-		if (this->isKindOf(KINDOF_AIRCRAFT))
+		LocomotorSurfaceTypeMask curLocomotorSurfaceMask;
+		LocomotorSurfaceTypeMask prevLocomotorSurfaceMask;
+		if (curLocomotor)
+		{
+			curLocomotorSurfaceMask = curLocomotor->getLegalSurfaces();
+		}
+		else
+		{
+			// fallback
+			curLocomotorSurfaceMask = LOCOMOTORSURFACE_GROUND;
+		}
+
+		if (prevLocomotor)
+		{
+			prevLocomotorSurfaceMask = prevLocomotor->getLegalSurfaces();
+		}
+		else
+		{
+			// fallback
+			prevLocomotorSurfaceMask = LOCOMOTORSURFACE_GROUND;
+		}
+
+		// If the 'LOCOMOTORSURFACE_AIR' bit is different between the prev/cur locomotor, re-compute the shroud.
+		// This allows shroud re-computation depending on 'isUsingAirborneLocomotor' to only run if it's believed
+		// to have changed (excessive shroud-checks can be expensive).
+		if ((curLocomotorSurfaceMask ^ prevLocomotorSurfaceMask) & LOCOMOTORSURFACE_AIR)
 		{
 			handleShroud();
 		}
 	}
-
-	m_airbornePreviousFrame = this->isUsingAirborneLocomotor();
 }
 
 //-------------------------------------------------------------------------------------------------

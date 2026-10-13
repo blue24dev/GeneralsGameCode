@@ -687,6 +687,10 @@ void ParkingPlaceBehavior::defectAllParkedUnits(Team* newTeam, UnsignedInt detec
 //-------------------------------------------------------------------------------------------------
 void ParkingPlaceBehavior::killAllParkedUnits()
 {
+	//MODDD - safety so helicopers still being healed don't get to continue healing while disconnected from the being-sold
+	// air field
+	m_healing.clear();
+
 	buildInfo();
 	purgeDead();
 

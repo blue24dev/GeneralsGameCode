@@ -45,7 +45,8 @@
 #include "GameLogic/Module/OverlordContain.h"
 #include "GameLogic/Object.h"
 #include "GameLogic/PartitionManager.h"
-
+//MODDD - include yourself properly
+#include "GameLogic/Module/StealthUpdate.h"
 
 
 

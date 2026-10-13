@@ -80,10 +80,13 @@ Bool VeterancyCrateCollide::isValidToExecute( const Object *other ) const
 	if (other->isEffectivelyDead())
 		return false;
 
+	//MODDD - moving this check to below instead
+	/*
 	if( other->isSignificantlyAboveTerrain() )
 	{
 		return false;
 	}
+	*/
 
 	Int levelsToGain = getLevelsToGain();
 	if (levelsToGain <= 0)
@@ -98,10 +101,13 @@ Bool VeterancyCrateCollide::isValidToExecute( const Object *other ) const
 
 	if (!et || !et->canGainExpForLevel(levelsToGain))
 		return false;
-
+	
+	//MODDD - only do this check if this isn't a pilot (new bounding if-then)
 	if( d->m_isPilot )
 	{
-		if( other->getControllingPlayer() != getObject()->getControllingPlayer() )
+		//MODDD - allow if we're friends! (TODO - make a preprocessor/macro setting for this)
+		//if( other->getControllingPlayer() != getObject()->getControllingPlayer() )
+		if (getObject()->getApparentRelationship(other) != ALLIES)
 		{
 			//This is a pilot and we are checking to make sure the pilot is entering a vehicle on
 			//the same team. If it's not, then don't allow it.. this is particularly the case for
@@ -113,6 +119,23 @@ Bool VeterancyCrateCollide::isValidToExecute( const Object *other ) const
 		{
 			// Can't upgrade a helicopter or plane, but we will think we can for a moment while it
 			// is on the ground from being built.
+
+			//MODDD - check to see if this is something that will land for us!
+ 			AIUpdateInterface *otherAI = (AIUpdateInterface*)other->getAIUpdateInterface();
+			if (otherAI->canLandToPickUpObjectWantingToEnter())
+			{
+				return true;
+			}
+
+			return false;
+		}
+	}
+	else
+	{
+		//MODDD - check from further above moved here - now only done if 'm_isPilot' is false.
+		// I assume the 'isUsingAirborneLocomotor' check alone above is good enough for the 'm_isPilot == true' route.
+		if( other->isSignificantlyAboveTerrain() )
+		{
 			return false;
 		}
 	}

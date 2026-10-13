@@ -44,7 +44,10 @@
 #include "GameLogic/WeaponBonusConditionFlags.h"
 #include "GameLogic/WeaponSet.h"
 #include "GameLogic/WeaponSetFlags.h"
-#include "GameLogic/Module/StealthUpdate.h"
+//MODDD - forward declaring the class below is enough like everything else does
+//#include "GameLogic/Module/StealthUpdate.h"
+// (some other iclude is needed to know what 'Waypoint' is, though)
+#include "GameLogic/Module/UpdateModule.h"
 
 //-----------------------------------------------------------------------------
 //           Forward References
@@ -100,8 +103,14 @@ class UpgradeModuleInterface;
 class UpgradeTemplate;
 
 //MODDD
+class StealthUpdate;
 class StealthDetectorUpdate;
 class LockWeaponCreate;
+class RebuildHoleBehaviorInterface;
+class SlavedUpdateInterface;
+
+//MODDD
+class Locomotor;
 
 class ObjectHeldHelper;
 class ObjectDisabledHelper;
@@ -199,7 +208,7 @@ public:
 	Bool isInitLockedHard();
 	Int getMoneySpentOnMe();
 	void setMoneySpentOnMe(Int moneySpentOnMe);
-	void onUpdatePost();
+	void onLocomotorChanged(const Locomotor* curLocomotor, const Locomotor* prevLocomotor);
 	// ---
 
 	void onDestroy();																							///< run during TheGameLogic::destroyObject
@@ -971,7 +980,6 @@ public:
 #if MONEY_AUTO_ADJUSTMENT_SUPPORT
 	Int m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
 #endif
-	Bool m_airbornePreviousFrame;
 
 	private:
 
