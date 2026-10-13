@@ -1489,6 +1489,11 @@ CommandAvailability ControlBar::getCommandAvailability( const CommandButton *com
 				Drawable *draw = *it;
 				if( draw && draw->getObject() && draw->getObject()->isLocallyControlled() && draw->getObject()->getCurrentWeapon())
 				{
+					//MODDD - if some unit in the selection hasn't even had a weapon selected, don't highlight any switch-weapon
+					// button - that would imply a choice the user hasn't even made yet
+					if (draw->getObject()->getCurWeaponLockType() != LOCKED_PERMANENTLY)
+						return COMMAND_AVAILABLE;
+
 					WeaponSlotType wslot = draw->getObject()->getCurrentWeapon()->getWeaponSlot();
 					if (wslot != command->getWeaponSlot())
 						return COMMAND_AVAILABLE;

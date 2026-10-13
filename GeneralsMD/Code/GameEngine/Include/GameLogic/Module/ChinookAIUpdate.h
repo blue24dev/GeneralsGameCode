@@ -85,6 +85,9 @@ public:
 	ChinookAIUpdate( Thing *thing, const ModuleData* moduleData );
 	// virtual destructor prototype provided by memory pool declaration
 
+	//MODDD - new
+	virtual Bool canLandToPickUpObjectWantingToEnter() override { return true; }
+
 	virtual UpdateSleepTime update() override;
  	virtual void aiDoCommand(const AICommandParms* parms) override;
 	virtual Bool chooseLocomotorSet(LocomotorSetType wst) override;

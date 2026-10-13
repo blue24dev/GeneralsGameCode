@@ -329,6 +329,10 @@ public:
 	inline Int getSurrenderedPlayerIndex() const { return m_surrenderedPlayerIndex; }
 #endif
 
+	//MODDD - new, to let something wanting to enter whether this is something that can land to pick it up even if presently
+	// airborne (ex: chinooks)
+	virtual Bool canLandToPickUpObjectWantingToEnter() { return false; }
+
 	virtual void joinTeam();			///< This unit just got added to a team & needs to catch up.
 
 	Bool areTurretsLinked() const { return getAIUpdateModuleData()->m_turretsLinked; }

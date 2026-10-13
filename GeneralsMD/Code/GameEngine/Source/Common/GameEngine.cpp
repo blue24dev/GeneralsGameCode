@@ -454,6 +454,12 @@ void GameEngine::init()
 		initSubsystem(TheWritableGlobalData, "TheWritableGlobalData", TheWritableGlobalData, &xferCRC, "Data\\INI\\Default\\GameData", "Data\\INI\\GameData");
 		TheWritableGlobalData->parseCustomDefinition();
 
+		//MODDD - the windowed setting can come from here (INI file or hardcoded default anyway) if it's never been specified by launch param.
+		if (!g_setting_getWindowed_everSet())
+		{
+			g_setting_setWindowed(TheWritableGlobalData->m_windowed);
+		}
+
 
 	#ifdef DUMP_PERF_STATS///////////////////////////////////////////////////////////////////////////
 	GetPrecisionTimer(&endTime64);//////////////////////////////////////////////////////////////////

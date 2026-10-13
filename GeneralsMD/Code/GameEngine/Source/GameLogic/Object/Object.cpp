@@ -44,6 +44,9 @@
 #include "Common/Team.h"
 #include "Common/ThingFactory.h"
 #include "Common/ThingTemplate.h"
+#if RTS_GENERALS && RETAIL_COMPATIBLE_CRC
+#include "Common/TunnelTracker.h"
+#endif
 #include "Common/Upgrade.h"
 #include "Common/WellKnownKeys.h"
 #include "Common/Xfer.h"
@@ -107,6 +110,9 @@
 #include "GameLogic/Module/RadarUpdate.h"
 // (duplicate)
 //#include "GameLogic/Module/PowerPlantUpdate.h"
+
+//MODDD - include yourself properly
+#include "GameLogic/Module/StealthUpdate.h"
 
 //MODDD
 #include "GameLogic/ObjectCreationList.h"
@@ -639,7 +645,7 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 			DEBUG_ASSERTCRASH( m_slavedUpdate == nullptr, ("Duplicate SlavedUpdate!") );
 			m_slavedUpdate = slavedUpdate;
 		}
-		
+
 		//MODDD - caching something for a getter available as-is (but mysteriously wasn't cached)
 		SpawnBehaviorInterface* spawnBehavior = newMod->getSpawnBehaviorInterface();
 		if ( spawnBehavior )
@@ -814,7 +820,6 @@ void Object::initConstructor(const ThingTemplate* tt)
 #if MONEY_AUTO_ADJUSTMENT_SUPPORT
 	m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = -1;
 #endif
-	m_airbornePreviousFrame = false;
 	
 	// Force the thing template to use the most overridden version of itself - jkmcd
 	// Note that after this, the object will be using m_template, which forces the usage of the
@@ -1075,9 +1080,6 @@ void Object::gamePostLoad()
 		}
 	}
 	*/
-
-	// should be able to tell whether this is airborn or not at this point?
-	m_airbornePreviousFrame = this->isUsingAirborneLocomotor();
 }
 
 //MODDD - convenience feature to bundle a few event calls that should be made on offsetting the last parts
@@ -1115,26 +1117,50 @@ void Object::setMoneySpentOnMe(Int moneySpentOnMe)
 	this->m_moneySpentOnMe = moneySpentOnMe;
 }
 
-//MODDD - new event called for every object
-void Object::onUpdatePost()
+//MODDD - event on changing the locomotor - includes the current and previous ones.
+// 'curLocomotor' is the same as running 'this->getAI()->getCurLocomotor()' - it is provided as a param for convenience.
+// Either being null/not-null isn't necessarily guaranteed - see 'AIUpdate.cpp' where this is called from.
+void Object::onLocomotorChanged(const Locomotor* curLocomotor, const Locomotor* prevLocomotor)
 {
-	if (this->isDestroyed() || this->isEffectivelyDead())
-	{
-		return;
-	}
-
 	// Check to see if this object has toggled going airborn between frames - if so, run a shroud update since that can
-	// affect vision now
-	Bool airborneCurrentFrame = this->isUsingAirborneLocomotor();
-	if (airborneCurrentFrame != m_airbornePreviousFrame)
+	// affect vision now.
+	// Not sure if 'isUsingAirborneLocomotor' or 'isSignificantlyAboveTerrain' is best here.
+	// Going with the former to leave it up to the intent so initially rising but technically being on the ground doesn't
+	// flicker to a soon-to-be outdated state (if that works like I think it does).
+	// Also assuming this should only apply to 'AIRCRAFT' things - the eventual check to half shroud if on the ground only
+	// applies to AIRCRAFT-marked things.
+	if (this->isKindOf(KINDOF_AIRCRAFT))
 	{
-		if (this->isKindOf(KINDOF_AIRCRAFT))
+		LocomotorSurfaceTypeMask curLocomotorSurfaceMask;
+		LocomotorSurfaceTypeMask prevLocomotorSurfaceMask;
+		if (curLocomotor)
+		{
+			curLocomotorSurfaceMask = curLocomotor->getLegalSurfaces();
+		}
+		else
+		{
+			// fallback
+			curLocomotorSurfaceMask = LOCOMOTORSURFACE_GROUND;
+		}
+
+		if (prevLocomotor)
+		{
+			prevLocomotorSurfaceMask = prevLocomotor->getLegalSurfaces();
+		}
+		else
+		{
+			// fallback
+			prevLocomotorSurfaceMask = LOCOMOTORSURFACE_GROUND;
+		}
+
+		// If the 'LOCOMOTORSURFACE_AIR' bit is different between the prev/cur locomotor, re-compute the shroud.
+		// This allows shroud re-computation depending on 'isUsingAirborneLocomotor' to only run if it's believed
+		// to have changed (excessive shroud-checks can be expensive).
+		if ((curLocomotorSurfaceMask ^ prevLocomotorSurfaceMask) & LOCOMOTORSURFACE_AIR)
 		{
 			handleShroud();
 		}
 	}
-
-	m_airbornePreviousFrame = this->isUsingAirborneLocomotor();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1267,6 +1293,23 @@ void Object::onRemovedFrom( Object *removedFrom )
 
 }
 
+#if RTS_GENERALS && RETAIL_COMPATIBLE_CRC
+//-------------------------------------------------------------------------------------------------
+void Object::removeFromTunnelContain()
+{
+	for (Int i = 0; i < ThePlayerList->getPlayerCount(); ++i)
+	{
+		TunnelTracker* tracker = ThePlayerList->getNthPlayer(i)->getTunnelSystem();
+		if (tracker && tracker->removeFromContain(this))
+		{
+			break;
+		}
+	}
+
+	onRemovedFrom(nullptr);
+}
+#endif
+
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 Int Object::getTransportSlotCount() const
@@ -1380,7 +1423,21 @@ void Object::onDestroy()
 	// This is the old cleanUpContain safeguard.  Say goodbye so they don't try to look us up.
 	if( m_containedBy && m_containedBy->getContain() )
 	{
-		m_containedBy->getContain()->removeFromContain( this );
+#if RTS_GENERALS && RETAIL_COMPATIBLE_CRC
+		// TheSuperHackers @bugfix bobtista / Caball009 17/09/2026 Remove stranded tunnel occupants during destruction.
+		// Surrendering can transfer a tunnel without updating its tunnel tracker. If that tunnel is destroyed,
+		// m_containedBy still points to the freed tunnel, and its ID is read here through that stale pointer.
+		// An unregistered ID means the tunnel is gone, so this object is removed from the tunnel trackers directly.
+		// This is a limited workaround that keeps retail compatibility. It cannot detect reuse of the freed memory.
+		if (!TheGameLogic->findObjectByID(m_containedBy->getID()))
+		{
+			removeFromTunnelContain();
+		}
+		else
+#endif
+		{
+			m_containedBy->getContain()->removeFromContain(this);
+		}
 	}
 
 	//
@@ -2606,7 +2663,7 @@ void Object::reactToTransformChange(const Matrix3D* oldMtx, const Coord3D* oldPo
 
 		Region3D mapExtent;
 		TheTerrainLogic->getExtent(&mapExtent);
-		if (mapExtent.isInRegion(getPosition()->asCoord2D()))
+		if (mapExtent.containsWithin(getPosition()->asCoord2D()))
 			m_privateStatus &= ~OFF_MAP;
 		else
 			m_privateStatus |= OFF_MAP;
@@ -3807,7 +3864,7 @@ void Object::friend_notifyOfNewMapBoundary()
 
 	Region3D mapExtent;
 	TheTerrainLogic->getExtent(&mapExtent);
-	if (mapExtent.isInRegion(getPosition()->asCoord2D()))
+	if (mapExtent.containsWithin(getPosition()->asCoord2D()))
 		m_privateStatus &= ~OFF_MAP;
 	else
 		m_privateStatus |= OFF_MAP;

@@ -37,6 +37,8 @@
 #include "GameClient/Drawable.h"
 #include "GameClient/InGameUI.h"
 #include "GameClient/GameText.h"
+//MODDD - include yourself properly
+#include "GameLogic/Module/StealthUpdate.h"
 
 
 // ------------------------------------------------------------------------------------------------

@@ -204,6 +204,12 @@ inline Bool TEST_KINDOFMASK_ANY(const KindOfMaskType& m, const KindOfMaskType& m
 	return m.anyIntersectionWith(mask);
 }
 
+//MODDD
+inline Bool TEST_KINDOFMASK_ALL(const KindOfMaskType& m, const KindOfMaskType& mask)
+{
+	return m.testForAll(mask);
+}
+
 inline Bool TEST_KINDOFMASK_MULTI(const KindOfMaskType& m, const KindOfMaskType& mustBeSet, const KindOfMaskType& mustBeClear)
 {
 	return m.testSetAndClear(mustBeSet, mustBeClear);

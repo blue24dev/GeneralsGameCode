@@ -44,6 +44,9 @@
 #include "Common/Team.h"
 #include "Common/ThingFactory.h"
 #include "Common/ThingTemplate.h"
+#if RTS_GENERALS && RETAIL_COMPATIBLE_CRC
+#include "Common/TunnelTracker.h"
+#endif
 #include "Common/Upgrade.h"
 #include "Common/WellKnownKeys.h"
 #include "Common/Xfer.h"
@@ -636,6 +639,23 @@ void Object::onRemovedFrom( Object *removedFrom )
 	m_containedByFrame = 0;
 }
 
+#if RTS_GENERALS && RETAIL_COMPATIBLE_CRC
+//-------------------------------------------------------------------------------------------------
+void Object::removeFromTunnelContain()
+{
+	for (Int i = 0; i < ThePlayerList->getPlayerCount(); ++i)
+	{
+		TunnelTracker* tracker = ThePlayerList->getNthPlayer(i)->getTunnelSystem();
+		if (tracker && tracker->removeFromContain(this))
+		{
+			break;
+		}
+	}
+
+	onRemovedFrom(nullptr);
+}
+#endif
+
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 Int Object::getTransportSlotCount() const
@@ -695,7 +715,21 @@ void Object::onDestroy()
 	// This is the old cleanUpContain safeguard.  Say goodbye so they don't try to look us up.
 	if( m_containedBy && m_containedBy->getContain() )
 	{
-		m_containedBy->getContain()->removeFromContain( this );
+#if RTS_GENERALS && RETAIL_COMPATIBLE_CRC
+		// TheSuperHackers @bugfix bobtista / Caball009 17/09/2026 Remove stranded tunnel occupants during destruction.
+		// Surrendering can transfer a tunnel without updating its tunnel tracker. If that tunnel is destroyed,
+		// m_containedBy still points to the freed tunnel, and its ID is read here through that stale pointer.
+		// An unregistered ID means the tunnel is gone, so this object is removed from the tunnel trackers directly.
+		// This is a limited workaround that keeps retail compatibility. It cannot detect reuse of the freed memory.
+		if (!TheGameLogic->findObjectByID(m_containedBy->getID()))
+		{
+			removeFromTunnelContain();
+		}
+		else
+#endif
+		{
+			m_containedBy->getContain()->removeFromContain(this);
+		}
 	}
 
 	//
@@ -1685,7 +1719,7 @@ void Object::reactToTransformChange(const Matrix3D* oldMtx, const Coord3D* oldPo
 
 		Region3D mapExtent;
 		TheTerrainLogic->getExtent(&mapExtent);
-		if (mapExtent.isInRegion(getPosition()->asCoord2D()))
+		if (mapExtent.containsWithin(getPosition()->asCoord2D()))
 			m_privateStatus &= ~OFF_MAP;
 		else
 			m_privateStatus |= OFF_MAP;
@@ -2588,7 +2622,7 @@ void Object::friend_notifyOfNewMapBoundary()
 
 	Region3D mapExtent;
 	TheTerrainLogic->getExtent(&mapExtent);
-	if (mapExtent.isInRegion(getPosition()->asCoord2D()))
+	if (mapExtent.containsWithin(getPosition()->asCoord2D()))
 		m_privateStatus &= ~OFF_MAP;
 	else
 		m_privateStatus |= OFF_MAP;

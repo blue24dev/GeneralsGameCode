@@ -34,6 +34,8 @@
 #include "GameLogic/Module/StealthUpgrade.h"
 #include "GameLogic/Module/SpawnBehavior.h"
 #include "GameLogic/Object.h"
+//MODDD - include yourself properly
+#include "GameLogic/Module/StealthUpdate.h"
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
