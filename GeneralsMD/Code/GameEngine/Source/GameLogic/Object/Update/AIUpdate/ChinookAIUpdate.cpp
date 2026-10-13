@@ -184,7 +184,7 @@ public:
 		/*
 		Region3D mapRegion;
 		TheTerrainLogic->getExtentIncludingBorder( &mapRegion );
-		if( !mapRegion.isInRegion( owner->getPosition()->asCoord2D() ) )
+		if( !mapRegion.containsWithin( owner->getPosition()->asCoord2D() ) )
 		*/
 		// ---
 		// Actually, nevermind this replacement too. A temporary state is used instead while the chinook moves to the destination,
