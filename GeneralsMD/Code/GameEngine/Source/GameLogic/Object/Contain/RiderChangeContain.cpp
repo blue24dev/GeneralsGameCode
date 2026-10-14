@@ -308,7 +308,7 @@ void RiderChangeContain::onRemoving( Object *rider )
 	if( bike->m_calledForDeletion )
 	{
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(42);
+		g_destroyObjectSource.push_back(41);
 #endif
 		TheGameLogic->destroyObject( rider );
 		return;

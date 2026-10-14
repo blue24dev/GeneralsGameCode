@@ -388,6 +388,7 @@ public:
 protected:
 	//MODDD - added
 	Real determineBrakingFactor(Real onPathDistToGoal, Real slowDownDist);
+
 	Real getMaxSpeedOverride() const;
 
 	void moveTowardsPositionLegs(Object* obj, PhysicsBehavior *physics, const Coord3D& goalPos, Real onPathDistToGoal, Real desiredSpeed);

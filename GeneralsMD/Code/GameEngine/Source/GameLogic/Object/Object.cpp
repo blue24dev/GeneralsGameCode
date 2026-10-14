@@ -1765,7 +1765,7 @@ void Object::setStatus( ObjectStatusMaskType objectStatus, Bool set )
 				else
 				{
 #if EXTRA_DEBUG_HELP
-					g_destroyObjectSource.push_back(45);
+					g_destroyObjectSource.push_back(44);
 #endif
 					TheGameLogic->destroyObject(them);
 				}
@@ -2626,7 +2626,7 @@ void Object::reactToTransformChange(const Matrix3D* oldMtx, const Coord3D* oldPo
 	if(_isnan(getPosition()->x) || _isnan(getPosition()->y) || _isnan(getPosition()->z)) {
 		DEBUG_CRASH(("Object pos is nan."));
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(46);
+		g_destroyObjectSource.push_back(45);
 #endif
 		TheGameLogic->destroyObject(this);
 	}
@@ -3146,6 +3146,9 @@ void Object::setDisabledUntil( DisabledType type, UnsignedInt frame )
 
 	if( type == DISABLED_UNMANNED && !isKindOf( KINDOF_DRONE ) )
 	{
+		//MODDD - TODO - kill the hijacker associated with this vehicle if applicable!
+		//EjectPilotDie::clearHijackerInObject(this);
+
 		//strange but true: If I am a carbomb,
 		//my driver actually has a dead-man's
 		//trigger for my dynamite...
@@ -7841,6 +7844,13 @@ StealthUpdate* Object::getStealthOwnerStealthStrict() const
 		return stealth->getStealthOwnerStealthUpdateStrict();
 	}
 	return nullptr;
+}
+
+//MODDD - convenience feature. This isn't looked up too frequently so the search should be tolerable
+HijackerUpdate* Object::getHijackerUpdate() const
+{
+	static NameKeyType key_HijackerUpdate = NAMEKEY( "HijackerUpdate" );
+	return (HijackerUpdate*)this->findUpdateModule( key_HijackerUpdate );
 }
 
 

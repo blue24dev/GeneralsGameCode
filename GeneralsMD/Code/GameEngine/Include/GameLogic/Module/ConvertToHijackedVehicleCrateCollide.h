@@ -39,6 +39,8 @@
 
 // FORWARD REFERENCES /////////////////////////////////////////////////////////////////////////////
 class Thing;
+//MODDD
+class HijackerUpdate;
 
 //-------------------------------------------------------------------------------------------------
 class ConvertToHijackedVehicleCrateCollideModuleData : public CrateCollideModuleData

@@ -92,7 +92,19 @@ public:
 	// virtual destructor prototype provided by memory pool declaration
 
 	virtual void beginSlowDeath( const DamageInfo *damageInfo ) override;	///< begin the slow death cycle
+
+	//MODDD - new
+	virtual void onDelete() override;
+
 	virtual UpdateSleepTime update() override;
+
+	//MODDD - new
+	Bool hasPilotEjectSupport();
+	void setHijacker(Object* hijacker);
+
+protected:
+	//MODDD - new
+	void attemptEjectPilot(Object* copter);
 
 protected:
 
@@ -108,5 +120,12 @@ protected:
 
 	// @todo propagate this up to SlowDeathBehavior. I don't wanna do it today, cause its 4/3. jkmcd
 	AudioEventRTS m_deathSound;						///< Sound played during death sequence.
+
+	//MODDD - record whether the pilot was ejected yet.
+	// This fixes the minor bug of grounded / close-to-the-ground helicopters failing to eject a pilot
+	// (ex: destroyed during repairs)
+	Bool m_pilotEjectedYet;
+	//MODDD - record a hijacker to be re-drawn/made re-tangible in place of a pilot
+	ObjectID m_hijackerID;
 
 };

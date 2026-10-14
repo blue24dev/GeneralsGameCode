@@ -56,6 +56,10 @@
 #include "GameLogic/ScriptEngine.h"
 #include "GameLogic/Module/DozerAIUpdate.h"
 
+//MODDD
+#include "GameLogic/Module/EjectPilotDie.h"
+#include "GameLogic/Module/HelicopterSlowDeathUpdate.h"
+
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -287,21 +291,15 @@ Bool ConvertToHijackedVehicleCrateCollide::executeCrateBehavior( Object *other )
 			targetExp->setVeterancyLevel( jackerExp->getVeterancyLevel(), FALSE );
 		}
 	}
+	
+	//MODDD - this shouldn't be necessary seeing as hijacking shouldn't allow unmanned vehicles, but just in case.
+	// Typically, forbidding non-enemy (ex: neutral-aligned player units) avoids this anyway.
+	other->clearDisabled( DISABLED_UNMANNED );
 
-	//MODDD - moving this from below so we can terminate early if this object is missing a 'HijackerUpdate' module.
-	// Without this, being 'stored' in a vehicle (invisible / uncollidable, keep in-sync with its position) won't be able
-	// to work. Some odd behavior such as enemies attacking the invisible hijacker forever at the same location he was
-	// at when a vehicle was hijacked has been observed in this case, though it could just be the 'obj->setStatus' call
-	// in the original 'if( hijackerUpdate )' block further down not running.
-	// The point is, I doubt preserving the unit should go any further if 'HijackerUpdate' is missing.
-	//MODDD - TODO - If a mod wants to support a unit that can hijack but uses a different unit for ejection systems
-	// (ex: a biker or flying hijacker from Contra hijacks something -> it dies -> spawns infantry hijacker), an additional
-	// field for what the hijacker should spawn in some hijacker-related module should suffice.
-	//MODDD - TODO - have the 'HijackerUpdate' reference cached at object creation so this is easy to find in real-time
-	// ---
-	static NameKeyType key_HijackerUpdate = NAMEKEY( "HijackerUpdate" );
-	HijackerUpdate *hijackerUpdate = (HijackerUpdate*)obj->findUpdateModule( key_HijackerUpdate );
-	if ( !hijackerUpdate )
+	//MODDD - original script to check for being able to eject & having 'HijackerUpdate' moved to a helper.
+	// And remember that blocking the rest of the method if 'HijackerUpdate' is missing is deliberate but diverges from
+	// the as-is codebase a little (nowhere actually runs into that in retail).
+	if (!EjectPilotDie::checkForTargetEjectSupport(obj, other))
 	{
 #if EXTRA_DEBUG_HELP
 		g_destroyObjectSource.push_back(34);
@@ -309,33 +307,8 @@ Bool ConvertToHijackedVehicleCrateCollide::executeCrateBehavior( Object *other )
 		TheGameLogic->destroyObject( obj );
 		return TRUE;
 	}
-	// ---
-	
-	Bool targetCanEject = FALSE;
-	BehaviorModule **dmi = nullptr;
-	for( dmi = other->getBehaviorModules(); *dmi; ++dmi )
-	{
-		if( (*dmi)->getEjectPilotDieInterface() )
-		{
-			targetCanEject = TRUE;
-			break;
-		}
-	}
 
-	//MODDD - this shouldn't be necessary seeing as hijacking shouldn't allow unmanned vehicles, but just in case.
-	// Typically, forbidding non-enemy (ex: neutral-aligned player units) avoids this anyway.
-	other->clearDisabled( DISABLED_UNMANNED );
-
-	if ( ! targetCanEject )
-	{
-#if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(35);
-#endif
-		TheGameLogic->destroyObject( obj );
-		return TRUE;
-	}
-
-	//MODDD - moved to above, condition no longer needed here either
+	//MODDD - moved to above (the helper now), condition no longer needed here either
 	/*
 	// I we have made it this far, we are going to ride in this vehicle for a while
 	// get the name of the hijackerupdate
@@ -344,9 +317,12 @@ Bool ConvertToHijackedVehicleCrateCollide::executeCrateBehavior( Object *other )
 	if( hijackerUpdate )
 	*/
 	{
+		//MODDD - these too
+		/*
 		hijackerUpdate->setTargetObject( other );
 		hijackerUpdate->setIsInVehicle( TRUE );
 		hijackerUpdate->setUpdate( TRUE );
+		*/
 
 		// flag bits so hijacker won't be selectible or collideable
 		//while within the vehicle

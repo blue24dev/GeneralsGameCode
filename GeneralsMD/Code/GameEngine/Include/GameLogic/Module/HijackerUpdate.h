@@ -77,13 +77,19 @@ public:
 	void setUpdate(Bool u ) {m_update = u;}
 	void setIsInVehicle(Bool i ) {m_isInVehicle = i;}
 
+	//MODDD
+	const AsciiString& getParachuteName() const;
+
 private:
 
 	ObjectID m_targetID;
-	Coord3D	 m_ejectPos;
+	//MODDD - tracking this never seemed necessary? This would always be the same as the hijacker's most recently set
+	// position anyway
+	//Coord3D	 m_ejectPos;
 	Bool     m_update;
 	Bool		 m_isInVehicle;
-	Bool		 m_wasTargetAirborne;
+	//MODDD - no longer needed
+	//Bool		 m_wasTargetAirborne;
 
 //	DieModuleInterface *m_ejectPilotDMI; // point to ejectpilotdiemodule
 																			 // of target vehicle if it has one

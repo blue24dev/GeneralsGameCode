@@ -57,7 +57,7 @@ void DestroyDie::onDie( const DamageInfo *damageInfo )
 	if (!isDieApplicable(damageInfo))
 		return;
 #if EXTRA_DEBUG_HELP
-	g_destroyObjectSource.push_back(44);
+	g_destroyObjectSource.push_back(43);
 #endif
 	TheGameLogic->destroyObject( obj );
 }

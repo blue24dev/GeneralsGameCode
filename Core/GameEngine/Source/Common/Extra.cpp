@@ -429,6 +429,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	static NameKeyType RailedTransportContainNameKey = NAMEKEY("RailedTransportContain");
 	static NameKeyType TunnelContainNameKey = NAMEKEY("TunnelContain");
 	static NameKeyType JetAIUpdateNameKey = NAMEKEY("JetAIUpdate");
+	static NameKeyType ChinookAIUpdateNameKey = NAMEKEY("ChinookAIUpdate");
 
 #if CUSTOM_ATTRIBUTE_CHANGES
 	Bool foundStealthDetectorUpdate = false;
@@ -439,6 +440,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	Bool foundContainBehavior = false;
 	// what a specific check
 	Bool foundJetAIUpdateBehavior = false;
+	Bool foundChinookAIUpdateBehavior = false;
 	AIUpdateModuleData* aiUpdateModuleData = nullptr;
 	
 	// Whether this thing gets a cost reduction for being a renewable income source at the very end.
@@ -796,6 +798,11 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			foundJetAIUpdateBehavior = true;
 			aiUpdateModuleData = (AIUpdateModuleData*)data;
 		}
+		else if ( modNameKey == ChinookAIUpdateNameKey )
+		{
+			foundChinookAIUpdateBehavior = true;
+			aiUpdateModuleData = (AIUpdateModuleData*)data;
+		}
 
 	}
 
@@ -819,31 +826,38 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	//kindOfTest.set(KINDOF_PRODUCED_AT_HELIPAD);
 	//if (!foundContainBehavior && _this->isAllKindOf(kindOfTest))
 
-	if (_this->isKindOf(KINDOF_AIRCRAFT) && foundJetAIUpdateBehavior)
+	if (_this->isKindOf(KINDOF_AIRCRAFT))
 	{
-		// TODO - check the toxin general cropduster aircraft in the Contra mod.
-		// does it trip this and think it moves like a helicopter cuz of a ground locomotor? not sure
-		if (movesLikeHelicopterCheck(_this, aiUpdateModuleData))
+		if (foundJetAIUpdateBehavior)
 		{
-			((JetAIUpdateModuleData*)aiUpdateModuleData)->m_movesLikeHelicopter = true;
+			// TODO - check the toxin general cropduster aircraft in the Contra mod.
+			// does it trip this and think it moves like a helicopter cuz of a ground locomotor? not sure
+			if (movesLikeHelicopterCheck(_this, aiUpdateModuleData))
+			{
+				((JetAIUpdateModuleData*)aiUpdateModuleData)->m_movesLikeHelicopter = true;
+			}
 		}
 
-		if (!foundContainBehavior)
+		// checks for 'ChinookAIUpdate' too for combat(trainable) helicopters that actually use that instead of 'JetAIUpdate'
+		if (foundJetAIUpdateBehavior || foundChinookAIUpdateBehavior)
 		{
-			// Add a bogus 'TransportContain' with a capacity of 0 slots that forbids everything - that should do it.
-			static AsciiString TransportContainName = AsciiString("TransportContain");
-			AsciiString moduleTag = AsciiString("Module_BOGUSTRANSPORT12345");
-			// would've used 'getBehaviorModuleInfo()', but this is a non-const reference that allows items to be added
-			ModuleInfo& mi = _this->m_behaviorModuleInfo;
-			ModuleData* data = TheModuleFactory->newModuleDataFromINI(nullptr, TransportContainName, MODULETYPE_BEHAVIOR, moduleTag);
+			if (!foundContainBehavior)
+			{
+				// Add a bogus 'TransportContain' with a capacity of 0 slots that forbids everything - that should do it.
+				static AsciiString TransportContainName = AsciiString("TransportContain");
+				AsciiString moduleTag = AsciiString("Module_BOGUSTRANSPORT12345");
+				// would've used 'getBehaviorModuleInfo()', but this is a non-const reference that allows items to be added
+				ModuleInfo& mi = _this->m_behaviorModuleInfo;
+				ModuleData* data = TheModuleFactory->newModuleDataFromINI(nullptr, TransportContainName, MODULETYPE_BEHAVIOR, moduleTag);
 		
-			TransportContainModuleData* _data = (TransportContainModuleData*)data;
-			_data->m_slotCapacity = 0;
-			_data->m_allowInsideKindOf.clear();
-			_data->m_forbidInsideKindOf.set();
-			_data->m_numberOfExitPaths = 0;
+				TransportContainModuleData* _data = (TransportContainModuleData*)data;
+				_data->m_slotCapacity = 0;
+				_data->m_allowInsideKindOf.clear();
+				_data->m_forbidInsideKindOf.set();
+				_data->m_numberOfExitPaths = 0;
 
-			mi.addModuleInfo(_this, TransportContainName, moduleTag, data, TransportContain::getInterfaceMask(), false, false);
+				mi.addModuleInfo(_this, TransportContainName, moduleTag, data, TransportContain::getInterfaceMask(), false, false);
+			}
 		}
 	}
 

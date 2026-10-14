@@ -819,7 +819,7 @@ UpdateSleepTime RailroadBehavior::update()
 			if ( m_endOfLine )
 			{
 #if EXTRA_DEBUG_HELP
-				g_destroyObjectSource.push_back(55);
+				g_destroyObjectSource.push_back(54);
 #endif
 				TheGameLogic->destroyObject( getObject() );
 			}
@@ -1212,7 +1212,7 @@ void RailroadBehavior::getPulled( PullInfo *info )
 		if ( m_endOfLine )
 		{
 #if EXTRA_DEBUG_HELP
-				g_destroyObjectSource.push_back(56);
+				g_destroyObjectSource.push_back(55);
 #endif
 			TheGameLogic->destroyObject( getObject() );
 		}
@@ -1352,7 +1352,7 @@ void RailroadBehavior::updatePositionTrackDistance( PullInfo *pullerInfo, PullIn
 void RailroadBehavior::destroyTheWholeTrainNow()
 {
 #if EXTRA_DEBUG_HELP
-	g_destroyObjectSource.push_back(57);
+	g_destroyObjectSource.push_back(56);
 #endif
 	TheGameLogic->destroyObject( getObject());
 
