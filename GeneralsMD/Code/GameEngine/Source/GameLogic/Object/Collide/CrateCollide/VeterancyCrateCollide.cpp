@@ -99,6 +99,16 @@ Bool VeterancyCrateCollide::isValidToExecute( const Object *other ) const
 		return false;
 	}
 
+	//MODDD - if this is something whose EXP is getting redirected to somewhere else, are you really sure you want to put
+	// a pilot in it? ex: something that's a slave/spawn of something else that's somehow made it this far.
+	// Whenever that happens, the EXP to add to get additional ranks is computed for the object the pilot enters, regardless
+	// that it's going to a completely different unit that likely has different EXP requirements per rank (very counter-
+	// intuitive behavior). Keep this in mind if you do want to support sudden EXP gains meant to jump a rank going to
+	// the EXP-sink of the unit entered by the pilot instead of the entered unit itself
+	// (these are mostly notes for 'ExperienceTracker::gainExpForLevel').
+	if (et->getExperienceSink() != INVALID_ID)
+		return false;
+
 	if (!et || !et->canGainExpForLevel(levelsToGain))
 		return false;
 	

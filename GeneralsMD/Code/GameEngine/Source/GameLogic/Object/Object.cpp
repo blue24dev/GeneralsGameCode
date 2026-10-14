@@ -108,13 +108,13 @@
 #include "GameLogic/Weapon.h"
 #include "GameLogic/WeaponSet.h"
 #include "GameLogic/Module/RadarUpdate.h"
-// (duplicate)
-//#include "GameLogic/Module/PowerPlantUpdate.h"
+#include "GameLogic/Module/PowerPlantUpdate.h"
 
 //MODDD - include yourself properly
 #include "GameLogic/Module/StealthUpdate.h"
 
 //MODDD
+#include "GameLogic/HijackUtil.h"
 #include "GameLogic/ObjectCreationList.h"
 #include "GameLogic/Module/StealthDetectorUpdate.h"
 #include "GameLogic/Module/LockWeaponCreate.h"
@@ -126,8 +126,6 @@
 
 //MODDD
 #include "Common/BitFlagsRawIO.h"
-//MODDD - temp hack
-#include "GameLogic/Module/ActiveShroudUpgrade.h"
 
 
 #ifdef DEBUG_OBJECT_ID_EXISTS
@@ -424,6 +422,8 @@ Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& 
 	this->m_moneySpentOnMe = 0;
 	// a safe assumption until proven otherwise
 	this->m_isTemporaryBuilder = FALSE;
+	m_hijackerInMeID = INVALID_ID;
+	m_moduleTagNameKeyToEjectHijacker = NAMEKEY_INVALID;
 
 	createBehaviorModules_PRE(tt);
 
@@ -1409,7 +1409,7 @@ void Object::onDestroy()
 			}
 		}
 	}
-	
+
 	// This is the old cleanUpContain safeguard.  Say goodbye so they don't try to look us up.
 	if( m_containedBy && m_containedBy->getContain() )
 	{
@@ -1438,7 +1438,15 @@ void Object::onDestroy()
 	{
 		(*b)->onDelete();
 	}
-
+	
+	//MODDD - if there's a hijacker associated with this vehicle, clean it up now!
+	// too bad if an eject system didn't get to it yet
+	// (note that this should come after 'onDelete' module calls in case something chooses to eject at the very last moment)
+	if (gameStatus != GAMESTATUS_TEARDOWN)
+	{
+		HijackUtil::clearHijackerInObject(this);
+	}
+	
 	//Have to remove ourself from looking as well.  RebuildHoleWorkers definitely hit here.
 	handlePartitionCellMaintenance();
 }
@@ -3146,8 +3154,7 @@ void Object::setDisabledUntil( DisabledType type, UnsignedInt frame )
 
 	if( type == DISABLED_UNMANNED && !isKindOf( KINDOF_DRONE ) )
 	{
-		//MODDD - TODO - kill the hijacker associated with this vehicle if applicable!
-		//EjectPilotDie::clearHijackerInObject(this);
+		HijackUtil::clearHijackerInObject(this);
 
 		//strange but true: If I am a carbomb,
 		//my driver actually has a dead-man's
@@ -3366,16 +3373,42 @@ void Object::checkDisabledStatus()
 	}
 }
 
-//MODDD - new
+//MODDD - new getters/setters
 Bool Object::isTemporaryBuilder() const
 {
 	return m_isTemporaryBuilder;
 }
 
-//MODDD - new
 void Object::setIsTemporaryBuilder(Bool isTemporaryBuilder)
 {
 	m_isTemporaryBuilder = isTemporaryBuilder;
+}
+
+ObjectID Object::getHijackerInMeID() const
+{
+	return m_hijackerInMeID;
+}
+
+// setter that avoids killing the existing hijacker (ex: just ejected, don't kill on clearing the reference to it)
+void Object::rawSetHijackerInMeID(ObjectID hijackerID)
+{
+	m_hijackerInMeID = hijackerID;
+}
+
+void Object::setHijackerInMeID(ObjectID hijackerID)
+{
+	HijackUtil::deleteExistingHijacker(m_hijackerInMeID);
+	m_hijackerInMeID = hijackerID;
+}
+
+NameKeyType Object::getModuleTagNameKeyToEjectHijacker() const
+{
+	return m_moduleTagNameKeyToEjectHijacker;
+}
+
+void Object::setModuleTagNameKeyToEjectHijacker(NameKeyType nameKey)
+{
+	m_moduleTagNameKeyToEjectHijacker = nameKey;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -5784,6 +5817,21 @@ void Object::xfer( Xfer *xfer )
 	//MODDD - new
 	xfer->xferInt( &m_moneySpentOnMe );
 	xfer->xferBool( &m_isTemporaryBuilder );
+	xfer->xferObjectID( &m_hijackerInMeID );
+	
+	//MODDD - not sure how reliable saving keys of strings is - converting to/from text for saving/loading
+	if (xfer->getXferMode() == XFER_SAVE)
+	{
+		AsciiString tempStr = TheNameKeyGenerator->keyToName( m_moduleTagNameKeyToEjectHijacker );
+		xfer->xferAsciiString(&tempStr);
+	}
+	else
+	{
+		AsciiString tempStr;
+		xfer->xferAsciiString(&tempStr);
+		m_moduleTagNameKeyToEjectHijacker = TheNameKeyGenerator->nameToKey(tempStr);
+	}
+
 #if MONEY_AUTO_ADJUSTMENT_SUPPORT
 	xfer->xferInt( &m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
 #endif

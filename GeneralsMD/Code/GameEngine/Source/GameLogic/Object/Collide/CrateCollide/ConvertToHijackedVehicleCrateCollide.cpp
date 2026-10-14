@@ -57,6 +57,7 @@
 #include "GameLogic/Module/DozerAIUpdate.h"
 
 //MODDD
+#include "GameLogic/HijackUtil.h"
 #include "GameLogic/Module/EjectPilotDie.h"
 #include "GameLogic/Module/HelicopterSlowDeathUpdate.h"
 
@@ -299,7 +300,7 @@ Bool ConvertToHijackedVehicleCrateCollide::executeCrateBehavior( Object *other )
 	//MODDD - original script to check for being able to eject & having 'HijackerUpdate' moved to a helper.
 	// And remember that blocking the rest of the method if 'HijackerUpdate' is missing is deliberate but diverges from
 	// the as-is codebase a little (nowhere actually runs into that in retail).
-	if (!EjectPilotDie::checkForTargetEjectSupport(obj, other))
+	if (!HijackUtil::checkForTargetEjectSupport(obj, other))
 	{
 #if EXTRA_DEBUG_HELP
 		g_destroyObjectSource.push_back(34);
@@ -308,50 +309,8 @@ Bool ConvertToHijackedVehicleCrateCollide::executeCrateBehavior( Object *other )
 		return TRUE;
 	}
 
-	//MODDD - moved to above (the helper now), condition no longer needed here either
-	/*
-	// I we have made it this far, we are going to ride in this vehicle for a while
-	// get the name of the hijackerupdate
-	static NameKeyType key_HijackerUpdate = NAMEKEY( "HijackerUpdate" );
-	HijackerUpdate *hijackerUpdate = (HijackerUpdate*)obj->findUpdateModule( key_HijackerUpdate );
-	if( hijackerUpdate )
-	*/
-	{
-		//MODDD - these too
-		/*
-		hijackerUpdate->setTargetObject( other );
-		hijackerUpdate->setIsInVehicle( TRUE );
-		hijackerUpdate->setUpdate( TRUE );
-		*/
-
-		// flag bits so hijacker won't be selectible or collideable
-		//while within the vehicle
-		obj->setStatus( MAKE_OBJECT_STATUS_MASK3( OBJECT_STATUS_NO_COLLISIONS, OBJECT_STATUS_MASKED, OBJECT_STATUS_UNSELECTABLE ) );
-	}
-
-	// THIS BLOCK HIDES THE HIJACKER AND REMOVES HIM FROM PARTITION MANAGER
-	// remove object from its group (if any)
-	obj->leaveGroup();
-	if( ai )
-	{
-		//By setting him to idle, we will prevent him from entering the target after this gets called.
-		ai->aiIdle( CMD_FROM_AI );
-	}
-
-	//This is kinda special... we will endow our new ride with our vision and shroud range, since we are driving
-	//MODDD - disagree with this. Keep the victim unit's own stats or else its enemy acquisition behavior may be affected - is that really necessary?
-	/*
-	other->setVisionRange(getObject()->getVisionRange());
-	other->setShroudClearingRange(getObject()->getShroudClearingRange());
-	*/
-
-	// remove rider from partition manager
-	ThePartitionManager->unRegisterObject( obj );
-
-	// hide the drawable associated with rider
-	if( obj->getDrawable() )
-		obj->getDrawable()->setDrawableHidden( true );
-
+	//MODDD - moved the rest of this method's script to the helper, runs when it returns 'true' anyway
+	
 	// By returning FALSE, we will not remove the object (Hijacker)
 	return FALSE;
 //	return TRUE;

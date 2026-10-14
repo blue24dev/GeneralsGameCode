@@ -250,6 +250,10 @@ set(GAMEENGINE_SRC
     Include/GameLogic/FPUControl.h
     Include/GameLogic/GameLogic.h
     Include/GameLogic/GhostObject.h
+
+    #MODDD - new
+    Include/GameLogic/HijackUtil.h
+
     Include/GameLogic/Locomotor.h
     Include/GameLogic/LocomotorSet.h
 #    Include/GameLogic/LogicRandomValue.h
@@ -1092,6 +1096,10 @@ set(GAMEENGINE_SRC
     Source/GameLogic/System/GameLogic.cpp
 #    Source/GameLogic/System/GameLogicDispatch.cpp
 #    Source/GameLogic/System/RankInfo.cpp
+
+    #MODDD - new
+    Source/GameLogic/Util/HijackUtil.cpp
+
 #    Source/GameNetwork/Connection.cpp
 #    Source/GameNetwork/ConnectionManager.cpp
 #    Source/GameNetwork/DisconnectManager.cpp

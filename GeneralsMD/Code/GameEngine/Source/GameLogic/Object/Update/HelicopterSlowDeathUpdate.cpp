@@ -50,6 +50,9 @@
 #include "GameLogic/Module/HelicopterSlowDeathUpdate.h"
 #include "GameLogic/Module/PhysicsUpdate.h"
 
+//MODDD
+#include "GameLogic/HijackUtil.h"
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Helicopter slow death update module data ///////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -163,7 +166,6 @@ HelicopterSlowDeathBehavior::HelicopterSlowDeathBehavior( Thing *thing, const Mo
 	m_hitGroundFrame = 0;
 	//MODDD
 	m_pilotEjectedYet = FALSE;
-	m_hijackerID = INVALID_ID;
 
 }
 
@@ -564,7 +566,6 @@ void HelicopterSlowDeathBehavior::xfer( Xfer *xfer )
 
 	//MODDD - record whether the pilot was ejected yet
 	xfer->xferBool( &m_pilotEjectedYet );
-	xfer->xferObjectID( &m_hijackerID );
 
 }
 
@@ -585,44 +586,37 @@ Bool HelicopterSlowDeathBehavior::hasPilotEjectSupport()
 	return (getHelicopterSlowDeathBehaviorModuleData()->m_oclEjectPilot != nullptr);
 }
 
-//MODDD
-void HelicopterSlowDeathBehavior::setHijacker(Object* hijacker)
-{
-	// check to see if there's already a hijacker in this vehicle - kill the existing first if so
-	EjectPilotDie::checkCleanHijacker(m_hijackerID);
-	m_hijackerID = hijacker->getID();
-}
-
 //MODDD - small helper
-void HelicopterSlowDeathBehavior::attemptEjectPilot(Object* copter)
+void HelicopterSlowDeathBehavior::attemptEjectPilot(Object* dyingObject)
 {
+	//Note - the 'copter' var was renamed to 'dyingObject' for consistency with script in 'EjectPilotDie'
 	const HelicopterSlowDeathBehaviorModuleData *modData = getHelicopterSlowDeathBehaviorModuleData();
 	//MODDD - doing this check early for neatness. If this module isn't even using this field, do not proceed
 	if (modData->m_oclEjectPilot == nullptr)
-	{
 		return;
-	}
 
 	//MODDD - check for that
 	if (m_pilotEjectedYet)
-	{
 		return;
-	}
 
-	// NOTE - could be a 'copter->isDisabledByType(DISABLED_UNMANNED)' check here, but the de-piloting call should have
+	NameKeyType ejectHijackerTag = dyingObject->getModuleTagNameKeyToEjectHijacker();
+	if (ejectHijackerTag != NAMEKEY_INVALID && ejectHijackerTag != this->getModuleTagNameKey())
+		return;
+
+	// NOTE - could be a 'dyingObject->isDisabledByType(DISABLED_UNMANNED)' check here, but the de-piloting call should have
 	// reached 'Object::setDisabledUntil' which sees 'DISABLED_UNMANNED' and removes veterancy (no pilot), and now has
 	// changes to destroy a hijacker associated with the thing depiloted if applicable
 
 	//MODDD - check for there being an associated hijacker to come out instead
-	if (m_hijackerID != INVALID_ID)
+	if (dyingObject->getHijackerInMeID() != INVALID_ID)
 	{
 		m_pilotEjectedYet = TRUE;
-		Object* hijacker = TheGameLogic->findObjectByID(m_hijackerID);
-		EjectPilotDie::ejectHijacker( hijacker, copter, modData->m_oclEjectPilot );
+		Object* hijacker = TheGameLogic->findObjectByID(dyingObject->getHijackerInMeID());
+		HijackUtil::ejectHijacker( hijacker, dyingObject, modData->m_oclEjectPilot );
 		return;
 	}
 
-	if( copter->getVeterancyLevel() > LEVEL_REGULAR )
+	if( dyingObject->getVeterancyLevel() > LEVEL_REGULAR )
 	{
 		//MODDD - set 'Beyond' so we are aware this has happened & other places can check for that already having happened.
 		//MODDD - TODO - being able to customize giving the pilot the parachute & not if ejected close to the ground
@@ -633,6 +627,6 @@ void HelicopterSlowDeathBehavior::attemptEjectPilot(Object* copter)
 		// (or alternative: the parachute OCL checks for being close to the ground & skips it altogether from there if so -
 		// general purpose fix for any OCL spawning a parachute thing too close to the ground for any reason in fact)
 		m_pilotEjectedYet = TRUE;
-		EjectPilotDie::ejectPilot( modData->m_oclEjectPilot, copter, nullptr );
+		EjectPilotDie::ejectPilot( modData->m_oclEjectPilot, dyingObject, nullptr );
 	}
 }

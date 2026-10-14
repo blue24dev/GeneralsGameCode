@@ -1073,7 +1073,8 @@ void ScriptEngine::init()
 	curTemplate->m_uiName = "Skirmish Only_/ Build a building.";
 	curTemplate->m_numParameters = 1;
 	curTemplate->m_parameters[0] = Parameter::OBJECT_TYPE;
-	curTemplate->m_numUiStrings = 1;
+	//MODDD - 1 -> 2
+	curTemplate->m_numUiStrings = 2;
 	curTemplate->m_uiStrings[0] = "Build a building of type ";
 	curTemplate->m_uiStrings[1] = ".";
 
@@ -1861,6 +1862,17 @@ void ScriptEngine::init()
 	curTemplate->m_numUiStrings = 2;
 	curTemplate->m_uiStrings[0] = " ";
 	curTemplate->m_uiStrings[1] = " loads into ";
+
+	//MODDD - new
+	curTemplate = &m_actionTemplates[ScriptAction::NAMED_GET_REPAIRED_AT_NAMED];
+	curTemplate->m_internalName = "NAMED_GET_REPAIRED_AT_NAMED";
+	curTemplate->m_uiName = "Unit_/Repair/Repair -- unit goes to a specific factory for repairs.";
+	curTemplate->m_numParameters = 2;
+	curTemplate->m_parameters[0] = Parameter::UNIT;
+	curTemplate->m_parameters[1] = Parameter::UNIT;
+	curTemplate->m_numUiStrings = 2;
+	curTemplate->m_uiStrings[0] = " ";
+	curTemplate->m_uiStrings[1] = " gets repaired at ";
 
 	curTemplate = &m_actionTemplates[ScriptAction::TEAM_ENTER_NAMED];
 	curTemplate->m_internalName = "TEAM_ENTER_NAMED";
@@ -2807,7 +2819,8 @@ void ScriptEngine::init()
 	curTemplate->m_uiName = "Camera_/Sounds/Set the audible distance for camera-up shots.";
 	curTemplate->m_numParameters = 1;
 	curTemplate->m_parameters[0] = Parameter::REAL;
-	curTemplate->m_numUiStrings = 2;
+	//MODDD - 2 -> 1
+	curTemplate->m_numUiStrings = 1;
 	curTemplate->m_uiStrings[0] = "Set the audible range during camera-up shots to ";
 
 	curTemplate = &m_actionTemplates[ScriptAction::NAMED_SET_HELD];
@@ -3639,7 +3652,8 @@ void ScriptEngine::init()
 	curTemplate->m_uiName = "Multimedia_/ Sound Events -- restore volume -- type.";
 	curTemplate->m_numParameters = 1;
 	curTemplate->m_parameters[0] = Parameter::SOUND;
-	curTemplate->m_numUiStrings = 3;
+	//MODDD - 3 -> 2
+	curTemplate->m_numUiStrings = 2;
 	curTemplate->m_uiStrings[0] = " ";
 	curTemplate->m_uiStrings[1] = " play at normal volume.";
 
@@ -3824,7 +3838,8 @@ void ScriptEngine::init()
 	curTemplate->m_parameters[0] = Parameter::TEAM;
 	curTemplate->m_parameters[1] = Parameter::COMMANDBUTTON_ALL_ABILITIES;
 	curTemplate->m_parameters[2] = Parameter::KIND_OF_PARAM;
-	curTemplate->m_numUiStrings = 4;
+	//MODDD - 4 -> 5
+	curTemplate->m_numUiStrings = 5;
 	curTemplate->m_uiStrings[0] = " ";
 	curTemplate->m_uiStrings[1] = " use ";
 	curTemplate->m_uiStrings[2] = " on nearest enemy with ";

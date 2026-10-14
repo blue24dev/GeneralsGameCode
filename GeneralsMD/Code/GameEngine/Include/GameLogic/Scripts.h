@@ -545,6 +545,7 @@ public:
 		AI_PLAYER_BUILD_TYPE_NEAREST_TEAM,				///< Tell the ai player to build an object nearest team.
 
 		//MODDD - new
+		NAMED_GET_REPAIRED_AT_NAMED,
 		SKIRMISH_FIRE_SPECIAL_POWER_FROM_UNIT_AT_MOST_COST,
 
 		// add new items here, please

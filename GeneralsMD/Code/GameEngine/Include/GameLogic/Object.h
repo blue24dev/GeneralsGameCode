@@ -712,6 +712,11 @@ public:
 	//MODDD - new
 	Bool isTemporaryBuilder() const;
 	void setIsTemporaryBuilder(Bool isTemporaryBuilder);
+	ObjectID getHijackerInMeID() const;
+	void rawSetHijackerInMeID(ObjectID hijackerID);
+	void setHijackerInMeID(ObjectID hijackerID);
+	NameKeyType getModuleTagNameKeyToEjectHijacker() const;
+	void setModuleTagNameKeyToEjectHijacker(NameKeyType nameKey);
 
 	//When an AIAttackState is over, it needs to clean up any weapons that might be in leech range mode
 	//or else those weapons will have unlimited range!
@@ -974,6 +979,8 @@ private:
 	Int m_moneySpentOnMe;
 	Bool m_hasHijackerCollide;
 	Bool m_isTemporaryBuilder;
+	ObjectID m_hijackerInMeID;
+	NameKeyType m_moduleTagNameKeyToEjectHijacker;
 	// Creating a new boolean just to track whether this object is going to be removed soon (set as soon as 'onDie' or
 	// 'GameLogic::destoryObject' is called on this).
 	// Not going to trust tinkering with other things for safety - untrackable bugs from bad memory involving 'm_stateMap' is a nightmare.

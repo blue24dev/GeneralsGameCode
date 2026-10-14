@@ -1381,6 +1381,89 @@ void GenericObjectCreationNugget::applyDisposition(
 	}
 }
 
+//MODDD - helper for a helper. Is this particular 'obj' acceptable to be an experience sink for something else?
+Bool GenericObjectCreationNugget::isValidExperienceSink(const Object* obj) const
+{
+	// Same check as having an experience sink: selectable, independent, believable to live longer than 2 seconds
+	KindOfMaskType intangibleKindOfs;
+	intangibleKindOfs.set(KINDOF_PROJECTILE);
+	intangibleKindOfs.set(KINDOF_IGNORED_IN_GUI);
+	intangibleKindOfs.set(KINDOF_HULK);
+	intangibleKindOfs.set(KINDOF_INERT);
+	if (obj->isKindOf(KINDOF_SELECTABLE) && !obj->isAnyKindOf(intangibleKindOfs) && obj->getSlavedUpdate() == nullptr)
+	{
+		// ok
+	}
+	else
+	{
+		return false;
+	}
+
+	// If this is being deleted, no.
+	// This should catch the OCL coming from 'CreateObjectDie' since this flag is set on the source object before calling
+	// 'onDie' of modules to fire 'CreateObjectDie''s OCL -> here we are.
+	if (obj->m_calledForDeletion)
+	{
+		return false;
+	}
+
+	// If this obj won't do anything with received EXP, why?
+	if (!obj->getExperienceTracker()->isTrainable())
+	{
+		return false;
+	}
+
+	return true;
+}
+
+//MODDD - helper to decide whether to set the EXP sink of the spwaned object.
+// This is trying to fix the issue of units spawned by support powers never getting veterancy sometimes.
+// Ex: in the 'Contra' mod, air force general comanches spawned by support power.
+// They send the 'sourceObj' (your command center) all the way down to become the EXP-sink of the comanches finally
+// spawned. This means the comanches will never get experience points because any EXP gained is getting redirected
+// to the command center - which effectively means nothing.
+// So, some rules:
+// 1. Something that isn't trainable (no rank support) can't be a sink, but it could still itself have a valid sink.
+//    This, along with a 'PROJECTILE' check anyway, should prevent inbetween temp-objects from being treated as sinks.
+// 2. A 'CreateObjectDie' calling for an OCL shouldn't use 'sourceObj' as a sink. It dying is what triggered this
+//    OCL in the first place.
+// 3. If the unit produced by the OCL is itself independently selectable/controllable, it shouldn't have a sink.
+//    Most likely, it's something usually produced by the player by a factory structure or looks similar to something
+//    like that - even helping a separate valid in-game unit rank up instead of itself would look strange when there
+//    isn't some slave relationship (uncontrollable extension of something else) to explain that.
+void GenericObjectCreationNugget::checkAssignExperienceSink(Object* spawnedObj, const Object* sourceObj) const
+{
+	// First, check 'spawnedObj'. If it's selectable, don't go further (typical in-game unit that responds to the player).
+	// 'UNATTACKABLE' and 'NO_COLLIDE' are tempting too, but going to err on the side of caution with those
+	KindOfMaskType intangibleKindOfs;
+	intangibleKindOfs.set(KINDOF_PROJECTILE);
+	intangibleKindOfs.set(KINDOF_IGNORED_IN_GUI);
+	intangibleKindOfs.set(KINDOF_HULK);
+	intangibleKindOfs.set(KINDOF_INERT);
+	if (spawnedObj->isKindOf(KINDOF_SELECTABLE) && !spawnedObj->isAnyKindOf(intangibleKindOfs) && spawnedObj->getSlavedUpdate() == nullptr)
+	{
+		return;
+	}
+
+	// Going to go ahead and give the earliest point precedence (sourceObj's sink if valid, then try using sourceObj as the sink).
+	ObjectID sourceObj_expSinkObjID = sourceObj->getExperienceTracker()->getExperienceSink();
+	if (sourceObj_expSinkObjID != INVALID_ID)
+	{
+		Object* testSink = TheGameLogic->findObjectByID(sourceObj_expSinkObjID);
+		if (testSink != nullptr && isValidExperienceSink(testSink))
+		{
+			spawnedObj->getExperienceTracker()->setExperienceSink(sourceObj_expSinkObjID);
+			return;
+		}
+	}
+
+	// try again with the source object itself
+	if (isValidExperienceSink(sourceObj))
+	{
+		spawnedObj->getExperienceTracker()->setExperienceSink(sourceObj->getID());
+	}
+}
+
 //MODDD - adding 'runExtraChecksOnMoneyCrateCollideInObjs_playerIndex' to the main overload, letting it redirect to this to avoid copy/pasting a huge method
 #if MONEY_AUTO_ADJUSTMENT_SUPPORT
 // original main overload for redirection
@@ -1533,8 +1616,13 @@ Object* GenericObjectCreationNugget::reallyCreate(const Coord3D *pos, const Matr
 	//MODDD - added null check. 'firstObject' can be null during the Generals ZH shell map, at least in the ProGen mod.
 	if (firstObject != nullptr)
 	{
-		ObjectID sinkID = sourceObj->getExperienceTracker()->getExperienceSink();
-		firstObject->getExperienceTracker()->setExperienceSink(sinkID != INVALID_ID ? sinkID : sourceObj->getID());
+		//MODDD - bugfix for objects created by 'CreateObject' from ObjectCreationList's sometimes never getting veterancy.
+		// ---
+		//ObjectID sinkID = sourceObj->getExperienceTracker()->getExperienceSink();
+		//firstObject->getExperienceTracker()->setExperienceSink(sinkID != INVALID_ID ? sinkID : sourceObj->getID());
+		// ---
+		checkAssignExperienceSink(firstObject, sourceObj);
+		// ---
 	}
 #endif
 
