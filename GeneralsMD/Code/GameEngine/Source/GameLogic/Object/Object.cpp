@@ -3146,6 +3146,9 @@ void Object::setDisabledUntil( DisabledType type, UnsignedInt frame )
 
 	if( type == DISABLED_UNMANNED && !isKindOf( KINDOF_DRONE ) )
 	{
+		//MODDD - TODO - kill the hijacker associated with this vehicle if applicable!
+		//EjectPilotDie::clearHijackerInObject(this);
+
 		//strange but true: If I am a carbomb,
 		//my driver actually has a dead-man's
 		//trigger for my dynamite...
@@ -7841,6 +7844,13 @@ StealthUpdate* Object::getStealthOwnerStealthStrict() const
 		return stealth->getStealthOwnerStealthUpdateStrict();
 	}
 	return nullptr;
+}
+
+//MODDD - convenience feature. This isn't looked up too frequently so the search should be tolerable
+HijackerUpdate* Object::getHijackerUpdate() const
+{
+	static NameKeyType key_HijackerUpdate = NAMEKEY( "HijackerUpdate" );
+	return (HijackerUpdate*)this->findUpdateModule( key_HijackerUpdate );
 }
 
 

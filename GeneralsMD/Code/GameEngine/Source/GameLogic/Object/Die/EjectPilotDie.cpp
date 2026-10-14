@@ -44,6 +44,7 @@
 #include "GameLogic/Module/AIUpdate.h"
 #include "GameLogic/Module/ContainModule.h"
 #include "GameLogic/Module/HijackerUpdate.h"
+#include "GameLogic/Module/HelicopterSlowDeathUpdate.h"
 #include "GameLogic/PartitionManager.h"
 #include "GameLogic/ObjectCreationList/GenericObjectCreationNugget.h"
 
@@ -117,7 +118,7 @@ EjectPilotDie::~EjectPilotDie()
 void EjectPilotDie::ejectHijacker(Object* hijacker, Object* dyingObject, const ObjectCreationList* oclReference)
 {
 	//MODDD - see 'ejectPilot'
-	if (!dyingObject)
+	if (!hijacker || !dyingObject)
 		return;
 
 	// (to keep retail code happy without renaming)
@@ -125,8 +126,7 @@ void EjectPilotDie::ejectHijacker(Object* hijacker, Object* dyingObject, const O
 
 	//MODDD - notify the HijackerUpdate so it doesn't try to force our position to say, a crashing helicopter even after
 	// we've ejected
-	static NameKeyType key_HijackerUpdate = NAMEKEY( "HijackerUpdate" );
-	HijackerUpdate *hijackerUpdate = (HijackerUpdate*)hijacker->findUpdateModule( key_HijackerUpdate );
+	HijackerUpdate *hijackerUpdate = hijacker->getHijackerUpdate();
 	hijackerUpdate->setTargetObject( nullptr );
 	hijackerUpdate->setIsInVehicle( FALSE );
 	hijackerUpdate->setUpdate( FALSE );
@@ -178,8 +178,7 @@ void EjectPilotDie::ejectHijacker(Object* hijacker, Object* dyingObject, const O
 		//MODDD - Get the parachute to use from the hijacker's 'HijackUpdate' module, through the Object reference to the hijacker now.
 		//const ThingTemplate* putInContainerTmpl = TheThingFactory->findTemplate(getHijackerUpdateModuleData()->m_parachuteName);
 		// ---
-		static NameKeyType key_HijackerUpdate = NAMEKEY( "HijackerUpdate" );
-		HijackerUpdate *hijackerUpdate = (HijackerUpdate*)obj->findUpdateModule( key_HijackerUpdate );
+		HijackerUpdate *hijackerUpdate = obj->getHijackerUpdate();
 		const AsciiString& parachuteName = hijackerUpdate->getParachuteName();
 		const ThingTemplate* putInContainerTmpl = TheThingFactory->findTemplate(parachuteName);
 		// ---
@@ -223,6 +222,118 @@ void EjectPilotDie::ejectHijacker(Object* hijacker, Object* dyingObject, const O
 	AudioEventRTS soundEject = *(dyingObject->getTemplate()->getPerUnitSound("SoundEject"));
 	soundEject.setPosition( dyingObject->getPosition() );
 	TheAudio->addAudioEvent(&soundEject);
+}
+
+//MODDD - Check to see if there is some module that supports pilot ejection - if this returns 'true', it can be assumed
+// something was found and the hijacker is attached to one of the supporting modules. If this returns 'false', the caller
+// should delete the hijacker since there won't be an opportunity for thie hijacker to be released.
+// Existing comments are referring to script around where this originally was.
+Bool EjectPilotDie::checkForTargetEjectSupport(Object* obj, Object* other)
+{
+	//MODDD - moving this from below so we can terminate early if this object is missing a 'HijackerUpdate' module.
+	// Without this, being 'stored' in a vehicle (invisible / uncollidable, keep in-sync with its position) won't be able
+	// to work. Some odd behavior such as enemies attacking the invisible hijacker forever at the same location he was
+	// at when a vehicle was hijacked has been observed in this case, though it could just be the 'obj->setStatus' call
+	// in the original 'if( hijackerUpdate )' block further down not running.
+	// The point is, I doubt preserving the unit should go any further if 'HijackerUpdate' is missing.
+	//MODDD - TODO - If a mod wants to support a unit that can hijack but uses a different unit for ejection systems
+	// (ex: a biker or flying hijacker from Contra hijacks something -> it dies -> spawns infantry hijacker), an additional
+	// field for what template to spawn from the hijacked vehicle if dead in some hijacker-related module should suffice.
+	// Ex: HijackerUpdate::m_templateOnTargetEject, "TemplateOnTargetEject" in the INI.
+	// Perhaps even whether to use an ejection system at all even if found: "AllowEject" defaulting to "Yes"/true.
+	// ---
+	HijackerUpdate *hijackerUpdate = obj->getHijackerUpdate();
+	if ( !hijackerUpdate )
+	{
+		return FALSE;
+	}
+	// ---
+
+	//MODDD - replaced
+	//Bool targetCanEject = FALSE;
+	Bool foundModuleForHijacker = false;
+
+	EjectPilotDie* ejectPilotDie_chosen = nullptr;
+
+	//MODDD - Turns out it's possible for there to be multiple 'EjectPilotDie' modules on the same Object in the INI.
+	// (example: 'Shockwave' mod).
+	// Instead of stopping at the first 'EjectPilotDie' module encountered, record the first one but disable all the other
+	// ones so that only the one we pick to associate with the hijacker ends up spawning anything.
+	// Doing anything else to the returned 'EjectPilotDie' will be left to the caller.
+
+	//MODDD - But first - check to see if there's a 
+	static NameKeyType key_HelicopterSlowDeathBehavior = NAMEKEY( "HelicopterSlowDeathBehavior" );
+	HelicopterSlowDeathBehavior *hsdb = (HelicopterSlowDeathBehavior*)other->findUpdateModule( key_HelicopterSlowDeathBehavior );
+	if (hsdb != nullptr && hsdb->hasPilotEjectSupport())
+	{
+		hsdb->setHijacker(obj);
+		foundModuleForHijacker = true;
+	}
+
+	BehaviorModule **dmi = nullptr;
+	for( dmi = other->getBehaviorModules(); *dmi; ++dmi )
+	{
+		//MODDD - save a reference to this - much deeper checks with this
+		EjectPilotDie* ejectPilotDieTest = (*dmi)->getEjectPilotDie();
+		if(ejectPilotDieTest != nullptr)
+		{
+			if (!foundModuleForHijacker)
+			{
+				// first EjectPilotDie module: choose that
+				ejectPilotDie_chosen = ejectPilotDieTest;
+				ejectPilotDie_chosen->setHijacker(obj);
+				foundModuleForHijacker = true;
+			}
+			else
+			{
+				// subsequent EjectPilotDie modules are turned off
+				ejectPilotDieTest->setEnabled(FALSE);
+			}
+			//targetCanEject = TRUE;
+			//break;
+		}
+	}
+
+	//if ( ! targetCanEject )
+	if (!foundModuleForHijacker)
+	{
+		return FALSE;
+	}
+
+	// decided to hijack 'other' - let 'hijackerUpdate' know
+	hijackerUpdate->setTargetObject( other );
+	hijackerUpdate->setIsInVehicle( TRUE );
+	hijackerUpdate->setUpdate( TRUE );
+	return TRUE;
+}
+
+//MODDD - TODO - if there is a hijacker anywhere in this object, remove/kill it.
+// Use this when a vehicle is depiloted so the associated hijacker should no longer exist.
+/*
+void EjectPilotDie::clearHijackerInObject()
+{
+
+}
+*/
+
+//MODDD - utility to kill the existing hijacker if there is one - use this before changing a module's
+// "m_hijackerID" so an existing intangible one waiting to come out of this vehicle doesn't remain
+// stuck in limbo
+void EjectPilotDie::checkCleanHijacker(ObjectID existingHijackerID)
+{
+	if (existingHijackerID != INVALID_ID)
+	{
+		Object* existingHijacker = TheGameLogic->findObjectByID(existingHijackerID);
+		if (existingHijacker != nullptr)
+		{
+			HijackerUpdate* hijackerUpdate = existingHijacker->getHijackerUpdate();
+			hijackerUpdate->setTargetObject( nullptr );
+			hijackerUpdate->setIsInVehicle( FALSE );
+			hijackerUpdate->setUpdate( FALSE );
+			//MODDD - TODO - should the hijacker be made tangible before being killed? not sure
+			existingHijacker->kill();
+		}
+	}
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -319,6 +430,7 @@ void EjectPilotDie::setEnabled( Bool enabled )
 //MODDD - new
 void EjectPilotDie::setHijacker( Object* hijacker )
 {
+	EjectPilotDie::checkCleanHijacker(m_hijackerID);
 	m_hijackerID = hijacker->getID();
 }
 

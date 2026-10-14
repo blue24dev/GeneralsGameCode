@@ -588,6 +588,8 @@ Bool HelicopterSlowDeathBehavior::hasPilotEjectSupport()
 //MODDD
 void HelicopterSlowDeathBehavior::setHijacker(Object* hijacker)
 {
+	// check to see if there's already a hijacker in this vehicle - kill the existing first if so
+	EjectPilotDie::checkCleanHijacker(m_hijackerID);
 	m_hijackerID = hijacker->getID();
 }
 
@@ -606,6 +608,10 @@ void HelicopterSlowDeathBehavior::attemptEjectPilot(Object* copter)
 	{
 		return;
 	}
+
+	// NOTE - could be a 'copter->isDisabledByType(DISABLED_UNMANNED)' check here, but the de-piloting call should have
+	// reached 'Object::setDisabledUntil' which sees 'DISABLED_UNMANNED' and removes veterancy (no pilot), and now has
+	// changes to destroy a hijacker associated with the thing depiloted if applicable
 
 	//MODDD - check for there being an associated hijacker to come out instead
 	if (m_hijackerID != INVALID_ID)

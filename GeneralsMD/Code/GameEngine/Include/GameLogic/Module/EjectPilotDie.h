@@ -67,6 +67,8 @@ public:
 	static void ejectPilot(const ObjectCreationList* ocl, Object* dyingObject, const Object* damageDealer);
 	//MODDD - new
 	static void ejectHijacker(Object* hijacker, Object* dyingObject, const ObjectCreationList* oclReference);
+	static Bool checkForTargetEjectSupport(Object* obj, Object* other);
+	static void checkCleanHijacker(ObjectID existingHijackerID);
 
 	virtual void onDie( const DamageInfo *damageInfo ) override;
 	//MODDD - somehow, not a 'EjectPilotDie*' returned?
