@@ -121,3 +121,32 @@ void DieModule::loadPostProcess()
 	BehaviorModule::loadPostProcess();
 
 }
+
+//MODDD - clone of 'DieMuxData::isDieApplicable' to use bitmasks supplied by the caller instead
+Bool DieModule::isDieApplicableCustom(
+	const Object* obj,
+	const DamageInfo *damageInfo,
+	const DeathTypeFlags& deathTypes,
+	const VeterancyLevelFlags& veterancyLevels,
+	const ObjectStatusMaskType& exemptStatus,
+	const ObjectStatusMaskType& requiredStatus
+) const
+{
+	// wrong death type? punt
+	if (!getDeathTypeFlag(deathTypes, damageInfo->in.m_deathType))
+		return false;
+
+	// wrong vet level? punt
+	if (!getVeterancyLevelFlag(veterancyLevels, obj->getVeterancyLevel()))
+		return false;
+
+	// all 'exempt' bits must be clear for us to run.
+	if( !obj->getStatusBits().testForNone( exemptStatus ) )
+		return false;
+
+	// all 'required' bits must be set for us to run.
+	if( !obj->getStatusBits().testForAll( requiredStatus ) )
+		return false;
+
+	return true;
+}

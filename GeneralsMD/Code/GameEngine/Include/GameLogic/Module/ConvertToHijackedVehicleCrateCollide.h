@@ -39,6 +39,8 @@
 
 // FORWARD REFERENCES /////////////////////////////////////////////////////////////////////////////
 class Thing;
+//MODDD
+class HijackerUpdate;
 
 //-------------------------------------------------------------------------------------------------
 class ConvertToHijackedVehicleCrateCollideModuleData : public CrateCollideModuleData
@@ -69,6 +71,9 @@ public:
 
 	ConvertToHijackedVehicleCrateCollide( Thing *thing, const ModuleData* moduleData );
 	// virtual destructor prototype provided by memory pool declaration
+
+	//MODDD
+	Bool checkForTargetEjectSupport(HijackerUpdate*& out_hijackerUpdate, Object* obj, Object* other);
 
 protected:
 

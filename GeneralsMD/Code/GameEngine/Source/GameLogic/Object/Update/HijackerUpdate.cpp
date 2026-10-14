@@ -55,8 +55,9 @@ HijackerUpdate::HijackerUpdate( Thing *thing, const ModuleData *moduleData ) : U
 	m_targetID = INVALID_ID;
 	setUpdate( FALSE );
 	setIsInVehicle( FALSE );
-	m_wasTargetAirborne = false;
-	m_ejectPos.zero();
+	//MODDD - removed
+	//m_wasTargetAirborne = false;
+	//m_ejectPos.zero();
 //	m_ejectPilotDMI = nullptr;
 }
 
@@ -88,8 +89,9 @@ UpdateSleepTime HijackerUpdate::update()
 		{
 			// @todo I think we should test for ! IsEffectivelyDead() as well, here
 			obj->setPosition( target->getPosition() );
-			m_wasTargetAirborne = target->isSignificantlyAboveTerrain();
-			m_ejectPos = *target->getPosition();
+			//MODDD - removed
+			//m_wasTargetAirborne = target->isSignificantlyAboveTerrain();
+			//m_ejectPos = *target->getPosition();
 
 			// So, if while I am driving this American war vehicle, I gain skill points, I get to keep them when I wreck the vehicle
 			ExperienceTracker *targetExp = target->getExperienceTracker();
@@ -116,61 +118,27 @@ UpdateSleepTime HijackerUpdate::update()
 		}
 		else // the car we have been "driving" is dead now, and has safely ejected us
 		{
-			{
-
-
-				//THIS BLOCK RESTORES HIJACKER TO PARTITION MANAGER AND UNHIDES HIM
-				ThePartitionManager->registerObject( obj );
-
-				if( obj->getDrawable() )
-				{
-					// so it is time to unhide ourselves and be a pedestrian hijacker again
-					obj->getDrawable()->setDrawableHidden( false );
-				}
-
-				// We won't come back here until and unless we have hijacked another vehicle
-				obj->clearStatus( MAKE_OBJECT_STATUS_MASK3( OBJECT_STATUS_NO_COLLISIONS, OBJECT_STATUS_MASKED, OBJECT_STATUS_UNSELECTABLE ) );
-
-				AIUpdateInterface* ai = obj->getAIUpdateInterface();
-				if ( ai )
-				{
-					ai->aiIdle( CMD_FROM_AI );
-				}
-
-				if (m_wasTargetAirborne)
-				{
-					const ThingTemplate* putInContainerTmpl = TheThingFactory->findTemplate(getHijackerUpdateModuleData()->m_parachuteName);
-					DEBUG_ASSERTCRASH(putInContainerTmpl,("DeliverPayload: PutInContainer %s not found!",getHijackerUpdateModuleData()->m_parachuteName.str()));
-					if (putInContainerTmpl)
-					{
-						Object* container = TheThingFactory->newObject( putInContainerTmpl, obj->getTeam() );
-						container->setPosition(&m_ejectPos);
-						if (container->getContain()->isValidContainerFor(obj, true))
-						{
-							container->getContain()->addToContain(obj);
-						}
-						else
-						{
-							DEBUG_CRASH(("DeliverPayload: PutInContainer %s is full, or not valid for the payload!",getHijackerUpdateModuleData()->m_parachuteName.str()));
-						}
-					}
-
-				}
-
-
-			}
+			//MODDD - in the case a hijacker gets a helicopter with 'HelicopterSlowDeathBehavior''s 'OCLEjectPilot' instead
+			// of 'EjectPilotDie' (the former will take precedence anyway if found), the hijacker would have already found
+			// the 'HelicopterSlowDeathBehavior' and slipped himself in so it knows to re-show the hijacker in place of the
+			// normally ejected pilot instead. Not sure why something like this wasn't done for 'EjectPilotDie' to begin with.
+			// Done for both cases - existing block handling hijacker re-drawing/tangibility moved to a static
+			// 'EjectPilotDie::ejectHijacker' similar to 'EjectPilotDie::ejectPilot'.
+			// This call will be left to 'EjectPilotDie' in the hijacked vehicle.
 
 			setTargetObject( nullptr );
 			setIsInVehicle( FALSE );
 			setUpdate( FALSE );
-			m_wasTargetAirborne = false;
+			//MODDD - removed
+			//m_wasTargetAirborne = false;
 
 		}
 
 	}
 	else	// not in vehicle
 	{
-		m_wasTargetAirborne = false;
+		//MODDD - removed
+		//m_wasTargetAirborne = false;
 	}
 
 	return UPDATE_SLEEP_NONE;
@@ -213,6 +181,12 @@ Object* HijackerUpdate::getTargetObject() const
   return nullptr;
 }
 
+//MODDD
+const AsciiString& HijackerUpdate::getParachuteName() const
+{
+	return getHijackerUpdateModuleData()->m_parachuteName;
+}
+
 // ------------------------------------------------------------------------------------------------
 /** CRC */
 // ------------------------------------------------------------------------------------------------
@@ -244,7 +218,8 @@ void HijackerUpdate::xfer( Xfer *xfer )
 	xfer->xferObjectID( &m_targetID );
 
 	// eject pos
-	xfer->xferCoord3D( &m_ejectPos );
+	//MODDD - removed
+	//xfer->xferCoord3D( &m_ejectPos );
 
 	// update
 	xfer->xferBool( &m_update );
@@ -253,7 +228,8 @@ void HijackerUpdate::xfer( Xfer *xfer )
 	xfer->xferBool( &m_isInVehicle );
 
 	// was target airborne
-	xfer->xferBool( &m_wasTargetAirborne );
+	//MODDD - removed
+	//xfer->xferBool( &m_wasTargetAirborne );
 
 }
 

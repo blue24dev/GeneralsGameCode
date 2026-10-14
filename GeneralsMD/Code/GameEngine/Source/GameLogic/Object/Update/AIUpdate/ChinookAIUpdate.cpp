@@ -200,7 +200,7 @@ public:
 		// ---
 		{
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource.push_back(48);
+			g_destroyObjectSource.push_back(47);
 #endif
 			TheGameLogic->destroyObject(owner);
 			return STATE_SUCCESS;

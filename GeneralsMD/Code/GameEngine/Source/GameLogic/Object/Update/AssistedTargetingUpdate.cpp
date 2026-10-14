@@ -131,7 +131,7 @@ void AssistedTargetingUpdate::makeFeedbackLaser( const ThingTemplate *laserTempl
 	if( !update )
 	{
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(58);
+		g_destroyObjectSource.push_back(57);
 #endif
 		TheGameLogic->destroyObject( laser );
 		return;

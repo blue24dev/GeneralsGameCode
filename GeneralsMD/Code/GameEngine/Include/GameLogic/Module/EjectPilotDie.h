@@ -65,8 +65,21 @@ public:
 
 	//MODDD - disarming mines gives experience. Removed 'const' on 'dyingObject'
 	static void ejectPilot(const ObjectCreationList* ocl, Object* dyingObject, const Object* damageDealer);
+	//MODDD - new
+	static void ejectHijacker(Object* hijacker, Object* dyingObject, const ObjectCreationList* oclReference);
 
 	virtual void onDie( const DamageInfo *damageInfo ) override;
-	virtual DieModuleInterface* getEjectPilotDieInterface() override {return this; }
+	//MODDD - somehow, not a 'EjectPilotDie*' returned?
+	virtual EjectPilotDie* getEjectPilotDie() override {return this; }
 
+	//MODDD
+	void setEnabled( Bool enabled );
+	void setHijacker( Object* hijacker );
+protected:
+	Bool _isDieApplicable( const Object* dyingObject, const DamageInfo *damageInfo );
+
+	//MODDD - new member fields to help record a hijacker that's taken over this module and should be spawned instead of a pilot
+protected:
+	Bool m_enabled;
+	ObjectID m_hijackerID;
 };

@@ -364,7 +364,7 @@ Bool MissileAIUpdate::projectileHandleCollision( Object *other )
 
 					// don't do the normal explosion; just destroy ourselves & return
 #if EXTRA_DEBUG_HELP
-					g_destroyObjectSource.push_back(52);
+					g_destroyObjectSource.push_back(51);
 #endif
 					TheGameLogic->destroyObject(obj);
 
@@ -451,7 +451,7 @@ void MissileAIUpdate::doKillSelfState()
     else
 		{
 #if EXTRA_DEBUG_HELP
-				g_destroyObjectSource.push_back(53);
+				g_destroyObjectSource.push_back(52);
 #endif
 		  TheGameLogic->destroyObject( obj );
 		}
@@ -706,7 +706,7 @@ UpdateSleepTime MissileAIUpdate::update()
 	{
 		// we ended up under the world.  go away.
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(54);
+		g_destroyObjectSource.push_back(53);
 #endif
 		TheGameLogic->destroyObject(getObject());
 		return UPDATE_SLEEP_FOREVER;

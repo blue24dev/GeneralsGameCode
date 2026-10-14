@@ -99,6 +99,16 @@ public:
 
 protected:
 	Bool isDieApplicable(const DamageInfo *damageInfo) const { return getDieModuleData()->isDieApplicable(getObject(), damageInfo); }
+	
+	//MODDD
+	Bool isDieApplicableCustom(
+		const Object* obj,
+		const DamageInfo *damageInfo,
+		const DeathTypeFlags& deathTypes,
+		const VeterancyLevelFlags& veterancyLevels,
+		const ObjectStatusMaskType& exemptStatus,
+		const ObjectStatusMaskType& requiredStatus
+	) const;
 
 };
 inline DieModule::DieModule( Thing *thing, const ModuleData* moduleData ) : BehaviorModule( thing, moduleData ) { }

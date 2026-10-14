@@ -98,7 +98,7 @@ void ReplaceObjectUpgrade::upgradeImplementation()
 		// thing will be placed, and then on deletion I will remove "his" marks.
 		TheAI->pathfinder()->removeObjectFromPathfindMap(me);
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(75);
+		g_destroyObjectSource.push_back(74);
 #endif
 		TheGameLogic->destroyObject(me);
 	}
