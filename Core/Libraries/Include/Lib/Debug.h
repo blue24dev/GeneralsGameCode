@@ -45,14 +45,34 @@
 
 #pragma once
 
-#define NO_RELEASE_DEBUG_LOGGING
+//MODDD NOTE - looks like this should be "RELEASE_DEBUG_LOGGING" to disable assert calls for testing
+// a debug build without annoying popups, like to be able to breakpoint & show uncaught exceptions without crashing to desktop.
+// Change back to retail's "NO_RELEASE_DEBUG_LOGGING" for debug mode to get assert popups again.
+// ---
+// TLDR: two choices here, change this const to:
+//   * NO_RELEASE_DEBUG_LOGGING: assert popups in debug mode
+//   * RELEASE_DEBUG_LOGGING: no assert popups in debug mode (moreso like playing in retail)
+// (release mode unaffected by this entirely)
+#define RELEASE_DEBUG_LOGGING
+
+//MODDD - forcing this off for now.
+#define NO_DEBUG_CRC
+#define DISABLE_ALLOW_DEBUG_UTILS
 
 #ifdef RELEASE_DEBUG_LOGGING  ///< Creates a DebugLogFile.txt (No I or D) with all the debug log goodness.  Good for startup problems.
-	#define ALLOW_DEBUG_UTILS 1
-	#define DEBUG_LOGGING 1
+//MODDD - no to these for now
+//	#define ALLOW_DEBUG_UTILS 1
+//	#define DEBUG_LOGGING 1
 	#define DISABLE_DEBUG_CRASHING 1
 	#define DISABLE_DEBUG_STACKTRACE 1
 #endif
+
+//MODDD
+// If on, some features normally only for debug builds are enabled for release builds.
+// Not every idea is covered by this - see 'GameMemory.h'.
+// Also, heed include order - see 'PreRTS.h', the 'GameCommon.h' include covers 'GameDefines.h' where most macro settings
+// are, but 'AsciiString.h' is included before 'GameCommon.h' -> things in 'GameDefines.h' do not reach 'AsciiString.h'.
+#define DEBUG_HELP_FOR_RELEASE 1
 
 // These are stolen from the WW3D Debug file. REALLY useful. :-)
 #define STRING_IT(a) #a
