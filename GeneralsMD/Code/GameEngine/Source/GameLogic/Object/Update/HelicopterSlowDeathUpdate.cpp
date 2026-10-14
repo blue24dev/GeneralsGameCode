@@ -161,6 +161,9 @@ HelicopterSlowDeathBehavior::HelicopterSlowDeathBehavior( Thing *thing, const Mo
 	m_lastSelfSpinUpdateFrame = 0;
 	m_bladeFlyOffFrame = 0;
 	m_hitGroundFrame = 0;
+	//MODDD
+	m_pilotEjectedYet = FALSE;
+	m_hijackerID = INVALID_ID;
 
 }
 
@@ -267,6 +270,19 @@ void HelicopterSlowDeathBehavior::beginSlowDeath( const DamageInfo *damageInfo )
 
 
 
+
+//MODDDD - new. For safety, check to see if the pilot still hasn't been ejected and do so at the very last moment we
+// possibly can.
+void HelicopterSlowDeathBehavior::onDelete()
+{
+	// if this is being deleted because the game is ending, don't bother
+	if (gameStatus != GAMESTATUS_TEARDOWN)
+	{
+		attemptEjectPilot(getObject());
+	}
+
+	SlowDeathBehavior::onDelete();
+}
 
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
@@ -398,8 +414,8 @@ UpdateSleepTime HelicopterSlowDeathBehavior::update()
 				// note that we call EjectPilotDie::ejectPilot() rather than ObjectCreationList::create(),
 				// because the former makes the right sounds, and also constrains to veteran-or-better status.
 				//
-				if( modData->m_oclEjectPilot && copter->getVeterancyLevel() > LEVEL_REGULAR )
-					EjectPilotDie::ejectPilot( modData->m_oclEjectPilot, copter, nullptr );
+				//MODDD - 'EjectPilotDie::ejectPilot' check & block moved to a helper
+				attemptEjectPilot(copter);
 
 			}
 
@@ -443,6 +459,9 @@ UpdateSleepTime HelicopterSlowDeathBehavior::update()
 			// mark the frame we hit the ground on
 			m_hitGroundFrame = TheGameLogic->getFrame();
 
+			//MODDD - once the copter hits the ground, check to see if there's still a pilot to eject
+			attemptEjectPilot(copter);
+
 			// make hit ground effect
 			FXList::doFXObj( modData->m_fxHitGround, copter );
 			ObjectCreationList::create( modData->m_oclHitGround, copter, nullptr );
@@ -482,7 +501,7 @@ UpdateSleepTime HelicopterSlowDeathBehavior::update()
 
 		// destroy the copter finally
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(63);
+		g_destroyObjectSource.push_back(62);
 #endif
 		TheGameLogic->destroyObject( copter );
 
@@ -543,6 +562,10 @@ void HelicopterSlowDeathBehavior::xfer( Xfer *xfer )
 	// hit ground frame
 	xfer->xferUnsignedInt( &m_hitGroundFrame );
 
+	//MODDD - record whether the pilot was ejected yet
+	xfer->xferBool( &m_pilotEjectedYet );
+	xfer->xferObjectID( &m_hijackerID );
+
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -554,4 +577,62 @@ void HelicopterSlowDeathBehavior::loadPostProcess()
 	// extend base class
 	SlowDeathBehavior::loadPostProcess();
 
+}
+
+//MODDD - for a hijacker to know if this module can be used for ejection
+Bool HelicopterSlowDeathBehavior::hasPilotEjectSupport()
+{
+	return (getHelicopterSlowDeathBehaviorModuleData()->m_oclEjectPilot != nullptr);
+}
+
+//MODDD
+void HelicopterSlowDeathBehavior::setHijacker(Object* hijacker)
+{
+	// check to see if there's already a hijacker in this vehicle - kill the existing first if so
+	EjectPilotDie::checkCleanHijacker(m_hijackerID);
+	m_hijackerID = hijacker->getID();
+}
+
+//MODDD - small helper
+void HelicopterSlowDeathBehavior::attemptEjectPilot(Object* copter)
+{
+	const HelicopterSlowDeathBehaviorModuleData *modData = getHelicopterSlowDeathBehaviorModuleData();
+	//MODDD - doing this check early for neatness. If this module isn't even using this field, do not proceed
+	if (modData->m_oclEjectPilot == nullptr)
+	{
+		return;
+	}
+
+	//MODDD - check for that
+	if (m_pilotEjectedYet)
+	{
+		return;
+	}
+
+	// NOTE - could be a 'copter->isDisabledByType(DISABLED_UNMANNED)' check here, but the de-piloting call should have
+	// reached 'Object::setDisabledUntil' which sees 'DISABLED_UNMANNED' and removes veterancy (no pilot), and now has
+	// changes to destroy a hijacker associated with the thing depiloted if applicable
+
+	//MODDD - check for there being an associated hijacker to come out instead
+	if (m_hijackerID != INVALID_ID)
+	{
+		m_pilotEjectedYet = TRUE;
+		Object* hijacker = TheGameLogic->findObjectByID(m_hijackerID);
+		EjectPilotDie::ejectHijacker( hijacker, copter, modData->m_oclEjectPilot );
+		return;
+	}
+
+	if( copter->getVeterancyLevel() > LEVEL_REGULAR )
+	{
+		//MODDD - set 'Beyond' so we are aware this has happened & other places can check for that already having happened.
+		//MODDD - TODO - being able to customize giving the pilot the parachute & not if ejected close to the ground
+		// (obj->isSignificantlyAboveTerrain()) would be nice, but unlike the 'EjectPilotDie' module, this doesn't offer
+		// separate OCLs for ground/air... would need some hackery to get that working in the existing mod ecosystem.
+		// maybe hunting to see if the OCL spawns with a parachute & make your own version that doesn't?
+		// not losing sleep over this one either way.
+		// (or alternative: the parachute OCL checks for being close to the ground & skips it altogether from there if so -
+		// general purpose fix for any OCL spawning a parachute thing too close to the ground for any reason in fact)
+		m_pilotEjectedYet = TRUE;
+		EjectPilotDie::ejectPilot( modData->m_oclEjectPilot, copter, nullptr );
+	}
 }

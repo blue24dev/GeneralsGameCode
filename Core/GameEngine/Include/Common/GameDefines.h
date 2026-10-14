@@ -58,7 +58,8 @@
 #endif
 
 #ifndef PRESERVE_NO_XP_FROM_HELIX_ATTACHMENT_KILLS
-#define PRESERVE_NO_XP_FROM_HELIX_ATTACHMENT_KILLS (1)
+//MODDD - was 1, changed to 0 for more fixes
+#define PRESERVE_NO_XP_FROM_HELIX_ATTACHMENT_KILLS (0)
 #endif
 
 #ifndef PRESERVE_NO_XP_FROM_OCL_KILLS
@@ -126,7 +127,8 @@
 // Whether to preserve the 1.41x speed discrepancy between straight and diagonal movements of all objects that move via a Locomotor.
 // Set this to 0 when world objects need to move at consistent speed in all directions.
 #ifndef PRESERVE_RETAIL_PHYSICS_FORWARD_SPEED_DISCREPANCY
-#define PRESERVE_RETAIL_PHYSICS_FORWARD_SPEED_DISCREPANCY (1)
+//MODDD - was 1, changed to 0 for more fixes
+#define PRESERVE_RETAIL_PHYSICS_FORWARD_SPEED_DISCREPANCY (0)
 #endif
 
 // Whether to preserve the harmonic mean of the straight and diagonal speeds of the original forward speed discrepancy bug.

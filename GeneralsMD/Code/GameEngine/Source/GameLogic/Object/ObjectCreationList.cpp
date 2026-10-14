@@ -1025,14 +1025,7 @@ void GenericObjectCreationNugget::doStuffToObj(
 		}
 	}
 
-	Coord3D offset = m_offset;
-	if (mtx)
-		adjustVector(&offset, mtx);
-
-	Coord3D chunkPos;
-	chunkPos.x = pos->x + offset.x;
-	chunkPos.y = pos->y + offset.y;
-	chunkPos.z = pos->z + offset.z;
+	//MODDD - small section creating/filling out 'offset' and 'chunkPos' moved into helper 'applyDisposition'
 
 	if (!m_particleSysName.isEmpty())
 	{
@@ -1084,6 +1077,99 @@ void GenericObjectCreationNugget::doStuffToObj(
 	{
 		obj->goInvulnerable( m_invulnerableTime );
 	}
+
+	//MODDD - things involving 'disposition' turned into a helper
+	applyDisposition(obj, pos, mtx, orientation, sourceObj);
+
+	if( m_containInsideSourceObject )
+	{
+		// The Obj has been totally made, so stuff it inside ourselves if desired.
+		if( sourceObj->getContain()  &&  sourceObj->getContain()->isValidContainerFor(obj, TRUE))
+		{
+			sourceObj->getContain()->addToContain( obj );
+
+			// Need to hide if they are hidden.
+			if( sourceObj->getDrawable() && obj->getDrawable() && sourceObj->getDrawable()->isDrawableEffectivelyHidden() )
+				obj->getDrawable()->setDrawableHidden( TRUE );
+		}
+		else
+		{
+			DEBUG_CRASH(("A OCL with ContainInsideSourceObject failed the contain and is killing the new object."));
+			// If we fail to contain it, we can't just leave it.  Stillborn it.
+#if EXTRA_DEBUG_HELP
+			g_destroyObjectSource.push_back(46);
+#endif
+			TheGameLogic->destroyObject(obj);
+		}
+	}
+
+
+
+  if ( m_diesOnBadLand && obj )
+  {
+	  // if we land in the water, we die. alas.
+	  const Coord3D* riderPos = obj->getPosition();
+	  Real waterZ, terrainZ;
+	  if (TheTerrainLogic->isUnderwater(riderPos->x, riderPos->y, &waterZ, &terrainZ)
+			  && riderPos->z <= waterZ + 10.0f
+			  && obj->getLayer() == LAYER_GROUND)
+	  {
+		  // don't call kill(); do it manually, so we can specify DEATH_FLOODED
+		  DamageInfo damageInfo;
+		  damageInfo.in.m_damageType = DAMAGE_WATER;	// use this instead of UNRESISTABLE so we don't get a dusty damage effect
+		  damageInfo.in.m_deathType = DEATH_FLOODED;
+		  damageInfo.in.m_sourceID = INVALID_ID;
+		  damageInfo.in.m_amount = HUGE_DAMAGE_AMOUNT;
+		  obj->attemptDamage( &damageInfo );
+	  }
+
+	  // Kill if materialized on impassable ground
+	  Int cellX = REAL_TO_INT( obj->getPosition()->x / PATHFIND_CELL_SIZE );
+	  Int cellY = REAL_TO_INT( obj->getPosition()->y / PATHFIND_CELL_SIZE );
+
+	  PathfindCell* cell = TheAI->pathfinder()->getCell( obj->getLayer(), cellX, cellY );
+	  PathfindCell::CellType cellType = cell ? cell->getType() : PathfindCell::CELL_IMPASSABLE;
+
+	  // If we land outside the map, we die too.
+	  // Otherwise we exist outside the PartitionManger like a cheater.
+	if( obj->isOffMap()
+    || (cellType == PathfindCell::CELL_CLIFF)
+    || (cellType == PathfindCell::CELL_WATER)
+    || (cellType == PathfindCell::CELL_IMPASSABLE) )
+	  {
+		  // We are sorry, for reasons beyond our control, we are experiencing technical difficulties. Please die.
+		  obj->kill();
+	  }
+
+// Note: for future enhancement of this feature, we should test the object against the cell type he is on,
+// using obj->getAI()->hasLocomotorForSurface( __ ). We cshould not assume here that the object can not
+// find happiness on cliffs or water or whatever.
+
+
+  }
+
+
+
+
+}
+
+//MODDD - new helper
+void GenericObjectCreationNugget::applyDisposition(
+	Object* obj,
+	const Coord3D *pos,
+	const Matrix3D *mtx,
+	Real orientation,
+	const Object* sourceObj
+) const
+{
+	Coord3D offset = m_offset;
+	if (mtx)
+		adjustVector(&offset, mtx);
+
+	Coord3D chunkPos;
+	chunkPos.x = pos->x + offset.x;
+	chunkPos.y = pos->y + offset.y;
+	chunkPos.z = pos->z + offset.z;
 
 	if( BitIsSet( m_disposition, INHERIT_VELOCITY ) && sourceObj )
 	{
@@ -1293,77 +1379,6 @@ void GenericObjectCreationNugget::doStuffToObj(
 			floatUpdate->setEnabled( TRUE );
 
 	}
-
-	if( m_containInsideSourceObject )
-	{
-		// The Obj has been totally made, so stuff it inside ourselves if desired.
-		if( sourceObj->getContain()  &&  sourceObj->getContain()->isValidContainerFor(obj, TRUE))
-		{
-			sourceObj->getContain()->addToContain( obj );
-
-			// Need to hide if they are hidden.
-			if( sourceObj->getDrawable() && obj->getDrawable() && sourceObj->getDrawable()->isDrawableEffectivelyHidden() )
-				obj->getDrawable()->setDrawableHidden( TRUE );
-		}
-		else
-		{
-			DEBUG_CRASH(("A OCL with ContainInsideSourceObject failed the contain and is killing the new object."));
-			// If we fail to contain it, we can't just leave it.  Stillborn it.
-#if EXTRA_DEBUG_HELP
-			g_destroyObjectSource.push_back(47);
-#endif
-			TheGameLogic->destroyObject(obj);
-		}
-	}
-
-
-
-  if ( m_diesOnBadLand && obj )
-  {
-	  // if we land in the water, we die. alas.
-	  const Coord3D* riderPos = obj->getPosition();
-	  Real waterZ, terrainZ;
-	  if (TheTerrainLogic->isUnderwater(riderPos->x, riderPos->y, &waterZ, &terrainZ)
-			  && riderPos->z <= waterZ + 10.0f
-			  && obj->getLayer() == LAYER_GROUND)
-	  {
-		  // don't call kill(); do it manually, so we can specify DEATH_FLOODED
-		  DamageInfo damageInfo;
-		  damageInfo.in.m_damageType = DAMAGE_WATER;	// use this instead of UNRESISTABLE so we don't get a dusty damage effect
-		  damageInfo.in.m_deathType = DEATH_FLOODED;
-		  damageInfo.in.m_sourceID = INVALID_ID;
-		  damageInfo.in.m_amount = HUGE_DAMAGE_AMOUNT;
-		  obj->attemptDamage( &damageInfo );
-	  }
-
-	  // Kill if materialized on impassable ground
-	  Int cellX = REAL_TO_INT( obj->getPosition()->x / PATHFIND_CELL_SIZE );
-	  Int cellY = REAL_TO_INT( obj->getPosition()->y / PATHFIND_CELL_SIZE );
-
-	  PathfindCell* cell = TheAI->pathfinder()->getCell( obj->getLayer(), cellX, cellY );
-	  PathfindCell::CellType cellType = cell ? cell->getType() : PathfindCell::CELL_IMPASSABLE;
-
-	  // If we land outside the map, we die too.
-	  // Otherwise we exist outside the PartitionManger like a cheater.
-	if( obj->isOffMap()
-    || (cellType == PathfindCell::CELL_CLIFF)
-    || (cellType == PathfindCell::CELL_WATER)
-    || (cellType == PathfindCell::CELL_IMPASSABLE) )
-	  {
-		  // We are sorry, for reasons beyond our control, we are experiencing technical difficulties. Please die.
-		  obj->kill();
-	  }
-
-// Note: for future enhancement of this feature, we should test the object against the cell type he is on,
-// using obj->getAI()->hasLocomotorForSurface( __ ). We cshould not assume here that the object can not
-// find happiness on cliffs or water or whatever.
-
-
-  }
-
-
-
-
 }
 
 //MODDD - adding 'runExtraChecksOnMoneyCrateCollideInObjs_playerIndex' to the main overload, letting it redirect to this to avoid copy/pasting a huge method

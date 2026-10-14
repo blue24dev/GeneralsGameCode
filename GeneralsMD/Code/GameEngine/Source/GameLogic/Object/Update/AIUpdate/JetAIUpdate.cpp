@@ -1976,6 +1976,8 @@ HeliAIStateMachine::HeliAIStateMachine(Object *owner, AsciiString name) : AIStat
 #else
 	//MODDD - I disagree with this change, or at least it isn't as necessary now.
 	// (fail states reverted to AI_IDLE instead of being TAKING_OFF)
+	// There are other changes to allow a helicopter to decide to take off if nothing is currently trying to enter it
+	// (automatic pilot-for-veterancy entry support).
 	//defineState( LANDING, newInstance(HeliTakeoffOrLandingState)( this, true ), RELOAD_AMMO, TAKING_OFF );
 	//defineState( RELOAD_AMMO, newInstance(JetOrHeliReloadAmmoState)( this ), AI_IDLE, TAKING_OFF );
 	defineState( LANDING, newInstance(HeliTakeoffOrLandingState)( this, true ), RELOAD_AMMO, AI_IDLE );
@@ -1987,7 +1989,7 @@ HeliAIStateMachine::HeliAIStateMachine(Object *owner, AsciiString name) : AIStat
 
 	//MODDD - new
 	defineState( TAKING_OFF_NOAIRFIELD, newInstance(HeliTakeoffOrLandingNoAirFieldState)( this, false ), AI_IDLE, AI_IDLE );
-	defineState( LANDING_NOAIRFIELD, newInstance(HeliTakeoffOrLandingNoAirFieldState)( this, true ), AI_IDLE, TAKING_OFF );
+	defineState( LANDING_NOAIRFIELD, newInstance(HeliTakeoffOrLandingNoAirFieldState)( this, true ), AI_IDLE, AI_IDLE );
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -2271,8 +2273,25 @@ UpdateSleepTime JetAIUpdate::update()
 		// See 'ChinookAIUpdate::update()': "setAirfieldForHealing(INVALID_ID);".
 		else
 		{
-			setFlag(AIRFIELD_DESTINATION, false);
+			// actually, I don't think this is necessary - if there is no associated air field / parking space,
+			// this flag isn't involved anywhere anyway
+			// TODO - I feel setting some flag like 'DOCKED_AT_AIRFIELD' when that's the case on success for the last
+			// landing state to go from that to AI_IDLE would be closer to the intent.
+			// I feel like an event to do something on state success would make sense around that? Not sure.
+			//setFlag(AIRFIELD_DESTINATION, false);
 		}
+
+		//MODDD - moved a later condition to here and included some other things for safety
+		// (only behavior from retail is the 'RELOAD_AMMO' check)
+		Bool isBusyAtAirField = (getFlag(AIRFIELD_DESTINATION) && !getFlag(ALLOW_AIR_LOCO) &&
+			(
+				getStateMachine()->getCurrentStateID() == RELOAD_AMMO ||
+				jet->getBodyModule()->getHealth() < jet->getBodyModule()->getMaxHealth() ||
+				// a parked jet that's finished reloading/healing & waiting to fly for an existing guard command will still
+				// wait on a pilot running towards it
+				waitingToEnterOrExit
+			)
+		);
 
 		// note that we might still have weapons with ammo, but still be forced to return to reload.
 		if (isOutOfSpecialReloadAmmo() && getFlag(ALLOW_AIR_LOCO))
@@ -2288,19 +2307,17 @@ UpdateSleepTime JetAIUpdate::update()
 		}
 		else if (getFlag(HAS_PENDING_COMMAND) &&
 			// srj sez: if we are reloading ammo, wait will we are done before processing the pending command.
-			getStateMachine()->getCurrentStateID() != RELOAD_AMMO)
+			//MODDD - replacing this with a condition decided above
+			//getStateMachine()->getCurrentStateID() != RELOAD_AMMO)
+			!isBusyAtAirField)
 		{
-			//MODDD - if a pilot is running to this parked jet, don't lift off!
-			if (!waitingToEnterOrExit)
-			{
-				m_returnToBaseFrame = 0;
+			m_returnToBaseFrame = 0;
 
-				AICommandParms parms(AICMD_MOVE_TO_POSITION, CMD_FROM_AI);	// values don't matter, will be wiped by next line
-				m_mostRecentCommand.reconstitute(parms);
-				setFlag(HAS_PENDING_COMMAND, false);
+			AICommandParms parms(AICMD_MOVE_TO_POSITION, CMD_FROM_AI);	// values don't matter, will be wiped by next line
+			m_mostRecentCommand.reconstitute(parms);
+			setFlag(HAS_PENDING_COMMAND, false);
 
- 				aiDoCommand(&parms);
-			}
+ 			aiDoCommand(&parms);
 		}
 		else if (m_returnToBaseFrame != 0 && now >= m_returnToBaseFrame && getFlag(ALLOW_AIR_LOCO))
 		{
@@ -2869,9 +2886,22 @@ void JetAIUpdate::aiDoCommand(const AICommandParms* parms)
 	//MODDD - similar to 'ChinookAIUpdate::aiDoCommand' calling 'setAirfieldForHealing(INVALID_ID)',
 	// most new AI commands reset this.
 	// Note that the 'stop' button sends AICMD_IDLE (can check if it's player-issued instead of AI/autonomous too).
-	if (parms->m_cmd != AICMD_IDLE && parms->m_cmd != AICMD_BUSY && parms->m_cmd != AICMD_FOLLOW_EXITPRODUCTION_PATH)
+	// Actually, going to allow stop commands (this type) for helicopters so they're forced to take off even if repairing.
+	// This is for consistency with helicopters using 'ChinookAIUpdate' instead of 'JetAIUpdate' in several mods.
+	// I think originally ignoring stop commands while repairing was more of a lazy carry-over from comanches using
+	// the same 'JetAIUpdate' in retail.
+	if (getObject()->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ))
 	{
+		// helicopter - always accept
 		setFlag(AIRFIELD_DESTINATION, false);
+	}
+	else
+	{
+		// jet - don't let stop commands forget being landed at an air field since nothing visually changes from doing this
+		if (parms->m_cmd != AICMD_IDLE)
+		{
+			setFlag(AIRFIELD_DESTINATION, false);
+		}
 	}
 
 	// note that we always store this, even if nothing will be "pending".
@@ -2886,11 +2916,17 @@ void JetAIUpdate::aiDoCommand(const AICommandParms* parms)
 	//MODDD - replacing occurrences of "getStateMachine()->getCurrentStateID() == RELOAD_AMMO" with "isReloading()".
 	else if (parms->m_cmd == AICMD_IDLE && isReloading())
 	{
-		// uber-special-case... if we are told to idle, but are reloading ammo, ignore it for now,
-		// since we're already doing "nothing" and responding to this will cease our reload...
-		// don't just return, tho, in case we were (say) reloading during a guard stint.
-		setFlag(HAS_PENDING_COMMAND, true);
-		return;
+		//MODDD - only allow this shortcut if this is a jet.
+		// helicopters can be docked to reload and need to be able to immediately take off when healing stops
+		// (added bounding if-then)
+		if (!getObject()->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ))
+		{
+			// uber-special-case... if we are told to idle, but are reloading ammo, ignore it for now,
+			// since we're already doing "nothing" and responding to this will cease our reload...
+			// don't just return, tho, in case we were (say) reloading during a guard stint.
+			setFlag(HAS_PENDING_COMMAND, true);
+			return;
+		}
 	}
 	else if( parms->m_cmd == AICMD_IDLE && getObject()->isAirborneTarget() && !getObject()->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )
 	{

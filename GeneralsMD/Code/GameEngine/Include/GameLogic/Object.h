@@ -108,6 +108,7 @@ class StealthDetectorUpdate;
 class LockWeaponCreate;
 class RebuildHoleBehaviorInterface;
 class SlavedUpdateInterface;
+class HijackerUpdate;
 
 //MODDD
 class Locomotor;
@@ -363,6 +364,7 @@ public:
 
 	//MODDD
 	Bool hasHijackerCollide() const { return m_hasHijackerCollide; }
+	HijackerUpdate* getHijackerUpdate() const;
 
 	// special case for the AIUpdateInterface, since it will be referred to a great deal
 	inline AIUpdateInterface *getAIUpdateInterface() { return m_ai; }

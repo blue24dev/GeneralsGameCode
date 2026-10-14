@@ -79,6 +79,7 @@ class ParticleSystemTemplate;
 class StealthUpdate;
 
 //MODDD
+class EjectPilotDie;
 class StealthDetectorUpdate;
 class LockWeaponCreate;
 class SpyVisionUpdate;
@@ -124,7 +125,8 @@ public:
 	virtual TransportPassengerInterface* getTransportPassengerInterface() = 0;
 	virtual CaveInterface* getCaveInterface() = 0;
 	virtual LandMineInterface* getLandMineInterface() = 0;
-	virtual DieModuleInterface* getEjectPilotDieInterface() = 0;
+	//MODDD - somehow, not a 'EjectPilotDie*' returned? (also renamed from 'getEjectPilotDieInterface' to 'getEjectPilotDie')
+	virtual EjectPilotDie* getEjectPilotDie() = 0;
 	// move from UpdateModuleInterface (srj)
 	virtual ProjectileUpdateInterface* getProjectileUpdateInterface() = 0;
 	virtual AIUpdateInterface* getAIUpdateInterface() = 0;
@@ -183,7 +185,8 @@ public:
 	virtual TransportPassengerInterface* getTransportPassengerInterface() override { return nullptr; }
 	virtual CaveInterface* getCaveInterface() override { return nullptr; }
 	virtual LandMineInterface* getLandMineInterface() override { return nullptr; }
-	virtual DieModuleInterface* getEjectPilotDieInterface() override { return nullptr; }
+	//MODDD - somehow, not a 'EjectPilotDie*' returned?
+	virtual EjectPilotDie* getEjectPilotDie() override { return nullptr; }
 	// interface acquisition (moved from UpdateModule)
 	virtual ProjectileUpdateInterface* getProjectileUpdateInterface() override { return nullptr; }
 	virtual AIUpdateInterface* getAIUpdateInterface() override { return nullptr; }
