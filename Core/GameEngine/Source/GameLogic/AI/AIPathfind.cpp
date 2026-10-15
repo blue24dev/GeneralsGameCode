@@ -110,8 +110,6 @@ struct TCheckMovementInfo
 	Bool							allyGoal;
 };
 
-inline Int IABS(Int x) {	if (x>=0) return x; return -x;};
-
 //-----------------------------------------------------------------------------------
 static Int frameToShowObstacles;
 
