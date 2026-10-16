@@ -617,7 +617,7 @@
 
 // ----------------------------------------------------------------------------------------------------------
 // Bundles of settings here for convenient access
-#define FORCE_GAME_CONTEXT FGC_NONE
+#define FORCE_GAME_CONTEXT FGC_GENERALS_CHALLENGE
 
 #define DEFAULT_GLOBAL_SKIRMISH_DIFFICULTY DIFFICULTY_HARD
 
@@ -626,7 +626,7 @@
 #define RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE 1
 #define RENEWABLE_MONEY_SOURCE_COST_SCALAR 0.8
 #define FORCE_AI_TEAM_BUILD_DELAY_SECONDS 0
-//#define SCRIPT_TIMINGS_SCALAR 1.15
+#define SCRIPT_TIMINGS_SCALAR 1.15
 
 #define REMOVE_FOG_OF_WAR 0
 #define REMOVE_FOG_OF_WAR_ALT 0

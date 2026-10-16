@@ -1700,7 +1700,7 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 	const UnsignedInt startMin = 15;
 	const UnsignedInt endMin = 60;
 	const Real startModifier = 1.0f;
-	const Real endModifier = 2.00f;
+	const Real endModifier = 1.75f;
 	#endif
 
 	Real scalar = 1.0f;
@@ -1766,7 +1766,7 @@ Int buildTimeAdjustmentFilter(const Player* player, const ThingTemplate* tt)
 	//const Real startModifier = 1.00f;
 	//const Real endModifier = 0.70f;
 	const Real startModifier = 1.00f;
-	const Real endModifier = 0.70f;
+	const Real endModifier = 0.82f;
 	#endif
 
 	Int _buildTime = tt->getBuildTime() * LOGICFRAMES_PER_SECOND;
@@ -1816,7 +1816,7 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 	const UnsignedInt startMin = 12;
 	const UnsignedInt endMin = 60;
 	const Real startModifier = 1.00f;
-	const Real endModifier = 2.00f;
+	const Real endModifier = 1.75f;
 	#endif
 
 	Real _expRateModifier = expRateModifier;
