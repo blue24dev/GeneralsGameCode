@@ -681,7 +681,7 @@ UpdateSleepTime PhysicsBehavior::update()
 			_isnan(mtx.Get_Z_Translation())) {
 			DEBUG_CRASH(("Object position is NAN, deleting."));
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource.push_back(64);
+			g_destroyObjectSource.push_back(62);
 #endif
 			TheGameLogic->destroyObject(obj);
 		}
@@ -1306,7 +1306,7 @@ void PhysicsBehavior::onCollide( Object *other, const Coord3D *loc, const Coord3
 			}
 
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource.push_back(65);
+			g_destroyObjectSource.push_back(63);
 #endif
 			TheGameLogic->destroyObject( obj );
 		}
@@ -1487,7 +1487,7 @@ void PhysicsBehavior::onCollide( Object *other, const Coord3D *loc, const Coord3
 #endif
 					}
 #if EXTRA_DEBUG_HELP
-					g_destroyObjectSource.push_back(66);
+					g_destroyObjectSource.push_back(64);
 #endif
 					TheGameLogic->destroyObject(obj);
 					return;

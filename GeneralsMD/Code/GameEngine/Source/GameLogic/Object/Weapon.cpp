@@ -2864,7 +2864,7 @@ Bool Weapon::privateFireWeapon(
 					else
 					{
 #if EXTRA_DEBUG_HELP
-						g_destroyObjectSource.push_back(75);
+						g_destroyObjectSource.push_back(73);
 #endif
 						TheGameLogic->destroyObject( victimObj );// douse this thing before somebody gets hurt!
 					}
@@ -3343,7 +3343,7 @@ void Weapon::processRequestAssistance( const Object *requestingObject, Object *v
 	if (launcher == nullptr)
 	{
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(76);
+		g_destroyObjectSource.push_back(74);
 #endif
 		TheGameLogic->destroyObject( projectile );
 		return;

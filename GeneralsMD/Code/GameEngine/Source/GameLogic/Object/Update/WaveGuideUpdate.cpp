@@ -792,7 +792,7 @@ UpdateSleepTime WaveGuideUpdate::update()
 
 			// initialization failed, destroy object and get out of here
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(72);
+		g_destroyObjectSource.push_back(70);
 #endif
 			TheGameLogic->destroyObject( getObject() );
 			return UPDATE_SLEEP_NONE;
@@ -844,7 +844,7 @@ UpdateSleepTime WaveGuideUpdate::update()
 
 		// destroy object
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(73);
+		g_destroyObjectSource.push_back(71);
 #endif
 		TheGameLogic->destroyObject( waveGuide );
 

@@ -1106,7 +1106,7 @@ void GenericObjectCreationNugget::doStuffToObj(
 			DEBUG_CRASH(("A OCL with ContainInsideSourceObject failed the contain and is killing the new object."));
 			// If we fail to contain it, we can't just leave it.  Stillborn it.
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource.push_back(46);
+			g_destroyObjectSource.push_back(44);
 #endif
 			TheGameLogic->destroyObject(obj);
 		}

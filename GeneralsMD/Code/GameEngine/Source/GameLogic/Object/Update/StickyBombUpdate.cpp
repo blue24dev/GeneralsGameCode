@@ -171,7 +171,7 @@ UpdateSleepTime StickyBombUpdate::update()
 		{
 			//If the target is dead, then
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource.push_back(71);
+			g_destroyObjectSource.push_back(69);
 #endif
 			TheGameLogic->destroyObject( self );
 			return UPDATE_SLEEP_NONE;
