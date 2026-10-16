@@ -107,7 +107,10 @@ class StealthUpdate;
 class StealthDetectorUpdate;
 class LockWeaponCreate;
 class RebuildHoleBehaviorInterface;
+class VeterancyCrateCollide;
+
 class SlavedUpdateInterface;
+
 class HijackerUpdate;
 
 //MODDD
@@ -301,8 +304,13 @@ public:
 	Player* getControllingPlayer() const;
 	Relationship getRelationship(const Object *that) const;
 	//MODDD - new
-	Relationship getApparentRelationship(const Object *that) const;
-	Relationship getApparentRelationshipResponse(const Object *requesterObj) const;
+	public: Player* getApparentControllingPlayerOf(const Object *that) const;
+	private: Player* getApparentControllingPlayerResponse(const Object *requesterObj) const;
+	public: Bool isApparentControllingPlayerOfMatch(const Object *that) const;
+	public: Relationship getApparentRelationshipOf(const Object *that) const;
+	private: Relationship getApparentRelationshipResponse(const Object *requesterObj) const;
+
+public:
 
 	//MODDD - convenience relationship checks since they're common
 	Bool isAlly(const Object* other) const;
@@ -353,6 +361,8 @@ public:
 	StealthDetectorUpdate*          getStealthDetector() const { return m_stealthDetector; }
 	LockWeaponCreate*          getLockWeaponCreate() const { return m_lockWeaponCreate; }
 	RebuildHoleBehaviorInterface*          getRebuildHoleBehavior() const { return m_rebuildHoleBehavior; }
+	VeterancyCrateCollide*					getVeterancyCrateCollide() const { return m_veterancyCrateCollide; }
+
 	SlavedUpdateInterface*          getSlavedUpdate() const { return m_slavedUpdate; }
 
 	//MODDD - present as-is but now refer to cached references instead (I'd prefer without the 'Interface' part of the names but this is merge conflict candy as it is)
@@ -904,6 +914,8 @@ private:
 	StealthDetectorUpdate*        m_stealthDetector;
 	LockWeaponCreate*             m_lockWeaponCreate;
 	RebuildHoleBehaviorInterface* m_rebuildHoleBehavior;
+	VeterancyCrateCollide*				m_veterancyCrateCollide;
+
 	SlavedUpdateInterface*        m_slavedUpdate;
 
 	//MODDD - for the modified as-is getters

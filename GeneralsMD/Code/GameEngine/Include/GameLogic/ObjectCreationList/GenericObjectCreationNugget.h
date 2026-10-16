@@ -67,10 +67,6 @@ protected:
 		UnsignedInt lifetimeFrames
 	) const;
 
-	//MODDD
-	Bool isValidExperienceSink(const Object* obj) const;
-	void checkAssignExperienceSink(Object* spawnedObj, const Object* sourceObj) const;
-
 	Object* reallyCreate(const Coord3D *pos, const Matrix3D *mtx, Real orientation, const Object *sourceObj, UnsignedInt lifetimeFrames ) const;
 	//MODDD
 #if MONEY_AUTO_ADJUSTMENT_SUPPORT

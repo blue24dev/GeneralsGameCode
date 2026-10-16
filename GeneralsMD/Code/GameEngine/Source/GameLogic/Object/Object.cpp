@@ -289,6 +289,7 @@ Object::Object( const ThingTemplate *tt ) :
 	m_stealthDetector(nullptr),
 	m_lockWeaponCreate(nullptr),
 	m_rebuildHoleBehavior(nullptr),
+	m_veterancyCrateCollide(nullptr),
 	m_slavedUpdate(nullptr),
 	m_spawnBehavior(nullptr),
 	m_projectileUpdate(nullptr),
@@ -358,6 +359,7 @@ Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& 
 	m_stealthDetector(nullptr),
 	m_lockWeaponCreate(nullptr),
 	m_rebuildHoleBehavior(nullptr),
+	m_veterancyCrateCollide(nullptr),
 	m_slavedUpdate(nullptr),
 	m_spawnBehavior(nullptr),
 	m_projectileUpdate(nullptr),
@@ -636,6 +638,14 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 		{
 			DEBUG_ASSERTCRASH( m_rebuildHoleBehavior == nullptr, ("Duplicate RebuildHoleBehavior!") );
 			m_rebuildHoleBehavior = rebuildHoleBehavior;
+		}
+		
+		//MODDD
+		VeterancyCrateCollide* veterancyCrateCollide = newMod->getVeterancyCrateCollide();
+		if ( veterancyCrateCollide )
+		{
+			DEBUG_ASSERTCRASH( m_veterancyCrateCollide == nullptr, ("Duplicate VeterancyCrateCollide!") );
+			m_veterancyCrateCollide = veterancyCrateCollide;
 		}
 
 		//MODDD - how on earth was this not cached, even the devs commented that searching for this was expensive
@@ -2341,12 +2351,12 @@ Relationship Object::getRelationship(const Object *that) const
 		// MODDD - TODO - aren't these forced constant relationship returns a bit sweeping?
 		// I feel this should check to see who the observing player is to see if they should be fooled by using what
 		// this object looks like for the relationship. Seems similar to, if not redundant with the disguise feature.
-		// IDEA - integrate these defector checks into the new 'getApparentRelationship' in addition to the disguise
+		// IDEA - integrate these defector checks into the new 'getApparentRelationshipOf' in addition to the disguise
 		// check already there. Record the player this object is defecting from to treat as the current player this is
 		// disguised as & use that for relationship checks with any enemies (i.e., enemies of the player we're defecting
 		// from still think we're an enemy, not a friend just cuz we're defecting from anyone at all!!).
 		// Then remove these defector checks completely and always be a raw '<my player>->relationshipWith(<their player>)'.
-		// Several references to 'getRelationship' can be changed to 'getApparentRelationship', perhaps most areas with
+		// Several references to 'getRelationship' can be changed to 'getApparentRelationshipOf', perhaps most areas with
 		// the exception of the AI / game engine needing the absolute truth at times.
 		if (getIsUndetectedDefector())
 		{
@@ -2366,13 +2376,46 @@ Relationship Object::getRelationship(const Object *that) const
 
 }
 
+//MODDD - other versions to do what 'getApparentRelationshipOf' does but for getting what player the other object is
+// trying to present itself as belonging to instead if applicable to the observer (trying to fool them basically).
+Player* Object::getApparentControllingPlayerOf(const Object *that) const
+{
+	return that->getApparentControllingPlayerResponse(this);
+}
+
+Player* Object::getApparentControllingPlayerResponse(const Object *requesterObj) const
+{
+	if (
+		testStatus(OBJECT_STATUS_DISGUISED) &&
+		!testStatus(OBJECT_STATUS_DETECTED) &&
+		// also, require not being allies (friends see the actual owner so the hiding mechanic is ignored then)
+		getRelationship(requesterObj) != ALLIES
+	)
+	{
+		// disguised & fools me: get the player from what who I'm presenting myself as belonging to
+		StealthUpdate *update = getStealth();
+		Player* playerDisguisedAs = ThePlayerList->getNthPlayer( update->getDisguisedPlayerIndex() );
+		return playerDisguisedAs;
+	}
+	
+	// not disguised - no trickery. A normal relationship check works.
+	return this->getControllingPlayer();
+}
+
+//MODDD - convenience feature to return whether 'this' object appears to have has the same owning player as whatever
+// we're checking against that might try to fool me with a disguise
+Bool Object::isApparentControllingPlayerOfMatch(const Object *that) const
+{
+	return this->getApparentControllingPlayerOf(that) == this->getControllingPlayer();
+}
+
 //MODDD - alt version that allows the other object ('that') to offer the player they're portraying themselves as belonging
 // to instead.
 // ex: a disguised enemy bomb truck wants you/your units to think it belongs to you or an ally of yours, use who it looks
 // like it belongs to for the relationship check with the 'this' object/player requesting it.
 // This can be called externally to get the relationship with an object that should be able to fool the caller with
 // disguises like a typical 'this->getReleationship(somethingElseToCheck)' form.
-Relationship Object::getApparentRelationship(const Object *that) const
+Relationship Object::getApparentRelationshipOf(const Object *that) const
 {
 	// leave this up to the other object since it will decide whether it should trick you
 	return that->getApparentRelationshipResponse(this);
@@ -2380,7 +2423,7 @@ Relationship Object::getApparentRelationship(const Object *that) const
 
 //MODDD - basically the inner workings for above, leaving the fooling behavior up to 'this' as that seems more sound with
 // object-oriented principles than querying the other('that') object for details over and over.
-// This version should NOT be called externally - call the plain 'getApparentRelationship' with the other object you want
+// This version should NOT be called externally - call the plain 'getApparentRelationshipOf' with the other object you want
 // to do a relationship check with in the usual order like "this->...(that)".
 // There is also the 'Defector' stuff from the retail 'Object::getRelationship', but that is low priority for now
 // Based off the idea behind 'GarrisonContain::getApparentControllingPlayer'.
@@ -2393,7 +2436,7 @@ Relationship Object::getApparentRelationshipResponse(const Object *requesterObj)
 		getRelationship(requesterObj) != ALLIES
 	)
 	{
-		// disguised & fools me: get the player from what the other's presenting itself as belonging to
+		// disguised & fools me: get the player from what who I'm presenting myself as belonging to
 		StealthUpdate *update = getStealth();
 		Player* playerDisguisedAs = ThePlayerList->getNthPlayer( update->getDisguisedPlayerIndex() );
 		return requesterObj->getControllingPlayer()->getRelationship( playerDisguisedAs->getDefaultTeam() );
@@ -3154,7 +3197,9 @@ void Object::setDisabledUntil( DisabledType type, UnsignedInt frame )
 
 	if( type == DISABLED_UNMANNED && !isKindOf( KINDOF_DRONE ) )
 	{
+		//MODDD - I feel these are important things to do
 		HijackUtil::clearHijackerInObject(this);
+		this->setStatus(MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_HIJACKED ), 0);
 
 		//strange but true: If I am a carbomb,
 		//my driver actually has a dead-man's
@@ -4327,7 +4372,9 @@ void Object::onVeterancyLevelChanged( VeterancyLevel oldLevel, VeterancyLevel ne
 
 	Bool doAnimation = provideFeedback &&
 		newLevel > oldLevel &&
-		!isKindOf(KINDOF_IGNORED_IN_GUI) &&
+		//MODDD - CONTROVERSIAL CHANGE
+		// I disagree. If the veterancy is going on for support power aircraft, go ahead and show me
+		//!isKindOf(KINDOF_IGNORED_IN_GUI) &&
 		isLogicallyVisible();
 
 	if (doAnimation)
@@ -7527,6 +7574,11 @@ void Object::doCommandButtonAtObject( const CommandButton *commandButton, Object
 				break;
 
 			case GUICOMMANDMODE_HIJACK_VEHICLE:
+				//MODDD - new custom supportif( ai )
+				{
+					ai->aiHijack( obj, cmdSource );
+				}
+				return;
 			case GUICOMMANDMODE_CONVERT_TO_CARBOMB:
 			case GUICOMMANDMODE_SABOTAGE_BUILDING:
 				if( ai )

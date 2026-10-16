@@ -115,9 +115,13 @@ Bool VeterancyCrateCollide::isValidToExecute( const Object *other ) const
 	//MODDD - only do this check if this isn't a pilot (new bounding if-then)
 	if( d->m_isPilot )
 	{
-		//MODDD - allow if we're friends! (TODO - make a preprocessor/macro setting for this)
+		//MODDD - allow if we're friends (replacing the check even without this setting so disguised units have the expected effect)
 		//if( other->getControllingPlayer() != getObject()->getControllingPlayer() )
-		if (getObject()->getApparentRelationship(other) != ALLIES)
+#if !EXTRA_ALLY_FUNCTIONALITY
+		if (!getObject()->isApparentControllingPlayerOfMatch(other))
+#else
+		if (getObject()->getApparentRelationshipOf(other) != ALLIES)
+#endif
 		{
 			//This is a pilot and we are checking to make sure the pilot is entering a vehicle on
 			//the same team. If it's not, then don't allow it.. this is particularly the case for
@@ -131,6 +135,8 @@ Bool VeterancyCrateCollide::isValidToExecute( const Object *other ) const
 			// is on the ground from being built.
 
 			//MODDD - check to see if this is something that will land for us!
+			// Note that a grounded helicopter/jet won't be using an airborne locomotor so that route would've skippped here
+			// and fallen through to 'return true' at the end of this method.
  			AIUpdateInterface *otherAI = (AIUpdateInterface*)other->getAIUpdateInterface();
 			if (otherAI->canLandToPickUpObjectWantingToEnter())
 			{
@@ -200,6 +206,33 @@ Bool VeterancyCrateCollide::executeCrateBehavior( Object *other )
 	}
 
 	return TRUE;
+}
+
+//MODDD - simple way to check if this can give veterancy to a neutral vehicle being entered anyway
+// (this can probably be re-used on entering transports in case that collision fires first)
+Bool VeterancyCrateCollide::attemptGiveVeterancySimple(Object* other) const
+{
+	const VeterancyCrateCollideModuleData *md = getVeterancyCrateCollideModuleData();
+	// Want to require being 'md->m_isPilot' for this? I feel that would be safe, but fine to skip the check either way?
+	Int levelsToGain = getLevelsToGain();
+	if (levelsToGain <= 0)
+		return false;
+
+	const ExperienceTracker *et = other->getExperienceTracker();
+	if( !et || !et->isTrainable() )
+	{
+		//If the other unit can't gain experience, then we can't help promote it!
+		return false;
+	}
+
+	if (et->getExperienceSink() != INVALID_ID)
+		return false;
+
+	if (!et || !et->canGainExpForLevel(levelsToGain))
+		return false;
+
+	other->getExperienceTracker()->gainExpForLevel( levelsToGain, ( ! md->m_isPilot) );
+	return true;
 }
 
 // ------------------------------------------------------------------------------------------------

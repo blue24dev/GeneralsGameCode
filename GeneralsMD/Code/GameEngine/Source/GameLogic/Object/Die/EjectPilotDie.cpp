@@ -110,36 +110,49 @@ void EjectPilotDie::onDie( const DamageInfo * damageInfo )
 	//MODDD - caching for several calls to 'getObject()'
 	Object* dyingObject = getObject();
 
-	//MODDD - check to see if this module should even do anything.
-	// This is a safety feature in case some 'EjectPilotDie' on this object is already handling ejecting a hijacker, and
-	// the others are set to do nothing then (ex: the 'Shockwave' mod has multiple 'EjectPilotDie' modules on the same
-	// Object in the INI in many cases).
+	//MODDD - check to see if this vehicle expects to eject a hijacker
 	NameKeyType ejectHijackerTag = dyingObject->getModuleTagNameKeyToEjectHijacker();
-	if (ejectHijackerTag != NAMEKEY_INVALID && ejectHijackerTag != this->getModuleTagNameKey())
+	if (ejectHijackerTag != NAMEKEY_INVALID)
+	{
+		// There's a hijacker in this vehicle - is this the module that's supposed to eject it?
+		if (ejectHijackerTag == this->getModuleTagNameKey())
+		{
+			// yes, proceed
+			if (dyingObject->getHijackerInMeID() != INVALID_ID)
+			{
+				// Overriding 'isDieApplicable' could make sense, but several other 'DieModule' interfaces specify this on their own
+				// so working that out everywhere looks like a mess at the moment.
+				if (!isDieApplicableHijacked(dyingObject, damageInfo))
+				{
+					// if the hijacker can't come out in the module that's supposed to eject it, time to die!
+					HijackUtil::deleteExistingHijacker(dyingObject->getHijackerInMeID());
+					return;
+				}
+
+				// Get the OCL anyway for physics to apply to the emerging hijacker just like a pilot spawned on-the-spot
+				const EjectPilotDieModuleData* d = getEjectPilotDieModuleData();
+				const ObjectCreationList* ocl = dyingObject->isSignificantlyAboveTerrain() ? d->m_oclInAir : d->m_oclOnGround;
+				Object* hijacker = TheGameLogic->findObjectByID(dyingObject->getHijackerInMeID());
+				HijackUtil::ejectHijacker(hijacker, dyingObject, ocl);
+				return;
+			}
+			// (it should not be possible to fail to eject the hijacker here, but if 'the place to do so' can't,
+			// I guess allow a fall-thru to default behavior?)
+		}
+		else
+		{
+			// stop - ejecting a pilot when somewhere else is ejecting the hijacker is bad
+			return;
+		}
+	}
+
+	//MODDD - NOTE - the rest of this route is for checking to see if ejecting a pilot is ok per retail
+	
+	if (!isDieApplicable(damageInfo))
 		return;
 
-	//MODDD - this is too condensed to be useful for here.
-	// The check for 'RequiredStatus' would block the rest of this call if a hijacker is using this 'EjectPilotDie' because
-	// in retail, 'RequiredStatus' includes 'HIJACKED' all over the place.
-	// Must have a way to exclude that part in particular if clearly going on to eject the hijacker is OK.
-	// Checking for the death-type being correct is still fine.
-	//if (!isDieApplicable(damageInfo))
-	//	return;
-	// Overriding 'isDieApplicable' could make sense, but several other 'DieModule' interfaces specify this on their own
-	// so working that out everywhere looks like a mess at the moment.
-	if (!_isDieApplicable(dyingObject, damageInfo))
-		return;
-	
 	const EjectPilotDieModuleData* d = getEjectPilotDieModuleData();
 	const ObjectCreationList* ocl = dyingObject->isSignificantlyAboveTerrain() ? d->m_oclInAir : d->m_oclOnGround;
-
-	//MODDD - check for if this has an associated hijacker - go that route instead if so.
-	if (dyingObject->getHijackerInMeID() != INVALID_ID)
-	{
-		Object* hijacker = TheGameLogic->findObjectByID(dyingObject->getHijackerInMeID());
-		HijackUtil::ejectHijacker(hijacker, dyingObject, ocl);
-		return;
-	}
 
 	Object* damageDealer = TheGameLogic->findObjectByID( damageInfo->in.m_sourceID );
 	ejectPilot(ocl, dyingObject, damageDealer);
@@ -185,27 +198,20 @@ void EjectPilotDie::loadPostProcess()
 }
 
 //MODDD - essentially a custom version of
-//   DieModule::isDieApplicable -> getDieModuleData()->isDieApplicable(getObject(), ...) -> DieModuleData::isDieApplicable(...) -> m_dieMuxData.isDieApplicable
-Bool EjectPilotDie::_isDieApplicable( const Object* obj, const DamageInfo *damageInfo )
+// DieModule::isDieApplicable -> getDieModuleData()->isDieApplicable(getObject(), ...) -> DieModuleData::isDieApplicable(...) -> m_dieMuxData.isDieApplicable
+// to use for checking whether to let a hijacker come out (obviously allow the HIJACKED status, as well as any veterancy)
+Bool EjectPilotDie::isDieApplicableHijacked( const Object* obj, const DamageInfo *damageInfo )
 {
 	const DieMuxData& muxData = getDieModuleData()->m_dieMuxData;
 
 	DeathTypeFlags deathTypes = muxData.m_deathTypes;
-	VeterancyLevelFlags veterancyLevels;
+	// forced to allow all veterancy levels
+	VeterancyLevelFlags veterancyLevels = VETERANCY_LEVEL_FLAGS_ALL;
 	ObjectStatusMaskType exemptStatus = muxData.m_exemptStatus;
 	ObjectStatusMaskType requiredStatus = muxData.m_requiredStatus;
-	
-	if (obj->getHijackerInMeID() != INVALID_ID)
-	{
-		// hijacked-thing/hijacker's veterancy has no impact on being able to come out
-		veterancyLevels = VETERANCY_LEVEL_FLAGS_ALL;
-		// Ignore the 'HIJACKED' status
-		exemptStatus.set(OBJECT_STATUS_HIJACKED, 0);
-	}
-	else
-	{
-		veterancyLevels = muxData.m_veterancyLevels;
-	}
+
+	// allow this obviously
+	exemptStatus.set(OBJECT_STATUS_HIJACKED, 0);
 
 	return isDieApplicableCustom(obj, damageInfo, deathTypes, veterancyLevels, exemptStatus, requiredStatus);
 }

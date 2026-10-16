@@ -48,6 +48,11 @@
 #include "GameLogic/Weapon.h"
 #include "GameLogic/LogicRandomValue.h"
 
+//MODDD
+#include "GameLogic/Module/VeterancyCrateCollide.h"
+#include "GameLogic/ExperienceTracker.h"
+#include "GameLogic/HijackUtil.h"
+
 const Real DEFAULT_MASS = 1.0f;
 
 const Real DEFAULT_SHOCK_YAW = 0.05f;
@@ -1269,8 +1274,39 @@ void PhysicsBehavior::onCollide( Object *other, const Coord3D *loc, const Coord3
 			//of the infantry to the vehicle... so the designer can control the vehicle with their scripts.
 			TheScriptEngine->transferObjectName( obj->getName(), other );
 
+			//MODDD - for a bit of fun, check to see if the unit entering the vehicle is a hijacker.
+			if (obj->hasHijackerCollide())
+			{
+				// Some bare minimum bonuses from 'ConvertToHijackedVehicleCrateCollide.h' before the ejection support check
+				other->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_HIJACKED ) );
+
+				// Copy veterancy to the vehicle
+				ExperienceTracker *targetExp = other->getExperienceTracker();
+				ExperienceTracker *jackerExp = obj->getExperienceTracker();
+				if ( targetExp && jackerExp )
+				{
+					if ( targetExp->isTrainable() )
+					{
+						targetExp->setVeterancyLevel( jackerExp->getVeterancyLevel(), FALSE );
+					}
+				}
+				
+				// May as well take advantage of ejection support if it's there
+				if (HijackUtil::checkForTargetEjectSupport(obj, other))
+				{
+					// don't fall through to delete this
+					return;
+				}
+			}
+			// if not, can we at least contribute veterancy anyway?
+			else if (obj->getVeterancyCrateCollide())
+			{
+				obj->getVeterancyCrateCollide()->attemptGiveVeterancySimple(other);
+				// still fall thru to be deleted
+			}
+
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(65);
+			g_destroyObjectSource.push_back(65);
 #endif
 			TheGameLogic->destroyObject( obj );
 		}

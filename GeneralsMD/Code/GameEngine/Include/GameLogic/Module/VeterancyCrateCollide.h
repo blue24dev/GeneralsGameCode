@@ -79,6 +79,10 @@ public:
 	VeterancyCrateCollide( Thing *thing, const ModuleData* moduleData );
 	// virtual destructor prototype provided by memory pool declaration
 
+	//MODDD
+	virtual VeterancyCrateCollide* getVeterancyCrateCollide() override { return this; }
+	Bool attemptGiveVeterancySimple(Object* other) const;
+
 protected:
 
 	/// This allows specific vetoes to certain types of crates and their data

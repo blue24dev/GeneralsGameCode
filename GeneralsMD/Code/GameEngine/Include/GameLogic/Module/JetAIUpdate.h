@@ -62,8 +62,6 @@ public:
 	Real										m_lockonAngleSpin;								///< how many times to spin around it
 	Real										m_lockonBlinky;
 	UnsignedInt							m_returnToBaseIdleTime;						///< if we're idle for this long, return to base
-	//MODDD - extra cached feature decided by the engine, not provided by INI
-	Bool m_movesLikeHelicopter;
 
 	JetAIUpdateModuleData();
 	static void buildFieldParse(MultiIniFieldParse& p);

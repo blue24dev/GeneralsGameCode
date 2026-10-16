@@ -868,6 +868,15 @@ StateReturnType DeliveringState::update() // Kick a dude out every so often
 							}
 							else
 							{
+								//MODDD - bugfix for some ability attacks not giving EXP to their caller, sometimes not even the player
+								// Note that most interactions with a 'ProjectileUpdate' module call 'projectileLaunchAtObjectOrPosition'.
+								// This skips to the 'projectileFireAtObjectOrPosition' call, which means the 'launcherID' of the projectile
+								// is never set - this is important for sending experience points to the right place (or at all).
+								// See 'WeaponTemplate::dealDamageInternal':
+								//   damageInfo.in.m_sourceID = pui->projectileGetLauncherID()
+								// This will set 'm_sourceID' to INVALID_ID if the launcher ID is never set.
+								pui->setLauncherID(owner->getID());
+
 								VeterancyLevel v = owner->getVeterancyLevel();
 								pui->projectileFireAtObjectOrPosition( nullptr, ai->getTargetPos(), weaponTemplate, weaponTemplate->getProjectileExhaust(v) );
 								projectileFired = true;

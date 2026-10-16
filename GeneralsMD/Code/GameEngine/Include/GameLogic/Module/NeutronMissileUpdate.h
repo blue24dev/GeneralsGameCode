@@ -103,6 +103,8 @@ public:
 	virtual const Coord3D *getVelocity() const { return &m_vel; }		///< get current velocity
 	virtual void setFramesTillCountermeasureDiversionOccurs( UnsignedInt frames ) override {}
 	virtual void projectileNowJammed() override {}
+	//MODDD - new
+	virtual void setLauncherID(ObjectID launcherID) override {m_launcherID = launcherID;}
 
 	virtual UpdateSleepTime update() override;
 	virtual void onDelete() override;

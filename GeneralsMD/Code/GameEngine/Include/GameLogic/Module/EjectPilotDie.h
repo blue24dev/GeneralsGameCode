@@ -71,6 +71,6 @@ public:
 	virtual EjectPilotDie* getEjectPilotDie() override {return this; }
 
 protected:
-	Bool _isDieApplicable( const Object* dyingObject, const DamageInfo *damageInfo );
+	Bool isDieApplicableHijacked( const Object* dyingObject, const DamageInfo *damageInfo );
 
 };

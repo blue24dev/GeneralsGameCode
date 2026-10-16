@@ -151,7 +151,9 @@ void ejectHijacker(Object* hijacker, Object* dyingObject, const ObjectCreationLi
 
 	//MODDD - finally, remove the association with the object so it doesn't try to kill the hijacker when it's deleted
 	dyingObject->rawSetHijackerInMeID(INVALID_ID);
-	dyingObject->setModuleTagNameKeyToEjectHijacker(NAMEKEY_INVALID);
+	// Not so fast! Other eject modules might be getting processed and need to know not to eject a pilot because this object
+	// was expecting to eject or already has ejected a hijacker
+	//dyingObject->setModuleTagNameKeyToEjectHijacker(NAMEKEY_INVALID);
 }
 
 //MODDD - Check to see if there is some module that supports pilot ejection - if this returns 'true', it can be assumed
@@ -240,6 +242,24 @@ Bool checkForTargetEjectSupport(Object* hijacker, Object* other)
 	//while within the vehicle
 	hijacker->setStatus( MAKE_OBJECT_STATUS_MASK3( OBJECT_STATUS_NO_COLLISIONS, OBJECT_STATUS_MASKED, OBJECT_STATUS_UNSELECTABLE ) );
 
+	//MODDD - bugfix for things trying to chase a hijacker that's already made intangible on hijacking a vehicle with
+	// ejection support. This is evident when a hijacker (visible while moving) attracks fire from 2 tanks, hijacks one,
+	// and the other still-enemy tank aggressively (though futily) rams into the hijacked tank, as though to try and crush
+	// the hijacker inside.
+	// Borrowed from the end of 'Object::onDie' to transfer attackers from one thing to another (this time to 'nothing').
+	// I still think looping through every single thing in the game is a bit much, but, oh well.
+	// ------
+	ObjectID hijackerID = hijacker->getID();
+	for ( Object *obj = TheGameLogic->getFirstObject(); obj; obj = obj->getNextObject() )
+	{
+		AIUpdateInterface* ai = obj->getAI();
+		if (!ai)
+				continue;
+
+		ai->transferAttack( hijackerID, INVALID_ID );
+	}
+	// ------
+
 	// THIS BLOCK HIDES THE HIJACKER AND REMOVES HIM FROM PARTITION MANAGER
 	// remove object from its group (if any)
 	hijacker->leaveGroup();
@@ -273,6 +293,8 @@ void clearHijackerInObject(Object* obj)
 {
 	// includes a check to kill the hijacker if present, so this works out nicely
 	obj->setHijackerInMeID(INVALID_ID);
+	// Clearing this here is OK - depiloting a vehicle calls here which kills the association with a hijacker so a pilot
+	// can come out again if remanned & killed later w/ veterancy
 	obj->setModuleTagNameKeyToEjectHijacker(NAMEKEY_INVALID);
 }
 

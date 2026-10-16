@@ -267,6 +267,8 @@ public:
 	virtual Bool projectileHandleCollision(Object *other) = 0;
 	virtual void setFramesTillCountermeasureDiversionOccurs( UnsignedInt frames ) = 0; ///< Number of frames till missile diverts to countermeasures.
 	virtual void projectileNowJammed() = 0;
+	//MODDD - new
+	virtual void setLauncherID(ObjectID launcherID) = 0;
 };
 
 //-------------------------------------------------------------------------------------------------

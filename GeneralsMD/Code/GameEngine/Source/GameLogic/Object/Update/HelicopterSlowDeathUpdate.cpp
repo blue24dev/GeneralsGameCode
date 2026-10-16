@@ -598,22 +598,34 @@ void HelicopterSlowDeathBehavior::attemptEjectPilot(Object* dyingObject)
 	//MODDD - check for that
 	if (m_pilotEjectedYet)
 		return;
-
+	
+	//MODDD - NOTE - could be a 'dyingObject->isDisabledByType(DISABLED_UNMANNED)' check here, but the de-piloting call
+	// should have reached 'Object::setDisabledUntil' which sees 'DISABLED_UNMANNED' and removes veterancy (no pilot),
+	// and now has changes to destroy a hijacker associated with the thing depiloted if applicable.
+	
+	//MODDD - check to see if this vehicle expects to eject a hijacker
 	NameKeyType ejectHijackerTag = dyingObject->getModuleTagNameKeyToEjectHijacker();
-	if (ejectHijackerTag != NAMEKEY_INVALID && ejectHijackerTag != this->getModuleTagNameKey())
-		return;
-
-	// NOTE - could be a 'dyingObject->isDisabledByType(DISABLED_UNMANNED)' check here, but the de-piloting call should have
-	// reached 'Object::setDisabledUntil' which sees 'DISABLED_UNMANNED' and removes veterancy (no pilot), and now has
-	// changes to destroy a hijacker associated with the thing depiloted if applicable
-
-	//MODDD - check for there being an associated hijacker to come out instead
-	if (dyingObject->getHijackerInMeID() != INVALID_ID)
+	if (ejectHijackerTag != NAMEKEY_INVALID)
 	{
-		m_pilotEjectedYet = TRUE;
-		Object* hijacker = TheGameLogic->findObjectByID(dyingObject->getHijackerInMeID());
-		HijackUtil::ejectHijacker( hijacker, dyingObject, modData->m_oclEjectPilot );
-		return;
+		// There's a hijacker in this vehicle - is this the module that's supposed to eject it?
+		if (ejectHijackerTag == this->getModuleTagNameKey())
+		{
+			// yes, proceed
+			if (dyingObject->getHijackerInMeID() != INVALID_ID)
+			{
+				m_pilotEjectedYet = TRUE;
+				Object* hijacker = TheGameLogic->findObjectByID(dyingObject->getHijackerInMeID());
+				HijackUtil::ejectHijacker( hijacker, dyingObject, modData->m_oclEjectPilot );
+				return;
+			}
+			// (it should not be possible to fail to eject the hijacker here, but if 'the place to do so' can't,
+			// I guess allow a fall-thru to default behavior?)
+		}
+		else
+		{
+			// stop - ejecting a pilot when somewhere else is ejecting the hijacker is bad
+			return;
+		}
 	}
 
 	if( dyingObject->getVeterancyLevel() > LEVEL_REGULAR )
