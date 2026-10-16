@@ -121,12 +121,12 @@ Bool JetAIUpdate::canLandToPickUpObjectWantingToEnter()
 // The point of this is to decide if the aircraft should be able to land to take a pilot even if it's using 'JetAIUpdate'
 // instead of 'ChinookAIUpdate'. If it isn't forced to be circling around a point when stopped, that's likely a good
 // enough sign.
-//MODDD - TODO - deciding this has since been cached at startup - if this can change significantly during the lifetime
-// of a particular game object, how to handle that would need to be done here - ex: check if an upgrade / some ability
-// changes the decision.
+//MODDD - TODO - if a mod could ever let a jet-like aircraft use ChinookAI, it would need to do a check like this before
+// allowing entry for units so it can know to reject that on the basis of not being able to suddenly drop in-place to
+// let something enter.
 Bool JetAIUpdate::movesLikeHelicopter() const
 {
-	return getJetAIUpdateModuleData()->m_movesLikeHelicopter;
+	return (getObject()->isUsingAirborneLocomotor() && getCurLocomotor()->getMinSpeed() == 0);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -2022,9 +2022,6 @@ JetAIUpdateModuleData::JetAIUpdateModuleData()
 	m_lockonFreq = 0.5;
 	m_lockonAngleSpin = 720;
 	m_returnToBaseIdleTime = 0;
-
-	//MODDD
-	m_movesLikeHelicopter = false;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -2354,12 +2351,12 @@ UpdateSleepTime JetAIUpdate::update()
 	//MODDD - based off a block in 'ChinookAIUpdate::update' that also checks 'waitingToEnterOrExit' several times
 	// Also, keep in mind 'isIdle()' will fail if currently docked at an air field for repairs
 	// ------------------------
-	if (movesLikeHelicopter() && AIUpdateInterface::isIdle() && !getFlag(HAS_PENDING_COMMAND))
+	if (jet->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) && AIUpdateInterface::isIdle() && !getFlag(HAS_PENDING_COMMAND))
 	{
 		if (waitingToEnterOrExit)
 		{
 			// since this must be idle, I don't think checking for '!getFlag(LANDING_IN_PROGRESS)' is needed
-			if (getFlag(ALLOW_AIR_LOCO))
+			if (movesLikeHelicopter() && getFlag(ALLOW_AIR_LOCO))
 			{
 				getStateMachine()->clear();
 				setLastCommandSource( CMD_FROM_AI );

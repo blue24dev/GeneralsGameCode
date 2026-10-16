@@ -94,6 +94,8 @@ public:
 	virtual ObjectID projectileGetLauncherID() const override { return m_launcherID; }
 	virtual void setFramesTillCountermeasureDiversionOccurs( UnsignedInt frames ) override {}
 	virtual void projectileNowJammed() override {}
+	//MODDD - new
+	virtual void setLauncherID(ObjectID launcherID) override {m_launcherID = launcherID;}
 
 protected:
 

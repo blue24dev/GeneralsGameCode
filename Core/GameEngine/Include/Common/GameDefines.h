@@ -415,6 +415,17 @@
 // is no longer possible. Changes most checks that forbid this from being strictly allies to more broadly being non-enemies.
 #define DONT_RUN_OVER_NEUTRAL_UNITS 1
 
+// If on, extra functionality related to interactions with allied players such as seeing the contents of or garrisoning
+// units in ally-owned transports/buildings, evacuating your units from their things or any allied units from yours,
+// putting pilots in their vehicles, finishing under-construction allied buildings with your workers/dozers, etc.,
+// will be added.
+// Several of these things could be thought of as carry-overs from Red Alert 2, at least as of the ARES DLL.
+// Same behavior as retail when off (a lot of logic only works for being the same player).
+// Note: seeing the ground decals of called-in support powers by allied players is in regardless of this setting, I fail
+// to see why this would ever be unwanted.
+// NOTE - this feature is in progress, most of this isn't in yet.
+#define EXTRA_ALLY_FUNCTIONALITY 1
+
 // Setting added in the hopes of preventing a major source of hardware lag: adding to a continually building
 // '<documents>/Command and... Data/Replays/00000000.REP' file for a replay the user may never intend to save/look at anyway.
 // Assuming the issue is what I think it is (hard drive writes becoming obnoxious in long-running games,

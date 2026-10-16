@@ -256,14 +256,6 @@ void HelixContain::addToContainList( Object *obj )
 {
   if ( obj->isKindOf( KINDOF_PORTABLE_STRUCTURE ) && m_portableStructureID == INVALID_ID)
   {
-    if ( Object *portable = getPortableStructure() )
-    {
-#if EXTRA_DEBUG_HELP
-		  g_destroyObjectSource.push_back(37);
-#endif
-      TheGameLogic->destroyObject( portable );
-    }
-
     m_portableStructureID = obj->getID();
     obj->friend_setContainedBy( getObject() );//fool portable into thinking my object is his container
 
@@ -281,14 +273,6 @@ void HelixContain::addToContain( Object *obj )
 {
   if ( obj->isKindOf( KINDOF_PORTABLE_STRUCTURE ) && m_portableStructureID == INVALID_ID)
   {
-    if ( Object *portable = getPortableStructure() )
-    {
-#if EXTRA_DEBUG_HELP
-		  g_destroyObjectSource.push_back(38);
-#endif
-      TheGameLogic->destroyObject( portable );
-    }
-
     m_portableStructureID = obj->getID();
     obj->friend_setContainedBy( getObject() );//fool portable into thinking my object is his container
 
@@ -312,21 +296,16 @@ void HelixContain::removeFromContain( Object *obj, Bool exposeStealthUnits )
 {
   if ( obj->isKindOf( KINDOF_PORTABLE_STRUCTURE ) && obj->getID() == m_portableStructureID )
 	{
-    Object *portable = getPortableStructure();
-    if ( portable )
-    {
 #if !RETAIL_COMPATIBLE_CRC
-      portable->friend_setContainedBy(nullptr);
+    obj->friend_setContainedBy(nullptr);
 #endif
 
 #if !(RETAIL_COMPATIBLE_CRC || PRESERVE_NO_XP_FROM_HELIX_ATTACHMENT_KILLS)
-      if ( portable->getExperienceTracker() )
-        portable->getExperienceTracker()->setExperienceSink( INVALID_ID );
+    if ( obj->getExperienceTracker() )
+      obj->getExperienceTracker()->setExperienceSink( INVALID_ID );
 #endif
 
-      m_portableStructureID = INVALID_ID;
-      //portable->kill();
-    }
+    m_portableStructureID = INVALID_ID;
   }
   else
   {
@@ -362,12 +341,8 @@ const Object *HelixContain::friend_getRider() const
 //-------------------------------------------------------------------------------------------------
 Bool HelixContain::isEnclosingContainerFor( const Object *obj ) const
 {
-  if ( m_portableStructureID == obj->getID() )
-  {
-    const Object *portableAsRider = TheGameLogic->findObjectByID( m_portableStructureID );
-    if ( portableAsRider == obj )
-      return FALSE;
-  }
+  if ( m_portableStructureID != INVALID_ID && m_portableStructureID == obj->getID() )
+    return FALSE;
 
 
   return TransportContain::isEnclosingContainerFor( obj );

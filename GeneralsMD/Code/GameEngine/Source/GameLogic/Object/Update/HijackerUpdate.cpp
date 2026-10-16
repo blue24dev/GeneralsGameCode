@@ -53,8 +53,9 @@
 HijackerUpdate::HijackerUpdate( Thing *thing, const ModuleData *moduleData ) : UpdateModule( thing, moduleData )
 {
 	m_targetID = INVALID_ID;
-	setUpdate( FALSE );
-	setIsInVehicle( FALSE );
+	//MODDD - removed
+	//setUpdate( FALSE );
+	//setIsInVehicle( FALSE );
 	//MODDD - removed
 	//m_wasTargetAirborne = false;
 	//m_ejectPos.zero();
@@ -73,12 +74,15 @@ UpdateSleepTime HijackerUpdate::update()
 {
 /// @todo srj use SLEEPY_UPDATE here
 
-	if ( ! m_update) // have not flagged for updating
+	//MODDD - removed field was 1-1 with 'm_targetID' being invalid or not
+	//if ( ! m_update) // have not flagged for updating
+	if (m_targetID == INVALID_ID)
 	{
 		return UPDATE_SLEEP_NONE;
 	}
 
-	if (m_isInVehicle)
+	//MODDD - removed field, 1-1 with 'm_targetID' being valid
+	//if (m_isInVehicle)
 	{
 		Object *obj = getObject();
 
@@ -127,19 +131,23 @@ UpdateSleepTime HijackerUpdate::update()
 			// This call will be left to 'EjectPilotDie' in the hijacked vehicle.
 
 			setTargetObject( nullptr );
-			setIsInVehicle( FALSE );
-			setUpdate( FALSE );
+			//MODDD - above is enough
+			//setIsInVehicle( FALSE );
+			//setUpdate( FALSE );
 			//MODDD - removed
 			//m_wasTargetAirborne = false;
 
 		}
 
 	}
+	//MODDD - nope
+	/*
 	else	// not in vehicle
 	{
 		//MODDD - removed
 		//m_wasTargetAirborne = false;
 	}
+	*/
 
 	return UPDATE_SLEEP_NONE;
 }
@@ -151,7 +159,9 @@ void HijackerUpdate::setTargetObject( const Object *object )
   if( object )
   {
     m_targetID = object->getID();
-
+		
+		//MODDD - whoops, looks like I did this - see 'HijackUtil.cpp': 'checkForTargetEjectSupport'
+		// ---
 		// here we also test the target to see whether it ejects pilots
 		// when it dies... if so, stores a pointer to that diemoduleinterface
 		// nullptr if not...
@@ -222,10 +232,12 @@ void HijackerUpdate::xfer( Xfer *xfer )
 	//xfer->xferCoord3D( &m_ejectPos );
 
 	// update
-	xfer->xferBool( &m_update );
+	//MODDD - removed
+	//xfer->xferBool( &m_update );
 
 	// is in vehicle
-	xfer->xferBool( &m_isInVehicle );
+	//MODDD - removed
+	//xfer->xferBool( &m_isInVehicle );
 
 	// was target airborne
 	//MODDD - removed

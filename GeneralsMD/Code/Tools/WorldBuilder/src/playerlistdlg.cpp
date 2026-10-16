@@ -527,6 +527,7 @@ void PlayerListDlg::updateTheUI()
 			{
 				//MODDD - 'rgb' remains garbage memory if it's never set (ex: neutral player, no player template 'pt').
 				// Use a default of white instead. This is more accurate to what would be seen for a truly neutral-controlled unit.
+				// In fact, don't take my word for it - see Player.cpp: "#define NEUTRAL_PLAYER_COLOR 0xffffffff".
 				rgb.setFromInt(0xFFFFFFFF);
 			}
 		}

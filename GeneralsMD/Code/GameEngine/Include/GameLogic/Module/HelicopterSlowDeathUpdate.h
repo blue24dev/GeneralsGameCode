@@ -100,11 +100,10 @@ public:
 
 	//MODDD - new
 	Bool hasPilotEjectSupport();
-	void setHijacker(Object* hijacker);
 
 protected:
 	//MODDD - new
-	void attemptEjectPilot(Object* copter);
+	void attemptEjectPilot(Object* dyingObject);
 
 protected:
 
@@ -125,7 +124,5 @@ protected:
 	// This fixes the minor bug of grounded / close-to-the-ground helicopters failing to eject a pilot
 	// (ex: destroyed during repairs)
 	Bool m_pilotEjectedYet;
-	//MODDD - record a hijacker to be re-drawn/made re-tangible in place of a pilot
-	ObjectID m_hijackerID;
 
 };

@@ -1803,10 +1803,8 @@ GameMessage::Type CommandTranslator::handleGuiCommand( const CommandButton *comm
 			{
 				//MODDD - custom message for hijack
 				// ---
-				/*
-				case GUICOMMANDMODE_CONVERT_TO_CARBOMB:
-				case GUICOMMANDMODE_HIJACK_VEHICLE:
-				*/
+				//case GUICOMMANDMODE_CONVERT_TO_CARBOMB:
+				//case GUICOMMANDMODE_HIJACK_VEHICLE:
 				// ---
 				case GUICOMMANDMODE_HIJACK_VEHICLE:
 					msgType = createHijackMessage( draw, type );

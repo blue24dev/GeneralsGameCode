@@ -310,47 +310,6 @@ void makeNonCivilianGarrisonableStructureCapturableHack(ThingTemplate* _this)
 	}
 }
 
-//MODDD - check if it's suspected this thing moves like a helicopter (implys it already has KINDOF_AIRCRAFT).
-// Check its locomotors to see if there is one for moving through the air with a min-speed of 0.
-// That's something I expect to be able to land to take a pilot even if it doesn't use 'ChinookAIUpdate'.
-Bool movesLikeHelicopterCheck(const ThingTemplate* _thing, const AIUpdateModuleData* aiUpdateModuleData)
-{
-	// (old stuff from when this checked for the object every time)
-	// this requirement should be ok, but just in case of mods doing something weird, leaving it out
-	//if (getObject()->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
-	
-	// want to get the locomotor this thing normally uses for movement, not necessarily the current one
-	// (ex: sitting jets often use a different one that isn't reliable for what this is checking for)
-	//const Locomotor* loc = getCurLocomotor();
-
-	// old way using the current object to get locomotor info:
-	//const LocomotorTemplateVector* locTemplateVector = getObject()->getAI()->getAIUpdateModuleData()->findLocomotorTemplateVector(LOCOMOTORSET_NORMAL);
-	// ---
-	// Keeping track of this 'LocomotorTemplateVector' and the 'LocomotorSet' class can be confusing.
-	// See 'AIUpdate::chooseLocomotorSetExplicit'. It builds the current LocomotorSet instance out of the fitting template
-	// vector for that module data. I can only assume there is a vector of locomotors per condition (NORMAL/PANIC/etc.) so that
-	// a unit's mood can impact what group of locomotors it can choose between (the 'NORMAL' vector = one for land, one for water, etc.).
-	// TODO - 'LOCOMOTORSET_NORMAL_UPGRADED'? how does a unit decide to use that one instead?
-	// that check can be for runtime (JetAIUpdate::movesLikeHelicopter) to check for a separte cached value for that set then
-	const LocomotorTemplateVector* locTemplateVector = aiUpdateModuleData->findLocomotorTemplateVector(LOCOMOTORSET_NORMAL);
-
-	LocomotorTemplateVector::const_iterator itr;
-	for (itr = locTemplateVector->begin(); itr != locTemplateVector->end(); ++itr)
-	{
-		const LocomotorTemplate* testLoc = (*itr);
-		if (testLoc->getSurfaces() & LOCOMOTORSURFACE_AIR)
-		{
-			// if this one has a min speed of 0, good enough for me
-			if (testLoc->getMinSpeed() == 0)
-			{
-				return true;
-			}
-			//break;
-		}
-	}
-	return false;
-}
-
 // Go through a ThingTemplate that's recently been parsed from the INI files
 // (ex: 'AmericaVehicle.ini' -> 'Object AmericaVehicleHumvee')
 // and see if it has any stats or modules that should be adjusted for either bug fixes or additional attribute edits
@@ -828,16 +787,6 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 
 	if (_this->isKindOf(KINDOF_AIRCRAFT))
 	{
-		if (foundJetAIUpdateBehavior)
-		{
-			// TODO - check the toxin general cropduster aircraft in the Contra mod.
-			// does it trip this and think it moves like a helicopter cuz of a ground locomotor? not sure
-			if (movesLikeHelicopterCheck(_this, aiUpdateModuleData))
-			{
-				((JetAIUpdateModuleData*)aiUpdateModuleData)->m_movesLikeHelicopter = true;
-			}
-		}
-
 		// checks for 'ChinookAIUpdate' too for combat(trainable) helicopters that actually use that instead of 'JetAIUpdate'
 		if (foundJetAIUpdateBehavior || foundChinookAIUpdateBehavior)
 		{

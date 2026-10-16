@@ -74,8 +74,9 @@ public:
 
 	void setTargetObject( const Object *object );
 	Object* getTargetObject() const;
-	void setUpdate(Bool u ) {m_update = u;}
-	void setIsInVehicle(Bool i ) {m_isInVehicle = i;}
+	//MODDD - removed
+	//void setUpdate(Bool u ) {m_update = u;}
+	//void setIsInVehicle(Bool i ) {m_isInVehicle = i;}
 
 	//MODDD
 	const AsciiString& getParachuteName() const;
@@ -86,8 +87,9 @@ private:
 	//MODDD - tracking this never seemed necessary? This would always be the same as the hijacker's most recently set
 	// position anyway
 	//Coord3D	 m_ejectPos;
-	Bool     m_update;
-	Bool		 m_isInVehicle;
+	//MODDD - no need for these
+	//Bool     m_update;
+	//Bool		 m_isInVehicle;
 	//MODDD - no longer needed
 	//Bool		 m_wasTargetAirborne;
 

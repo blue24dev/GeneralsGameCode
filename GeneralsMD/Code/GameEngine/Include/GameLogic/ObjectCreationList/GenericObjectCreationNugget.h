@@ -46,7 +46,8 @@ public:
 	virtual Object* create_RECoMCCiO(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const override;
 #endif
 
-	//MODDD
+	//MODDD - public so hijacker-related script can apply the initial force a particular OCL would extert on a spawned
+	// object to something existing instead
 	void applyDisposition(Object* obj, const Coord3D *pos, const Matrix3D *mtx, Real orientation, const Object* sourceObj) const;
 
 	static const FieldParse* getCommonFieldParse();
