@@ -1329,7 +1329,9 @@ BEGIN
                     225,117,8
 END
 
-IDD_EXPORT_SCRIPTS_OPTIONS DIALOG DISCARDABLE  0, 0, 186, 153
+//MODDD - height increased: 153 -> 170 to better see the bottom two buttons - did this(as-is) look fine in Windows XP or something?
+// Also, not sure the rhyme or reason to this because the impact on pixel count from fudging the size isn't 1-1 with the screen... great
+IDD_EXPORT_SCRIPTS_OPTIONS DIALOG DISCARDABLE  0, 0, 186, 170
 STYLE DS_MODALFRAME | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "Export Script Options"
 FONT 8, "MS Sans Serif"

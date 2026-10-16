@@ -184,7 +184,7 @@ void BattlePlanUpdate::onDelete()
 		if( obj )
 		{
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource.push_back(58);
+			g_destroyObjectSource.push_back(56);
 #endif
 			TheGameLogic->destroyObject( obj );
 		}

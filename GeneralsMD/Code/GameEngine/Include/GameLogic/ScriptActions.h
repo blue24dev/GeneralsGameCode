@@ -140,6 +140,8 @@ protected:
 	void doTeamAttackArea(const AsciiString& teamName, const AsciiString& areaName);
 	void doTeamAttackNamed(const AsciiString& teamName, const AsciiString& unitName);
 	void doNamedEnterNamed(const AsciiString& unitSrcName, const AsciiString& unitDestName);
+	//MODDD
+	void doNamedGetRepairedAtNamed(const AsciiString& unitSrcName, const AsciiString& unitDestName);
 	void doTeamEnterNamed(const AsciiString& teamName, const AsciiString& unitDestName);
 	void doNamedExitAll(const AsciiString& unitName);
 	void doTeamExitAll(const AsciiString& teamName);

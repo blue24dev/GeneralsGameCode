@@ -67,6 +67,7 @@
 
 #if USE_STD_FROM_CHARS_PARSING
 #include <charconv>
+#include <cstdlib>
 #include <string_view>
 #include <type_traits>
 #endif
@@ -1766,20 +1767,38 @@ void INI::initFromINIMulti_allowUnknown( void *what, const MultiIniFieldParse& p
 #if USE_STD_FROM_CHARS_PARSING
 
 template <typename Type>
-Type scanType(std::string_view token)
+Type scanType(const char* tokenString)
 {
+	std::string_view token(tokenString);
 	DEBUG_ASSERTCRASH(!token.empty(), ("token is not expected to be empty"));
 
 	// Unlike sscanf, std::from_chars cannot parse "+".
-	// Consume the plus symbol to accommodate custom ini files that have numbers prefixed with a plus.
-	if (token[0] == '+')
-	{
-		token.remove_prefix(1);
-	}
+	// Skip it for from_chars while preserving the original token for the fallback.
+	const size_t tokenOffset = (token[0] == '+');
+	if (tokenOffset && token.size() > 1 && token[1] == '-')
+		throw INI_INVALID_DATA;
 
 	// Unlike sscanf, std::from_chars cannot parse "-" as unsigned integer.
 	std::conditional_t<std::is_integral_v<Type>, Int64, Type> result{};
-	const auto [ptr, ec] = std::from_chars(token.data(), token.data() + token.size(), result);
+	const auto [ptr, ec] = std::from_chars(token.data() + tokenOffset, token.data() + token.size(), result);
+
+	// Preserve legacy range handling with defined strto* conversions.
+	if (ec == std::errc::result_out_of_range)
+	{
+		char* end;
+		Type value;
+		if constexpr (std::is_floating_point_v<Type>)
+			value = std::strtof(tokenString, &end);
+		else if constexpr (std::is_signed_v<Type>)
+			value = static_cast<Type>(std::strtoll(tokenString, &end, 10));
+		else
+			value = static_cast<Type>(std::strtoull(tokenString, &end, 10));
+
+		if (end == tokenString)
+			throw INI_INVALID_DATA;
+
+		return value;
+	}
 
 	if (ec != std::errc{})
 	{
@@ -1952,61 +1971,7 @@ void INI::parseDurationReal( INI *ini, void * /*instance*/, void *store, const v
 // parse a duration in msec and convert to duration in integral number of frames, (unsignedint) rounding UP
 void INI::parseDurationUnsignedInt( INI *ini, void * /*instance*/, void *store, const void* /*userData*/ )
 {
-	//MODDD - in-between assignment for below - see notes there
-	const char* currentToken = ini->getNextToken();
-	
-	//MODDD - several mods have exaggerated durations made out of large numbers of repeated 9's.
-	// In several cases this exceeds the limit of a 32-bit unsigned int.
-	// Just do a little quality control to avoid a crash...
-#if USE_STD_FROM_CHARS_PARSING
-	//static const int maxDigitCount = std::floor(std::log10(UINT_MAX)) + 1;
-	static const std::string UINT_MAX_as_str = std::to_string(UINT_MAX);
-	static const int maxDigitCount = UINT_MAX_as_str.length();
-	//int currentTokenDigitCount = std::strlen(currentToken);
-	std::string_view tokenStr(currentToken);
-	// mimick what's seen later in scanUnsignedInt -> scanType
-	if (tokenStr[0] == '+')
-	{
-		tokenStr.remove_prefix(1);
-	}
-
-	// If this would be invalid for a uint32, skip parsing and just return the maximum possible value then.
-	// Clearly the intent & would've been legal in the original w/o being specifically restricted here as-is I'm guessing.
-	if (tokenStr.length() > maxDigitCount)
-	{
-		*(UnsignedInt *)store = UINT_MAX;
-		return;
-	}
-	else if (tokenStr.length() == maxDigitCount)
-	{
-		// check to see if this is too big on a digit-by-digit basis then, in order of most significant digit first
-		int i;
-		for (i = 0; i < tokenStr.length(); ++i)
-		{
-			// (this is ASCII comparison, which still works - ex: '2' < '7' is still logically sound)
-			if (tokenStr[i] > UINT_MAX_as_str[i])
-			{
-				// exceeds max - clip to max still!
-				*(UnsignedInt *)store = UINT_MAX;
-				return;
-			}
-			else if (tokenStr[i] == UINT_MAX_as_str[i])
-			{
-				// matches means being larger/smaller can't be determined from this digit.
-				// check the next significant digit (next iteration)
-			}
-			else
-			{
-				// less than the max in this digit - rest can only be less so fall-thru
-				// to normal parsing then
-				break;
-			}
-		}
-	}
-#endif
-
-	//MODDD - 'ini->getNextToken()' -> 'currentToken', saved above in advance for the aforementioned "quality control"
-	UnsignedInt val = scanUnsignedInt(currentToken);
+	UnsignedInt val = scanUnsignedInt(ini->getNextToken());
 	*(UnsignedInt *)store = (UnsignedInt)ceilf(ConvertDurationFromMsecsToFrames((Real)val));
 }
 

@@ -1591,6 +1591,28 @@ void ScriptActions::doNamedEnterNamed(const AsciiString& unitSrcName, const Asci
 	aiUpdate->aiEnter(theTransport, CMD_FROM_SCRIPT);
 }
 
+//MODDD - clone of 'doNamedEnterNamed' for going to a structure for repairs
+void ScriptActions::doNamedGetRepairedAtNamed(const AsciiString& unitSrcName, const AsciiString& unitDestName)
+{
+	Object *theSrcUnit = TheScriptEngine->getUnitNamed( unitSrcName );
+	if (!theSrcUnit) {
+		return;
+	}
+
+	Object *theTransport = TheScriptEngine->getUnitNamed( unitDestName );
+	if (!theTransport) {
+		return;
+	}
+
+	AIUpdateInterface* aiUpdate = theSrcUnit->getAIUpdateInterface();
+	if (!aiUpdate) {
+		return;
+	}
+	theSrcUnit->leaveGroup();
+	aiUpdate->chooseLocomotorSet(LOCOMOTORSET_NORMAL);
+	aiUpdate->aiGetRepaired(theTransport, CMD_FROM_SCRIPT);
+}
+
 //-------------------------------------------------------------------------------------------------
 /** doTeamEnterNamed */
 //-------------------------------------------------------------------------------------------------
@@ -2446,7 +2468,7 @@ void ScriptActions::doNamedDelete(const AsciiString& unitName)
 	}
 
 #if EXTRA_DEBUG_HELP
-	g_destroyObjectSource.push_back(77);
+	g_destroyObjectSource.push_back(75);
 #endif
 	TheGameLogic->destroyObject(theUnit);
 }
@@ -7024,7 +7046,7 @@ void ScriptActions::deleteAllUnmanned()
 		if (obj->isDisabledByType(DISABLED_UNMANNED))
 		{
 #if EXTRA_DEBUG_HELP
-			g_destroyObjectSource.push_back(78);
+			g_destroyObjectSource.push_back(76);
 #endif
 			TheGameLogic->destroyObject(obj);
 		}
@@ -7307,6 +7329,10 @@ void ScriptActions::executeAction( ScriptAction *pAction )
 			return;
 		case ScriptAction::NAMED_ENTER_NAMED:
 			doNamedEnterNamed(pAction->getParameter(0)->getString(), pAction->getParameter(1)->getString());
+			return;
+		//MODDD
+		case ScriptAction::NAMED_GET_REPAIRED_AT_NAMED:
+			doNamedGetRepairedAtNamed(pAction->getParameter(0)->getString(), pAction->getParameter(1)->getString());
 			return;
 		case ScriptAction::TEAM_ENTER_NAMED:
 			doTeamEnterNamed(pAction->getParameter(0)->getString(), pAction->getParameter(1)->getString());

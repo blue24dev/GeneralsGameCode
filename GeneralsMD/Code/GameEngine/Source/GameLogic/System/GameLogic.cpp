@@ -389,7 +389,7 @@ void GameLogic::destroyAllObjectsImmediate()
 	{
 		nextObj = obj->getNextObject();
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(79);
+		g_destroyObjectSource.push_back(77);
 #endif
 		destroyObject( obj );
 	}
@@ -398,11 +398,7 @@ void GameLogic::destroyAllObjectsImmediate()
 	processDestroyList();
 	DEBUG_ASSERTCRASH( m_objList == nullptr, ("destroyAllObjectsImmediate: Object list not cleared") );
 
-//	m_objHash.clear();
-	m_objVector.clear();
-	//MODDD - extra complementary 'm_objVector' lists
-	//m_objValid.clear();
-	//m_objTemplateName.clear();
+	m_objHash.clear();
 
 }
 
@@ -512,11 +508,11 @@ void GameLogic::reset()
 	destroyAllObjectsImmediate();
 
 	// set the hash to be rather large. We need to optimize this value later.
-//	m_objHash.resize(OBJ_HASH_SIZE);
-	m_objVector.resize(OBJ_HASH_SIZE, nullptr);
-	//MODDD - extra complementary 'm_objVector' lists
-	//m_objValid.resize(OBJ_HASH_SIZE, FALSE);
-	//m_objTemplateName.resize(OBJ_HASH_SIZE, nullptr);
+#if USING_STLPORT
+	m_objHash.resize(OBJ_HASH_SIZE);
+#else
+	m_objHash.reserve(OBJ_HASH_SIZE);
+#endif
 
 	m_nextObjID = (ObjectID)1;
 
@@ -3829,7 +3825,7 @@ static void unitTimings()
 			while (obj) {
 				if (obj->getTemplate() != g_UT_curThing) {
 #if EXTRA_DEBUG_HELP
-					g_destroyObjectSource.push_back(80);
+					g_destroyObjectSource.push_back(78);
 #endif
 					TheGameLogic->destroyObject(obj);
 					gotSpawn = true;
@@ -3960,7 +3956,7 @@ static void unitTimings()
 	Object *obj = TheGameLogic->getFirstObject();
 	while (obj) {
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(81);
+		g_destroyObjectSource.push_back(79);
 #endif
 		TheGameLogic->destroyObject(obj);
 		obj = obj->getNextObject();
@@ -4143,7 +4139,7 @@ static void unitTimings()
 #define dont_DO_TREE	1
 #ifdef DO_TREE
 #if EXTRA_DEBUG_HELP
-					g_destroyObjectSource.push_back(82);
+					g_destroyObjectSource.push_back(80);
 #endif
 					TheGameLogic->destroyObject(obj);
 					externalAddTree(pos, 1.0f, 0.0f, "TreeOakFall1");
@@ -4619,24 +4615,8 @@ void GameLogic::addObjectToLookupTable( Object *obj )
 	if( obj == nullptr )
 		return;
 
-	// add to lookup
-//	m_objHash[ obj->getID() ] = obj;
-	ObjectID newID = obj->getID();
-	while( newID >= m_objVector.size() ) // Fail case is hella rare, so faster to double up on size() call
-	//MODDD - added brackets
-	{
-		//MODDD - moved expression in argument below to variable
-		size_t newSize = m_objVector.size() * 2;
-		m_objVector.resize(newSize, nullptr);
-		//MODDD - extra complementary 'm_objVector' lists
-		//m_objValid.resize(newSize, FALSE);
-		//m_objTemplateName.resize(newSize, nullptr);
-	}
-
-	m_objVector[ newID ] = obj;
-	//MODDD - extra complementary 'm_objVector' lists
-	//m_objValid[newID] = true;
-	//m_objTemplateName[newID] = obj->getTemplate() ? obj->getTemplate()->getName() : "!!!NO TEMPLATE!!!";
+	// add to lookup table
+	m_objHash[ obj->getID() ] = obj;
 
 }
 
@@ -4647,17 +4627,11 @@ void GameLogic::removeObjectFromLookupTable( Object *obj )
 {
 
 	// sanity
-	// TheSuperHackers @fix Mauller/Xezon 24/04/2025 Prevent out of range access to vector lookup table
-	if( obj == nullptr || static_cast<size_t>(obj->getID()) >= m_objVector.size() )
+	if( obj == nullptr )
 		return;
 
 	// remove from lookup table
-//	m_objHash.erase( obj->getID() );
-	m_objVector[ obj->getID() ] = nullptr;
-	//MODDD - extra complementary 'm_objVector' lists
-	// Keep in mind if some other place doesn't set this to 'false' sooner, there isn't any
-	// difference from just relying on the 'm_objVector[#]' lookup for this ID being non-null.
-	//m_objValid[ obj->getID() ] = false;
+	m_objHash.erase( obj->getID() );
 
 }
 
@@ -4736,28 +4710,15 @@ void GameLogic::_destroyObject( Object *obj )
 	if (!obj || obj->isDestroyed())
 		return;
 
-	//MODDD - extra complementary 'm_objVector' lists (partially)
-	// Seems like a good idea to let inner logic know that looks back at this object.
-	// Being destroyed by unusual means like a garrisoned building deleting all occupants can avoid the damage system's usual
-	// 'setEffectivelyDead' setter.
-	// Also, consider 'Object::onDie', but the caller often also calls something like 'ActiveBody::internalChangeHealth' which
-	// calls 'setEffectivelyDead' if the health becomes 0 or less.
-	// Mainly, this addresses a small technicality of 'RiderChangeContain::onRemoving' doing a bit more than needed because
-	// its check on 'bike->isEffectivelyDead()' fails, even though the source of the call is the bike being deleted but it's
-	// deleting its 'rider' before deleting itself (rider checks the bike before this can be realized).
-	// At this point, kindof have to wonder if changing particular places like that to use 'obj->isDestroyed()' instead,
-	// since as of retail, that is set sooner in the object destruction process.
-	//MODDD - disabling this, could be causing some crashes from weird deep inner issues around "StateMachine::m_stateMap"
-	// for some things. feels like this engine is made out of hot glue and duct tape sometimes.
-	// ---------
-	/*
-	obj->setEffectivelyDead(TRUE);
-	// also, this
-	m_objValid[ obj->getID() ] = false;
-	*/
-	// ---------
+	//MODDD - NOTE - don't call 'obj->setEffectivelyDead(TRUE)' here. Could be causing some crashes from weird deep inner
+	// issues around "StateMachine::m_stateMap" in some rare scenarios. feels like this engine is held together with hot glue and duct tape sometimes.
 
-	//MODDD - how about the idea above with a new flag instead
+	//MODDD - Small bug: 'RiderChangeContain::onRemoving' doing a bit more than needed because its check on
+	// 'bike->isEffectivelyDead()' fails, even though the source of the call is the bike being deleted but it's deleting
+	// its 'rider' before deleting itself (rider checks the bike before this can be realized).
+	// At this point, kindof have to wonder if changing particular places like that to use 'obj->isDestroyed()' instead of
+	// 'isEffectivelyDead', since as of retail, that ('isDestroyed') is set sooner in the object destruction process.
+	// New flag - this is also set when 'onDie' has been calle on an object, setting the flag here in case that somehow gets skipped.
 	obj->m_calledForDeletion = true;
 
 	// run the object onDestroy event if provided
@@ -4938,40 +4899,11 @@ Object* GameLogic::findObjectByID( ObjectID id )
 	if( id == INVALID_ID )
 		return nullptr;
 
-//	ObjectPtrHash::iterator it = m_objHash.find(id);
-//	if (it == m_objHash.end())
-//		return nullptr;
-//
-//	return (*it).second;
-	if( (size_t)id < m_objVector.size() )
-	//MODDD - added brackets
-	{
-		//MODDD - extra complementary 'm_objVector' lists
-		// ------------------------
-#if 0
-		if (!m_objValid[(size_t)id])
-		{
-			// ultimately disallow returning an object that's being/been deleted.
-			// - disable printout for now, quite spammy
-			/*
-			if (m_objVector[(size_t)id] != nullptr)
-			{
-				// not good - reference is still there & something requested access to it
-				FILE* outputFile = fopen("test_crash_findObjectByID_invalid.txt", "a");
-				printTimeStamp(outputFile);
-				fprintf(outputFile, " - ID:%d occupied by template \"%s\" is being referenced after being deleted.\n", id, m_objTemplateName[(size_t)id].str());
-				fclose(outputFile);
-			}
-			*/
-			return nullptr;
-		}
-#endif
-		// ------------------------
+	ObjectPtrHash::iterator it = m_objHash.find(id);
+	if (it == m_objHash.end())
+		return nullptr;
 
-		return m_objVector[(size_t)id];
-	}
-
-	return nullptr;
+	return (*it).second;
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -5674,7 +5606,7 @@ void GameLogic::prepareLogicForObjectLoad()
 				oldTower = findObjectByID( bridgeInfo->towerObjectID[ i ] );
 				if (oldTower) {
 #if EXTRA_DEBUG_HELP
-					g_destroyObjectSource.push_back(83);
+					g_destroyObjectSource.push_back(81);
 #endif
 					destroyObject( oldTower );
 				}
@@ -5682,7 +5614,7 @@ void GameLogic::prepareLogicForObjectLoad()
 			}
 
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(84);
+		g_destroyObjectSource.push_back(82);
 #endif
 			// destroy the old bridge object
 			destroyObject( oldObject );
@@ -5692,7 +5624,7 @@ void GameLogic::prepareLogicForObjectLoad()
 		{
 
 #if EXTRA_DEBUG_HELP
-		g_destroyObjectSource.push_back(85);
+		g_destroyObjectSource.push_back(83);
 #endif
 			// destroy walk on top of wall things too
 			destroyObject( obj );
