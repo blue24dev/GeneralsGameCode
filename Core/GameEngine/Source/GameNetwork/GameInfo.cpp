@@ -120,6 +120,8 @@ static Bool isSlotLocalAlly(const GameSlot *slot)
 		return TRUE;
 
 	// if we're an observer, we see all
+	//MODDD - NOTE - any reason why this is using 'getOriginalPlayerTemplate' instead of 'getPlayerTemplate'?
+	// Being an observer isn't something that comes from randomization (preserving original choices on restarting the game) so this doesn't seem to be necessary.
 	if (localSlot->getOriginalPlayerTemplate() == PLAYERTEMPLATE_OBSERVER)
 		return TRUE;
 
@@ -282,6 +284,20 @@ Bool GameSlot::isPlayer( UnsignedInt ip ) const
 Bool GameSlot::isOpen() const
 {
 	return m_state == SLOT_OPEN;
+}
+
+//MODDD - convenience feature to check if this is a player believed to be participating in the game (slot is set to be
+// used and they're not an observer), since these checks are seen together in several places for whether it makes sense
+// to pick a particular player or do logic for that one.
+// Other checks like checking to see that the slot's associated player is still active (not defeated / absent) would
+// likely still be needed.
+// It turns out 'Player::isPlayerActive' includes checking for not having 'm_observer' set - whoops! Oh well.
+// I would think both a slot and player keeping track of being an observer is redundant anyway - when would this ever
+// differ, plus being an observer is up to user game setup (slots) - maps doing so (Sides, Players) wouldn't have a
+// point I would think.
+Bool GameSlot::isParticipant() const
+{
+	return isOccupied() && getPlayerTemplate() != PLAYERTEMPLATE_OBSERVER;
 }
 
 // GameInfo ----------------------------------------

@@ -538,7 +538,7 @@ GameMessageDisposition LookAtTranslator::translateGameMessage(const GameMessage 
 				TheTacticalView->scrollBy(&offset);
 			}
 
-#if !BLOCK_REPLAY_RECORDING_ALWAYS
+#if REPLAY_SUPPORT
 			//if (TheGlobalData->m_saveCameraInReplay /*&& TheRecorder->getMode() != RECORDERMODETYPE_PLAYBACK *//**/&& (TheGameLogic->isInSinglePlayerGame() || TheGameLogic->isInSkirmishGame())/**/)
 			//if (TheGlobalData->m_saveCameraInReplay && (TheGameLogic->isInMultiplayerGame() || TheGameLogic->isInSinglePlayerGame() || TheGameLogic->isInSkirmishGame()))
 			if (TheGlobalData->m_saveCameraInReplay && (TheGameLogic->isInSinglePlayerGame() || TheGameLogic->isInSkirmishGame()))

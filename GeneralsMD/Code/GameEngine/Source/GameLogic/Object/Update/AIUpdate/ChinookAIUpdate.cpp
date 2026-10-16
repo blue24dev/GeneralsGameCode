@@ -1051,7 +1051,15 @@ Bool ChinookAIUpdate::isAvailableForSupplying() const
 		return false;
 
 	ContainModuleInterface* contain = getObject()->getContain();
-	if( !contain || contain->hasObjectsWantingToEnterOrExit() || contain->getContainCount() || contain->isSpecialOverlordStyleContainer())
+	//MODDD - removed '!contain' from the original conditions for returning 'false' below.
+	// Seems like an oversight because having a contain module has nothing to do with being able to use supply gathering functionality.
+	// Tested in retail generals by removing the chinook's 'TransportContain' in the INI - supply gathering still works in-game.
+	// (lacking a contain module returns' true' instead - no means of obstructing supply gathering then as that seems to be the point of the check)
+	// ---
+	if (!contain )
+		return true;
+	// ---
+	if( contain->hasObjectsWantingToEnterOrExit() || contain->getContainCount() || contain->isSpecialOverlordStyleContainer())
 		return false;
 
 	return true;

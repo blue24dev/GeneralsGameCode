@@ -589,7 +589,12 @@ Bool ActionManager::canResumeConstructionOf( const Object *obj,
 	if( r != ALLIES )
 		return FALSE;
 #else
+	//MODDD
+#if !EXTRA_ALLY_FUNCTIONALITY
 	if (obj->getControllingPlayer() != objectBeingConstructed->getControllingPlayer())
+#else
+	if (obj->getApparentRelationshipOf(objectBeingConstructed) != ALLIES)
+#endif
 		return FALSE;
 #endif
 
@@ -715,6 +720,9 @@ Bool ActionManager::canEnterObject( const Object *obj, const Object *objectToEnt
 	// Special case for aircraft.
 	if( obj->isKindOf( KINDOF_AIRCRAFT ) && objectToEnter->isKindOf( KINDOF_FS_AIRFIELD ) )
 	{
+		//MODDD - replacing these with a requirement to be a different air field, so a request to move to a different air field
+		// isn't blocked just for being grounded
+		/*
 		if( obj->getStatusBits().test( OBJECT_STATUS_DECK_HEIGHT_OFFSET ) && obj->getCarrierDeckHeight() >= obj->getPosition()->z )
 		{
 			return FALSE;
@@ -722,8 +730,26 @@ Bool ActionManager::canEnterObject( const Object *obj, const Object *objectToEnt
 
 		if (!obj->isAboveTerrain())
 			return FALSE;
+		*/
+		//MODDD - also, shouldn't 'isAboveTerrain' be ignored if 'OBJECT_STATUS_DECK_HEIGHT_OFFSET' is set?
+		// Looks like that's for being in an aircraft carrier (where 'what the ground is' needs to be factored in).
+		// Anyway, it looks like the 'getCarrierDeckHeight() >= obj->getPosition' alongside that DECK_HEIGHT_OFFSET flag would be enough for that case.
+		Bool isGrounded;
+		if (!obj->getStatusBits().test( OBJECT_STATUS_DECK_HEIGHT_OFFSET ))
+		{
+			isGrounded = !obj->isAboveTerrain();
+		}
+		else
+		{
+			isGrounded = (obj->getStatusBits().test( OBJECT_STATUS_DECK_HEIGHT_OFFSET ) && obj->getCarrierDeckHeight() >= obj->getPosition()->z);
+		}
 
+		//MODDD - why not when aircraft can use allied air fields if there are no other choices? (easy to observe in allied team games as of retail)
+#if !EXTRA_ALLY_FUNCTIONALITY
 		if( obj->getControllingPlayer() == objectToEnter->getControllingPlayer() )
+#else
+		if (obj->getApparentRelationshipOf(objectToEnter) == ALLIES)
+#endif
 		{
 			//Kris -- added code to prevent aircraft from landing in any airstrips other than their own!
 
@@ -734,8 +760,13 @@ Bool ActionManager::canEnterObject( const Object *obj, const Object *objectToEnt
 				if (pp == nullptr)
 					continue;
 
+				//MODDD - check 'isGrounded' for if being 'my' air field is ok
 				if (pp->hasReservedSpace(obj->getID()))
-					return TRUE;
+				{
+					//MODDD
+					//return TRUE;
+					return !isGrounded;
+				}
 
 				if (pp->shouldReserveDoorWhenQueued(obj->getTemplate()) && pp->hasAvailableSpaceFor(obj->getTemplate()))
 					return TRUE;

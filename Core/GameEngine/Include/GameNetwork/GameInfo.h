@@ -35,8 +35,9 @@
 
 enum SlotState CPP_11(: Int)
 {
-	SLOT_OPEN,
+	//MODDD - swapping the first two. 'SLOT_CLOSED' is the expected default so I feel it being #0 is more fitting
 	SLOT_CLOSED,
+	SLOT_OPEN,
 	SLOT_EASY_AI,
 	SLOT_MED_AI,
 	SLOT_BRUTAL_AI,
@@ -118,6 +119,8 @@ public:
 	Bool isPlayer( UnicodeString userName ) const;					///< Does this slot contain the given user?
 	Bool isPlayer( UnsignedInt ip ) const;									///< Is this slot at this IP?
 	Bool isOpen() const;
+	//MODDD
+	Bool isParticipant() const;
 
 	void setLastFrameInGame( UnsignedInt frame ) { m_lastFrameInGame = frame; }
 	void markAsDisconnected() { m_disconnected = TRUE; }

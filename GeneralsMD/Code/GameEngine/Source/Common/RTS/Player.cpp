@@ -4163,6 +4163,16 @@ Bool Player::isPlayableSide() const
 
 }
 
+//MODDD - convenience feature
+Bool Player::isUnaffiliated() const
+{
+	return ThePlayerList->isPlayerUnaffiliated(this);
+}
+Bool Player::isPlayerViewer() const
+{
+	return ThePlayerList->isPlayerViewer(this);
+}
+
 // ------------------------------------------------------------------------------------------------
 /** CRC */
 // ------------------------------------------------------------------------------------------------

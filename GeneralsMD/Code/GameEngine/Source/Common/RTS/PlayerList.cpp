@@ -103,31 +103,56 @@ Player *PlayerList::getNthPlayer(Int i)
 //MODDD - tell whether this is a player that typically owns non-playable-user-owned-things, such as unmanned vehicles,
 // ungarrisoned buildings, tech structures, etc.
 // In many cases, this is often a standard-named 'civilian' player, so this check is better than only a '... == neutral player' check.
-Bool PlayerList::isPlayerUnaffiliated(Player* player)
+Bool PlayerList::isPlayerUnaffiliated(const Player* player) const
 {
-	if (player == getNeutralPlayer())
+	// Using the cached var instead of 'getNeutralPlayer()' in case this check is frequent (oh who am I kidding, this has to be micro optimization)
+	if (player == m_neutralPlayer)
 	{
 		return TRUE;
 	}
 
-	if (m_civilianPlayer != nullptr && player == m_civilianPlayer)
+	// even if 'm_civilianPlayer' were null, this would just never pass - 'player' should not be null
+	if (player == m_civilianPlayer)
 	{
 		return TRUE;
 	}
 
-	// No side at all?
-	if (player->getPlayerTemplate() == nullptr)
+	// No side at all? Observer?
+	if (player->getPlayerTemplate() == nullptr || player->isPlayerObserver())
 	{
 		return TRUE;
 	}
 
 	// Is this player using the "FactionCivilian" side?
+	// Going to be careful about this check - as likely said elsewhere, consider some pre-source-code-release Co-Op maps
+	// that do weird things to get around the limitation of killing non-civilian-placed-things in a skirmish/multiplayer
+	// game such as making a player use the civilian faction & make it mock a typical computer player.
+	/*
 	if (m_civilianPlayerTemplate != nullptr && player->getPlayerTemplate() == m_civilianPlayerTemplate)
 	{
 		return TRUE;
 	}
+	*/
 
 	return FALSE;
+}
+
+//MODDD - a variant of above that allows being an observer - basically something believably 'playing' or watching the game,
+// not just a bare-minimum background computer player that doesn't do much.
+// Ex: cheats to reveal fog-of-war for all players
+Bool PlayerList::isPlayerViewer(const Player* player) const
+{
+	if (player == m_neutralPlayer)
+	{
+		return FALSE;
+	}
+
+	if (player == m_civilianPlayer)
+	{
+		return FALSE;
+	}
+
+	return TRUE;
 }
 
 //-----------------------------------------------------------------------------
@@ -200,9 +225,7 @@ Player* PlayerList::findCivilianPlayer()
 	{
 		// Not part of retail, but could require it to have the 'Civilian' side name. I doubt this would ever not be the case.
 		//if (playerRef->getSide().compare("Civilian") == 0)
-		{
 			return playerRef;
-		}
 	}
 
 	// just "Civilian"?
@@ -211,9 +234,7 @@ Player* PlayerList::findCivilianPlayer()
 	if (playerRef != nullptr)
 	{
 		//if (playerRef->getSide().compare("Civilian") == 0)
-		{
 			return playerRef;
-		}
 	}
 
 	// Try any player who's side is 'Civilian'.
@@ -228,9 +249,7 @@ Player* PlayerList::findCivilianPlayer()
 		{
 			//if (m_players[i]->getSide().compare("Civilian") == 0)
 			if (m_players[i]->getPlayerTemplate() == m_civilianPlayerTemplate)
-			{
 				return m_players[i];
-			}
 		}
 	}
 	*/
@@ -254,7 +273,9 @@ Player* PlayerList::findFirstSlotPlayer()
 		"ThePlayer",
 		"Player",
 		"PlyrPLAYER",
-		"player0"
+		"player0",
+		// (test - did any retail maps use this one? Seems reasonable to occur)
+		"PlyrPlayer"
 	};
 	int i;
 
@@ -273,7 +294,7 @@ Player* PlayerList::findFirstSlotPlayer()
 	for (i = 0; i < MAX_PLAYER_COUNT; i++)
 	{
 		playerRef = getNthPlayer(i);
-		if (playerRef->getPlayerType() == PLAYER_HUMAN)
+		if (playerRef->getPlayerType() == PLAYER_HUMAN && !playerRef->isPlayerObserver())
 		{
 			return playerRef;
 		}
@@ -284,15 +305,20 @@ Player* PlayerList::findFirstSlotPlayer()
 }
 
 //MODDD - new
-// After creating the players from the sides in 'PlayerList::newGame()', find the human players for 'm_slotPlayerRefs'.
+// After creating the players from the sides in 'PlayerList::newGame()', find the human players for 'm_slotPlayerRefs'
+// (this now uses 'setSlotIndex' added by 'TheSuperHackers' since).
 // This is less error prone than assuming any non-computer-marked player is meant to be played as, because several maps
 // had multiple non-computer-marked players, and most were clearly not intended to be played as.
 // Only the player usually played as per single player logic (by an expected name, or the first non-computer-marked player),
-// and subsequent ones by a "player1", "player2", etc. naming scheme, should be in 'm_slotPlayerRefs'.
+// and subsequent ones by a "player1", "player2", etc. naming scheme, should be in the slot-to-player indices for
+// skirmish/multiplayer logic to easily reach.
 // This will allow it to mirror the choices of players selected per machine in GameLogic.cpp: getMultiplayerLocalSide.
 // This lets any one machine be aware of who the other slot players are.
 void PlayerList::populateSlotPlayerRefs()
 {
+	// Note that 'm_slotSoftMax' used to be incremented alongside 'setSlotIndex' under the assumption that
+	// players would always be found to assign to slots in increasing order without any gaps. Deciding this at the end
+	// instead for absolute safety.
 	if (TheGameLogic->getGameMode() == GAME_SHELL)
 	{
 		// Shell map: find the first human-marked player, add to the list of slot player refs. That's it.
@@ -302,10 +328,7 @@ void PlayerList::populateSlotPlayerRefs()
 			Player* playerRef = getNthPlayer(i);
 			if (playerRef->getPlayerType() == PLAYER_HUMAN)
 			{
-				//playerRef->slotIndex = 0;
-				//m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
 				setSlotIndex(playerRef->getPlayerIndex(), 0);
-				++m_slotPlayerRefsSoftCount;
 				break;
 			}
 		}
@@ -354,10 +377,7 @@ void PlayerList::populateSlotPlayerRefs()
 		// This can't possibly be null or else a similar earlier check (GameLogic.cpp: getMultiplayerLocalSide)
 		// would have already crashed.
 		playerRef = findFirstSlotPlayer();
-		//playerRef->slotIndex = 0;
-		//m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
 		setSlotIndex(playerRef->getPlayerIndex(), 0);
-		++m_slotPlayerRefsSoftCount;
 		
 		// For the remaining possible users, search for the expected name: "player<1-7>".
 		standardSlotPlayerSearch_firstSlotIndex = 1;
@@ -377,19 +397,35 @@ void PlayerList::populateSlotPlayerRefs()
 			playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
 			if (playerRef != nullptr)
 			{
-				//playerRef->slotIndex = i;
-				//// Add to the list and keep searching
-				//m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = playerRef;
 				setSlotIndex(playerRef->getPlayerIndex(), i);
-				++m_slotPlayerRefsSoftCount;
 			}
 			else
 			{
 				// Not found? Stop searching
-				break;
+				// Actually no - keep going in case a slot was skipped but there are still players for later set slots
+				// Ex: player1 through 4 is found, 5 isn't but 6 exists - don't give up at 5!
+				//break;
 			}
 		}
 	}
+
+	m_slotSoftMax = determineSlotSoftMax();
+}
+
+//MODDD - only used for 'populateSlotPlayerRefs' to decide what the highest slot number in use is after setting slot-to-player indices
+Int PlayerList::determineSlotSoftMax() const
+{
+	int i;
+	for (i = MAX_SLOTS - 1; i >= 0; --i)
+	{
+		if (m_slotToPlayerIndices[i] != -1)
+		{
+			return i + 1;
+		}
+	}
+
+	// every single slot-to-player indice was -1(unset)? shouldn't be possible, but 0 would be accurate to that case
+	return 0;
 }
 
 //MODDD - new event for handling some cheat/extra-difficulty-related settings to apply to players.
@@ -405,7 +441,8 @@ void PlayerList::postPlayersInit()
 		if (TheGameInfo && slotIndex != -1)
 		{
 			GameSlot *slot = TheGameInfo->getSlot(slotIndex);
-			if (!slot->isOccupied())
+			// NOTE - barring observer players with 'isParticipant' vs. 'isOccupied'
+			if (!slot->isParticipant())
 			{
 				continue;
 			}
@@ -482,8 +519,8 @@ void PlayerList::newGame()
 		// This works in case a player other than the first human player is the local player for this machine
 		// (co-op mode under FGC_CAMPAIGN).
 		// You could argue that all non-network game modes should also use the 'TheKey_multiplayerIsLocal' way for
-		// consistency and remove this block entirely (probably only campaign & shell game modes, even generals challenge
-		// is just a reskin of skirmish).
+		// consistency and remove this block entirely (probably only campaign & shell game modes relied on this block as of
+		// retail, even generals challenge is just a reskin of skirmish).
 #if FORCE_GAME_CONTEXT != FGC_CAMPAIGN
 		//MODDD
 		//if (!setLocal && !TheNetwork && d->getBool(TheKey_playerIsHuman))
@@ -499,9 +536,7 @@ void PlayerList::newGame()
 		/*
 		if (d->getBool(TheKey_playerIsHuman))
 		{
-			//m_slotPlayerRefs[m_slotPlayerRefsSoftCount] = p;
 			setSlotIndex(p->getPlayerIndex(), 0);
-			++m_slotPlayerRefsSoftCount;
 		}
 		*/
 #endif
@@ -587,6 +622,9 @@ void PlayerList::newGame()
 	// but changing assignments to my 'm_slotPlayerRefs' to use TheSuperHackers addition 'm_slotToPlayerIndices' instead.
 	// Also, this was below the first loop through 'getNumSides()' at the start of this method (right below where
 	// 'm_civilianPlayer = findCivilianPlayer();' is), but here should be fine too.
+	// Also note that this happens regardless of 'TheGameInfo' being present in case some of my changes still expect the
+	// slot-to-player indices to be set up as has been the case for a while
+	// (check around 'TheGameInfo != nullptr' checks in ScriptEngine.cpp for examples).
 	/*
 	if (TheGameInfo)
 	{
@@ -611,13 +649,12 @@ void PlayerList::init()
 	m_neutralPlayer = nullptr;
 	m_civilianPlayer = nullptr;
 	m_civilianPlayerTemplate = nullptr;
-	m_slotPlayerRefsSoftCount = 0;
+	m_slotSoftMax = 0;
 
 	//MODDD - why separately?
 	//m_players[0]->init(nullptr);
 
-	//MODDD
-	//for (int i = 1; i < MAX_PLAYER_COUNT; i++)
+	//MODDD - all within this loop is fine (start val of 'i' changed: 1 -> 0)
 	for (int i = 0; i < MAX_PLAYER_COUNT; i++)
 		m_players[i]->init(nullptr);
 
@@ -625,10 +662,8 @@ void PlayerList::init()
 	std::fill(m_slotToPlayerIndices, m_slotToPlayerIndices + ARRAY_SIZE(m_slotToPlayerIndices), -1);
 
 	// call setLocalPlayer so that becomingLocalPlayer() gets called appropriately
-	//MODDD - don't think this is needed, replacing with a null assignment
-	// ...I stand corrected. I really don't think anything should be interacting with a 'local player' before a game's even started, but, what do I know.
-	// Doing the duct-tape fix from retail in 'getLocalPlayer' instead: return #0 as a placeholder for the sake of not crashing
-	//setLocalPlayer(m_players[0])
+	//MODDD - just initting 'm_local' to null is good enough now
+	//setLocalPlayer(m_players[0]);
 	m_local = nullptr;
 }
 
@@ -697,7 +732,7 @@ Player* PlayerList::getLocalPlayer()
 }
 
 //MODDD - tell if the local player has been set to a non-default choice
-Bool PlayerList::isLocalPlayerSet()
+Bool PlayerList::isLocalPlayerSet() const
 {
 	return m_local != nullptr;
 }
@@ -935,6 +970,51 @@ Player *PlayerList::getPlayerFromSlotIndex(Int slotIndex) const
 	}
 
 	return nullptr;
+}
+
+//MODDD - new. Variant of above (see notes below)
+Player *PlayerList::getPlayerFromSlotIndex_requireOccupied(Int slotIndex) const
+{
+	if (TheGameInfo != nullptr)
+	{
+		GameSlot *slot = TheGameInfo->getSlot(slotIndex);
+		if (!slot->isOccupied())
+		{
+			return nullptr;
+		}
+	}
+
+	return getPlayerFromSlotIndex(slotIndex);
+}
+
+//MODDD - new. Variant of above that includes a filter for coming from a slot that's actively participating in the game
+// (filled by someone, not observer) if that information is available ('TheGameInfo' is present).
+// Mainly a convenience feature to bundle whether there is 'TheGameInfo' to check and the result of a player-lookup being
+// null into one call (places using this tend not to need any other info about slots).
+Player *PlayerList::getPlayerFromSlotIndex_requireActiveParticipant(Int slotIndex) const
+{
+	// If 'TheGameInfo' is null, this lookup for slot info to verify being non-open/closed & non-observer isn't possible.
+	// This is the case for playing the single player campaign in the original/retail state of the game, not my co-op
+	// additions. Of course 'you' are here playing the game as the only valid 'slot' (local player), so skipping this works
+	// out just fine then.
+	if (TheGameInfo != nullptr)
+	{
+		GameSlot *slot = TheGameInfo->getSlot(slotIndex);
+		if (!slot->isParticipant())
+		{
+			// regardless of a player being connected (ex: observer), not relevant for the caller
+			return nullptr;
+		}
+	}
+
+	// passed/skipped the above filter - pass along whatever the base variant finds
+	// and may as well bundle in a 'is-active' check
+	Player* p = getPlayerFromSlotIndex(slotIndex);
+	if (p == nullptr || !p->isPlayerActive())
+	{
+		return nullptr;
+	}
+	return p;
 }
 
 //-----------------------------------------------------------------------------
