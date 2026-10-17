@@ -86,8 +86,9 @@ public:
 		ALLOW_CIRCLING,
 		ALLOW_INTERRUPT_AND_RESUME_OF_CUR_STATE_FOR_RELOAD,
 		TAXI_IN_PROGRESS,
-		//MODDD - new
-		AIRFIELD_DESTINATION
+		//MODDD - new, mainly for helicopters to tell if the reason they're landed is for repairs at their associated air
+		// field (this should be the only reason ever for landed jets, but doesn't hurt to use this flag for them too).
+		PARKED_AT_AIRFIELD
 	};
 
 private:
