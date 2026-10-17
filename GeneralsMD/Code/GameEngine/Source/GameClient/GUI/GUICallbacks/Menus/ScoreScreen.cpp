@@ -2063,14 +2063,7 @@ void grabMultiPlayerInfo()
 	}
 
 	// Add each player and score to the map. THis allows us to sort the players based on score.
-	//MODDD - use the new 'm_slotPlayerRefs' instead so 'FGC_CAMPAIGN' can correctly get the first player.
-	// Its name wasn't standardized so it isn't necessarily "player0" for campaign maps, nor are players
-	// generated per slots in that case unlike for skirmish / generals challenge maps.
-	//MODDD - UPDATE - there has since been a 'getPlayerFromSlotIndex' method added by TheSuperHackers,
-	// fine to rely on that too. Probably reverting the 'm_slotPlayerRefsSoftCount' for loop header change
-	// below after I understand things better.
-	//for( Int i = 0; i < MAX_SLOTS; ++i)
-	for( Int i = 0; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
+	for( Int i = 0; i < MAX_SLOTS; ++i)
 	{
 		Player *player = ThePlayerList->getPlayerFromSlotIndex(i);
 		if (player)
@@ -2083,7 +2076,6 @@ void grabMultiPlayerInfo()
 			++playerCount;
 		}
 	}
-	//MODDD - TODO - what is the significance of 'hideWindows' above? Seems I can add additional rows past that just fine?
 	hideWindows(playerCount);
 	Int count =0;
 	RevScoreMapIt revIt;

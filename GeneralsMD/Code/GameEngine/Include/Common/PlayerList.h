@@ -92,8 +92,6 @@ public:
 	Player* findNeutralPlayer();
 	Player* findCivilianPlayer();
 	Player* findFirstSlotPlayer();
-	void populateSlotPlayerRefs();
-	void postPlayersInit();
 
 	virtual void newGame(); // called during GameLogic::startNewGame()
 	virtual void newMap();	 // Called after a new map is loaded.
@@ -119,12 +117,13 @@ public:
 	*/
 	//MODDD - now a cached var instead
 	//Player *getNeutralPlayer() { DEBUG_ASSERTCRASH(m_players[0] != nullptr, ("null neutral")); return m_players[0]; }
-	Player *getNeutralPlayer() { return m_neutralPlayer; }
+	Player *getNeutralPlayer() const { return m_neutralPlayer; }
 
 	//MODDD - tell whether this is a player that typically owns non-playable-user-owned-things, such as unmanned vehicles,
 	// ungarrisoned buildings, tech structures, etc.
 	// In many cases, this is often a standard-named 'civilian' player, so this check is better than only a '... == neutral player' check.
-	Bool isPlayerUnaffiliated(Player* player);
+	Bool isPlayerUnaffiliated(const Player* player) const;
+	Bool isPlayerViewer(const Player* player) const;
 
 	/**
 		return the Player with the given internal name, or null if none found.
@@ -140,7 +139,7 @@ public:
 	Player *getLocalPlayer();
 
 	//MODDD
-	Bool isLocalPlayerSet();
+	Bool isLocalPlayerSet() const;
 
 	/**
 		Set the local player. You cannot set it to null; if you pass null, you'll
@@ -176,6 +175,10 @@ public:
 	Int getSlotIndex(Int playerIndex) const;
 	Player *getPlayerFromSlotIndex(Int slotIndex) const;
 
+	//MODDD - new
+	Player *getPlayerFromSlotIndex_requireOccupied(Int slotIndex) const;
+	Player *getPlayerFromSlotIndex_requireActiveParticipant(Int slotIndex) const;
+
 protected:
 
 	// snapshot methods
@@ -188,6 +191,11 @@ protected:
 private:
 	void assignSlotIndices(const GameInfo& gameInfo);
 	void setSlotIndex(Int playerIndex, Int slotIndex);
+
+	//MODDD
+	void populateSlotPlayerRefs();
+	Int determineSlotSoftMax() const;
+	void postPlayersInit();
 
 	Player				*m_local;
 	Int						m_playerCount;
@@ -207,11 +215,10 @@ private:
 // to do "player#" string lookups so often (not purposefully replacing all of them for now, though).
 // (public for now for laziness)
 //MODDD - UPDATE - since this, 'getPlayerFromSlotIndex' has been added by TheSuperHackers - phasing
-// my way out ( keeping the 'slotPlayerRefsSoftCount' for now)
+// my way out, but keeping the 'slotPlayerRefsSoftCount' for now. Also, renamed to 'm_slotSoftMax' and comments
+// updated with that too.
 public:
-	Int						m_slotPlayerRefsSoftCount;
-	// capacity comes from MAX_SLOTS
-	//Player				*m_slotPlayerRefs[8];
+	Int						m_slotSoftMax;
 
 };
 

@@ -59,6 +59,12 @@
 #include "GameLogic/SidesList.h"
 
 
+//MODDD
+#if FORCE_GAME_CONTEXT != FGC_NONE
+extern PlayerMaskType getOccupiedSlotPlayerMask();
+#endif
+
+
 // These are for debugger window
 static int st_LastCurrentFrame;
 static int st_CurrentFrame;
@@ -150,6 +156,7 @@ static const Int ATTACK_PRIORITY_DEFAULT = 1;
 //MODDD - NEW. Logic to randomly select a player to be the 'enemy', likely for some map script such as who to use a support power / superweapon
 // on when the current player doesn't have a contextual enemy at the time (assuming I understand how that works).
 // This replaces the retail way of finding an enemy if the current player lacks one to use already.
+// The 'currentPlayer' pass in should never be null.
 Player* getRandomEnemyPlayer(Player* currentPlayer)
 {
 	// List of players to choose from to be my enemy. Potentially every single player minus 1 can be an enemy,
@@ -157,43 +164,35 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 	Player* availablePlayerList[MAX_PLAYER_COUNT];
 	int availablePlayerListSoftCount = 0;
 	int i;
+	
+	// This works even if 'TheGameInfo' isn't null (no slot info): if 'currentPlayer' is the local player, that's treated
+	// as slot 0's player then (returns 0).
+	// Though, this function is expected to be called with computer players baked into the map such as 'AIOpponent3', so
+	// realistically this would be -1 - not associated with any slot.
+	Int currentPlayerSlotIndex = ThePlayerList->getSlotIndex(currentPlayer->getPlayerIndex());
 
 	// Go through every slot player to see which ones I am 'enemies' with by relationship, and which one are valid
 	// choices (not defeated, not associated with a slot that was never used by a connected player -> brain-dead AI default).
 	// Note that checking for the dummy "ThePlayer" in Generals Challenge maps isn't needed here - that's never a slot player
 	// so it's gracefully left out of this run-through.
-	for (i=0; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
+	for (i=0; i < ThePlayerList->m_slotSoftMax; ++i)
 	{
-		Player* player = ThePlayerList->getPlayerFromSlotIndex(i);
-
-		if (player == currentPlayer) {
-			// Don't pick yourself to be the enemy
+		if (i == currentPlayerSlotIndex)
+		{
+			// Would lead to the same player. This check is still fine if 'currentPlayerSlotIndex' is -1 because it will pass
+			// for all slot players then.
 			continue;
 		}
 
-		if (!player->isPlayerActive())
+		Player* player = ThePlayerList->getPlayerFromSlotIndex_requireActiveParticipant(i);
+		if (player == nullptr)
 		{
-			// Don't attack/target defeated players
 			continue;
-		}
-
-		// Check to see if slots are available (map started from the skirmish/network menus).
-		// Can decide if a slot player's corresponding slot was actually occupied (given a connected player).
-		// Basically, don't attack/target a slot that's using a dummy computer player (not participating anyway).
-		// Note that 'TheGameInfo' is NULL for playing the campaign the normally intended way without FGC_CAMPAIGN.
-		// No slot info means the game is 'single-player' (of course you're here) so this check wouldn't have a purpose anyway.
-		if (TheGameInfo != nullptr)
-		{
-			GameSlot *slot = TheGameInfo->getSlot(i);
-			if (!slot->isOccupied())
-			{
-				continue;
-			}
 		}
 
 		if (currentPlayer->getRelationship( player->getDefaultTeam() ) != ENEMIES)
 		{
-			// Not even enemies at all
+			// Not even enemies
 			continue;
 		}
 
@@ -276,7 +275,8 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 	}
 	*/
 
-	if (availablePlayerListSoftCount <= 0) {
+	if (availablePlayerListSoftCount <= 0)
+	{
 		// Nothing available?
 		return nullptr;
 	}
@@ -287,31 +287,25 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 }
 
 // Also, a method to get the first slot player since 'getLocalPlayer' would return different a result in
-// multiplayer per machine  (mismatch candy).
+// multiplayer per machine (mismatch candy).
+// Note that this can return null if there are no active players left (everyone left but the game's still running for a
+// bit - ex: post-defeat before the current game quits itself for real).
 Player* getFirstSlotPlayer()
 {
 	int i;
-	for (i=0; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
+	for (i=0; i < ThePlayerList->m_slotSoftMax; ++i)
 	{
-		Player* player = ThePlayerList->getPlayerFromSlotIndex(i);
-		if (!player->isPlayerActive())
+		// Check that the player is active.
+		// Ex: in multiplayer, if player #0 leaves, they're inactive so consider player to be "the" player if they're still here
+		Player* player = ThePlayerList->getPlayerFromSlotIndex_requireActiveParticipant(i);
+		if (player == nullptr)
 		{
 			continue;
-		}
-
-		if (TheGameInfo != nullptr)
-		{
-			GameSlot *slot = TheGameInfo->getSlot(i);
-			if (!slot->isOccupied())
-			{
-				continue;
-			}
 		}
 
 		return player;
 	}
 
-	// ???
 	return nullptr;
 }
 
@@ -714,7 +708,7 @@ void ScriptEngine::init()
 				proc();
 			}
 		}
-	} //MODDD - complementary end-bracket
+	//MODDD - NOTE - as-is, the extra indentation ended here, but I'm including the "CreateParticleSystemDialog" block below anyway
 
 	if (st_ParticleDLL) {
 		FARPROC proc = GetProcAddress(st_ParticleDLL, "CreateParticleSystemDialog");
@@ -722,6 +716,8 @@ void ScriptEngine::init()
 			proc();
 		}
 	}
+
+	} //MODDD - complementary end-bracket
 
 #ifdef DO_VTUNE_STUFF
 	_initVTune();
@@ -6198,9 +6194,9 @@ Player *ScriptEngine::getPlayerFromAsciiString(const AsciiString& playerString)
 		// Still makes sense if either constant is on in case of GC/campaign being played in co-op mode.
 		// Eliminates sync risks. Just make the map scripts smarter per map to fine tune stuff per player if you really want to.
 		return getFirstSlotPlayer();
-#endif
 		// Old way (bad assumption for campaign maps: player name isn't standardized)
 		// return ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey("player0"));
+#endif
 
 	if (playerString == THIS_PLAYER)
 		return getCurrentPlayer();
@@ -6332,6 +6328,7 @@ Team * ScriptEngine::getTeamNamed(const AsciiString& teamName)
 #endif
 
 	if (teamName == TEAM_THE_PLAYER && is_GeneralsChallengeContext)
+	{
 		// Designers have built their Generals' Challenge maps, referencing "teamThePlayer" meaning the local player's default (parent) team.
 		// However, they've also built many of their single player maps with this string, where "teamThePlayer" is not intended as an alias.
 		// ---
@@ -6339,7 +6336,19 @@ Team * ScriptEngine::getTeamNamed(const AsciiString& teamName)
 		// ---
 		//return ThePlayerList->getLocalPlayer()->getDefaultTeam();
 		// ---
-		return getFirstSlotPlayer()->getDefaultTeam();
+		Player* thePlayer = getFirstSlotPlayer();
+		if (thePlayer != nullptr)
+		{
+			return thePlayer->getDefaultTeam();
+		}
+		else
+		{
+			// this happens if no active slot player was found - everyone left
+			// (forcing slot player #0 unconditionally here is possible, but I don't think this is a meaningful use case to
+			// focus on - callers of this should be able to deal with a null response anyway)
+			return nullptr;
+		}
+	}
 
 	if (teamName == THIS_TEAM) {
 		if (m_callingTeam)
@@ -6567,9 +6576,6 @@ void ScriptEngine::createNamedMapReveal(const AsciiString& revealName, const Asc
 	m_namedReveals.push_back(reveal);
 }
 
-//MODDD
-extern PlayerMaskType getHumanPlayerMask();
-
 //-------------------------------------------------------------------------------------------------
 void ScriptEngine::doNamedMapReveal(const AsciiString& revealName)
 {
@@ -6600,13 +6606,13 @@ void ScriptEngine::doNamedMapReveal(const AsciiString& revealName)
 	Coord3D pos;
 	pos = *way->getLocation();
 
-	//MODDD
-#if FORCE_GAME_CONTEXT == FGC_NONE
-	ThePartitionManager->doShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, player->getPlayerMask());
-#else
-	// force for all players
-	ThePartitionManager->doShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, getHumanPlayerMask());
+	//MODDD - bringing the function argument out to a variable
+	PlayerMaskType playerMask = player->getPlayerMask();
+#if FORCE_GAME_CONTEXT != FGC_NONE
+	if (TheGameLogic->getGameMode() != GAME_SHELL && ThePlayerList->getSlotIndex(player->getPlayerIndex()) == 0)
+		playerMask = getOccupiedSlotPlayerMask();
 #endif
+	ThePartitionManager->doShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, playerMask);
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -6639,13 +6645,13 @@ void ScriptEngine::undoNamedMapReveal(const AsciiString& revealName)
 	Coord3D pos;
 	pos = *way->getLocation();
 
-	//MODDD
-#if FORCE_GAME_CONTEXT == FGC_NONE
-	ThePartitionManager->undoShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, player->getPlayerMask());
-#else
-	// force for all players
-	ThePartitionManager->undoShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, getHumanPlayerMask());
+	//MODDD - bringing the function argument out to a variable
+	PlayerMaskType playerMask = player->getPlayerMask();
+#if FORCE_GAME_CONTEXT != FGC_NONE
+	if (TheGameLogic->getGameMode() != GAME_SHELL && ThePlayerList->getSlotIndex(player->getPlayerIndex()) == 0)
+		playerMask = getOccupiedSlotPlayerMask();
 #endif
+	ThePartitionManager->undoShroudReveal(pos.x, pos.y, reveal->m_radiusToReveal, playerMask);
 }
 
 //-------------------------------------------------------------------------------------------------
