@@ -2392,6 +2392,9 @@ bool GameLogic::onSelfDestruct(MAYBE_UNUSED GameMessage *msg)
 				if (msgPlayer->getRelationship(otherPlayer->getDefaultTeam()) == ALLIES &&
 					otherPlayer->getRelationship(msgPlayer->getDefaultTeam()) == ALLIES)
 				{
+					//MODDD - NOTE - couldn't this just check for 'otherPlayer->isPlayerActive()', which is false for players no
+					// longer playing by passing a defeat-condition at some point? This seems like the kind of thing that decides
+					// if a player has been defeated for toggling what 'isPlayerActive' reads from.
 					if (TheVictoryConditions->hasSinglePlayerBeenDefeated(otherPlayer))
 						continue;
 

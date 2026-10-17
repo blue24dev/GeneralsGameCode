@@ -3111,9 +3111,7 @@ void ScriptActions::doCameraMotionBlur(Bool zoomIn, Bool saturate)
 	}
 }
 
-//MODDD - removed 'static' modifier, can be externed from other places
-//static PlayerMaskType getHumanPlayerMask()
-PlayerMaskType getHumanPlayerMask()
+static PlayerMaskType getHumanPlayerMask()
 {
 #if RETAIL_COMPATIBLE_CRC
 	PlayerMaskType mask;
@@ -3135,6 +3133,22 @@ PlayerMaskType getHumanPlayerMask()
 	return mask;
 }
 
+#if FORCE_GAME_CONTEXT != FGC_NONE
+//MODDD - gets a mask to represent the players of occupied slots
+PlayerMaskType getOccupiedSlotPlayerMask()
+{
+	PlayerMaskType mask = 0;
+	for (int i=0; i < ThePlayerList->m_slotSoftMax; ++i)
+	{
+		Player* player = ThePlayerList->getPlayerFromSlotIndex_requireOccupied(i);
+		if (player == nullptr)
+			continue;
+		mask |= player->getPlayerMask();
+	}
+	return mask;
+}
+#endif
+
 //-------------------------------------------------------------------------------------------------
 /** doRevealMapAtWaypoint */
 //-------------------------------------------------------------------------------------------------
@@ -3142,20 +3156,8 @@ void ScriptActions::doRevealMapAtWaypoint(const AsciiString& waypointName, Real 
 {
 	//MODDD
 #if REMOVE_FOG_OF_WAR
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+	if (TheGameLogic->getGameMode() != GAME_SHELL)
 		return;
-	}
-#endif
-
-#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
-		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
-			// fall through
-		} else {
-			// no.
-			return;
-		}
-	}
 #endif
 
 	Waypoint *way = TheTerrainLogic->getWaypointByName(waypointName);
@@ -3163,22 +3165,21 @@ void ScriptActions::doRevealMapAtWaypoint(const AsciiString& waypointName, Real 
 		return;
 	}
 
-	// thanks for making me need to do this visual studio.......
-#if FORCE_GAME_CONTEXT == FGC_NONE
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
-#endif
 	PlayerMaskType playerMask;
 
-	//MODDD
-#if FORCE_GAME_CONTEXT == FGC_NONE
 	if (player && playerName.isNotEmpty())
+	{
 		playerMask = player->getPlayerMask();
+
+		//MODDD
+#if FORCE_GAME_CONTEXT != FGC_NONE
+		if (TheGameLogic->getGameMode() != GAME_SHELL && ThePlayerList->getSlotIndex(player->getPlayerIndex()) == 0)
+			playerMask = getOccupiedSlotPlayerMask();
+#endif
+	}
 	else
 		playerMask = getHumanPlayerMask();
-#else
-	// always apply to all human players instead
-	playerMask = getHumanPlayerMask();
-#endif
 
 	Real positionX = way->getLocation()->x;
 	Real positionY = way->getLocation()->y;
@@ -3195,20 +3196,8 @@ void ScriptActions::doShroudMapAtWaypoint(const AsciiString& waypointName, Real 
 {
 	//MODDD
 #if REMOVE_FOG_OF_WAR
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+	if (TheGameLogic->getGameMode() != GAME_SHELL)
 		return;
-	}
-#endif
-
-#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
-		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
-			// fall through
-		} else {
-			// no.
-			return;
-		}
-	}
 #endif
 
 	Waypoint *way = TheTerrainLogic->getWaypointByName(waypointName);
@@ -3216,22 +3205,21 @@ void ScriptActions::doShroudMapAtWaypoint(const AsciiString& waypointName, Real 
 		return;
 	}
 
-	// thanks for making me need to do this visual studio.......
-#if FORCE_GAME_CONTEXT == FGC_NONE
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
-#endif
 	PlayerMaskType playerMask;
 
-	//MODDD
-#if FORCE_GAME_CONTEXT == FGC_NONE
 	if (player && playerName.isNotEmpty())
+	{
 		playerMask = player->getPlayerMask();
+
+		//MODDD
+#if FORCE_GAME_CONTEXT != FGC_NONE
+		if (TheGameLogic->getGameMode() != GAME_SHELL && ThePlayerList->getSlotIndex(player->getPlayerIndex()) == 0)
+			playerMask = getOccupiedSlotPlayerMask();
+#endif
+	}
 	else
 		playerMask = getHumanPlayerMask();
-#else
-	// always apply to all human players instead
-	playerMask = getHumanPlayerMask();
-#endif
 
 	Real positionX = way->getLocation()->x;
 	Real positionY = way->getLocation()->y;
@@ -3244,8 +3232,7 @@ void ScriptActions::doShroudMapAtWaypoint(const AsciiString& waypointName, Real 
 	ThePartitionManager->doShroudCover(positionX, positionY, radiusToShroud, playerMask);
 	ThePartitionManager->undoShroudCover(positionX, positionY, radiusToShroud, playerMask);
 #else
-	// To achieve this, need a different call instead of 'do/undoShroudCover'.
-	ThePartitionManager->doSetShroudArea(positionX, positionY, radiusToShroud, playerMask);
+	// <below>
 #endif
 	*/
 	ThePartitionManager->doSetShroudArea(positionX, positionY, radiusToShroud, playerMask);
@@ -3258,40 +3245,8 @@ void ScriptActions::doRevealMapEntire(const AsciiString& playerName)
 {
 	//MODDD
 #if REMOVE_FOG_OF_WAR
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+	if (TheGameLogic->getGameMode() != GAME_SHELL)
 		return;
-	}
-#endif
-
-#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
-		// Copy of the loop-thru players route further down. Just do this to apply any reveal to all players for co-op friendliness
-		// (so long as the script is referring to either 'ThePlayer' or 'player0', in case of manual edits done elsewhere - ex: don't do this for both 'player0' and 'player1', etc.)
-		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
-			for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
-			{
-				Player *player = ThePlayerList->getNthPlayer(i);
-				if (player->getPlayerType() == PLAYER_HUMAN)
-				{
-					ThePartitionManager->revealMapForPlayer( i );
-				}
-			}
-		}
-		return;
-	}
-#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
-		// Just do it for all human players.
-		for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
-		{
-			Player *player = ThePlayerList->getNthPlayer(i);
-			if (player->getPlayerType() == PLAYER_HUMAN)
-			{
-				ThePartitionManager->revealMapForPlayer( i );
-			}
-		}
-		return;
-	}
 #endif
 
 	DEBUG_LOG(("ScriptActions::doRevealMapEntire() for player named '%s'", playerName.str()));
@@ -3300,6 +3255,21 @@ void ScriptActions::doRevealMapEntire(const AsciiString& playerName)
 	{
 		DEBUG_LOG(("ScriptActions::doRevealMapEntire() for player named '%ls' in position %d", player->getPlayerDisplayName().str(), player->getPlayerIndex()));
 		ThePartitionManager->revealMapForPlayer( player->getPlayerIndex() );
+
+		//MODDD - check for FGC setting to apply this action to all other slot players if this was for the first slot player
+#if FORCE_GAME_CONTEXT != FGC_NONE
+		if (TheGameLogic->getGameMode() != GAME_SHELL && ThePlayerList->getSlotIndex(player->getPlayerIndex()) == 0)
+		{
+			// apply to all other slot players
+			for (int i=1; i < ThePlayerList->m_slotSoftMax; ++i)
+			{
+				Player* player = ThePlayerList->getPlayerFromSlotIndex_requireOccupied(i);
+				if (player == nullptr)
+					continue;
+				ThePartitionManager->revealMapForPlayer( player->getPlayerIndex() );
+			}
+		}
+#endif
 	}
 	else
 	{
@@ -3320,45 +3290,8 @@ void ScriptActions::doRevealMapEntirePermanently( Bool reveal, const AsciiString
 {
 #if REMOVE_FOG_OF_WAR
 	//MODDD - disable since the change in GameLogic.cpp to reveal the map permanently for all players already
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+	if (TheGameLogic->getGameMode() != GAME_SHELL)
 		return;
-	}
-#endif
-
-#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
-		// Copy of the loop-thru players route further down. Just do this to apply any reveal to all players for co-op friendliness
-		// (so long as the script is referring to either 'ThePlayer' or 'player0', in case of manual edits done elsewhere - ex: don't do this for both 'player0' and 'player1', etc.)
-		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
-			for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
-			{
-				Player *player = ThePlayerList->getNthPlayer(i);
-				if (player->getPlayerType() == PLAYER_HUMAN)
-				{
-					if( reveal )
-						ThePartitionManager->revealMapForPlayerPermanently( i );
-					else
-						ThePartitionManager->undoRevealMapForPlayerPermanently( i );
-				}
-			}
-		}
-		return;
-	}
-#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
-		for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
-		{
-			Player *player = ThePlayerList->getNthPlayer(i);
-			if (player->getPlayerType() == PLAYER_HUMAN)
-			{
-				if( reveal )
-					ThePartitionManager->revealMapForPlayerPermanently( i );
-				else
-					ThePartitionManager->undoRevealMapForPlayerPermanently( i );
-			}
-		}
-		return;
-	}
 #endif
 
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
@@ -3368,6 +3301,25 @@ void ScriptActions::doRevealMapEntirePermanently( Bool reveal, const AsciiString
 			ThePartitionManager->revealMapForPlayerPermanently( player->getPlayerIndex() );
 		else
 			ThePartitionManager->undoRevealMapForPlayerPermanently( player->getPlayerIndex() );
+
+		//MODDD - check for FGC setting to apply this action to all other slot players if this was for the first slot player
+#if FORCE_GAME_CONTEXT != FGC_NONE
+		if (TheGameLogic->getGameMode() != GAME_SHELL && ThePlayerList->getSlotIndex(player->getPlayerIndex()) == 0)
+		{
+			// apply to all other slot players
+			for (int i=1; i < ThePlayerList->m_slotSoftMax; ++i)
+			{
+				Player* player = ThePlayerList->getPlayerFromSlotIndex_requireOccupied(i);
+				if (player == nullptr)
+					continue;
+				if( reveal )
+					ThePartitionManager->revealMapForPlayerPermanently( player->getPlayerIndex() );
+				else
+					ThePartitionManager->undoRevealMapForPlayerPermanently( player->getPlayerIndex() );
+			}
+		}
+#endif
+
 	}
 	else
 	{
@@ -3393,46 +3345,30 @@ void ScriptActions::doShroudMapEntire(const AsciiString& playerName)
 {
 	//MODDD
 #if REMOVE_FOG_OF_WAR
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+	if (TheGameLogic->getGameMode() != GAME_SHELL)
 		return;
-	}
 #endif
-
-#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
-		// Copy of the loop-thru players route further down. Just do this to apply any reveal to all players for co-op friendliness
-		// (so long as the script is referring to either 'ThePlayer' or 'player0', in case of manual edits done elsewhere - ex: don't do this for both 'player0' and 'player1', etc.)
-		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
-			for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
-			{
-				Player *player = ThePlayerList->getNthPlayer(i);
-				if (player->getPlayerType() == PLAYER_HUMAN)
-				{
-					ThePartitionManager->shroudMapForPlayer( i );
-				}
-			}
-		}
-		return;
-	}
-#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
-		for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
-		{
-			Player *player = ThePlayerList->getNthPlayer(i);
-			if (player->getPlayerType() == PLAYER_HUMAN)
-			{
-				ThePartitionManager->shroudMapForPlayer( i );
-			}
-		}
-		return;
-	}
-#endif
-
 
 	Player* player = TheScriptEngine->getPlayerFromAsciiString(playerName);
 	if (player && playerName.isNotEmpty())
 	{
 		ThePartitionManager->shroudMapForPlayer( player->getPlayerIndex() );
+
+		//MODDD - check for FGC setting to apply this action to all other slot players if this was for the first slot player
+#if FORCE_GAME_CONTEXT != FGC_NONE
+		if (TheGameLogic->getGameMode() != GAME_SHELL && ThePlayerList->getSlotIndex(player->getPlayerIndex()) == 0)
+		{
+			// apply to all other slot players
+			for (int i=1; i < ThePlayerList->m_slotSoftMax; ++i)
+			{
+				Player* player = ThePlayerList->getPlayerFromSlotIndex_requireOccupied(i);
+				if (player == nullptr)
+					continue;
+				ThePartitionManager->shroudMapForPlayer( player->getPlayerIndex() );
+			}
+		}
+#endif
+
 	}
 	else
 	{
@@ -5389,9 +5325,11 @@ void ScriptActions::doBorderSwitch(Int borderToUse)
 	}
 #else
 	//MODDD - added portion to undo the reveal for all players
-	for (int i = 0; i < ThePlayerList->getPlayerCount(); ++i) {
+	for (int i = 0; i < ThePlayerList->getPlayerCount(); ++i)
+	{
 		Player* player = ThePlayerList->getNthPlayer(i);
-		if (player && player->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(player->getPlayerNameKey()).getLength() != 0) {
+		if (player->isPlayerViewer())
+		{
 			ThePartitionManager->undoRevealMapForPlayerPermanently( player->getPlayerIndex() );
 		}
 	}
@@ -5406,9 +5344,11 @@ void ScriptActions::doBorderSwitch(Int borderToUse)
 	}
 #else
 	//MODDD - added portion to re-apply the reveal for all players
-	for (int i = 0; i < ThePlayerList->getPlayerCount(); ++i) {
+	for (int i = 0; i < ThePlayerList->getPlayerCount(); ++i)
+	{
 		Player* player = ThePlayerList->getNthPlayer(i);
-		if (player && player->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(player->getPlayerNameKey()).getLength() != 0) {
+		if (player->isPlayerViewer())
+		{
 			ThePartitionManager->revealMapForPlayerPermanently( player->getPlayerIndex() );
 		}
 	}
@@ -6631,47 +6571,8 @@ void ScriptActions::doRevealMapAtWaypointPermanent(const AsciiString& waypointNa
 {
 	//MODDD
 #if REMOVE_FOG_OF_WAR
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+	if (TheGameLogic->getGameMode() != GAME_SHELL)
 		return;
-	}
-#endif
-
-	//MODDD - nevermind, a few edits in ScriptEngine.cpp is much easier
-	/*
-#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
-		// Copy of the loop-thru players route further down. Just do this to apply any reveal to all players for co-op friendliness
-		// (so long as the script is referring to either 'ThePlayer' or 'player0', in case of manual edits done elsewhere - ex: don't do this for both 'player0' and 'player1', etc.)
-		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
-			for (Int i=0; i<ThePlayerList->getPlayerCount(); ++i)
-			{
-				Player *player = ThePlayerList->getNthPlayer(i);
-				if (player->getPlayerType() == PLAYER_HUMAN)
-				{
-					AsciiString playerNameTemp;
-					playerNameTemp.format("player%d", i);
-					// Create a unique name for each one
-					AsciiString lookNameTemp;
-					lookNameTemp.format("%s_p%d", lookName.str(), i);
-					TheScriptEngine->createNamedMapReveal(lookNameTemp, waypointName, radiusToReveal, playerNameTemp);
-					TheScriptEngine->doNamedMapReveal(lookNameTemp);
-				}
-			}
-		}
-		return;
-	}
-#endif
-  */
-	// However, can block calls that aren't to one of the expected player choices
-#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
-		if (playerName == THE_PLAYER || playerName == LOCAL_PLAYER || playerName == "player0") {
-			// fall through
-		} else {
-			// no.
-			return;
-		}
-	}
 #endif
 
 	TheScriptEngine->createNamedMapReveal(lookName, waypointName, radiusToReveal, playerName);
@@ -6683,9 +6584,8 @@ void ScriptActions::doUndoRevealMapAtWaypointPermanent(const AsciiString& lookNa
 {
 	//MODDD
 #if REMOVE_FOG_OF_WAR
-	if (TheGameLogic->getGameMode() != GAME_SHELL) {
+	if (TheGameLogic->getGameMode() != GAME_SHELL)
 		return;
-	}
 #endif
 
 	TheScriptEngine->undoNamedMapReveal(lookName);
@@ -7003,25 +6903,21 @@ void ScriptActions::doAffectSkillPointsModifier(const AsciiString& playerName, R
 
 	playerDst->setSkillPointsModifier(newModifier);
 
-	//MODDD - if this is generals challenge co-op and this is a promotion experience rate change for the 1st
-	// slot player, apply it to all other slot players. It's fine if this is overridden by other scripts
-	// using this same method, some may already set the experience rate for players other than the 1st.
-	
-#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
-	if (ThePlayerList->getSlotIndex(playerDst->getPlayerIndex()) == 0 && playerDst->getPlayerType() == PLAYER_HUMAN)
+	//MODDD - if this is campaign or generals challenge co-op and this is a promotion experience rate change for the 1st
+	// slot player, apply it to all other slot players. It's fine if this is overridden by other scripts using this same
+	// method, some may already set the experience rate for players other than the 1st.
+#if FORCE_GAME_CONTEXT != FGC_NONE
+	if (ThePlayerList->getSlotIndex(playerDst->getPlayerIndex()) == 0)
 	{
 		// skip player #0 since that experience rate has already been set and is the basis for everyone else
-		for (int i=1; i < ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
+		for (int i=1; i < ThePlayerList->m_slotSoftMax; ++i)
 		{
-			Player* player = ThePlayerList->getPlayerFromSlotIndex(i);
-			if (TheGameInfo != nullptr)
+			Player* player = ThePlayerList->getPlayerFromSlotIndex_requireActiveParticipant(i);
+			if (player == nullptr)
 			{
-				GameSlot *slot = TheGameInfo->getSlot(i);
-				if (!slot->isOccupied())
-				{
-					continue;
-				}
+				continue;
 			}
+
 			player->setSkillPointsModifier(newModifier);
 		}
 	}

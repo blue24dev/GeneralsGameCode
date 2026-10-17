@@ -2581,7 +2581,8 @@ void TerrainLogic::setActiveBoundary(Int newActiveBoundary)
 #if 0
 	//MODDD - if this preprocessor const is on, need to re-shroud whatever part of the map was permanently
 	// revealed so it doesn't show up past the playable map area.
-	if (m_boundaries[newActiveBoundary].x < m_boundaries[m_activeBoundary].x || m_boundaries[newActiveBoundary].y < m_boundaries[m_activeBoundary].y) {
+	if (m_boundaries[newActiveBoundary].x < m_boundaries[m_activeBoundary].x || m_boundaries[newActiveBoundary].y < m_boundaries[m_activeBoundary].y)
+	{
 		// translate boundary to cell count
 		Real cellSizeInv = ThePartitionManager->getCellSizeInv();
 
@@ -2601,7 +2602,8 @@ void TerrainLogic::setActiveBoundary(Int newActiveBoundary)
 
 		for (int i = 0; i < ThePlayerList->getPlayerCount(); ++i) {
 			Player* player = ThePlayerList->getNthPlayer(i);
-			if (player && player->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(player->getPlayerNameKey()).getLength() != 0) {
+			if (player->isPlayerViewer())
+			{
 				if (m_boundaries[newActiveBoundary].x < m_boundaries[m_activeBoundary].x) {
 					ThePartitionManager->shroudRangeCells(newBoundaryCellCountX, 0, curBoundaryCellCountX, minBoundaryCellCountY, player->getPlayerIndex());
 				}

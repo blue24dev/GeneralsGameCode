@@ -627,6 +627,10 @@ public:
 	Bool isPlayerDead() const; // Favor !isPlayerActive() - this is used so OCLs don't give us stuff after death.
 	Bool isPlayerActive() const; // Player is alive and not observer. !isPlayerActive() is synonymous with observing.
 
+	//MODDD
+	Bool isUnaffiliated() const;
+	Bool isPlayerViewer() const;
+
 	Bool didPlayerPreorder() const { return m_isPreorder; }
 
 	/// Grab the scorekeeper so we can score up in here!

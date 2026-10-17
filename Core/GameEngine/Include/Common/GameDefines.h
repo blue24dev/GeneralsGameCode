@@ -428,12 +428,15 @@
 
 // Setting added in the hopes of preventing a major source of hardware lag: adding to a continually building
 // '<documents>/Command and... Data/Replays/00000000.REP' file for a replay the user may never intend to save/look at anyway.
-// Assuming the issue is what I think it is (hard drive writes becoming obnoxious in long-running games,
-// possibly worse in mods for this reason), a better fix would probably be to try and hold the entire replay
-// in memory & do write operations to there instead since modern machines can handle this, hopefully without
-// this having to be a 64-bit program (needing over 4 gig of memory).
-// Also, consider a yes/no option for whether a game should record for a replay before starting the game.
-#define BLOCK_REPLAY_RECORDING_ALWAYS 1
+// Assuming the issue is what I think it is (hard drive writes becoming obnoxious in long-running games, possibly worse
+// in mods), a better fix would probably be to try and hold the entire replay in memory & do write operations to there
+// instead since modern machines can handle this, hopefully without this having to be a 64-bit program. This concern may
+// be alleviated with the change since to enable the 'LARGEADDRESSAWARE' flag in the executable (see the README for more
+// info).
+// Also, consider adding a yes/no option to the UI before starting a game for whether a game should record for a replay
+// before starting the game & avoid doing whatever this setting would leave out of the compile when the in-game option
+// is off.
+#define REPLAY_SUPPORT 0
 
 // If on, 'MSG_META_DEMO_...' messages, reached by key inputs described in 'CommandMapDebug.ini', won't be handled in debug mode.
 // This setting is good for testing debug builds without the risk of accidentally turning on debug features or cheats by certain key inputs.

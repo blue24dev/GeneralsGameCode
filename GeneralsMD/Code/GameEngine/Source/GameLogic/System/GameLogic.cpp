@@ -1224,7 +1224,7 @@ void GameLogic::setGameMode( GameMode mode )
 // the currrent machine(user) will play as in-game.
 // Lastly, this isn't needed for FGC_CHALLENGE_FORCE/CAMPAIGN because both cases use the skirmish map system
 // (always a "player#" that knows which belongs to the current machine).
-//MODDD - TODO - couldn't 'populateHumanPlayerRefs' in PlayerList handle this too?
+//MODDD - TODO - couldn't 'populateSlotPlayerRefs' in PlayerList handle this too?
 // Do whatever a side having 'TheKey_multiplayerIsLocal' does to declare that this player is for the local user/machine.
 SidesInfo* getMultiplayerLocalSide()
 {
@@ -1254,8 +1254,10 @@ SidesInfo* getMultiplayerLocalSide()
 	{
 		SidesInfo* sideInfo = TheSidesList->getSideInfo(i);
 		Dict* sideDict = sideInfo->getDict();
-		if (sideDict->getBool(TheKey_playerIsHuman)) {
-			if (targetHumanSideToEncounter == humanSidesEncountered) {
+		if (sideDict->getBool(TheKey_playerIsHuman))
+		{
+			if (targetHumanSideToEncounter == humanSidesEncountered)
+			{
 				sideDict->setBool(TheKey_multiplayerIsLocal, TRUE);
 				break;
 			}
@@ -1276,7 +1278,8 @@ SidesInfo* getMultiplayerLocalSide()
 		{
 			SidesInfo* sideInfo = TheSidesList->getSideInfo(i);
 			Dict* sideDict = sideInfo->getDict();
-			if (sideDict->getBool(TheKey_playerIsHuman)) {
+			if (sideDict->getBool(TheKey_playerIsHuman))
+			{
 				return sideInfo;
 			}
 		}
@@ -1310,7 +1313,9 @@ SidesInfo* getMultiplayerLocalSide()
 			"ThePlayer",
 			"Player",
 			"PlyrPLAYER",
-			"player0"
+			"player0",
+			// (test - did any retail maps use this one? Seems reasonable to occur)
+			"PlyrPlayer"
 		};
 		int i;
 
@@ -1331,7 +1336,8 @@ SidesInfo* getMultiplayerLocalSide()
 		{
 			sideInfo = TheSidesList->getSideInfo(i);
 			Dict* sideDict = sideInfo->getDict();
-			if (sideDict->getBool(TheKey_playerIsHuman)) {
+			if (sideDict->getBool(TheKey_playerIsHuman))
+			{
 				return sideInfo;
 			}
 		}
@@ -1612,6 +1618,8 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 	// Ex: co-op (network) games have a non-null game info but should still avoid some automatic behavior.
 	Bool doAutomaticPostGamePlayerSetup;
 #if FORCE_GAME_CONTEXT == FGC_CAMPAIGN
+	// Act as though 'TheGameInfo' doesn't exist (were null) - playing the campaign in co-op means 'TheGameInfo' will be
+	// mainly to be connective tissue for network support
 	doAutomaticPostGamePlayerSetup = FALSE;
 #else
 	doAutomaticPostGamePlayerSetup = (TheGameInfo != nullptr);
@@ -1835,6 +1843,25 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 	}
 #endif
 
+	//MODDD - don't add the replay observer if replay support won't even be part of the compile
+	// (or if supported eventually, user setting says not to record a replay).
+	// UPDATE - I've since seen that 'rts::changeObservedPlayer' (GameUtility.h) expects 'ReplayObserver' to exist.
+	// If a game has observer players, they may use that player as a fallback when no particular player is being observed
+	// (permanent map reveal). Would need a more thorough check to make sure there are no observer players who could
+	// possibly need that. And this is all getting way out of scope - just have your dang ReplayObserver!
+	Bool createObserverPlayer;
+//#if REPLAY_SUPPORT
+	// retail way: always
+	createObserverPlayer = TRUE;
+//#else
+//	// only on playing an existing replay
+//	createObserverPlayer = (m_gameMode == GAME_REPLAY);
+//#endif
+
+	//MODDD - adding a bounding if-then for 'createObserverPlayer'
+	// NOTE - The commented out 'm_gameMode != GAME_REPLAY' thing was found that way as-is. Interestingly enough I want the opposite for 'REPLAY_SUPPORT' is off (playback only).
+	if (createObserverPlayer)
+	{
 	//if(m_gameMode != GAME_REPLAY)
 	//{
 
@@ -1863,6 +1890,8 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 		d.setBool(TheKey_teamIsSingleton, true);
 		TheSidesList->addTeam(&d);
 	//}
+	}//MODDD - end bracket
+
 	TheSidesList->validateSides();
 
 	// update the loadscreen
@@ -2128,13 +2157,31 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 	updateLoadProgress(LOAD_PROGRESS_POST_PATHFINDER_NEW_MAP);
 
 	// reveal the map for the permanent observer
-	Player *observerPlayer = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey("ReplayObserver"));
-	ThePartitionManager->revealMapForPlayerPermanently( observerPlayer->getPlayerIndex() );
-	DEBUG_LOG(("Reveal shroud for %ls whose index is %d", observerPlayer->getPlayerDisplayName().str(), observerPlayer->getPlayerIndex()));
+	//MODDD - replay observer won't exist if replay support's been yanked out by setting.
+	// (whether to expected it to exist will depend on macro setting)
+	Player *observerPlayer = nullptr;
+	//MODDD - see notes above - bounding if-then is new
+	if (createObserverPlayer)
+	{
+		observerPlayer = ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey("ReplayObserver"));
+	}
+
+	//MODDD - Revealing the map for a player would be redundant if 'REMOVE_FOG_OF_WAR==true''s block will run a bit further down.
+	// Also, added a null check on 'observerPlayer' since its existence may varry during runtime now
+#if !REMOVE_FOG_OF_WAR
+	if (observerPlayer != nullptr)
+	{
+		ThePartitionManager->revealMapForPlayerPermanently( observerPlayer->getPlayerIndex() );
+		DEBUG_LOG(("Reveal shroud for %ls whose index is %d", observerPlayer->getPlayerDisplayName().str(), observerPlayer->getPlayerIndex()));
+	}
+#endif
 	
 	//MODDD - replaced 'TheGame' condition with this
 	if (doAutomaticPostGamePlayerSetup)
 	{
+		//MODDD - this only checks whether to enable fog of war per player, so replace this block if the approach to force
+		// all players to call 'revealMapForPlayerPermanently' will be used anyway
+#if !REMOVE_FOG_OF_WAR
 		int i;
 		for (i=0; i<MAX_SLOTS; ++i)
 		{
@@ -2157,14 +2204,13 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 					ThePartitionManager->revealMapForPlayer( player->getPlayerIndex() );
 			}
 		}
-
-#if REMOVE_FOG_OF_WAR
-		//MODDD - new loop, for all players, slot-or-not (though slot-only should suffice too?)
-		for (i = 0; i < ThePlayerList->getPlayerCount(); ++i) {
+#else
+		//MODDD
+		for (i = 0; i < ThePlayerList->getPlayerCount(); ++i)
+		{
 			Player* player = ThePlayerList->getNthPlayer(i);
-			//MODDD - CHANGE. Reveal the map for all players for now
-			//if (player && player->getPlayerNameKey() != NAMEKEY_INVALID && KEYNAME(player->getPlayerNameKey()).getLength() != 0) {
-			if (player->getPlayerType() == PLAYER_HUMAN) {
+			if (player->isPlayerViewer())
+			{
 				ThePartitionManager->revealMapForPlayerPermanently( player->getPlayerIndex() );
 			}
 		}
@@ -2566,10 +2612,10 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 				*/
 				///////////////////////////////////////////////////////////////
 				int i;
-				for (i=0; i<ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
+				for (i=0; i<ThePlayerList->m_slotSoftMax; ++i)
 				{
 					GameSlot *slot = TheGameInfo->getSlot(i);
-					if (!slot->isOccupied())
+					if (!slot->isParticipant())
 					{
 						continue;
 					}
@@ -2613,10 +2659,10 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 			// each other), and make all slot players enemies with players not assigned by a slot (ex: AI enemy
 			// general player baked into the map).
 			int i;
-			for (i=0; i<ThePlayerList->m_slotPlayerRefsSoftCount; ++i)
+			for (i=0; i<ThePlayerList->m_slotSoftMax; ++i)
 			{
 				GameSlot *slot = TheGameInfo->getSlot(i);
-				if (!slot->isOccupied())
+				if (!slot->isParticipant())
 				{
 					continue;
 				}

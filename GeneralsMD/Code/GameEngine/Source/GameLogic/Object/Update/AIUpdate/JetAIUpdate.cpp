@@ -519,6 +519,12 @@ public:
 		if( !jetAI )
 			return STATE_FAILURE;
 
+		//MODDD - if this is a jet leaving the parking space, no more repairs
+		if (jetAI->getJetAIUpdateModuleData()->m_needsRunway && m_taxiMode == FROM_PARKING)
+		{
+			jetAI->setFlag(JetAIUpdate::PARKED_AT_AIRFIELD, false);
+		}
+
 		jetAI->setCanPathThroughUnits(true);
 		jetAI->friend_setTakeoffInProgress(m_taxiMode != TO_PARKING);
 		jetAI->friend_setLandingInProgress(m_taxiMode == TO_PARKING);
@@ -1023,6 +1029,12 @@ public:
 		JetAIUpdate* jetAI = (JetAIUpdate*)jet->getAIUpdateInterface();
 		if( !jetAI )
 			return STATE_FAILURE;
+		
+		//MODDD - if this is a helicopter taking off, no more repairs
+		if (m_landing == false)
+		{
+			jetAI->setFlag(JetAIUpdate::PARKED_AT_AIRFIELD, false);
+		}
 
 		jetAI->friend_setTakeoffInProgress(!m_landing);
 		jetAI->friend_setLandingInProgress(m_landing);
@@ -1235,7 +1247,18 @@ public:
 		JetAIUpdate* jetAI = (JetAIUpdate*)obj->getAIUpdateInterface();
 		if( !jetAI )
 			return STATE_FAILURE;
-		
+
+		//MODDD - if this is a helicopter taking off, no more repairs
+		// In this case, there shouldn't usually be an associated air field from the 'NoAirFieldState' part of the name,
+		// but just in case, as some idle detection may still choose to use this state to leave an air field this
+		// helicopter was getting repaired at until it chose to stay landed for another reason - ex: a pilot wanting to
+		// enter even after repairs are done & staying landed for that, THEN takeoff is for a reason other than repairs
+		// being done at that exact moment.
+		if (m_landing == false)
+		{
+			jetAI->setFlag(JetAIUpdate::PARKED_AT_AIRFIELD, false);
+		}
+
 		// kill any drift...
 		obj->getPhysics()->scrubVelocity2D(0);
 
@@ -1777,6 +1800,10 @@ public:
 		if( !jetAI )
 			return STATE_FAILURE;
 
+		//MODDD - starting the reload state implies having landed at an air field, even if just for repairs & ammo is full
+		// (this state will still reach this point before quickly switching to the 'AI_IDLE' one, maybe? Jets or helicopters?).
+		jetAI->setFlag(JetAIUpdate::PARKED_AT_AIRFIELD, true);
+
 		jetAI->friend_setTakeoffInProgress(false);
 		jetAI->friend_setLandingInProgress(false);
 		jetAI->friend_setUseSpecialReturnLoco(false);
@@ -1899,14 +1926,7 @@ public:
 		}
 		setAdjustsDestination(false);		// precision is necessary
 
-		//MODDD - if this state's going to run, seems fine to set this flag
-		//return AIInternalMoveToState::onEnter();
-		StateReturnType ret = AIInternalMoveToState::onEnter();
-		if (ret != STATE_FAILURE)
-		{
-			jetAI->setFlag(JetAIUpdate::AIRFIELD_DESTINATION, true);
-		}
-		return ret;
+		return AIInternalMoveToState::onEnter();
 	}
 };
 EMPTY_DTOR(JetOrHeliReturnForLandingState)
@@ -2221,7 +2241,10 @@ UpdateSleepTime JetAIUpdate::update()
 	{
 		if (pp != nullptr)
 		{
-			if (!getFlag(ALLOW_AIR_LOCO) &&
+			if (
+				//MODDD - replacing check with 'getFlag(PARKED_AT_AIRFIELD)'
+				//!getFlag(ALLOW_AIR_LOCO) &&
+				getFlag(PARKED_AT_AIRFIELD) && 
 						//MODDD - I don't think the 'HAS_PENDING_COMMAND' check here is necessary.
 						// if this is a helicopter at full health, not taking off for that reason will cause it to stay on the ground
 						// until told to move (ex: using the 'stop' button while it's grounded for repairs).
@@ -2231,8 +2254,8 @@ UpdateSleepTime JetAIUpdate::update()
 						(isReloading() || !getFlag(HAS_PENDING_COMMAND)) &&
 						jet->isKindOf(KINDOF_PRODUCED_AT_HELIPAD) &&
 						jet->getBodyModule()->getHealth() == jet->getBodyModule()->getMaxHealth() &&
-					//MODDD - also require knowing this is landed at the airfield, and nothing wanting to enter this
-					getFlag(AIRFIELD_DESTINATION) && !waitingToEnterOrExit
+					//MODDD - require that nothing wanting to enter this
+					!waitingToEnterOrExit
 			)
 			{
 				// we're completely healed, so take off again
@@ -2263,24 +2286,15 @@ UpdateSleepTime JetAIUpdate::update()
 				// be strange).
 				// No issue requiring this for everything - should be the only reason jets ever land anyway so this is always set
 				// when grounded then.
-				pp->setHealee(jet, !getFlag(ALLOW_AIR_LOCO) && getFlag(AIRFIELD_DESTINATION));
+				pp->setHealee(jet, getFlag(PARKED_AT_AIRFIELD));
 			}
-		}
-		//MODDD - new 'else' section to know not to heal if the air field disappears.
-		// See 'ChinookAIUpdate::update()': "setAirfieldForHealing(INVALID_ID);".
-		else
-		{
-			// actually, I don't think this is necessary - if there is no associated air field / parking space,
-			// this flag isn't involved anywhere anyway
-			// TODO - I feel setting some flag like 'DOCKED_AT_AIRFIELD' when that's the case on success for the last
-			// landing state to go from that to AI_IDLE would be closer to the intent.
-			// I feel like an event to do something on state success would make sense around that? Not sure.
-			//setFlag(AIRFIELD_DESTINATION, false);
 		}
 
 		//MODDD - moved a later condition to here and included some other things for safety
 		// (only behavior from retail is the 'RELOAD_AMMO' check)
-		Bool isBusyAtAirField = (getFlag(AIRFIELD_DESTINATION) && !getFlag(ALLOW_AIR_LOCO) &&
+		// Also, note that being 'PARKED_AT_AIRFIELD' implies having landed, so no need to check for
+		// '!getFlag(ALLOW_AIR_LOCO)' too.
+		Bool isBusyAtAirField = (getFlag(PARKED_AT_AIRFIELD) &&
 			(
 				getStateMachine()->getCurrentStateID() == RELOAD_AMMO ||
 				jet->getBodyModule()->getHealth() < jet->getBodyModule()->getMaxHealth() ||
@@ -2879,27 +2893,6 @@ void JetAIUpdate::aiDoCommand(const AICommandParms* parms)
 
 	if (!isAllowedToRespondToAiCommands(parms))
 		return;
-	
-	//MODDD - similar to 'ChinookAIUpdate::aiDoCommand' calling 'setAirfieldForHealing(INVALID_ID)',
-	// most new AI commands reset this.
-	// Note that the 'stop' button sends AICMD_IDLE (can check if it's player-issued instead of AI/autonomous too).
-	// Actually, going to allow stop commands (this type) for helicopters so they're forced to take off even if repairing.
-	// This is for consistency with helicopters using 'ChinookAIUpdate' instead of 'JetAIUpdate' in several mods.
-	// I think originally ignoring stop commands while repairing was more of a lazy carry-over from comanches using
-	// the same 'JetAIUpdate' in retail.
-	if (getObject()->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ))
-	{
-		// helicopter - always accept
-		setFlag(AIRFIELD_DESTINATION, false);
-	}
-	else
-	{
-		// jet - don't let stop commands forget being landed at an air field since nothing visually changes from doing this
-		if (parms->m_cmd != AICMD_IDLE)
-		{
-			setFlag(AIRFIELD_DESTINATION, false);
-		}
-	}
 
 	// note that we always store this, even if nothing will be "pending".
 	m_mostRecentCommand.store(*parms);

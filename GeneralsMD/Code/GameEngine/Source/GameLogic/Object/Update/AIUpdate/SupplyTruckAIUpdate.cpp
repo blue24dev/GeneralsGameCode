@@ -128,6 +128,12 @@ Bool SupplyTruckAIUpdate::isCurrentlyFerryingSupplies() const
 //-------------------------------------------------------------------------------------------------
 Bool SupplyTruckAIUpdate::isAvailableForSupplying() const
 {
+	//MODDD - not going to check for having a capacity of over 0 boxes? 1800-really-now?
+	// Without this, adding a bogus 0-size container to comanches to let pilots be able to enter them makes the comanches
+	// think they can pick up supplies (UI hint & they move over the supplies).
+	if (getSupplyTruckAIUpdateModuleData()->m_maxBoxesData <= 0)
+		return false;
+
 	return true;
 }
 
