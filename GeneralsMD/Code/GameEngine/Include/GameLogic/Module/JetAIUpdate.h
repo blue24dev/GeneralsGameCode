@@ -88,7 +88,7 @@ public:
 		TAXI_IN_PROGRESS,
 		//MODDD - new, mainly for helicopters to tell if the reason they're landed is for repairs at their associated air
 		// field (this should be the only reason ever for landed jets, but doesn't hurt to use this flag for them too).
-		PARKED_AT_AIRFIELD
+		DOCKED_AT_AIRFIELD
 	};
 
 private:
@@ -110,7 +110,12 @@ public:
 	virtual void setLocomotorGoalNone() override;
 	
 	//MODDD - new
-	virtual Bool canLandToPickUpObjectWantingToEnter() override;
+	virtual Bool canLandToPickUpObjectWantingToEnter() const override;
+	virtual Bool isDockedAtAirField() const override;
+	virtual Bool isLandingAtAirField() const override;
+	virtual ObjectID getAirFieldDockIntentID() const override;
+
+	//MODDD - not an override
 	virtual Bool movesLikeHelicopter() const;
 
 	virtual Bool isIdle() const override;

@@ -299,9 +299,20 @@ Bool ActionManager::canGetRepairedAt( const Object *obj, const Object *repairDes
 	if (obj->isKindOf( KINDOF_AIRCRAFT ))
 	{
 		// aircraft require an airfield.
-		if( !obj->isAboveTerrain() ||
-					repairDest->isKindOf( KINDOF_FS_AIRFIELD ) == FALSE )
+		//MODDD - similar to the 'canEnterObject' change - just require not landing or already being docked (i.e. repairing already)
+		// (replacing this, a tad sloppy to me)
+		//if( !obj->isAboveTerrain() ||
+		//			repairDest->isKindOf( KINDOF_FS_AIRFIELD ) == FALSE )
+		//  return FALSE;
+		// ------
+		if (!repairDest->isKindOf( KINDOF_FS_AIRFIELD ))
 			return FALSE;
+
+		// Note that this only returns a valid ID if a jet/helicopter has started landing or is currently docked, so currently
+		// being away or intending to leave the air field allows an enter command again
+		if (obj->getAI()->getAirFieldDockIntentID() == repairDest->getID())
+			return FALSE;
+		// ------
 	}
 	else
 	{
@@ -722,27 +733,25 @@ Bool ActionManager::canEnterObject( const Object *obj, const Object *objectToEnt
 	{
 		//MODDD - replacing these with a requirement to be a different air field, so a request to move to a different air field
 		// isn't blocked just for being grounded
-		/*
-		if( obj->getStatusBits().test( OBJECT_STATUS_DECK_HEIGHT_OFFSET ) && obj->getCarrierDeckHeight() >= obj->getPosition()->z )
-		{
-			return FALSE;
-		}
-
-		if (!obj->isAboveTerrain())
-			return FALSE;
-		*/
+		// ------
+		//if( obj->getStatusBits().test( OBJECT_STATUS_DECK_HEIGHT_OFFSET ) && obj->getCarrierDeckHeight() >= obj->getPosition()->z )
+		//{
+		//	return FALSE;
+		//}
+		//
+		//if (!obj->isAboveTerrain())
+		//	return FALSE;
+		// ------
 		//MODDD - also, shouldn't 'isAboveTerrain' be ignored if 'OBJECT_STATUS_DECK_HEIGHT_OFFSET' is set?
 		// Looks like that's for being in an aircraft carrier (where 'what the ground is' needs to be factored in).
 		// Anyway, it looks like the 'getCarrierDeckHeight() >= obj->getPosition' alongside that DECK_HEIGHT_OFFSET flag would be enough for that case.
-		Bool isGrounded;
-		if (!obj->getStatusBits().test( OBJECT_STATUS_DECK_HEIGHT_OFFSET ))
-		{
-			isGrounded = !obj->isAboveTerrain();
-		}
-		else
-		{
-			isGrounded = (obj->getStatusBits().test( OBJECT_STATUS_DECK_HEIGHT_OFFSET ) && obj->getCarrierDeckHeight() >= obj->getPosition()->z);
-		}
+		// UPDATE - going to let 'canPickMyAirfield' just depend on not being docked nor landing at the air field instead.
+		// Being docked at the air field counts jets in a parking space or helicopters landed for repairs.
+		//Bool canPickMyAirField = !obj->isDockedAtAirField() && !obj->isLandingAtAirField();
+		// UPDATE - a shortcut to check if this is 'my' airfield and we're intending to land at one / already docked there
+		// (bundled in 'getAirFieldDockIntentID').
+		if (obj->getAI()->getAirFieldDockIntentID() == objectToEnter->getID())
+			return FALSE;
 
 		//MODDD - why not when aircraft can use allied air fields if there are no other choices? (easy to observe in allied team games as of retail)
 #if !EXTRA_ALLY_FUNCTIONALITY
@@ -760,13 +769,16 @@ Bool ActionManager::canEnterObject( const Object *obj, const Object *objectToEnt
 				if (pp == nullptr)
 					continue;
 
-				//MODDD - check 'isGrounded' for if being 'my' air field is ok
+				//MODDD - check if being 'my' air field is ok
+				// UPDATE - disabled, the shortcut above makes this redundant
+				/*
 				if (pp->hasReservedSpace(obj->getID()))
 				{
 					//MODDD
 					//return TRUE;
-					return !isGrounded;
+					return canPickMyAirField;
 				}
+				*/
 
 				if (pp->shouldReserveDoorWhenQueued(obj->getTemplate()) && pp->hasAvailableSpaceFor(obj->getTemplate()))
 					return TRUE;

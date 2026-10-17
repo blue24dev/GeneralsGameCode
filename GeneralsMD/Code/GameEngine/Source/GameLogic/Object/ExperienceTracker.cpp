@@ -139,7 +139,8 @@ void ExperienceTracker::setVeterancyLevel( VeterancyLevel newLevel, Bool provide
 }
 
 //-------------------------------------------------------------------------------------------------
-Bool ExperienceTracker::gainExpForLevel(Int levelsToGain, Bool canScaleForBonus)
+//MODDD - added param 'provideFeedback'
+Bool ExperienceTracker::gainExpForLevel(Int levelsToGain, Bool canScaleForBonus, Bool provideFeedback )
 {
 	Int newLevel = (Int)m_currentLevel + levelsToGain;
 	if (newLevel > LEVEL_LAST)
@@ -148,7 +149,8 @@ Bool ExperienceTracker::gainExpForLevel(Int levelsToGain, Bool canScaleForBonus)
 	if (newLevel > m_currentLevel)
 	{
 		Int experienceNeeded = m_parent->getTemplate()->getExperienceRequired(newLevel) - m_currentExperience;
-		addExperiencePoints( experienceNeeded, canScaleForBonus );
+		//MODDD - sent param 'provideFeedback'
+		addExperiencePoints( experienceNeeded, canScaleForBonus, provideFeedback );
 		return true;
 	}
 	return false;
@@ -179,7 +181,8 @@ Object* getContainModuleRider(ContainModuleInterface* contain)
 }
 
 //-------------------------------------------------------------------------------------------------
-void ExperienceTracker::addExperiencePoints( Int experienceGain, Bool canScaleForBonus)
+//MODDD - added param 'provideFeedback'
+void ExperienceTracker::addExperiencePoints( Int experienceGain, Bool canScaleForBonus, Bool provideFeedback)
 {
 	if( m_experienceSink != INVALID_ID )
 	{
@@ -188,7 +191,8 @@ void ExperienceTracker::addExperiencePoints( Int experienceGain, Bool canScaleFo
 		if( sinkPointer )
 		{
 			// Not a fatal failure if not valid, he died when I was in the air.
-			sinkPointer->getExperienceTracker()->addExperiencePoints( experienceGain * m_experienceScalar, canScaleForBonus );
+			//MODDD - sent param 'provideFeedback'
+			sinkPointer->getExperienceTracker()->addExperiencePoints( experienceGain * m_experienceScalar, canScaleForBonus, provideFeedback );
 			return;
 		}
 	}
@@ -221,8 +225,6 @@ void ExperienceTracker::addExperiencePoints( Int experienceGain, Bool canScaleFo
 	//MODDD - TODO - could argue there should be better logic for 'RiderChangeContain' to preserve experience & use
 	// the rider for any experienceRequired/etc. attributes too, like a 'strictPreserveExperience' setting for the INI to use.
 	// (more notes on the 'MODDD - TODO' in RiderChangeContain)
-	// ---
-	// 
 	Object* experienceReqSource = m_parent;
 	if (m_parent->getTemplate()->getExperienceRequired(1) == 0 && m_parent->getContain() != nullptr)
 	{
@@ -232,7 +234,6 @@ void ExperienceTracker::addExperiencePoints( Int experienceGain, Bool canScaleFo
 			experienceReqSource = rider;
 		}
 	}
-
 
 	Int levelIndex = 0;
 	//MODDD - replaced 'm_parent' with 'experienceReqSource' per above
@@ -249,7 +250,8 @@ void ExperienceTracker::addExperiencePoints( Int experienceGain, Bool canScaleFo
 	if( oldLevel != m_currentLevel )
 	{
 		// Edge trigger special level gain effects.
-		m_parent->onVeterancyLevelChanged( oldLevel, m_currentLevel );
+		//MODDD - sent param 'provideFeedback'
+		m_parent->onVeterancyLevelChanged( oldLevel, m_currentLevel, provideFeedback );
 	}
 
 }

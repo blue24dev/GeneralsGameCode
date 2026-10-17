@@ -108,6 +108,41 @@ static Object* getPotentialRappeller(Object* obj)
 	return nullptr;
 }
 
+//MODDD - this feature is mainly for 'JetAIUpdate' to decide whether it is for a helicopter that is able to drop to let
+// something enter, since (puzzlingly) JetAIUpdate can be used by jets or helicopters.
+// Here in ChinookAIUpdate, carrying over retail behavior of always saying "yes" works fine
+Bool ChinookAIUpdate::canLandToPickUpObjectWantingToEnter() const
+{
+	return true;
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+Bool ChinookAIUpdate::isDockedAtAirField() const
+{
+	return (m_airfieldForHealing != INVALID_ID && m_flightStatus == CHINOOK_LANDED);
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+Bool ChinookAIUpdate::isLandingAtAirField() const
+{
+	return (m_airfieldForHealing != INVALID_ID && m_flightStatus == CHINOOK_LANDING);
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+ObjectID ChinookAIUpdate::getAirFieldDockIntentID() const
+{
+	// This is a little awkward since ChinookAIUpdate forgets the association with any air field the momenti it's done
+	// with repairs or moved away, unlike a helicopter using JetAIUpdate - this shouldn't have much impact when it's
+	// only checked with the 'isDockedAtAirField()' or 'isLandingAtAirField()' flags.
+	// UPDATE - this method has since been renamed from 'getHomeAirFieldID' to 'getAirFieldDockIntentID()' to better
+	// suggest it expects that context.
+	if (isDockedAtAirField() || isLandingAtAirField())
+	{
+		return m_airfieldForHealing;
+	}
+	return INVALID_ID;
+}
+
 //----------------------------------------------------------------------------------------------------------
 class ChinookEvacuateState : public State
 {

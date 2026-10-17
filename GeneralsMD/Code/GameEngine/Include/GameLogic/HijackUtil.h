@@ -9,8 +9,8 @@ class ObjectCreationList;
 
 namespace HijackUtil
 {
-	void deleteExistingHijacker(ObjectID hijackerID);
+	void deleteHijacker(ObjectID hijackerID);
 	void ejectHijacker(Object* hijacker, Object* dyingObject, const ObjectCreationList* oclReference);
 	Bool checkForTargetEjectSupport(Object* hijacker, Object* other);
-	void clearHijackerInObject(Object* obj);
+	void clearHijackerInObject(Object* obj, Bool isDuringEject = FALSE);
 }

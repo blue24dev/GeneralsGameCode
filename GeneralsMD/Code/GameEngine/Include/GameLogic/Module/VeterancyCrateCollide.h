@@ -81,7 +81,7 @@ public:
 
 	//MODDD
 	virtual VeterancyCrateCollide* getVeterancyCrateCollide() override { return this; }
-	Bool attemptGiveVeterancySimple(Object* other) const;
+	Bool attemptGiveVeterancySimple(Object* other, Bool provideFeedback = TRUE) const;
 
 protected:
 

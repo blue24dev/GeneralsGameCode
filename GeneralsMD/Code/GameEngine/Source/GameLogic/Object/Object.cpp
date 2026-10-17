@@ -3061,6 +3061,17 @@ ACTIONSTATETYPE Object::getActionStateType() const
 	return ACTIONSTATETYPE_ATTACK;
 }
 
+//MODDD - convenience getter
+Bool Object::isDockedAtAirField() const
+{
+	return m_ai->isDockedAtAirField();
+}
+//MODDD - convenience getter
+Bool Object::isLandingAtAirField() const
+{
+	return m_ai->isLandingAtAirField();
+}
+
 //-------------------------------------------------------------------------------------------------
 void Object::setReceivingDifficultyBonus(Bool receive)
 {
@@ -3442,7 +3453,7 @@ void Object::rawSetHijackerInMeID(ObjectID hijackerID)
 
 void Object::setHijackerInMeID(ObjectID hijackerID)
 {
-	HijackUtil::deleteExistingHijacker(m_hijackerInMeID);
+	HijackUtil::deleteHijacker(m_hijackerInMeID);
 	m_hijackerInMeID = hijackerID;
 }
 

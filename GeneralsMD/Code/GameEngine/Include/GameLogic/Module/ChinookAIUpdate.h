@@ -86,7 +86,11 @@ public:
 	// virtual destructor prototype provided by memory pool declaration
 
 	//MODDD - new
-	virtual Bool canLandToPickUpObjectWantingToEnter() override { return true; }
+	virtual Bool canLandToPickUpObjectWantingToEnter() const override;
+	virtual Bool isDockedAtAirField() const override;
+	virtual Bool isLandingAtAirField() const override;
+	virtual ObjectID getAirFieldDockIntentID() const override;
+
 
 	virtual UpdateSleepTime update() override;
  	virtual void aiDoCommand(const AICommandParms* parms) override;

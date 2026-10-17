@@ -23,10 +23,12 @@
 namespace HijackUtil
 {
 
-//MODDD - utility to kill the existing hijacker if there is one - use this before changing a module's
-// "m_hijackerID" so an existing intangible one waiting to come out of this vehicle doesn't remain
-// stuck in limbo
-void deleteExistingHijacker(ObjectID hijackerID)
+//MODDD - utility to kill the hijacker if the ID isn't empty - use this to clean what's at an ID leading to a hijacker
+// before changing it to another so the existing intangible one waiting to come out of this vehicle doesn't remain
+// stuck in limbo.
+// From most external sources (not 'Object::setHijackerInMeID' itself), consider 'clearHijackerInObject' instead to
+// both delete the hijacker inside (calls this function) and set the hijacked ID member field to 'INVALID_ID'.
+void deleteHijacker(ObjectID hijackerID)
 {
 	if (hijackerID != INVALID_ID)
 	{
@@ -35,7 +37,7 @@ void deleteExistingHijacker(ObjectID hijackerID)
 		{
 			HijackerUpdate* hijackerUpdate = existingHijacker->getHijackerUpdate();
 			hijackerUpdate->setTargetObject( nullptr );
-			//MODDD - TODO - should the hijacker be made tangible before being killed? not sure
+			// Looks to me like making the hijacker re-tangible (ex: undoing NO_COLLISIONS, invisible, etc) isn't needed
 			existingHijacker->kill();
 		}
 	}
@@ -156,10 +158,44 @@ void ejectHijacker(Object* hijacker, Object* dyingObject, const ObjectCreationLi
 	//dyingObject->setModuleTagNameKeyToEjectHijacker(NAMEKEY_INVALID);
 }
 
+// Private helper for below. Returns whether a module could be found to suggest this vehicle supports pilot ejection
+// and automatically sets the first fitting encountered module to be the one the object will eject the hijacker from
+// when the object is killed.
+// This mainly replaces retail script that would've set 'targetCanEject' to 'TRUE' if an 'EjectPilotDie' module is found.
+Bool _checkForTargetEjectSupport(Object* hijacker, Object* other)
+{
+	// Turns out it's possible for there to be multiple 'EjectPilotDie' modules on the same Object in the INI.
+	// (example: 'Shockwave' mod). The comanche even had both a 'HelicopterSlowDeathBehavior' providing the pilot-ejection
+	// OCL, and an 'EjectPilotDie' - giving the former precedence because it's more specialized.
+	
+	//MODDD - But first - check to see if there's a 'HelicopterSlowDeathBehavior'
+	static NameKeyType key_HelicopterSlowDeathBehavior = NAMEKEY( "HelicopterSlowDeathBehavior" );
+	HelicopterSlowDeathBehavior *hsdb = (HelicopterSlowDeathBehavior*)other->findUpdateModule( key_HelicopterSlowDeathBehavior );
+	if (hsdb != nullptr && hsdb->hasPilotEjectSupport())
+	{
+		other->setModuleTagNameKeyToEjectHijacker(hsdb->getModuleTagNameKey());
+		return true;
+	}
+	
+	BehaviorModule **dmi = nullptr;
+	for( dmi = other->getBehaviorModules(); *dmi; ++dmi )
+	{
+		//MODDD - save a reference to this
+		EjectPilotDie* ejectPilotDieTest = (*dmi)->getEjectPilotDie();
+		if(ejectPilotDieTest != nullptr)
+		{
+			other->setModuleTagNameKeyToEjectHijacker(ejectPilotDieTest->getModuleTagNameKey());
+			return true;
+		}
+	}
+
+	return false;
+}
+
 //MODDD - Check to see if there is some module that supports pilot ejection - if this returns 'true', it can be assumed
 // something was found and the hijacker is attached to one of the supporting modules. If this returns 'false', the caller
 // should delete the hijacker since there won't be an opportunity for thie hijacker to be released.
-// Existing comments are referring to script around where this originally was.
+// Existing comments may refer to script near where this originally was.
 Bool checkForTargetEjectSupport(Object* hijacker, Object* other)
 {
 	//MODDD - moving this from below so we can terminate early if this object is missing a 'HijackerUpdate' module.
@@ -183,56 +219,14 @@ Bool checkForTargetEjectSupport(Object* hijacker, Object* other)
 
 	//MODDD - replaced
 	//Bool targetCanEject = FALSE;
-	Bool foundModuleForHijacker = false;
+	Bool targetCanEject = _checkForTargetEjectSupport(hijacker, other);
 
-	//EjectPilotDie* ejectPilotDie_chosen = nullptr;
-
-	//MODDD - Turns out it's possible for there to be multiple 'EjectPilotDie' modules on the same Object in the INI.
-	// (example: 'Shockwave' mod).
-	// Instead of stopping at the first 'EjectPilotDie' module encountered, record the first one but disable all the other
-	// ones so that only the one we pick to associate with the hijacker ends up spawning anything.
-	// Doing anything else to the returned 'EjectPilotDie' will be left to the caller.
-
-	//MODDD - But first - check to see if there's a 
-	static NameKeyType key_HelicopterSlowDeathBehavior = NAMEKEY( "HelicopterSlowDeathBehavior" );
-	HelicopterSlowDeathBehavior *hsdb = (HelicopterSlowDeathBehavior*)other->findUpdateModule( key_HelicopterSlowDeathBehavior );
-	if (hsdb != nullptr && hsdb->hasPilotEjectSupport())
-	{
-		foundModuleForHijacker = true;
-		other->setModuleTagNameKeyToEjectHijacker(hsdb->getModuleTagNameKey());
-	}
-
-	BehaviorModule **dmi = nullptr;
-	for( dmi = other->getBehaviorModules(); *dmi; ++dmi )
-	{
-		//MODDD - save a reference to this - much deeper checks with this
-		EjectPilotDie* ejectPilotDieTest = (*dmi)->getEjectPilotDie();
-		if(ejectPilotDieTest != nullptr)
-		{
-			if (!foundModuleForHijacker)
-			{
-				// first EjectPilotDie module: choose that
-				//ejectPilotDie_chosen = ejectPilotDieTest;
-				foundModuleForHijacker = true;
-				other->setModuleTagNameKeyToEjectHijacker(ejectPilotDieTest->getModuleTagNameKey());
-			}
-			else
-			{
-				// subsequent EjectPilotDie modules are turned off
-				// (no longer necessary - each module will check to see if it's the one ejecting the hijacker by a confirmation
-				// with the object it belongs to)
-			}
-			//targetCanEject = TRUE;
-			//break;
-		}
-	}
-
-	//if ( ! targetCanEject )
-	if (!foundModuleForHijacker)
+	if ( ! targetCanEject )
 	{
 		return FALSE;
 	}
-	
+
+	//MODDD
 	other->setHijackerInMeID(hijacker->getID());
 
 	//MODDD - the remaining block is mostly from the rest of 'ConvertToHijackedVehicleCrateCollide::executeCrateBehavior'.
@@ -289,13 +283,16 @@ Bool checkForTargetEjectSupport(Object* hijacker, Object* other)
 
 //MODDD - if there is a hijacker anywhere in this object, remove/kill it.
 // Use this when a vehicle is depiloted so the associated hijacker should no longer exist.
-void clearHijackerInObject(Object* obj)
+void clearHijackerInObject(Object* obj, Bool isDuringEject)
 {
 	// includes a check to kill the hijacker if present, so this works out nicely
 	obj->setHijackerInMeID(INVALID_ID);
-	// Clearing this here is OK - depiloting a vehicle calls here which kills the association with a hijacker so a pilot
-	// can come out again if remanned & killed later w/ veterancy
-	obj->setModuleTagNameKeyToEjectHijacker(NAMEKEY_INVALID);
+	// Clearing this here is OK if this isn't an ejection - depiloting a vehicle calls here which kills the association
+	// with a hijacker so a pilot can come out again if the vehicle is remanned & killed later with veterancy
+	if (!isDuringEject)
+	{
+		obj->setModuleTagNameKeyToEjectHijacker(NAMEKEY_INVALID);
+	}
 }
 
 }// namespace HijackUtil

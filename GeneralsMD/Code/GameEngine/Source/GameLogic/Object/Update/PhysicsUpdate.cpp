@@ -1301,7 +1301,9 @@ void PhysicsBehavior::onCollide( Object *other, const Coord3D *loc, const Coord3
 			// if not, can we at least contribute veterancy anyway?
 			else if (obj->getVeterancyCrateCollide())
 			{
-				obj->getVeterancyCrateCollide()->attemptGiveVeterancySimple(other);
+				// Also, I don't think a flashy veterancy effect is needed - that's just to makea pilot entering a vehicle you
+				// already own look more interesting vs. barely anything happening (an unmanned vehicle becoming yours is interesting enough).
+				obj->getVeterancyCrateCollide()->attemptGiveVeterancySimple(other, FALSE);
 				// still fall thru to be deleted
 			}
 

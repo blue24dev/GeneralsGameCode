@@ -105,9 +105,45 @@ void JetAIUpdate::setFlag( FlagType f, Bool v)
 }
 
 //MODDD - new
-Bool JetAIUpdate::canLandToPickUpObjectWantingToEnter()
+Bool JetAIUpdate::canLandToPickUpObjectWantingToEnter() const
 {
 	return movesLikeHelicopter();
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+Bool JetAIUpdate::isDockedAtAirField() const
+{
+	// only set when landed at an air field, not in the middle of nowhere to let a pilot in
+	return getFlag(DOCKED_AT_AIRFIELD);
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+Bool JetAIUpdate::isLandingAtAirField() const
+{
+	// For here, need to know if this is landing at an airfield specifically - checking the state should work.
+	// Note that 'LANDING_NOAIRFIELD' is separate from 'LANDING' to track just that.
+	StateID stateID = getStateMachine()->getCurrentStateID();
+	return
+	(
+		getFlag(LANDING_IN_PROGRESS) &&
+		(
+			stateID == LANDING_AWAIT_CLEARANCE ||
+			stateID == LANDING ||
+			stateID == ORIENT_FOR_PARKING_PLACE ||
+			stateID == TAXI_FROM_LANDING
+		)
+	);
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+ObjectID JetAIUpdate::getAirFieldDockIntentID() const
+{
+	if (isDockedAtAirField() || isLandingAtAirField())
+	{
+		// the 'producer' is changed anytime the unit gets a command, autonomous or not, to enter/get-repaired-at an air field.
+		return getObject()->getProducerID();
+	}
+	return INVALID_ID;
 }
 
 //MODDD - NEW - tell if this behaves like a perpetually hovering aircraft than a jet (circling around / expecting a
@@ -522,7 +558,7 @@ public:
 		//MODDD - if this is a jet leaving the parking space, no more repairs
 		if (jetAI->getJetAIUpdateModuleData()->m_needsRunway && m_taxiMode == FROM_PARKING)
 		{
-			jetAI->setFlag(JetAIUpdate::PARKED_AT_AIRFIELD, false);
+			jetAI->setFlag(JetAIUpdate::DOCKED_AT_AIRFIELD, false);
 		}
 
 		jetAI->setCanPathThroughUnits(true);
@@ -1033,7 +1069,7 @@ public:
 		//MODDD - if this is a helicopter taking off, no more repairs
 		if (m_landing == false)
 		{
-			jetAI->setFlag(JetAIUpdate::PARKED_AT_AIRFIELD, false);
+			jetAI->setFlag(JetAIUpdate::DOCKED_AT_AIRFIELD, false);
 		}
 
 		jetAI->friend_setTakeoffInProgress(!m_landing);
@@ -1256,7 +1292,7 @@ public:
 		// being done at that exact moment.
 		if (m_landing == false)
 		{
-			jetAI->setFlag(JetAIUpdate::PARKED_AT_AIRFIELD, false);
+			jetAI->setFlag(JetAIUpdate::DOCKED_AT_AIRFIELD, false);
 		}
 
 		// kill any drift...
@@ -1802,7 +1838,7 @@ public:
 
 		//MODDD - starting the reload state implies having landed at an air field, even if just for repairs & ammo is full
 		// (this state will still reach this point before quickly switching to the 'AI_IDLE' one, maybe? Jets or helicopters?).
-		jetAI->setFlag(JetAIUpdate::PARKED_AT_AIRFIELD, true);
+		jetAI->setFlag(JetAIUpdate::DOCKED_AT_AIRFIELD, true);
 
 		jetAI->friend_setTakeoffInProgress(false);
 		jetAI->friend_setLandingInProgress(false);
@@ -2242,9 +2278,9 @@ UpdateSleepTime JetAIUpdate::update()
 		if (pp != nullptr)
 		{
 			if (
-				//MODDD - replacing check with 'getFlag(PARKED_AT_AIRFIELD)'
+				//MODDD - replacing check with 'getFlag(DOCKED_AT_AIRFIELD)'
 				//!getFlag(ALLOW_AIR_LOCO) &&
-				getFlag(PARKED_AT_AIRFIELD) && 
+				getFlag(DOCKED_AT_AIRFIELD) && 
 						//MODDD - I don't think the 'HAS_PENDING_COMMAND' check here is necessary.
 						// if this is a helicopter at full health, not taking off for that reason will cause it to stay on the ground
 						// until told to move (ex: using the 'stop' button while it's grounded for repairs).
@@ -2286,15 +2322,15 @@ UpdateSleepTime JetAIUpdate::update()
 				// be strange).
 				// No issue requiring this for everything - should be the only reason jets ever land anyway so this is always set
 				// when grounded then.
-				pp->setHealee(jet, getFlag(PARKED_AT_AIRFIELD));
+				pp->setHealee(jet, getFlag(DOCKED_AT_AIRFIELD));
 			}
 		}
 
 		//MODDD - moved a later condition to here and included some other things for safety
 		// (only behavior from retail is the 'RELOAD_AMMO' check)
-		// Also, note that being 'PARKED_AT_AIRFIELD' implies having landed, so no need to check for
+		// Also, note that being 'DOCKED_AT_AIRFIELD' implies having landed, so no need to check for
 		// '!getFlag(ALLOW_AIR_LOCO)' too.
-		Bool isBusyAtAirField = (getFlag(PARKED_AT_AIRFIELD) &&
+		Bool isBusyAtAirField = (getFlag(DOCKED_AT_AIRFIELD) &&
 			(
 				getStateMachine()->getCurrentStateID() == RELOAD_AMMO ||
 				jet->getBodyModule()->getHealth() < jet->getBodyModule()->getMaxHealth() ||

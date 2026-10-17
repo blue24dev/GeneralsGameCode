@@ -766,6 +766,10 @@ public:
 	
 	//MODDD - new - utility to get the 'ACTIONSUBSTATETYPE' to use for a given object
 	ACTIONSTATETYPE getActionStateType() const;
+	
+	//MODDD
+	Bool isDockedAtAirField() const;
+	Bool isLandingAtAirField() const;
 
 	Bool getReceivingDifficultyBonus() const { return m_isReceivingDifficultyBonus; }
 	void setReceivingDifficultyBonus(Bool receive);
