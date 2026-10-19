@@ -55,8 +55,9 @@
 #include "Common/ThingFactory.h"
 #include "Common/Team.h"
 #include "Common/ThingTemplate.h"
-#include "GameClient/Water.h"
-#include "GameClient/Snow.h"
+#if RTS_GENERALS && RETAIL_COMPATIBLE_CRC
+#include "Common/TunnelTracker.h"
+#endif
 #include "Common/WellKnownKeys.h"
 #include "Common/Xfer.h"
 #include "Common/XferCRC.h"
@@ -73,8 +74,10 @@
 #include "GameClient/MapUtil.h"
 #include "GameClient/Mouse.h"
 #include "GameClient/ParticleSys.h"
+#include "GameClient/Snow.h"
 #include "GameClient/TerrainVisual.h"
 #include "GameClient/View.h"
+#include "GameClient/Water.h"
 #include "GameClient/CampaignManager.h"
 #include "GameClient/GameWindowTransitions.h"
 
@@ -581,7 +584,6 @@ static Object * placeObjectAtPosition(Int slotNum, AsciiString objectTemplateNam
 		obj->setOrientation(obj->getTemplate()->getPlacementViewAngle());
 		obj->setPosition( &pos );
 
-		//DEBUG_LOG(("Placed a starting building for %s at waypoint %s", playerName.str(), waypointName.str()));
 		CRCDEBUG_LOG(("Placed an object for %ls at pos (%g,%g,%g)", pPlayer->getPlayerDisplayName().str(),
 			pos.x, pos.y, pos.z));
 		DUMPCOORD3D(&pos);
@@ -925,7 +927,7 @@ static void populateRandomStartPosition( GameInfo *game )
 				{
 					Coord3D p1 = c1->second;
 					Coord3D p2 = c2->second;
-					startSpotDistance[i][j] = sqrt( sqr(p1.x-p2.x) + sqr(p1.y-p2.y) );
+					startSpotDistance[i][j] = WWMath::Sqrt( sqr(p1.x-p2.x) + sqr(p1.y-p2.y) );
 				}
 			}
 			else
@@ -1692,7 +1694,7 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 			TheSidesList->prepareForMP_or_Skirmish();
 		}
 
-		//DEBUG_LOG(("Starting LAN game with %d players", game->getNumPlayers()));
+		//DEBUG_LOG(("Starting LAN game with %d players", TheGameInfo->getNumPlayers()));
 		for (int i=0; i<MAX_SLOTS; ++i)
 		{
 			// Add a Side to TheSidesList
@@ -3709,11 +3711,39 @@ void GameLogic::friend_awakenUpdateModule(Object* obj, UpdateModulePtr u, Unsign
 	}
 }
 
+#if RTS_GENERALS && RETAIL_COMPATIBLE_CRC
+// ------------------------------------------------------------------------------------------------
+// Find the tunnel tracker that contains the object and destroy all objects in the contain list
+// ------------------------------------------------------------------------------------------------
+void GameLogic::friend_destroyInTunnelContain(const Object* strandedObject)
+{
+	for (Int i = 0; i < ThePlayerList->getPlayerCount(); ++i)
+	{
+		TunnelTracker* tracker = ThePlayerList->getNthPlayer(i)->getTunnelSystem();
+		if (!tracker)
+			continue;
 
+		const ContainedItemsList& list = *tracker->getContainedItemsList();
 
+		const ContainedItemsList::const_iterator it = std::find(list.begin(), list.end(), strandedObject);
+		if (it == list.end())
+			continue;
 
+		while (!list.empty())
+		{
+			Object* obj = list.front();
 
+			tracker->removeFromContain(obj);
 
+			obj->onRemovedFrom(nullptr);
+
+			destroyObject(obj);
+		}
+
+		break;
+	}
+}
+#endif
 
 // ------------------------------------------------------------------------------------------------
 #ifdef DO_UNIT_TIMINGS
@@ -4514,7 +4544,7 @@ void GameLogic::update()
 			{
 				USE_PERF_TIMER(GameLogic_update_sleepy)
 
-				//DEBUG_LOG(("calling update %08lx (%d %d)...",update,update->friend_getNextCallFrame(),update->friend_getNextCallPhase()));
+				//DEBUG_LOG(("calling update %08lx (%d %d)...",u,u->friend_getNextCallFrame(),u->friend_getNextCallPhase()));
 				m_curUpdateModule = u;
 
 				sleepLen = u->update();
