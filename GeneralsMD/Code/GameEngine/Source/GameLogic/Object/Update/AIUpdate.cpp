@@ -2432,7 +2432,10 @@ Bool AIUpdateInterface::isDoingGroundMovement() const
 {
 
   if (getObject()->isDisabledByType( DISABLED_UNMANNED ) &&
-   getObject()->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )
+		//MODDD - anything unmanned, so remove the helicopter check? I'll play that part safe for now
+		//getObject()->isKindOf( KINDOF_PRODUCED_AT_HELIPAD )
+		getObject()->isHelicopter()
+	)
   {
     return TRUE; // an unmanned helicopter gets grounded, eventually.
   }
@@ -3196,6 +3199,45 @@ void AIUpdateInterface::privateIdle(CommandSourceType cmdSource)
 		}
 	}
 
+}
+
+//MODDD - check to see if this is intended to be a helicopter.
+// See notes in 'Object::isHelicopter'.
+// This should typically be handled by some JetAIUpdate subclass - this is meant to be a failsafe.
+Bool AIUpdateInterface::isHelicopter() const
+{
+	// must at least be aircraft
+	const Object* obj = getObject();
+	if (!obj->isKindOf(KINDOF_AIRCRAFT))
+		return FALSE;
+
+	// no expected AIUpdate-subtype but still aircraft?
+	// All I got's 'movesLikeHelicopter' and the 'KINDOF_PRODUCED_AT_HELIPAD' from retail. Going with that for now.
+	//if (movesLikeHelicopter())
+	if (obj->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+		return TRUE;
+
+	return FALSE;
+}
+
+//MODDD - NEW - tell if this behaves like a perpetually hovering aircraft than a jet (circling around / expecting a
+// parking space at an air field).
+// Mainly this is for letting comanches land to allow pilots to enter without needing weird INI hack-arounds like the
+// ProGen mod does.
+// The point of this is to decide if the aircraft should be able to land to take a pilot even if it's using 'JetAIUpdate'
+// instead of 'ChinookAIUpdate'. If it isn't forced to be circling around a point when stopped, that's likely a good
+// enough sign.
+// Note that this kind of specific is checked by AIUpdate's that are aircraft-based, such as JetAIUpdate - outside sources
+// should typically be fine with 'isHelicopter' (i.e., originally would have checked for 'KINDOF_PRODUCED_AT_HELIPAD').
+// The result of this call can vary with how this unit is currently moving - ex: a landed comanche would say 'false' since
+// it isn't even airborne (a min speed of 0 doesn't say much then). Just something to be aware of.
+//MODDD - TODO - if a mod could ever let a jet-like aircraft use ChinookAI, it would need to do a check like this before
+// allowing entry for units so it can know to reject that on the basis of not being able to suddenly drop in-place to
+// let something enter.
+Bool AIUpdateInterface::movesLikeHelicopter() const
+{
+	// There is also 'PreferredHeight' being above-0 to check for, but I think 'isUsingAirborneLocomotor' should be enough.
+	return (getObject()->isUsingAirborneLocomotor() && getCurLocomotor()->getMinSpeed() == 0);
 }
 
 //----------------------------------------------------------------------------------------

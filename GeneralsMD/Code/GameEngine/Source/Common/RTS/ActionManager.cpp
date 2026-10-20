@@ -310,7 +310,7 @@ Bool ActionManager::canGetRepairedAt( const Object *obj, const Object *repairDes
 
 		// Note that this only returns a valid ID if a jet/helicopter has started landing or is currently docked, so currently
 		// being away or intending to leave the air field allows an enter command again
-		if (obj->getAI()->getAirFieldDockIntentID() == repairDest->getID())
+		if (obj->getAI()->getAirFieldDockedOrLandingAtID() == repairDest->getID())
 			return FALSE;
 		// ------
 	}
@@ -749,8 +749,8 @@ Bool ActionManager::canEnterObject( const Object *obj, const Object *objectToEnt
 		// Being docked at the air field counts jets in a parking space or helicopters landed for repairs.
 		//Bool canPickMyAirField = !obj->isDockedAtAirField() && !obj->isLandingAtAirField();
 		// UPDATE - a shortcut to check if this is 'my' airfield and we're intending to land at one / already docked there
-		// (bundled in 'getAirFieldDockIntentID').
-		if (obj->getAI()->getAirFieldDockIntentID() == objectToEnter->getID())
+		// (bundled in 'getAirFieldDockedOrLandingAtID').
+		if (obj->getAI()->getAirFieldDockedOrLandingAtID() == objectToEnter->getID())
 			return FALSE;
 
 		//MODDD - why not when aircraft can use allied air fields if there are no other choices? (easy to observe in allied team games as of retail)

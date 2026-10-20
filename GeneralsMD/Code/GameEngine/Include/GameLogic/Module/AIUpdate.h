@@ -329,12 +329,17 @@ public:
 	inline Int getSurrenderedPlayerIndex() const { return m_surrenderedPlayerIndex; }
 #endif
 
+	//MODDD - new
+	virtual Bool isHelicopter() const;
+	virtual Bool movesLikeHelicopter() const;
 	//MODDD - new, to let something wanting to enter whether this is something that can land to pick it up even if presently
 	// airborne (ex: chinooks)
 	virtual Bool canLandToPickUpObjectWantingToEnter() const { return false; }
 	//MODDD - also new
 	virtual Bool isDockedAtAirField() const { return false; }
 	virtual Bool isLandingAtAirField() const { return false; }
+	virtual Bool isMovingToAirField() const { return false; }
+	virtual ObjectID getAirFieldDockedOrLandingAtID() const { return INVALID_ID; }
 	virtual ObjectID getAirFieldDockIntentID() const { return INVALID_ID; }
 
 	virtual void joinTeam();			///< This unit just got added to a team & needs to catch up.

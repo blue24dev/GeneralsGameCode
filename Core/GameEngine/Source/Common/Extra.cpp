@@ -401,6 +401,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	Bool foundJetAIUpdateBehavior = false;
 	Bool foundChinookAIUpdateBehavior = false;
 	AIUpdateModuleData* aiUpdateModuleData = nullptr;
+	Bool _landingRequiresParkingSpace = false;
 	
 	// Whether this thing gets a cost reduction for being a renewable income source at the very end.
 	// There is checking kindof's like FS_BLACK_MARKET or FS_SUPPLY_DROP_ZONE, but I'd rather have a more accurate check
@@ -756,11 +757,17 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			foundJetAIUpdateBehavior = true;
 			aiUpdateModuleData = (AIUpdateModuleData*)data;
+
+			JetAIUpdateModuleData* _data = (JetAIUpdateModuleData*)data;
+			// Copying the 'JetAIUpdate::landingRequiresParkingSpace' check
+			_landingRequiresParkingSpace = _data->m_needsRunway;
 		}
 		else if ( modNameKey == ChinookAIUpdateNameKey )
 		{
 			foundChinookAIUpdateBehavior = true;
 			aiUpdateModuleData = (AIUpdateModuleData*)data;
+			// Copying the 'ChinookAIUpdate::landingRequiresParkingSpace' check
+			_landingRequiresParkingSpace = false;
 		}
 
 	}
@@ -790,6 +797,9 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		// checks for 'ChinookAIUpdate' too for combat(trainable) helicopters that actually use that instead of 'JetAIUpdate'
 		if (foundJetAIUpdateBehavior || foundChinookAIUpdateBehavior)
 		{
+			// send what's been figured from reading the specific module
+			_this->m_landingRequiresParkingSpace = _landingRequiresParkingSpace;
+
 			if (!foundContainBehavior)
 			{
 				// Add a bogus 'TransportContain' with a capacity of 0 slots that forbids everything - that should do it.
@@ -807,6 +817,12 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 
 				mi.addModuleInfo(_this, TransportContainName, moduleTag, data, TransportContain::getInterfaceMask(), false, false);
 			}
+		}
+		else
+		{
+			// an AIRCRAFT not using a JetAIUpdate nor ChinookAIUpdate?
+			// Have to decide if this is a helicopter or not. All I got's the retail PRODUCET_AT_HELIPAD check.
+			_this->m_landingRequiresParkingSpace = !_this->isKindOf(KINDOF_PRODUCED_AT_HELIPAD);
 		}
 	}
 

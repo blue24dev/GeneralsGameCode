@@ -109,15 +109,6 @@ public:
 	virtual Bool chooseLocomotorSet(LocomotorSetType wst) override;
 	virtual void setLocomotorGoalNone() override;
 	
-	//MODDD - new
-	virtual Bool canLandToPickUpObjectWantingToEnter() const override;
-	virtual Bool isDockedAtAirField() const override;
-	virtual Bool isLandingAtAirField() const override;
-	virtual ObjectID getAirFieldDockIntentID() const override;
-
-	//MODDD - not an override
-	virtual Bool movesLikeHelicopter() const;
-
 	virtual Bool isIdle() const override;
 	virtual Bool isTaxiingToParking() const override; //only applies to jets interacting with runways.
 	virtual Bool isReloading() const;
@@ -133,7 +124,10 @@ public:
 	const Coord3D* friend_getProducerLocation() const { return &m_producerLocation; }
 	Real friend_getOutOfAmmoDamagePerSecond() const { return getJetAIUpdateModuleData()->m_outOfAmmoDamagePerSecond; }
 	Bool friend_keepsParkingSpaceWhenAirborne() const { return getJetAIUpdateModuleData()->m_keepsParkingSpaceWhenAirborne; }
-	Bool friend_needsRunway() const { return getJetAIUpdateModuleData()->m_needsRunway; }
+
+	//MODDD - removing to force use of the new 'landingRequiresParkingSpace' instead
+	//Bool friend_needsRunway() const { return getJetAIUpdateModuleData()->m_needsRunway; }
+
 	Real friend_getTakeoffDistForMaxLift() const { return getJetAIUpdateModuleData()->m_takeoffDistForMaxLift; }
 	Real friend_getMinHeight() const { return getJetAIUpdateModuleData()->m_minHeight; }
 	Real friend_getParkingOffset() const { return getJetAIUpdateModuleData()->m_parkingOffset; }
@@ -154,6 +148,18 @@ public:
 	void friend_addWaypointToGoalPath( const Coord3D &pos );
 	AICommandType friend_getPendingCommandType() const;
 	void friend_purgePendingCommand();
+	
+	//MODDD - new
+	virtual Bool isHelicopter() const override;
+	virtual Bool canLandToPickUpObjectWantingToEnter() const override;
+	virtual Bool isDockedAtAirField() const override;
+	virtual Bool isLandingAtAirField() const override;
+	virtual Bool isMovingToAirField() const override;
+	virtual ObjectID getAirFieldDockedOrLandingAtID() const override;
+	virtual ObjectID getAirFieldDockIntentID() const override;
+
+	Bool landingRequiresParkingSpace() const;
+	Bool usesSequenceForTakeoff() const;
 
 protected:
 

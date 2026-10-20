@@ -1701,7 +1701,7 @@ void ThingTemplate::determineHasInactiveBodyModule()
 			break;
 		}
 	}
-	setHasInactiveBodyModule(isInactiveBody);
+	m_hasInactiveBodyModule = isInactiveBody;
 }
 
 //MODDD
@@ -1711,9 +1711,9 @@ Bool ThingTemplate::getHasInactiveBodyModule() const
 }
 
 //MODDD
-void ThingTemplate::setHasInactiveBodyModule(Bool hasInactiveBodyModule)
+Bool ThingTemplate::landingRequiresParkingSpace() const
 {
-	this->m_hasInactiveBodyModule = hasInactiveBodyModule;
+	return m_landingRequiresParkingSpace;
 }
 
 //---------------------------------------------------------------------------------------ModuleInfo

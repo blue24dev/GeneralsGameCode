@@ -6042,7 +6042,9 @@ void Pathfinder::updateGoal( Object *obj, const Coord3D *newGoalPos, PathfindLay
 		Bool isUnmannedHelicopter = false;
 #else
 		// exception:sniped choppers are on ground
-		Bool isUnmannedHelicopter = ( obj->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) && obj->isDisabledByType( DISABLED_UNMANNED  ) ) ;
+		//MODDD - anything unmanned, so remove the helicopter check? I'll play that part safe for now
+		//Bool isUnmannedHelicopter = ( obj->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) && obj->isDisabledByType( DISABLED_UNMANNED  ) ) ;
+		Bool isUnmannedHelicopter = ( obj->isHelicopter() && obj->isDisabledByType( DISABLED_UNMANNED  ) ) ;
 #endif
 		if (!isUnmannedHelicopter) {
 			updateAircraftGoal(obj, newGoalPos);

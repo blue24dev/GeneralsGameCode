@@ -727,6 +727,7 @@ public:
 	void setHijackerInMeID(ObjectID hijackerID);
 	NameKeyType getModuleTagNameKeyToEjectHijacker() const;
 	void setModuleTagNameKeyToEjectHijacker(NameKeyType nameKey);
+	Bool isHelicopter() const;
 
 	//When an AIAttackState is over, it needs to clean up any weapons that might be in leech range mode
 	//or else those weapons will have unlimited range!

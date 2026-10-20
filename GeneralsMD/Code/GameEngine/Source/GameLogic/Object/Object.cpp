@@ -3467,6 +3467,14 @@ void Object::setModuleTagNameKeyToEjectHijacker(NameKeyType nameKey)
 	m_moduleTagNameKeyToEjectHijacker = nameKey;
 }
 
+//MODDD - check to see if this is intended to be a helicopter.
+// This replaces the typical 'KINDOF_PRODUCED_AT_HELIPAD' check in case it happens to be used just to denote something
+// coming out of the helipad part of an airfield when produced (ex: pilots in the 'Contra' mod).
+Bool Object::isHelicopter() const
+{
+	return m_ai->isHelicopter();
+}
+
 //-------------------------------------------------------------------------------------------------
 void Object::pauseAllSpecialPowers( const Bool disabling ) const
 {

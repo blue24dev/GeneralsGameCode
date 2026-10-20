@@ -619,7 +619,9 @@ Bool Drawable::getShouldAnimate( Bool considerPower ) const
 		if (obj->isDisabled())
 		{
 			if(
-         ! obj->isKindOf( KINDOF_PRODUCED_AT_HELIPAD )  &&
+				//MODDD - different way of checking for this
+        // ! obj->isKindOf( KINDOF_PRODUCED_AT_HELIPAD )  &&
+				!obj->isHelicopter() &&
         // mal sez: helicopters just look goofy if they stop animating, so keep animating them, anyway
 
         (  obj->isDisabledByType( DISABLED_HACKED ) ||
