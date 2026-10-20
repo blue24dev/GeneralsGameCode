@@ -1982,8 +1982,8 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 	//memset(m_cellFlipState,0,numBytesX*m_height);
 	//memset(m_cellCliffState,0,numBytesX*m_height);
 	// ---
-	m_cellCliffState = cellCliffState;
 	m_cellFlipState = cellFlipState;
+	m_cellCliffState = cellCliffState;
 	// ---
 
 	// Verify index remapping
