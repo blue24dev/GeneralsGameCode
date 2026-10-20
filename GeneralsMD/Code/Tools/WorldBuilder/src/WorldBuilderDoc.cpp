@@ -1388,6 +1388,7 @@ BOOL CWorldBuilderDoc::OnNewDocument()
 	//MODDD - resetting this - any unsaved resize offsets no longer apply
 	m_offsetSinceSave.zero();
 
+	//MODDD - 'TNewHeightInfo' handling moved to 'CWorldBuilderApp::OnFileNew' - simply retrieved here now
 	TNewHeightInfo* hi = WbApp()->getRecentNewHeightInfo();
 
 	//MODDD
