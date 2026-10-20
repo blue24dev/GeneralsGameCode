@@ -1851,6 +1851,7 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 
 	//MODDD - something from below moved up
 	Int numBytesX = (newXSize+7)/8;	//how many bytes to fit all bitflags
+	//MODDD - a non-member form of 'm_flipStateWidth' before writing to that
 	Int flipStateWidth = numBytesX;
 
 	Short *tileNdxes = new Short[newDataSize];
@@ -1971,9 +1972,13 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 	m_dataSize = newDataSize;
 	delete[] m_cellCliffState;
 	delete[] m_cellFlipState;
-	//MODDD - moved earlier
+	//MODDD - moved to earlier, assigning the already established 'flipStateWidth' to 'm_flipStateWidth' instead
+	// ---
 	//Int numBytesX = (m_width+7)/8;	//how many bytes to fit all bitflags
- 	m_flipStateWidth=numBytesX;
+ 	//m_flipStateWidth=numBytesX;
+	// ---
+ 	m_flipStateWidth=flipStateWidth;
+	// ---
 
 	//MODDD - creation is handled earlier, replaced with assignment to the function variables that have been handled
 	// ---
