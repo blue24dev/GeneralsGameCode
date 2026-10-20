@@ -3472,6 +3472,13 @@ void Object::setModuleTagNameKeyToEjectHijacker(NameKeyType nameKey)
 // coming out of the helipad part of an airfield when produced (ex: pilots in the 'Contra' mod).
 Bool Object::isHelicopter() const
 {
+	if (m_ai == nullptr)
+	{
+		// if this doesn't even have an AI, let's assume "no" already
+		// (this could only backfire if there's some weird cinematic dummy that still expects 'KINDOF_PRODUCED_AT_HELIPAD' to be relevant for this)
+		return FALSE;
+	}
+
 	return m_ai->isHelicopter();
 }
 
