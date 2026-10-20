@@ -5654,7 +5654,8 @@ Int AIUpdateInterface::friend_getWaypointGoalPathSize() const
 }
 
 // ------------------------------------------------------------------------------------------------
-Bool AIUpdateInterface::hasLocomotorForSurface(LocomotorSurfaceType surfaceType)
+//MODDD - added 'const'
+Bool AIUpdateInterface::hasLocomotorForSurface(LocomotorSurfaceType surfaceType) const
 {
 	LocomotorSurfaceTypeMask surfaceMask = (LocomotorSurfaceTypeMask)surfaceType;
 	if (m_locomotorSet.findLocomotor(surfaceMask))

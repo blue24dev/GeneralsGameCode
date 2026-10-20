@@ -441,7 +441,8 @@ public:
 	const Locomotor *getCurLocomotor() const {return m_curLocomotor;}
 	Locomotor *getCurLocomotor() { return m_curLocomotor; }
 	LocomotorSetType getCurLocomotorSetType() const { return m_curLocomotorSet; }
-	Bool hasLocomotorForSurface(LocomotorSurfaceType surfaceType);
+	//MODDD - added 'const'
+	Bool hasLocomotorForSurface(LocomotorSurfaceType surfaceType) const;
 
 	// turret stuff.
 	WhichTurretType getWhichTurretForWeaponSlot(WeaponSlotType wslot, Real* turretAngle, Real* turretPitch = nullptr) const;

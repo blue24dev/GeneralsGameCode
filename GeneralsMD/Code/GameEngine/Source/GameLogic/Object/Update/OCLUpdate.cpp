@@ -224,7 +224,7 @@ UpdateSleepTime OCLUpdate::update()
 		else
 		{
 			//MODDD - if this will produce money crates (renewable income source), let the object delivering the OCL know
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 			if (getObject()->getTemplate()->m_isRenewableMoneyOCLSource)
 			{
 				Int playerIndexToSend = getObject()->getControllingPlayer()->getPlayerIndex();

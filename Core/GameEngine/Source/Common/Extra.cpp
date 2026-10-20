@@ -1022,7 +1022,7 @@ void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
 #if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR)
 	Bool renewableMoneySourceCostReduction = false;
 #endif
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	// more specific check for supply drop zones (know to let OCLs know they're for adjusted-value moeny crates)
 	Bool renewableMoneyOCLSource = false;
 #endif
@@ -1104,7 +1104,7 @@ void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
 			OCLUpdateModuleData* _data = (OCLUpdateModuleData*)data;
 			(void)_data;
 			
-#if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR) || MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR) || EXTRA_MONEY_CRATE_OCL_TRACKING
 			// Does this eventually lead to a money crate?
 			// ---
 			// Contra's TechReinforcementPad used 'FactionOCL' in the INI instead - not handling that case for now
@@ -1146,7 +1146,7 @@ void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
 #if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR)
 					renewableMoneySourceCostReduction = true;
 #endif
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 					// this too
 					renewableMoneyOCLSource = true;
 #endif
@@ -1173,7 +1173,7 @@ void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
 		}
 	}
 #endif
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	if (renewableMoneyOCLSource)
 	{
 		_this->m_isRenewableMoneyOCLSource = true;
@@ -1188,7 +1188,7 @@ Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_helper(const Th
 	if (automaticChangesPostINIParsing_thing_hasMoneyCrateCollide(tt))
 	{
 		// also let this OCL know to look out for being called from something that can spawn money crates
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 		ocl->m_checkForRenewableMoneySource = true;
 #endif
 		leadsToMoneyCrate = true;
@@ -1199,7 +1199,7 @@ Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_helper(const Th
 	Bool outcome = automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_checkSpawned(tt, processedOCLList);
 	if (outcome)
 	{
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 		ocl->m_checkForRenewableMoneySource = true;
 #endif
 		leadsToMoneyCrate = true;
@@ -1391,7 +1391,7 @@ Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_checkSpawned(co
 					{
 						if (automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate(ocl, processedOCLList))
 						{
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 							ocl->m_checkForRenewableMoneySource = true;
 #endif
 							leadsToMoneyCrate = true;
@@ -1410,7 +1410,7 @@ Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_checkSpawned(co
 			{
 				if (automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate(ocl, processedOCLList))
 				{
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 					ocl->m_checkForRenewableMoneySource = true;
 #endif
 					leadsToMoneyCrate = true;

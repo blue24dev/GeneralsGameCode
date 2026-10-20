@@ -98,8 +98,8 @@ public:
 	void clear();
 
 	void addLocomotor(const LocomotorTemplate* lt);
-
-	Locomotor* findLocomotor(LocomotorSurfaceTypeMask t);
+	//MODDD - added 'const'
+	Locomotor* findLocomotor(LocomotorSurfaceTypeMask t) const;
 
 	void xferSelfAndCurLocoPtr(Xfer *xfer, Locomotor** loco);
 

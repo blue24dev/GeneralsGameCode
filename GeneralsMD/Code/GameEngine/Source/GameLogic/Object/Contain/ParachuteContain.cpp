@@ -46,6 +46,9 @@
 
 #include "GameClient/Drawable.h"
 
+//MODDD
+#include "GameLogic/Module/MoneyCrateCollide.h"
+
 
 const Real NO_START_Z = 1e10;
 
@@ -466,7 +469,8 @@ void ParachuteContain::onRemoving( Object *rider )
 {
 	OpenContain::onRemoving(rider);
 
-	const ParachuteContainModuleData* d = getParachuteContainModuleData();
+	//MODDD - unused now
+	//const ParachuteContainModuleData* d = getParachuteContainModuleData();
 
 	// object is no longer held inside a transport
 	rider->clearDisabled( DISABLED_HELD );
@@ -531,27 +535,58 @@ void ParachuteContain::onRemoving( Object *rider )
 		}
 	}
 
-	// if we land in the water, we die. alas.
-	const Coord3D* riderPos = rider->getPosition();
-	Real waterZ, terrainZ;
-	if (TheTerrainLogic->isUnderwater(riderPos->x, riderPos->y, &waterZ, &terrainZ) &&
-			riderPos->z <= waterZ + d->m_killWhenLandingInWaterSlop &&
-			rider->getLayer() == LAYER_GROUND)
+
+	//MODDD - check to see if this is a money crate that is mistakenly landing somewhere other than the intended drop zone,
+	// either by hitting something unintended (nearby taller civilian/other-player-owner thing first or a cliff), or missing
+	// the mark and going past the dropzone to hit the ground anyway. This is to fix the issue of residual drop zone crates
+	// near a drop zone easily seen in retail during a long running game.
+	// The point of this check isn't to make stealing crates from another player impossible - this requires the calling
+	// supply drop zone to no longer exist before the crates touch the ground (then it's finder's-keeper's as usual).
+#if MONEY_CRATE_DROP_SAFETY
+	if (rider->isDestroyed())
 	{
-		// don't call kill(); do it manually, so we can specify DEATH_FLOODED
-		DamageInfo damageInfo;
-		damageInfo.in.m_damageType = DAMAGE_WATER;	// use this instead of UNRESISTABLE so we don't get a dusty damage effect
-		damageInfo.in.m_deathType = DEATH_FLOODED;
-		damageInfo.in.m_sourceID = INVALID_ID;
-		damageInfo.in.m_amount = HUGE_DAMAGE_AMOUNT;
-		rider->attemptDamage( &damageInfo );
+		int x;
+		x = 4;
 	}
+
+	if (!rider->isDestroyed() && rider->getMoneyCrateCollide() && rider->m_supplyDropZoneProducerID != INVALID_ID)
+	{
+		Object* testSrc = TheGameLogic->findObjectByID(rider->m_supplyDropZoneProducerID);
+		if (testSrc && !testSrc->isEffectivelyDead())
+		{
+			Int sourcePlayerIndex = rider->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
+			// Note that 'playerIndex' can have a flag baked into it indicating whether this crate was produced by a neutral tech
+			// structure, captured or not (in case of non-capturable flat areas, like neutral supply drop zones in several mods).
+			if (sourcePlayerIndex & (1 << 31))
+			{
+				sourcePlayerIndex &= ~(1 << 31);
+			}
+
+			// if the owner is a civilian building, don't use this trick because forcing landed money to go to no one playing
+			// the game is lame
+			if (!testSrc->getControllingPlayer()->isUnaffiliated() && testSrc->getControllingPlayer()->getPlayerIndex() == sourcePlayerIndex)
+			{
+				rider->getMoneyCrateCollide()->execute(testSrc);
+				// should make the crate disapper from the collection - stop
+				return;
+			}
+		}
+	}
+#endif
+
+
+	// if we land in the water, we die. alas.
+	//MODDD - but the check for cell-type below found as-is already checks for CELL_WATER?
+	// Moving this to further down if the new valid-cell check fails
+	// <moved to 'extraLandedInWaterDeathCheck'>
 
 	// Kill if we landed on impassable ground
 	Int cellX = REAL_TO_INT( rider->getPosition()->x / PATHFIND_CELL_SIZE );
 	Int cellY = REAL_TO_INT( rider->getPosition()->y / PATHFIND_CELL_SIZE );
 
 	PathfindCell* cell = TheAI->pathfinder()->getCell( rider->getLayer(), cellX, cellY );
+	//MODDD - replacing this
+	/*
 	PathfindCell::CellType cellType = cell ? cell->getType() : PathfindCell::CELL_IMPASSABLE;
 
 	// If we land outside the map from a faulty parachute, we die too.
@@ -569,8 +604,38 @@ void ParachuteContain::onRemoving( Object *rider )
   // Note: for future enhancement of this feature, we should test the object against the cell type he is on,
   // using obj->getAI()->hasLocomotorForSurface( __ ). We cshould not assume here that the parachutist can not
   // find happiness on cliffs or water or whatever.
-
-
+	*/
+	// ---------------
+	// just kill the rider early if the cell can't be found or they ended up off the map
+	if (cell == nullptr || rider->isOffMap())
+	{
+		// I guess do this check here to preserve retail accuracy? I don't know if it's possible to land on an invalid
+		// cell or off the map and still count as 'in the water' for this.
+		if (!extraLandedInWaterDeathCheck(rider))
+		{
+			return;
+		}
+		// ordinary kill to fall back to
+		rider->kill();
+	}
+	else
+	{
+		PathfindCell::CellType cellType = cell->getType();
+		if (!checkCellLandedOnValid(rider, cellType))
+		{
+			//MODDD - new location for the extra water check
+			// (it aleady handles killing the rider if it applies)
+			// also, keep in mind even returnong on killing the rider is new - the original could still fall through to here
+			// to kill the rider again for being on a CELL_WATER-cell. Quite strange.
+			if (!extraLandedInWaterDeathCheck(rider))
+			{
+				return;
+			}
+			// ordinary kill to fall back to
+			rider->kill();
+		}
+	}
+	// ---------------
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -628,6 +693,107 @@ void ParachuteContain::setOverrideDestination( const Coord3D *dest )
 	// Instead of trying to float straight down, I am going to nail this spot.
 	m_landingOverride = *dest;
 	m_isLandingOverrideSet = TRUE;
+}
+
+//MODDD - helper to decide if the parachute-user landed on a valid cell.
+// ex: if someone lands on water and they can swim, it would look silly to get insta-killed by a hardcoded
+// 'landed-on-water' check.
+// Does not do anything to the rider - that is up to the caller.
+Bool ParachuteContain::checkCellLandedOnValid(const Object* rider, PathfindCell::CellType cellType) const
+{
+	if (rider->isKindOf(KINDOF_BOAT))
+	{
+		// boats are always ok on water
+		if (cellType == PathfindCell::CELL_WATER)
+		{
+			return true;
+		}
+	}
+	else
+	{
+		// Generally assume the ground is fine then.
+		if (rider->isKindOf(KINDOF_IMMOBILE))
+		{
+			// if immobile, can't allow OBSTACLE (no way to move away from here)
+			if (cellType == PathfindCell::CELL_CLEAR || cellType == PathfindCell::CELL_RUBBLE)
+			{
+				return true;
+			}
+		}
+		else
+		{
+			// being stuck in an obstacle for strange reasons doesn't kill mobile things
+			if (cellType == PathfindCell::CELL_CLEAR || cellType == PathfindCell::CELL_RUBBLE || cellType == PathfindCell::CELL_OBSTACLE)
+			{
+				return true;
+			}
+		}
+	}
+	
+	const AIUpdateInterface* ai = rider->getAIUpdateInterface();
+	if (ai != nullptr)
+	{
+		// Last resort: see if this has a locomotor that allows movement on some relevant surface. If so, we're good anyway.
+
+		// give up early if marked immobile - what would having locomotors even mean here
+		if (rider->isKindOf(KINDOF_IMMOBILE))
+		{
+			return false;
+		}
+
+		LocomotorSurfaceTypeMask validLocoSurfaces = Pathfinder::validLocomotorSurfacesForCellType(cellType);
+		// if this has a 'rubble' type, force allow ground - being meant for the ground, not specifying rubble, and dying for
+		// landing on rubble would look awfully silly. Same for obstacle-types - if I can move, that shouldn't kill me.
+		if (cellType == PathfindCell::CELL_RUBBLE || cellType == PathfindCell::CELL_OBSTACLE)
+		{
+			validLocoSurfaces |= LOCOMOTORSURFACE_GROUND;
+		}
+		// actually no, maybe this has air-movement so being impassable is ok? unsure here
+		// ('hasLocomotorForSurface' would fail anyway on seeing it has nothing to fly for an IMPASSABLE cell).
+		/*
+		else if (cellType == PathfindCell::CELL_BRIDGE_IMPASSABLE || cellType == PathfindCell::CELL_IMPASSABLE)
+		{
+			// impassable cell - guaranteed failure, as retail would have done.
+			// I have no clue why retail didn't checked for 'CELL_BRIDGE_IMPASSABLE'.
+			return false;
+		}
+		*/
+
+		// See if this has a locomotor that allows movement on some relevant surface. If so, we're good anyway.
+		if (ai->hasLocomotorForSurface((LocomotorSurfaceType)validLocoSurfaces))
+		{
+			return true;
+		}
+	}
+	else
+	{
+		// No AI? Failure at this point - no other way to guess what surfaces this should be able to fall on.
+		// Note that retail's check for being non-cliff/impassable/water is still adhered to for non-BOAT-KindOf's.
+	}
+
+	return false;
+}
+
+//MODDD - extra check from the as-is script for a drowned-type death if the parachute user landed in water.
+// Returns 'false' if invalid (handles the kill this time), 'true' if valid / nothing happens to 'rider' from this.
+Bool ParachuteContain::extraLandedInWaterDeathCheck(Object* rider) const
+{
+	const Coord3D* riderPos = rider->getPosition();
+	Real waterZ, terrainZ;
+	if (TheTerrainLogic->isUnderwater(riderPos->x, riderPos->y, &waterZ, &terrainZ) &&
+			riderPos->z <= waterZ + getParachuteContainModuleData()->m_killWhenLandingInWaterSlop &&
+			rider->getLayer() == LAYER_GROUND)
+	{
+		// don't call kill(); do it manually, so we can specify DEATH_FLOODED
+		DamageInfo damageInfo;
+		damageInfo.in.m_damageType = DAMAGE_WATER;	// use this instead of UNRESISTABLE so we don't get a dusty damage effect
+		damageInfo.in.m_deathType = DEATH_FLOODED;
+		damageInfo.in.m_sourceID = INVALID_ID;
+		damageInfo.in.m_amount = HUGE_DAMAGE_AMOUNT;
+		rider->attemptDamage( &damageInfo );
+		return false;
+	}
+	return true;
 }
 
 //-------------------------------------------------------------------------------------------------

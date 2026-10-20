@@ -108,6 +108,7 @@ class StealthDetectorUpdate;
 class LockWeaponCreate;
 class RebuildHoleBehaviorInterface;
 class VeterancyCrateCollide;
+class MoneyCrateCollide;
 
 class SlavedUpdateInterface;
 
@@ -362,6 +363,7 @@ public:
 	LockWeaponCreate*          getLockWeaponCreate() const { return m_lockWeaponCreate; }
 	RebuildHoleBehaviorInterface*          getRebuildHoleBehavior() const { return m_rebuildHoleBehavior; }
 	VeterancyCrateCollide*					getVeterancyCrateCollide() const { return m_veterancyCrateCollide; }
+	MoneyCrateCollide*							getMoneyCrateCollide() const { return m_moneyCrateCollide; }
 
 	SlavedUpdateInterface*          getSlavedUpdate() const { return m_slavedUpdate; }
 
@@ -920,6 +922,7 @@ private:
 	LockWeaponCreate*             m_lockWeaponCreate;
 	RebuildHoleBehaviorInterface* m_rebuildHoleBehavior;
 	VeterancyCrateCollide*				m_veterancyCrateCollide;
+	MoneyCrateCollide*						m_moneyCrateCollide;
 
 	SlavedUpdateInterface*        m_slavedUpdate;
 
@@ -1003,8 +1006,11 @@ private:
 	// Not going to trust tinkering with other things for safety - untrackable bugs from bad memory involving 'm_stateMap' is a nightmare.
 public:
 	Bool m_calledForDeletion;
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	Int m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
+#endif
+#if MONEY_CRATE_DROP_SAFETY
+	ObjectID m_supplyDropZoneProducerID;
 #endif
 
 	private:

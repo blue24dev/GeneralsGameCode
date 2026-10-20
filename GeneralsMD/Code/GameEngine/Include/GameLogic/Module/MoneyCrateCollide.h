@@ -78,10 +78,17 @@ public:
 	MoneyCrateCollide( Thing *thing, const ModuleData* moduleData );
 	// virtual destructor prototype provided by memory pool declaration
 
-protected:
+	//MODDD
+	virtual MoneyCrateCollide* getMoneyCrateCollide() override { return this; }
+
+	//MODDD
+//protected:
 
 	/// This is the game logic execution function that all real CrateCollides will implement
 	virtual Bool executeCrateBehavior( Object *other ) override;
+
+	//MODDD
+	virtual Bool isValidToExecute( const Object *other ) const override;
 
 	Int getUpgradedSupplyBoost( Object *other ) const;
 

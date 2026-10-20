@@ -2907,9 +2907,11 @@ void LocomotorSet::addLocomotor(const LocomotorTemplate* lt)
 }
 
 //-------------------------------------------------------------------------------------------------
-Locomotor* LocomotorSet::findLocomotor(LocomotorSurfaceTypeMask t)
+//MODDD - added 'const'
+Locomotor* LocomotorSet::findLocomotor(LocomotorSurfaceTypeMask t) const
 {
-	for (LocomotorVector::iterator it = m_locomotors.begin(); it != m_locomotors.end(); ++it)
+	//MODDD - 'LocomotorVector::iterator' -> 'LocomotorVector::const_iterator'
+	for (LocomotorVector::const_iterator it = m_locomotors.begin(); it != m_locomotors.end(); ++it)
 	{
 		Locomotor* curLocomotor = *it;
 		if (curLocomotor && (curLocomotor->getLegalSurfaces() & t))

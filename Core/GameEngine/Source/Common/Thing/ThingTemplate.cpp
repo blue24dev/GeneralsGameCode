@@ -1077,7 +1077,7 @@ ThingTemplate::ThingTemplate() :
 
 	//MODDD
 	m_hasInactiveBodyModule = false;
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	m_isRenewableMoneyOCLSource = false;
 #endif
 

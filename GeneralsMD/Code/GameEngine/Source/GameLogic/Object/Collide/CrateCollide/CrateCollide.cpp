@@ -105,38 +105,11 @@ CrateCollide::~CrateCollide()
 //-------------------------------------------------------------------------------------------------
 void CrateCollide::onCollide( Object *other, const Coord3D *, const Coord3D * )
 {
-	const CrateCollideModuleData *modData = getCrateCollideModuleData();
 	// If the crate can be picked up, perform the game logic and destroy the crate.
 	if( isValidToExecute( other ) )
 	{
-		if( executeCrateBehavior( other ) )
-		{
-			if( modData->m_executeFX != nullptr )
-			{
-				// Note: We pass in other here, because the crate is owned by the neutral player, and
-				// we want to do things that only the other person can see.
-				FXList::doFXObj( modData->m_executeFX, other );
-			}
-
-#if EXTRA_DEBUG_HELP
-			g_destroyObjectSource.push_back(35);
-#endif
-			TheGameLogic->destroyObject( getObject() );
-		}
-
-		// play animation in the world at this spot if there is one
-		if( TheAnim2DCollection && modData->m_executionAnimationTemplate.isEmpty() == FALSE && TheGameLogic->getDrawIconUI() )
-		{
-			Anim2DTemplate *animTemplate = TheAnim2DCollection->findTemplate( modData->m_executionAnimationTemplate );
-
-			TheInGameUI->addWorldAnimation( animTemplate,
-																			getObject()->getPosition(),
-																			WORLD_ANIM_FADE_ON_EXPIRE,
-																			modData->m_executeAnimationDisplayTimeInSeconds,
-																			modData->m_executeAnimationZRisePerSecond );
-
-		}
-
+		//MODDD - contents moved to 'execute'.
+		execute(other);
 	}
 
 }
@@ -189,6 +162,39 @@ Bool CrateCollide::isValidToExecute( const Object *other ) const
 		return FALSE;
 
 	return TRUE;
+}
+
+//MODDD - new
+void CrateCollide::execute( Object *other )
+{
+	const CrateCollideModuleData *modData = getCrateCollideModuleData();
+	if( executeCrateBehavior( other ) )
+	{
+		if( modData->m_executeFX != nullptr )
+		{
+			// Note: We pass in other here, because the crate is owned by the neutral player, and
+			// we want to do things that only the other person can see.
+			FXList::doFXObj( modData->m_executeFX, other );
+		}
+
+#if EXTRA_DEBUG_HELP
+		g_destroyObjectSource.push_back(35);
+#endif
+		TheGameLogic->destroyObject( getObject() );
+	}
+
+	// play animation in the world at this spot if there is one
+	if( TheAnim2DCollection && modData->m_executionAnimationTemplate.isEmpty() == FALSE && TheGameLogic->getDrawIconUI() )
+	{
+		Anim2DTemplate *animTemplate = TheAnim2DCollection->findTemplate( modData->m_executionAnimationTemplate );
+
+		TheInGameUI->addWorldAnimation( animTemplate,
+																		getObject()->getPosition(),
+																		WORLD_ANIM_FADE_ON_EXPIRE,
+																		modData->m_executeAnimationDisplayTimeInSeconds,
+																		modData->m_executeAnimationZRisePerSecond );
+
+	}
 }
 
 

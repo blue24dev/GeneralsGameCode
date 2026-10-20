@@ -290,6 +290,7 @@ Object::Object( const ThingTemplate *tt ) :
 	m_lockWeaponCreate(nullptr),
 	m_rebuildHoleBehavior(nullptr),
 	m_veterancyCrateCollide(nullptr),
+	m_moneyCrateCollide(nullptr),
 	m_slavedUpdate(nullptr),
 	m_spawnBehavior(nullptr),
 	m_projectileUpdate(nullptr),
@@ -360,6 +361,7 @@ Object::Object(const ThingTemplate* tt, Team* team, const ObjectStatusMaskType& 
 	m_lockWeaponCreate(nullptr),
 	m_rebuildHoleBehavior(nullptr),
 	m_veterancyCrateCollide(nullptr),
+	m_moneyCrateCollide(nullptr),
 	m_slavedUpdate(nullptr),
 	m_spawnBehavior(nullptr),
 	m_projectileUpdate(nullptr),
@@ -648,6 +650,14 @@ void Object::createBehaviorModules(const ThingTemplate* tt)
 			m_veterancyCrateCollide = veterancyCrateCollide;
 		}
 
+		//MODDD
+		MoneyCrateCollide* moneyCrateCollide = newMod->getMoneyCrateCollide();
+		if ( moneyCrateCollide )
+		{
+			DEBUG_ASSERTCRASH( m_moneyCrateCollide == nullptr, ("Duplicate MoneyCrateCollide!") );
+			m_moneyCrateCollide = moneyCrateCollide;
+		}
+
 		//MODDD - how on earth was this not cached, even the devs commented that searching for this was expensive
 		SlavedUpdateInterface* slavedUpdate = newMod->getSlavedUpdateInterface();
 		if ( slavedUpdate )
@@ -827,8 +837,11 @@ void Object::initConstructor(const ThingTemplate* tt)
 	//MODDD - NEW. well gee, I would certainly hope not this early
 	m_calledForDeletion = false;
 	//MODDD
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = -1;
+#endif
+#if MONEY_CRATE_DROP_SAFETY
+	m_supplyDropZoneProducerID = INVALID_ID;
 #endif
 	
 	// Force the thing template to use the most overridden version of itself - jkmcd
@@ -5905,8 +5918,12 @@ void Object::xfer( Xfer *xfer )
 		m_moduleTagNameKeyToEjectHijacker = TheNameKeyGenerator->nameToKey(tempStr);
 	}
 
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+	//MODDD
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	xfer->xferInt( &m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+#endif
+#if MONEY_CRATE_DROP_SAFETY
+	xfer->xferObjectID( &m_supplyDropZoneProducerID );
 #endif
 }
 
