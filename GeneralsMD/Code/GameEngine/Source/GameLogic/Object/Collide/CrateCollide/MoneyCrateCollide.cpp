@@ -68,12 +68,12 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 	// adjusted, since oil derrick income rate can be.
 	// See 'extra.cpp' for some automatic adjustments that decide whether the money granted by touching a crate will be
 	// adjusted by cheats and/or the 'RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE' setting (whichever is applicable).
-	if (getObject()->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
+	if (getObject()->m_OCLSourcePlayerIndex != -1)
 	{
 		Real moneyScalar = 1.0f;
 		// First, decide whether this is the same player that caused the crate to be created (ex: supply drop zone owner)
 		// as the player that has a unit touching the crate to collect it for them
-		Int sourcePlayerIndex = getObject()->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
+		Int sourcePlayerIndex = getObject()->m_OCLSourcePlayerIndex;
 		Bool fromTechStructure;
 		// Note that 'playerIndex' can have a flag baked into it indicating whether this crate was produced by a neutral tech
 		// structure, captured or not (in case of non-capturable flat areas, like neutral supply drop zones in several mods).

@@ -117,9 +117,9 @@ Object* ObjectCreationNugget::create( Object* primary, const Object* secondary, 
 
 //MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-Object* ObjectCreationNugget::create_RECoMCCiO( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+Object* ObjectCreationNugget::create_alt( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const
 {
-	return create_RECoMCCiO( primary, primary ? primary->getPosition() : nullptr, secondary ? secondary->getPosition() : nullptr, INVALID_ANGLE, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+	return create_alt( primary, primary ? primary->getPosition() : nullptr, secondary ? secondary->getPosition() : nullptr, INVALID_ANGLE, lifetimeFrames, OCLSourcePlayerIndex );
 }
 #endif
 
@@ -288,24 +288,24 @@ Object* DeliverPayloadNugget::create(Object *primaryObj, const Coord3D *primary,
 
 //MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-Object* DeliverPayloadNugget::create_RECoMCCiO(Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+Object* DeliverPayloadNugget::create_alt(Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const
 {
-	return create_RECoMCCiO( primaryObj, primary, secondary, true, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+	return create_alt( primaryObj, primary, secondary, true, lifetimeFrames, OCLSourcePlayerIndex );
 }
 #endif
 
 //MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
 // (default arg on 'lifetimeFrames' removed - see new '.h' file)
-//MODDD - adding 'runExtraChecksOnMoneyCrateCollideInObjs_playerIndex' to the main overload, letting it redirect to this to avoid copy/pasting a huge method
+//MODDD - adding 'OCLSourcePlayerIndex' to the main overload, letting it redirect to this to avoid copy/pasting a huge method
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
 // original main overload for redirection
 Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames ) const
 {
-	return create_RECoMCCiO(primaryObj, primary, secondary, createOwner, lifetimeFrames, -1);
+	return create_alt(primaryObj, primary, secondary, createOwner, lifetimeFrames, -1);
 }
 
 // main overload modified
-Object* DeliverPayloadNugget::create_RECoMCCiO(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+Object* DeliverPayloadNugget::create_alt(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const
 #else
 // original main overload untouched
 Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames ) const
@@ -445,14 +445,18 @@ Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary,
 
 		//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-		if (runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
+		if (OCLSourcePlayerIndex != -1)
 		{
 			// pass it on
-			transport->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
+			transport->m_OCLSourcePlayerIndex = OCLSourcePlayerIndex;
 		}
 #endif
 #if MONEY_CRATE_DROP_SAFETY
-		transport->m_supplyDropZoneProducerID = primaryObj->getID();
+		// NOTE - this is a bit cheezy, as the proper way to get the ID is letting the caller provide it instead of getting
+		// it from the current 'primaryObj' so that this never has the potential to use an intermediate ID of some inbetween
+		// temp object, but this is only expected to be used by simple paradrops for money crates to decide which supply
+		// drop zone called for them.
+		transport->m_OCLSourceObjectID = primaryObj->getID();
 #endif
 
 		// Notify special power tracking
@@ -510,14 +514,14 @@ Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary,
 					Object* payload = TheThingFactory->newObject( payloadTmpl, owner );
 					//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-					if (runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
+					if (OCLSourcePlayerIndex != -1)
 					{
 						// pass it on
-						payload->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
+						payload->m_OCLSourcePlayerIndex = OCLSourcePlayerIndex;
 					}
 #endif
 #if MONEY_CRATE_DROP_SAFETY
-					payload->m_supplyDropZoneProducerID = primaryObj->getID();
+					payload->m_OCLSourceObjectID = primaryObj->getID();
 #endif
 
 					payload->setPosition(&startPos);
@@ -832,14 +836,14 @@ Object* GenericObjectCreationNugget::create(Object* primary, const Object* secon
 
 //MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-Object* GenericObjectCreationNugget::create_RECoMCCiO(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+Object* GenericObjectCreationNugget::create_alt(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const
 {
 	if (primary)
 	{
 		if (m_skipIfSignificantlyAirborne && primary->isSignificantlyAboveTerrain())
 			return nullptr;
 
-		return reallyCreate_RECoMCCiO( primary->getPosition(), primary->getTransformMatrix(), primary->getOrientation(), primary, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+		return reallyCreate_alt( primary->getPosition(), primary->getTransformMatrix(), primary->getOrientation(), primary, lifetimeFrames, OCLSourcePlayerIndex );
 	}
 	else
 	{
@@ -871,7 +875,7 @@ Object* GenericObjectCreationNugget::create(Object* primaryObj, const Coord3D *p
 
 //MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-Object* GenericObjectCreationNugget::create_RECoMCCiO(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+Object* GenericObjectCreationNugget::create_alt(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const
 {
 	if (primary)
 	{
@@ -881,7 +885,7 @@ Object* GenericObjectCreationNugget::create_RECoMCCiO(Object* primaryObj, const 
 			//Vast majority of OCL's don't care about the angle, so if it comes in invalid, default the angle to 0.
 			angle = 0.0f;
 		}
-		return reallyCreate_RECoMCCiO( primary, xfrm, angle, primaryObj, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+		return reallyCreate_alt( primary, xfrm, angle, primaryObj, lifetimeFrames, OCLSourcePlayerIndex );
 	}
 	else
 	{
@@ -1397,16 +1401,16 @@ void GenericObjectCreationNugget::applyDisposition(
 	}
 }
 
-//MODDD - adding 'runExtraChecksOnMoneyCrateCollideInObjs_playerIndex' to the main overload, letting it redirect to this to avoid copy/pasting a huge method
+//MODDD - adding 'OCLSourcePlayerIndex' to the main overload, letting it redirect to this to avoid copy/pasting a huge method
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
 // original main overload for redirection
 Object* GenericObjectCreationNugget::reallyCreate(const Coord3D *pos, const Matrix3D *mtx, Real orientation, const Object *sourceObj, UnsignedInt lifetimeFrames ) const
 {
-	return reallyCreate_RECoMCCiO(pos, mtx, orientation, sourceObj, lifetimeFrames, -1);
+	return reallyCreate_alt(pos, mtx, orientation, sourceObj, lifetimeFrames, -1);
 }
 
 // main overload modified
-Object* GenericObjectCreationNugget::reallyCreate_RECoMCCiO(const Coord3D *pos, const Matrix3D *mtx, Real orientation, const Object *sourceObj, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+Object* GenericObjectCreationNugget::reallyCreate_alt(const Coord3D *pos, const Matrix3D *mtx, Real orientation, const Object *sourceObj, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const
 #else
 // original main overload untouched
 Object* GenericObjectCreationNugget::reallyCreate(const Coord3D *pos, const Matrix3D *mtx, Real orientation, const Object *sourceObj, UnsignedInt lifetimeFrames ) const
@@ -1473,14 +1477,14 @@ Object* GenericObjectCreationNugget::reallyCreate(const Coord3D *pos, const Matr
 
 		//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-		if (runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
+		if (OCLSourcePlayerIndex != -1)
 		{
 			// pass it on
-			debris->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
+			debris->m_OCLSourcePlayerIndex = OCLSourcePlayerIndex;
 		}
 #endif
 #if MONEY_CRATE_DROP_SAFETY
-		debris->m_supplyDropZoneProducerID = sourceObj->getID();
+		debris->m_OCLSourceObjectID = sourceObj->getID();
 #endif
 
 		if( !firstObject )
@@ -1651,13 +1655,13 @@ Object* ObjectCreationList::createInternal( Object* primaryObj, const Coord3D *p
 
 //MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-Object* ObjectCreationList::createInternal_RECoMCCiO( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+Object* ObjectCreationList::createInternal_alt( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const
 {
 	DEBUG_ASSERTCRASH(primaryObj != nullptr, ("You should always call OCLs with a non-null primary Obj, even for positional calls, to get team ownership right"));
 	Object *theFirstObject = nullptr;
 	for (ObjectCreationNuggetVector::const_iterator i = m_nuggets.begin(); i != m_nuggets.end(); ++i)
 	{
-		Object *curObj =  (*i)->create_RECoMCCiO( primaryObj, primary, secondary, angle, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+		Object *curObj =  (*i)->create_alt( primaryObj, primary, secondary, angle, lifetimeFrames, OCLSourcePlayerIndex );
 		if (theFirstObject==nullptr) {
 			theFirstObject = curObj;
 		}
@@ -1684,13 +1688,13 @@ Object* ObjectCreationList::createInternal( Object* primary, const Object* secon
 
 //MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-Object* ObjectCreationList::createInternal_RECoMCCiO( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+Object* ObjectCreationList::createInternal_alt( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const
 {
 	DEBUG_ASSERTCRASH(primary != nullptr, ("You should always call OCLs with a non-null primary Obj, even for positional calls, to get team ownership right"));
 	Object *theFirstObject = nullptr;
 	for (ObjectCreationNuggetVector::const_iterator i = m_nuggets.begin(); i != m_nuggets.end(); ++i)
 	{
-		Object *curObj =  (*i)->create_RECoMCCiO( primary, secondary, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+		Object *curObj =  (*i)->create_alt( primary, secondary, lifetimeFrames, OCLSourcePlayerIndex );
 		if (theFirstObject==nullptr) {
 			theFirstObject = curObj;
 		}

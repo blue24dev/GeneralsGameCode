@@ -839,10 +839,10 @@ void Object::initConstructor(const ThingTemplate* tt)
 	m_calledForDeletion = false;
 	//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-	m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = -1;
+	m_OCLSourcePlayerIndex = -1;
 #endif
 #if MONEY_CRATE_DROP_SAFETY
-	m_supplyDropZoneProducerID = INVALID_ID;
+	m_OCLSourceObjectID = INVALID_ID;
 #endif
 	
 	// Force the thing template to use the most overridden version of itself - jkmcd
@@ -5926,10 +5926,10 @@ void Object::xfer( Xfer *xfer )
 
 	//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-	xfer->xferInt( &m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+	xfer->xferInt( &m_OCLSourcePlayerIndex );
 #endif
 #if MONEY_CRATE_DROP_SAFETY
-	xfer->xferObjectID( &m_supplyDropZoneProducerID );
+	xfer->xferObjectID( &m_OCLSourceObjectID );
 #endif
 }
 

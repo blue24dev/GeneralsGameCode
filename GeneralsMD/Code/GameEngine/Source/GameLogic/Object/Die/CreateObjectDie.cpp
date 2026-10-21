@@ -98,8 +98,8 @@ void CreateObjectDie::onDie( const DamageInfo * damageInfo )
 //MODDD
 #if MONEY_AUTO_ADJUSTMENT_SUPPORT
 	Object *newObject;
-		if (getObject()->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
-			newObject = ObjectCreationList::create_RECoMCCiO( data->m_ocl, getObject(), damageDealer, 0, getObject()->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+		if (getObject()->m_OCLSourcePlayerIndex != -1)
+			newObject = ObjectCreationList::create_alt( data->m_ocl, getObject(), damageDealer, 0, getObject()->m_OCLSourcePlayerIndex );
 		else
 			newObject = ObjectCreationList::create( data->m_ocl, getObject(), damageDealer );
 #else
