@@ -750,6 +750,7 @@ static const char* const DebrisDispositionNames[] =
 	"WHIRLING",
 	nullptr
 };
+static_assert(equalsEnumBitFlagsCount(ARRAY_SIZE(DebrisDispositionNames) - 1, DEBRIS_DISPOSITION_END), "Incorrect array size");
 
 std::vector<AsciiString>	debrisModelNamesGlobalHack;
 
