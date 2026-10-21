@@ -62,7 +62,9 @@ enum DebrisDisposition CPP_11(: Int)
 	RANDOM_FORCE						= 0x00000020,
 	FLOATING								= 0x00000040,
 	INHERIT_VELOCITY				= 0x00000080,
-	WHIRLING								= 0x00000100
+	WHIRLING								= 0x00000100,
+
+	DEBRIS_DISPOSITION_END // keep after the last named flag
 };
 
 //MODDD - moved typedefs that were inside classes to here
