@@ -85,9 +85,6 @@ public:
 	ChinookAIUpdate( Thing *thing, const ModuleData* moduleData );
 	// virtual destructor prototype provided by memory pool declaration
 
-	//MODDD - new
-	virtual Bool canLandToPickUpObjectWantingToEnter() override { return true; }
-
 	virtual UpdateSleepTime update() override;
  	virtual void aiDoCommand(const AICommandParms* parms) override;
 	virtual Bool chooseLocomotorSet(LocomotorSetType wst) override;
@@ -95,6 +92,10 @@ public:
 	// allowing people to exit...
 	virtual AIFreeToExitType getAiFreeToExit(const Object* exiter) const override;
 	virtual Bool isAllowedToAdjustDestination() const override;
+
+	//MODDD
+	virtual Bool isAllowedToMoveAwayFromUnit() const override;
+
 	virtual ObjectID getBuildingToNotPathAround() const override;
 
 	// this is present for subclasses (eg, Chinook) to override, to
@@ -111,6 +112,15 @@ public:
 	const Coord3D* getOriginalPosition() const { return &m_originalPos; }
 
 	virtual Int getUpgradedSupplyBoost() const override;
+
+	//MODDD - new
+	virtual Bool isHelicopter() const override;
+	virtual Bool canLandToPickUpObjectWantingToEnter() const override;
+	virtual Bool isDockedAtAirField() const override;
+	virtual Bool isLandingAtAirField() const override;
+	virtual Bool isMovingToAirField() const override;
+	virtual ObjectID getAirFieldDockedOrLandingAtID() const override;
+	virtual ObjectID getAirFieldDockIntentID() const override;
 
 protected:
 

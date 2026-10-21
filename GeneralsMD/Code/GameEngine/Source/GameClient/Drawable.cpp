@@ -619,7 +619,9 @@ Bool Drawable::getShouldAnimate( Bool considerPower ) const
 		if (obj->isDisabled())
 		{
 			if(
-         ! obj->isKindOf( KINDOF_PRODUCED_AT_HELIPAD )  &&
+				//MODDD - different way of checking for this
+        // ! obj->isKindOf( KINDOF_PRODUCED_AT_HELIPAD )  &&
+				!obj->isHelicopter() &&
         // mal sez: helicopters just look goofy if they stop animating, so keep animating them, anyway
 
         (  obj->isDisabledByType( DISABLED_HACKED ) ||
@@ -1073,13 +1075,14 @@ Real Drawable::getScale () const
 //-------------------------------------------------------------------------------------------------
 void Drawable::reactToBodyDamageStateChange(BodyDamageType newState)
 {
-	static const ModelConditionFlagType TheDamageMap[BODYDAMAGETYPE_COUNT] =
+	static const ModelConditionFlagType TheDamageMap[] =
 	{
 		MODELCONDITION_INVALID,
 		MODELCONDITION_DAMAGED,
 		MODELCONDITION_REALLY_DAMAGED,
 		MODELCONDITION_RUBBLE,
 	};
+	static_assert(ARRAY_SIZE(TheDamageMap) == BODYDAMAGETYPE_COUNT, "Incorrect array size");
 
 	ModelConditionFlags newDamage;
 	if (TheDamageMap[newState] != MODELCONDITION_INVALID)

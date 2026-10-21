@@ -118,6 +118,8 @@ enum AutoAcquireStates CPP_11(: Int)
 	AAS_Idle_No										= 0x04,
 	AAS_Idle_Not_While_Attacking	= 0x08,
 	AAS_Idle_Attack_Buildings			= 0x10,
+
+	AUTO_ACQUIRE_STATES_END // keep after the last named flag
 };
 
 #ifdef DEFINE_AUTOACQUIRE_NAMES
@@ -131,6 +133,7 @@ static const char *const TheAutoAcquireEnemiesNames[] =
 
 	nullptr
 };
+static_assert(equalsEnumBitFlagsCount(ARRAY_SIZE(TheAutoAcquireEnemiesNames) - 1, AUTO_ACQUIRE_STATES_END), "Incorrect array size");
 #endif
 
 
@@ -329,9 +332,18 @@ public:
 	inline Int getSurrenderedPlayerIndex() const { return m_surrenderedPlayerIndex; }
 #endif
 
+	//MODDD - new
+	virtual Bool isHelicopter() const;
+	virtual Bool movesLikeHelicopter() const;
 	//MODDD - new, to let something wanting to enter whether this is something that can land to pick it up even if presently
 	// airborne (ex: chinooks)
-	virtual Bool canLandToPickUpObjectWantingToEnter() { return false; }
+	virtual Bool canLandToPickUpObjectWantingToEnter() const { return false; }
+	//MODDD - also new
+	virtual Bool isDockedAtAirField() const { return false; }
+	virtual Bool isLandingAtAirField() const { return false; }
+	virtual Bool isMovingToAirField() const { return false; }
+	virtual ObjectID getAirFieldDockedOrLandingAtID() const { return INVALID_ID; }
+	virtual ObjectID getAirFieldDockIntentID() const { return INVALID_ID; }
 
 	virtual void joinTeam();			///< This unit just got added to a team & needs to catch up.
 
@@ -432,7 +444,8 @@ public:
 	const Locomotor *getCurLocomotor() const {return m_curLocomotor;}
 	Locomotor *getCurLocomotor() { return m_curLocomotor; }
 	LocomotorSetType getCurLocomotorSetType() const { return m_curLocomotorSet; }
-	Bool hasLocomotorForSurface(LocomotorSurfaceType surfaceType);
+	//MODDD - added 'const'
+	Bool hasLocomotorForSurface(LocomotorSurfaceType surfaceType) const;
 
 	// turret stuff.
 	WhichTurretType getWhichTurretForWeaponSlot(WeaponSlotType wslot, Real* turretAngle, Real* turretPitch = nullptr) const;

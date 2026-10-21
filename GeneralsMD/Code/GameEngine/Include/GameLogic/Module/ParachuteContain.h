@@ -31,6 +31,8 @@
 
 // USER INCLUDES //////////////////////////////////////////////////////////////////////////////////
 #include "GameLogic/Module/OpenContain.h"
+//MODDD
+#include "GameLogic/Pathfinder/PathfindCell.h"
 
 //-------------------------------------------------------------------------------------------------
 class ParachuteContainModuleData : public OpenContainModuleData
@@ -82,6 +84,10 @@ protected:
 
 	virtual Bool isFullyEnclosingContainer() const { return false; }
 	virtual void positionContainedObjectsRelativeToContainer() override;
+
+	//MODDD
+	Bool checkCellLandedOnValid(const Object* rider, PathfindCell::CellType cellType) const;
+	Bool extraLandedInWaterDeathCheck(Object* rider) const;
 
 private:
 

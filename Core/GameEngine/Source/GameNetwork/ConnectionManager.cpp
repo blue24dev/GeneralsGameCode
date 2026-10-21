@@ -104,7 +104,7 @@ struct TransferFileRule
 	UnsignedInt maxSize;
 };
 
-static const TransferFileRule transferFileRules[TransferFileType_Count] =
+static const TransferFileRule transferFileRules[] =
 {
 	{ ".map", 5 * 1024 * 1024 },
 	{ ".ini", 2 * 1024 * 1024 },
@@ -113,6 +113,7 @@ static const TransferFileRule transferFileRules[TransferFileType_Count] =
 	{ ".tga", 2 * 1024 * 1024 },
 	{ ".wak", 128 * 1024 },
 };
+static_assert(ARRAY_SIZE(transferFileRules) == TransferFileType_Count, "Incorrect array size");
 
 static TransferFileType getTransferFileType(const char* extension)
 {
@@ -707,7 +708,7 @@ void ConnectionManager::processRunAheadMetrics(NetRunAheadMetricsCommandMsg *msg
 	if (isPlayerConnected(playerID)) {
 		m_latencyAverages[playerID] = msg->getAverageLatency();
 		m_fpsAverages[playerID] = msg->getAverageFps();
-		//DEBUG_LOG(("ConnectionManager::processRunAheadMetrics - player %d, fps = %d, latency = %f", player, msg->getAverageFps(), msg->getAverageLatency()));
+		//DEBUG_LOG(("ConnectionManager::processRunAheadMetrics - player %d, fps = %d, latency = %f", playerID, msg->getAverageFps(), msg->getAverageLatency()));
 		if (m_fpsAverages[playerID] > 100) {
 			// limit the reported frame rate average to 100.  This is done because if a
 			// user alt-tab's out of the game their frame rate climbs to in the neighborhood of

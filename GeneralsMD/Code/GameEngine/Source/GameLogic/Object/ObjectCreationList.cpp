@@ -116,7 +116,7 @@ Object* ObjectCreationNugget::create( Object* primary, const Object* secondary, 
 }
 
 //MODDD
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 Object* ObjectCreationNugget::create_RECoMCCiO( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
 {
 	return create_RECoMCCiO( primary, primary ? primary->getPosition() : nullptr, secondary ? secondary->getPosition() : nullptr, INVALID_ANGLE, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
@@ -287,7 +287,7 @@ Object* DeliverPayloadNugget::create(Object *primaryObj, const Coord3D *primary,
 }
 
 //MODDD
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 Object* DeliverPayloadNugget::create_RECoMCCiO(Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
 {
 	return create_RECoMCCiO( primaryObj, primary, secondary, true, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
@@ -297,7 +297,7 @@ Object* DeliverPayloadNugget::create_RECoMCCiO(Object *primaryObj, const Coord3D
 //MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
 // (default arg on 'lifetimeFrames' removed - see new '.h' file)
 //MODDD - adding 'runExtraChecksOnMoneyCrateCollideInObjs_playerIndex' to the main overload, letting it redirect to this to avoid copy/pasting a huge method
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 // original main overload for redirection
 Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames ) const
 {
@@ -444,12 +444,15 @@ Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary,
 		}
 
 		//MODDD
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 		if (runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
 		{
 			// pass it on
 			transport->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
 		}
+#endif
+#if MONEY_CRATE_DROP_SAFETY
+		transport->m_supplyDropZoneProducerID = primaryObj->getID();
 #endif
 
 		// Notify special power tracking
@@ -506,12 +509,15 @@ Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary,
 				{
 					Object* payload = TheThingFactory->newObject( payloadTmpl, owner );
 					//MODDD
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 					if (runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
 					{
 						// pass it on
 						payload->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
 					}
+#endif
+#if MONEY_CRATE_DROP_SAFETY
+					payload->m_supplyDropZoneProducerID = primaryObj->getID();
 #endif
 
 					payload->setPosition(&startPos);
@@ -744,6 +750,7 @@ static const char* const DebrisDispositionNames[] =
 	"WHIRLING",
 	nullptr
 };
+static_assert(equalsEnumBitFlagsCount(ARRAY_SIZE(DebrisDispositionNames) - 1, DEBRIS_DISPOSITION_END), "Incorrect array size");
 
 std::vector<AsciiString>	debrisModelNamesGlobalHack;
 
@@ -824,7 +831,7 @@ Object* GenericObjectCreationNugget::create(Object* primary, const Object* secon
 }
 
 //MODDD
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 Object* GenericObjectCreationNugget::create_RECoMCCiO(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
 {
 	if (primary)
@@ -863,7 +870,7 @@ Object* GenericObjectCreationNugget::create(Object* primaryObj, const Coord3D *p
 }
 
 //MODDD
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 Object* GenericObjectCreationNugget::create_RECoMCCiO(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
 {
 	if (primary)
@@ -1391,7 +1398,7 @@ void GenericObjectCreationNugget::applyDisposition(
 }
 
 //MODDD - adding 'runExtraChecksOnMoneyCrateCollideInObjs_playerIndex' to the main overload, letting it redirect to this to avoid copy/pasting a huge method
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 // original main overload for redirection
 Object* GenericObjectCreationNugget::reallyCreate(const Coord3D *pos, const Matrix3D *mtx, Real orientation, const Object *sourceObj, UnsignedInt lifetimeFrames ) const
 {
@@ -1465,12 +1472,15 @@ Object* GenericObjectCreationNugget::reallyCreate(const Coord3D *pos, const Matr
 		}
 
 		//MODDD
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 		if (runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
 		{
 			// pass it on
 			debris->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
 		}
+#endif
+#if MONEY_CRATE_DROP_SAFETY
+		debris->m_supplyDropZoneProducerID = sourceObj->getID();
 #endif
 
 		if( !firstObject )
@@ -1640,7 +1650,7 @@ Object* ObjectCreationList::createInternal( Object* primaryObj, const Coord3D *p
 }
 
 //MODDD
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 Object* ObjectCreationList::createInternal_RECoMCCiO( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
 {
 	DEBUG_ASSERTCRASH(primaryObj != nullptr, ("You should always call OCLs with a non-null primary Obj, even for positional calls, to get team ownership right"));
@@ -1673,7 +1683,7 @@ Object* ObjectCreationList::createInternal( Object* primary, const Object* secon
 }
 
 //MODDD
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 Object* ObjectCreationList::createInternal_RECoMCCiO( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
 {
 	DEBUG_ASSERTCRASH(primary != nullptr, ("You should always call OCLs with a non-null primary Obj, even for positional calls, to get team ownership right"));

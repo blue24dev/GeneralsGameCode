@@ -1635,7 +1635,9 @@ void AIGroup::groupMoveToPosition( const Coord3D *p_posIn, Bool addWaypoint, Com
 	{
     const Object *groupMember = (*i);
 
-    if ( groupMember->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )//helicopter
+		//MODDD - different way of checking for this
+    //if ( groupMember->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )//helicopter
+		if ( groupMember->isHelicopter() )
     {
       isFormation = FALSE;
       extraMargin = MAX( extraMargin, groupMember->getGeometryInfo().getMajorRadius() );
@@ -1883,8 +1885,8 @@ void getHelicopterOffset( Coord3D& posOut, Int idx )
   }
 
   Coord3D tempCtr = posOut;
-  posOut.x = tempCtr.x + (sin(angle) * radius);
-  posOut.y = tempCtr.y + (cos(angle) * radius);
+  posOut.x = tempCtr.x + (WWMath::Sin(angle) * radius);
+  posOut.y = tempCtr.y + (WWMath::Cos(angle) * radius);
 
 }
 
@@ -1951,7 +1953,9 @@ void AIGroup::groupTightenToPosition( const Coord3D *pos, Bool addWaypoint, Comm
 		AIUpdateInterface *ai = theUnit->getAIUpdateInterface();
 		if( !addWaypoint )
 		{
-      if ( theUnit->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) ) //NEW
+			//MODDD - different way of checking for this
+      //if ( theUnit->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) ) //NEW
+			if ( theUnit->isHelicopter() ) //NEW
       {
         Coord3D heliOffs = *pos;
         getHelicopterOffset( heliOffs, heliIdx++ );

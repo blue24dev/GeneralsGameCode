@@ -985,7 +985,7 @@ void PlayerListDlg::OnChangePlayerdisplayname()
 //MODDD - removing the third param. Display name is always the same as the internal player name so why not
 // handle that here?
 //static void addSide(SidesList *sides, AsciiString faction,
-//										AsciiString playerName, const wchar_t *playerUName)
+//										AsciiString playerName, const WideChar *playerUName)
 static void addSide(SidesList *sides, AsciiString faction, AsciiString playerName)
 {
 	if (!sides->findSideInfo(playerName)) {

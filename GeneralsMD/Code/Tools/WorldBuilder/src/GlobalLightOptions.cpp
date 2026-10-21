@@ -193,8 +193,8 @@ static void calcNewLight(Int lr, Int fb, Vector3 *newLight)
 	newLight->Set(0,0,-1);
 	Real yAngle = PI*(lr-90)/180;
 	Real xAngle = PI*(fb-90)/180;
-	Real zAngle = xAngle * WWMath::Sin(yAngle);
-	xAngle *= WWMath::Cos(yAngle);
+	Real zAngle = xAngle * WWMath::Sinf(yAngle);
+	xAngle *= WWMath::Cosf(yAngle);
 	newLight->Rotate_Y(yAngle);
 	newLight->Rotate_X(xAngle);
 	newLight->Rotate_Z(zAngle);
@@ -256,8 +256,8 @@ GlobalData::TerrainLighting GlobalLightOptions::getTerrainLightingCopy(Int light
 //MODDD
 void GlobalLightOptions::horizontalCoordsToPosition(Vector3* out_lightPos, Int lightIndex)
 {
-	out_lightPos->X = sin(PI/2.0f+m_angleElevation[lightIndex]/180.0f*PI)*cos(m_angleAzimuth[lightIndex]/180.0f*PI);// -WWMath::Sin(PI*(m_angleLR[lightIndex]-90)/180);
-	out_lightPos->Y = sin(PI/2.0f+m_angleElevation[lightIndex]/180.0f*PI)*sin(m_angleAzimuth[lightIndex]/180.0f*PI);//-WWMath::Sin(PI*(m_angleFB[lightIndex]-90)/180);
+	out_lightPos->X = sin(PI/2.0f+m_angleElevation[lightIndex]/180.0f*PI)*cos(m_angleAzimuth[lightIndex]/180.0f*PI);// -WWMath::Sinf(PI*(m_angleLR[lightIndex]-90)/180);
+	out_lightPos->Y = sin(PI/2.0f+m_angleElevation[lightIndex]/180.0f*PI)*sin(m_angleAzimuth[lightIndex]/180.0f*PI);//-WWMath::Sinf(PI*(m_angleFB[lightIndex]-90)/180);
 	out_lightPos->Z = cos (PI/2.0f+m_angleElevation[lightIndex]/180.0f*PI);
 }
 

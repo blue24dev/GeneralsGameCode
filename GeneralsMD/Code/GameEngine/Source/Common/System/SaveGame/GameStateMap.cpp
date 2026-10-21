@@ -239,6 +239,32 @@ static void extractAndSaveMap( AsciiString mapToSave, Xfer *xfer )
 }
 
 // ------------------------------------------------------------------------------------------------
+// TheSuperHackers @bugfix bobtista 20/10/2026 Clear the loading save flag on every exit from a load,
+// including a throw, so that a failed save load does not leave the quit menu disabled.
+class LoadingSaveScope
+{
+public:
+	LoadingSaveScope( Bool loading ) : m_loading( loading )
+	{
+		if( m_loading )
+		{
+			TheGameLogic->setLoadingSave( TRUE );
+		}
+	}
+
+	~LoadingSaveScope()
+	{
+		if( m_loading )
+		{
+			TheGameLogic->setLoadingSave( FALSE );
+		}
+	}
+
+private:
+	Bool m_loading;
+};
+
+// ------------------------------------------------------------------------------------------------
 /** Xfer method
 	* Version Info:
 	* 1: Initial version
@@ -248,10 +274,7 @@ static void extractAndSaveMap( AsciiString mapToSave, Xfer *xfer )
 // ------------------------------------------------------------------------------------------------
 void GameStateMap::xfer( Xfer *xfer )
 {
-	if( xfer->getXferMode() == XFER_LOAD )
-	{
-		TheGameLogic->setLoadingSave( TRUE );
-	}
+	LoadingSaveScope loadingSaveScope( xfer->getXferMode() == XFER_LOAD );
 
 	// version
 	const XferVersion currentVersion = 2;
@@ -444,12 +467,6 @@ void GameStateMap::xfer( Xfer *xfer )
 	if( xfer->getXferMode() == XFER_LOAD )
 	{
 		TheGameLogic->startNewGame( TRUE );
-		//MODDD - Note - There are still things to load after this.
-		// See Xfer.h's 'globalXferStatus' for a way to track whether a game is being loaded/saved/neither as other thinsg
-		// are being loaded (better to trust).
-		// Most likely, the intent of this was only for 'startNewGame' to check 'TheGameLogic->isLoadingSave()'.
-		// The flag is turned back off now that 'startNewGame' has finished.
-		TheGameLogic->setLoadingSave( FALSE );
 	}
 
 	//MODDD - handling xfer of the time-of-day here, since 'TheGameLogic->startNewGame' above reaches the

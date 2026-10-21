@@ -98,7 +98,7 @@ WorldHeightMapEdit::WorldHeightMapEdit(Int width, Int height, UnsignedByte initi
 		m_sourceTiles[i]=nullptr;
 		m_edgeTiles[i]=nullptr;
 	}
-	if (width<0 || height < 0) {
+	if (!isValidPlayableMapSize(width, height, border)) {
 		AfxMessageBox(IDS_BAD_VALUE);
 		return;
 	}
@@ -1801,6 +1801,10 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 							Bool anchorLeft, Bool anchorRight, Coord3D *pObjOffset, Coord3D* pAbsChange)
 {
 	if (newBorder<0) newBorder = 0;
+	if (!isValidPlayableMapSize(newXSize, newYSize, newBorder)) {
+		AfxMessageBox(IDS_BAD_VALUE);
+		return(false);
+	}
 	newXSize += 2*newBorder;
 	newYSize += 2*newBorder;
 	Int newDataSize = newXSize*newYSize;
@@ -1847,16 +1851,23 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 
 	//MODDD - something from below moved up
 	Int numBytesX = (newXSize+7)/8;	//how many bytes to fit all bitflags
+	//MODDD - a non-member form of 'm_flipStateWidth' before writing to that
 	Int flipStateWidth = numBytesX;
 
 	Short *tileNdxes = new Short[newDataSize];
 	Short *blendTileNdxes = new Short[newDataSize];
 	Short *extraBlendTileNdxes = new Short[newDataSize];
-	UnsignedByte *data = new UnsignedByte[newDataSize];
+	UnsignedByte *data = new UnsignedByte[newDataSize + newXSize+1];
 	Short  *cliffInfoNdxes = new Short[newDataSize];
-	//MODDD
-	UnsignedByte* cellCliffState = new UnsignedByte[numBytesX*newYSize];
-	UnsignedByte* cellFlipState = new UnsignedByte[numBytesX*newYSize];
+
+	//MODDD - moved block from below to copy details into the new height map for the destination size.
+	// 'm_height' replaced with 'newYSize'
+	// ---
+	UnsignedByte* cellFlipState	= MSGNEW("WorldHeightMapEdit::resize") UnsignedByte[numBytesX*newYSize];
+	UnsignedByte* cellCliffState	= MSGNEW("WorldHeightMapEdit::resize") UnsignedByte[numBytesX*newYSize];
+	memset(cellFlipState,0,numBytesX*newYSize);
+	memset(cellCliffState,0,numBytesX*newYSize);
+	// ---
 	
 	Int i, j;
 	for (i=0; i<newXSize; i++) {
@@ -1945,11 +1956,11 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 		}
 	}
 
-	delete(m_tileNdxes);
-	delete(m_cliffInfoNdxes);
-	delete(m_blendTileNdxes);
-	delete(m_extraBlendTileNdxes);
-	delete(m_data);
+	delete[] m_tileNdxes;
+	delete[] m_cliffInfoNdxes;
+	delete[] m_blendTileNdxes;
+	delete[] m_extraBlendTileNdxes;
+	delete[] m_data;
 	m_tileNdxes = tileNdxes;
 	m_blendTileNdxes = blendTileNdxes;
 	m_extraBlendTileNdxes = extraBlendTileNdxes;
@@ -1959,19 +1970,25 @@ Bool WorldHeightMapEdit::resize(Int newXSize, Int newYSize, Int newHeight, Int n
 	m_height = newYSize;
 	m_borderSize = newBorder;
 	m_dataSize = newDataSize;
-	delete(m_cellCliffState);
-	delete(m_cellFlipState);
-	//MODDD - moved earlier
+	delete[] m_cellCliffState;
+	delete[] m_cellFlipState;
+	//MODDD - moved to earlier, assigning the already established 'flipStateWidth' to 'm_flipStateWidth' instead
+	// ---
 	//Int numBytesX = (m_width+7)/8;	//how many bytes to fit all bitflags
+ 	//m_flipStateWidth=numBytesX;
+	// ---
  	m_flipStateWidth=flipStateWidth;
+	// ---
 
-	//MODDD - replaced
+	//MODDD - creation is handled earlier, replaced with assignment to the function variables that have been handled
 	// ---
 	//m_cellFlipState	= MSGNEW("WorldHeightMapEdit::resize") UnsignedByte[numBytesX*m_height];
 	//m_cellCliffState	= MSGNEW("WorldHeightMapEdit::resize") UnsignedByte[numBytesX*m_height];
+	//memset(m_cellFlipState,0,numBytesX*m_height);
+	//memset(m_cellCliffState,0,numBytesX*m_height);
 	// ---
-	m_cellCliffState = cellCliffState;
 	m_cellFlipState = cellFlipState;
+	m_cellCliffState = cellCliffState;
 	// ---
 
 	// Verify index remapping

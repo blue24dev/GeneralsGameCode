@@ -81,9 +81,10 @@ public:
 
 	//MODDD
 	virtual VeterancyCrateCollide* getVeterancyCrateCollide() override { return this; }
-	Bool attemptGiveVeterancySimple(Object* other) const;
+	Bool attemptGiveVeterancySimple(Object* other, Bool provideFeedback = TRUE) const;
 
-protected:
+	//MODDD
+//protected:
 
 	/// This allows specific vetoes to certain types of crates and their data
 	virtual Bool isValidToExecute( const Object *other ) const override;

@@ -602,7 +602,7 @@ public:
 		{
 			if (it->ropeLen < it->ropeLenMax)
 			{
-				it->ropeSpeed += fabs(TheGlobalData->m_gravity);
+				it->ropeSpeed += WWMath::Fabs(TheGlobalData->m_gravity);
 				if (it->ropeSpeed > d->m_ropeDropSpeed)
 					it->ropeSpeed = d->m_ropeDropSpeed;
 				it->ropeLen += it->ropeSpeed;
@@ -794,7 +794,7 @@ public:
 		StateReturnType status = AIMoveToState::update();
 
 		const Real THRESH = 3.0f;
-		if (status != STATE_CONTINUE && fabs(obj->getPosition()->z - m_destZ) > THRESH)
+		if (status != STATE_CONTINUE && WWMath::Fabs(obj->getPosition()->z - m_destZ) > THRESH)
 			status = STATE_CONTINUE;
 
 		return status;
@@ -923,7 +923,7 @@ ChinookAIUpdateModuleData::ChinookAIUpdateModuleData()
 	m_minDropHeight = 30.0f;
 	m_ropeFinalHeight = 0.0f;
 	m_ropeDropSpeed = 1e10f;		// um, fast.
-	m_rappelSpeed = fabs(TheGlobalData->m_gravity) * LOGICFRAMES_PER_SECOND * 0.5f;
+	m_rappelSpeed = WWMath::Fabs(TheGlobalData->m_gravity) * LOGICFRAMES_PER_SECOND * 0.5f;
 	m_ropeWobbleLen = 10.0f;
 	m_ropeWobbleAmp = 1.0f;
 	m_ropeWobbleRate = 0.1f;
@@ -1025,17 +1025,33 @@ Bool ChinookAIUpdate::isIdle() const
 	if (m_hasPendingCommand)
 		return false;
 
-	Bool result = SupplyTruckAIUpdate::isIdle();
+	//MODDD - just return false?
+	//Bool result = SupplyTruckAIUpdate::isIdle();
+	if (!SupplyTruckAIUpdate::isIdle())
+		return false;
 
-	if (result && m_flightStatus == CHINOOK_LANDED)
+	//MODDD - 'result' removed
+	//if (result && m_flightStatus == CHINOOK_LANDED)
+	if (m_flightStatus == CHINOOK_LANDED)
 	{
 		// ditto: if we are waiting to disgorge some folks, we aren't 'idle'
 		ContainModuleInterface* contain = getObject()->getContain();
 		if (contain && contain->hasObjectsWantingToEnterOrExit())
-			result = false;
+			//MODDD - "result = false" -> "return false"
+			return false;
+
+		//MODDD - if getting repaired, also count this as not-idle.
+		// This stops an 'aiMoveToPosition' call from 'AIUpdateInterface::processCollision' that can possibly make a landed
+		// helicopter take off even if 'AICMD_MOVE_AWAY_FROM_UNIT' and 'isAllowedToAdjustDestination' are set up properly...
+		// yuck.
+		// Note that the only reason a ChinookAIUpdate can be docked at an air field is for repairs, so this check alone
+		// works here. (if still waiting for someone to enter this as a transport, above would have caught that)
+		if (isDockedAtAirField())
+			return false;
 	}
 
-	return result;
+	//MODDD - "return result" -> "return true"
+	return true;
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1077,6 +1093,19 @@ Bool ChinookAIUpdate::isAllowedToAdjustDestination() const
 	}
 
 	return SupplyTruckAIUpdate::isAllowedToAdjustDestination();
+}
+
+//MODDD - override, borrowed from JetAIUpdate.
+// The point is to block takeoff from objects colliding/being too close, often causing several helicopters landing
+// for repairs to push others away when repairs have barely started.
+// This issue can be noticed in mods that change the comanche from using 'JetAIUpdate' to 'ChinookUpdate' in the INI.
+Bool ChinookAIUpdate::isAllowedToMoveAwayFromUnit() const
+{
+	// parked (or landing) units don't get to do this.
+	if (m_flightStatus == CHINOOK_LANDED || m_flightStatus == CHINOOK_TAKING_OFF || m_flightStatus == CHINOOK_LANDING)
+		return false;
+
+	return SupplyTruckAIUpdate::isAllowedToMoveAwayFromUnit();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -1133,6 +1162,11 @@ UpdateSleepTime ChinookAIUpdate::update()
 		{
 			// we're completely healed, so take off again
 			pp->setHealee(getObject(), false);
+
+			//MODDD - since we're done healing, may as well disassociate me from the air field this frame too, not just the
+			// airfield from me
+			setAirfieldForHealing(INVALID_ID);
+
 			setMyState(TAKING_OFF, nullptr, nullptr, CMD_FROM_AI);
 
 #if !RETAIL_COMPATIBLE_CRC
@@ -1327,17 +1361,34 @@ void ChinookAIUpdate::privateCombatDrop( Object* target, const Coord3D& pos, Com
 //-------------------------------------------------------------------------------------------------
 void ChinookAIUpdate::aiDoCommand(const AICommandParms* parms)
 {
+	//MODDD - moved from below
+	if (!isAllowedToRespondToAiCommands(parms))
+		return;
+
+	//MODDD - if this is a repair order and we've already had the order or are in progress, ignore this.
+	// This is to let a large selection of aircraft, some told and not yet told to repair, only affect things that aren't
+	// already repairing / intending to repair at the given air field.
+	if (parms->m_cmd == AICMD_GET_REPAIRED)
+	{
+		if (parms->m_obj->getID() == getAirFieldDockIntentID())
+		{
+			return;
+		}
+	}
+
 #if RETAIL_COMPATIBLE_CRC
 	// this gets reset every time a command is issued.
 	setAirfieldForHealing(INVALID_ID);
 #else
 	// TheSuperHackers @bugfix Stubbjax 31/10/2025 Don't leave healing state for evacuation commands.
-	if (parms->m_cmd != AICMD_EVACUATE && parms->m_cmd != AICMD_EXIT)
+	//MODDD - adding 'AICMD_BUSY' and 'AICMD_MOVE_AWAY_FROM_UNIT' for safety
+	if (parms->m_cmd != AICMD_EVACUATE && parms->m_cmd != AICMD_EXIT && parms->m_cmd != AICMD_BUSY && parms->m_cmd != AICMD_MOVE_AWAY_FROM_UNIT)
 		setAirfieldForHealing(INVALID_ID);
 #endif
 
-	if (!isAllowedToRespondToAiCommands(parms))
-		return;
+	//MODDD - moved to the top
+	//if (!isAllowedToRespondToAiCommands(parms))
+	//	return;
 
 	if (m_flightStatus == CHINOOK_TAKING_OFF ||
 				m_flightStatus == CHINOOK_LANDING ||
@@ -1355,6 +1406,10 @@ void ChinookAIUpdate::aiDoCommand(const AICommandParms* parms)
 		case AICMD_IDLE:
 		case AICMD_BUSY:
 		case AICMD_FOLLOW_EXITPRODUCTION_PATH:
+		//MODDD - including this one, so repairs at an air field aren't prematurely blocked.
+		// If this isn't here, the 'default' case is reached further down & the 'isAllowedToMoveAwayFromUnit' call (involves
+		// the override I added) that usually happpens is skipped.
+		case AICMD_MOVE_AWAY_FROM_UNIT:
 		{
 			// don't need (or want) to take off for these...
 			// just pass it thru.
@@ -1782,4 +1837,62 @@ Int ChinookAIUpdate::getUpgradedSupplyBoost() const
 		return getChinookAIUpdateModuleData()->m_upgradedSupplyBoost;
 	else
 		return 0;
+}
+
+//MODDD
+Bool ChinookAIUpdate::isHelicopter() const
+{
+	// we'll say yes always for now unless some existing mod breaking says not to
+	return true;
+}
+
+//MODDD - this feature is mainly for 'JetAIUpdate' to decide whether it is for a helicopter that is able to drop to let
+// something enter, since (puzzlingly) JetAIUpdate can be used by jets or helicopters.
+// Here in ChinookAIUpdate, carrying over retail behavior of always saying "yes" works fine
+Bool ChinookAIUpdate::canLandToPickUpObjectWantingToEnter() const
+{
+	return true;
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+Bool ChinookAIUpdate::isDockedAtAirField() const
+{
+	return (m_airfieldForHealing != INVALID_ID && m_flightStatus == CHINOOK_LANDED);
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+Bool ChinookAIUpdate::isLandingAtAirField() const
+{
+	return (m_airfieldForHealing != INVALID_ID && m_flightStatus == CHINOOK_LANDING);
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+Bool ChinookAIUpdate::isMovingToAirField() const
+{
+	return (m_airfieldForHealing != INVALID_ID && m_flightStatus == CHINOOK_FLYING);
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+ObjectID ChinookAIUpdate::getAirFieldDockedOrLandingAtID() const
+{
+	// This is a little awkward since ChinookAIUpdate forgets the association with any air field the momenti it's done
+	// with repairs or moved away, unlike a helicopter using JetAIUpdate - this shouldn't have much impact when it's
+	// only checked with the 'isDockedAtAirField()' or 'isLandingAtAirField()' flags.
+	// UPDATE - this method has since been renamed from 'getHomeAirFieldID' to 'getAirFieldDockedOrLandingAtID()' to better
+	// suggest it expects that context.
+	if (isDockedAtAirField() || isLandingAtAirField())
+	{
+		return m_airfieldForHealing;
+	}
+	return INVALID_ID;
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+ObjectID ChinookAIUpdate::getAirFieldDockIntentID() const
+{
+	if (isDockedAtAirField() || isLandingAtAirField() || isMovingToAirField())
+	{
+		return m_airfieldForHealing;
+	}
+	return INVALID_ID;
 }

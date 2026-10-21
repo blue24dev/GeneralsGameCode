@@ -62,7 +62,9 @@ enum DebrisDisposition CPP_11(: Int)
 	RANDOM_FORCE						= 0x00000020,
 	FLOATING								= 0x00000040,
 	INHERIT_VELOCITY				= 0x00000080,
-	WHIRLING								= 0x00000100
+	WHIRLING								= 0x00000100,
+
+	DEBRIS_DISPOSITION_END // keep after the last named flag
 };
 
 //MODDD - moved typedefs that were inside classes to here
@@ -115,7 +117,7 @@ public:
 	virtual Object* create( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const = 0;
 
 	//MODDD - also, instead of expecting every single ObjectCreationNugget subclass to implement this, letting a default redirect to the normal 'create' overload
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	virtual Object* create_RECoMCCiO( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
 	{
 		return create(primaryObj, primary, secondary, angle, lifetimeFrames);
@@ -130,7 +132,7 @@ public:
 	virtual Object* create( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const;
 
 	//MODDD
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	virtual Object* create_RECoMCCiO( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const;
 #endif
 
@@ -142,7 +144,7 @@ public:
 	virtual Object* create( Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 ) const;
 
 	//MODDD - also, instead of expecting every single ObjectCreationNugget subclass to implement this, letting a default redirect to the normal 'create' overload
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	virtual Object* create_RECoMCCiO( Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Bool createOwner, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
 	{
 		return create(primaryObj, primary, secondary, createOwner, lifetimeFrames);
@@ -182,7 +184,7 @@ public:
 
 	//MODDD - constructor
 	ObjectCreationList()
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 		:
 		m_checkForRenewableMoneySource(false)
 #endif
@@ -223,7 +225,7 @@ public:
 	}
 
 	//MODDD - overload to take a bool for being for a renewable income source (eventually produces money crates)
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	static Object* create_RECoMCCiO(const ObjectCreationList* ocl, Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex )
 	{
 		if (ocl)
@@ -244,7 +246,7 @@ public:
 	}
 
 	//MODDD - overload to take a bool for being for a renewable income source (eventually produces money crates)
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	static Object* create_RECoMCCiO( const ObjectCreationList* ocl, Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex )
 	{
 		if (ocl)
@@ -261,7 +263,7 @@ public:
 	AsciiString m_nameFromINI;
 #endif
 
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	//MODDD - something for hackery
 	bool m_checkForRenewableMoneySource;
 #endif
@@ -276,7 +278,7 @@ private:
 	Object* createInternal(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const;
 
 	//MODDD
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	Object* createInternal_RECoMCCiO(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex) const;
 #endif
 
@@ -284,7 +286,7 @@ private:
 	Object* createInternal(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames = 0 ) const;
 	
 	//MODDD
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	Object* createInternal_RECoMCCiO(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const;
 #endif
 

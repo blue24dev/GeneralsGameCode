@@ -148,10 +148,7 @@
 // Note: Retail compatibility must not be broken before this project officially does.
 // Use RETAIL_COMPATIBLE_CRC, RETAIL_COMPATIBLE_DATA and RETAIL_COMPATIBLE_XFER_SAVE to guard breaking changes.
 
-#ifndef RETAIL_COMPATIBLE_CRC
-//MODDD - was 1, changed to 0 for more fixes
-#define RETAIL_COMPATIBLE_CRC (0) // Game is expected to be CRC compatible with retail Generals 1.08, Zero Hour 1.04
-#endif
+// RETAIL_COMPATIBLE_CRC is default defined in BaseDefines.h
 
 #ifndef RETAIL_COMPATIBLE_DATA
 #define RETAIL_COMPATIBLE_DATA (1) // Game and tool data files are expected to be compatible with retail Generals 1.08 and Zero Hour 1.04
@@ -406,6 +403,12 @@
 //#define NOOB_MODE 0
 //#define NOOB_START_MONEY_SCALAR 1.25
 //#define NOOB_PLAYER_PROMOTION_EXPERIENCE_RATE_SCALAR 1.10
+
+// If on, supply drop zone crates (anything with MoneyCrateCollide) called for by support power is guaranteed to give money
+// to the intended player if the supply drop zone (calling structure) still exists whenever it hits anything, including the
+// ground or even impassable terrain. The goal is to stop uneven amounts of money coming in from poor placement or the slight
+// retail bug of crates that fall a bit past the drop zone & just sit there.
+#define MONEY_CRATE_DROP_SAFETY 1
 
 // Forces extra modifiers based on the current game difficulty, such as reduced unit health/damage for hard
 // difficulty, to be disabled regardless of the setting in the GameData.ini file.
@@ -676,4 +679,10 @@
 	#define MONEY_AUTO_ADJUSTMENT_SUPPORT 1
 #else
 	#define MONEY_AUTO_ADJUSTMENT_SUPPORT 0
+#endif
+
+#if MONEY_AUTO_ADJUSTMENT_SUPPORT || MONEY_CRATE_DROP_SAFETY
+	#define EXTRA_MONEY_CRATE_OCL_TRACKING 1
+#else
+	#define EXTRA_MONEY_CRATE_OCL_TRACKING 0
 #endif

@@ -33,11 +33,11 @@
 #include "GameNetwork/NetworkDefs.h"
 #include "GameNetwork/FirewallHelper.h"
 
+//MODDD - NOTE - beats me why SLOT_CLOSED isn't #0 instead of #1, but swap these at your own mortal peril
 enum SlotState CPP_11(: Int)
 {
-	//MODDD - swapping the first two. 'SLOT_CLOSED' is the expected default so I feel it being #0 is more fitting
-	SLOT_CLOSED,
 	SLOT_OPEN,
+	SLOT_CLOSED,
 	SLOT_EASY_AI,
 	SLOT_MED_AI,
 	SLOT_BRUTAL_AI,

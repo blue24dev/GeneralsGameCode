@@ -50,6 +50,7 @@
 #include "Common/OptionPreferences.h"
 #include "Common/version.h"
 #include "Lib/PathUtil.h"
+#include <Utility/bit_adapter.h>
 
 constexpr const char s_genrep[] = "GENREP";
 constexpr const UnsignedInt replayBufferBytes = 8192;
@@ -438,7 +439,7 @@ void RecorderClass::updatePlayback() {
 	// While there are commands to be queued up for this frame, do it.
 	while (m_nextFrame == curFrame) {
 		appendNextCommand();	// append the next command to TheCommandQueue
-		readNextFrame();	// Read the next command's frame number for playback.
+		readNextFrame();	// Read and validate the next command's frame number for playback.
 	}
 }
 
@@ -1228,6 +1229,7 @@ Bool RecorderClass::playbackFile(AsciiString filename)
 	// Otherwise a crc message remains and messes up the crc calculation on the restarted replay.
 	TheCommandList->reset();
 
+	m_nextFrame = 0;
 	readNextFrame();
 	// readNextFrame() closes m_file via stopPlayback() if the first frame cannot be read.
 	if(m_file == nullptr)
@@ -1324,9 +1326,29 @@ AsciiString RecorderClass::readAsciiString() {
  * Read the frame number for the next command in the playback file. If the end of the file is reached, the playback
  * is stopped and the next frame is said to be -1.
  */
-void RecorderClass::readNextFrame() {
+void RecorderClass::readNextFrame()
+{
+	const UnsignedInt curFrame = m_nextFrame;
+
 	Int bytesRead = m_file->read(&m_nextFrame, sizeof(m_nextFrame));
-	if (bytesRead != sizeof(m_nextFrame)) {
+	if (bytesRead == sizeof(m_nextFrame))
+	{
+		// TheSuperHackers @bugfix Check whether the next frame value is within a reasonable range
+		// to avoid prolonging playback due to potentially corrupted data.
+		const bool isInValidRange = m_nextFrame >= curFrame && m_nextFrame < curFrame + 3600 * LOGICFRAMES_PER_SECOND;
+		if (!isInValidRange)
+		{
+			if (m_doingAnalysis)
+				return;
+
+			DEBUG_LOG(("RecorderClass::readNextFrame - current frame %d, next frame %d is in unexpected distance",
+				TheGameLogic->getFrame(), m_nextFrame));
+			m_nextFrame = -1;
+			stopPlayback();
+		}
+	}
+	else
+	{
 		DEBUG_LOG(("RecorderClass::readNextFrame - read failed on frame %d", TheGameLogic->getFrame()));
 		m_nextFrame = -1;
 		stopPlayback();
@@ -1451,7 +1473,7 @@ void RecorderClass::readArgument(GameMessageArgumentDataType type, GameMessage *
 #ifdef DEBUG_LOGGING
 			if (m_doingAnalysis)
 			{
-				DEBUG_LOG(("Real argument: %g (%8.8X)", thereal, *(int *)&thereal));
+				DEBUG_LOG(("Real argument: %g (%8.8X)", thereal, std::bit_cast<int>(thereal)));
 			}
 #endif
 			break;
@@ -1512,7 +1534,7 @@ void RecorderClass::readArgument(GameMessageArgumentDataType type, GameMessage *
 			if (m_doingAnalysis)
 			{
 				DEBUG_LOG(("Coord3D argument: %g %g %g (%8.8X %8.8X %8.8X)", loc.x, loc.y, loc.z,
-					*(int *)&loc.x, *(int *)&loc.y, *(int *)&loc.z));
+					std::bit_cast<int>(loc.x), std::bit_cast<int>(loc.y), std::bit_cast<int>(loc.z)));
 			}
 #endif
 			break;

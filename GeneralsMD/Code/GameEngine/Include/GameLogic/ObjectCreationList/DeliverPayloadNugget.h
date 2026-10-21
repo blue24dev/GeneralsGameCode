@@ -40,7 +40,7 @@ public:
 	virtual Object* create(Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const override;
 
 	//MODDD
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	virtual Object* create_RECoMCCiO(Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const override;
 #endif
 
@@ -48,7 +48,7 @@ public:
 	virtual Object* create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames = 0 ) const override;
 	
 	//MODDD
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	virtual Object* create_RECoMCCiO(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const override;
 #endif
 

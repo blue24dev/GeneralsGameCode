@@ -346,7 +346,10 @@ protected:
 																	PathfindCell *goalCell, Bool center ); ///< Add pathfind cells to a path.
 
 	void debugShowSearch( Bool pathFound );				///< Show all cells touched in the last search
-	static LocomotorSurfaceTypeMask validLocomotorSurfacesForCellType(PathfindCell::CellType t);
+
+	//MODDD - why not be public?
+	public :static LocomotorSurfaceTypeMask validLocomotorSurfacesForCellType(PathfindCell::CellType t);
+protected:
 
 	void checkChangeLayers(PathfindCell *parentCell);
 
