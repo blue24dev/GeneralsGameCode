@@ -210,7 +210,7 @@ Bool VeterancyCrateCollide::executeCrateBehavior( Object *other )
 
 //MODDD - simple way to check if this can give veterancy to a neutral vehicle being entered anyway
 // (this can probably be re-used on entering transports in case that collision fires first)
-Bool VeterancyCrateCollide::attemptGiveVeterancySimple(Object* other) const
+Bool VeterancyCrateCollide::attemptGiveVeterancySimple(Object* other, Bool provideFeedback) const
 {
 	const VeterancyCrateCollideModuleData *md = getVeterancyCrateCollideModuleData();
 	// Want to require being 'md->m_isPilot' for this? I feel that would be safe, but fine to skip the check either way?
@@ -231,7 +231,7 @@ Bool VeterancyCrateCollide::attemptGiveVeterancySimple(Object* other) const
 	if (!et || !et->canGainExpForLevel(levelsToGain))
 		return false;
 
-	other->getExperienceTracker()->gainExpForLevel( levelsToGain, ( ! md->m_isPilot) );
+	other->getExperienceTracker()->gainExpForLevel( levelsToGain, ( ! md->m_isPilot), provideFeedback );
 	return true;
 }
 

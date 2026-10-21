@@ -57,6 +57,9 @@
 #include "GameLogic/PartitionManager.h"
 #include "GameLogic/Weapon.h"
 
+//MODDD
+#include "GameLogic/Module/VeterancyCrateCollide.h"
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // PUBLIC FUNCTIONS ///////////////////////////////////////////////////////////////////////////////
@@ -300,6 +303,18 @@ void OpenContain::addToContain( Object *rider )
 	// sanity
 	if( rider == nullptr )
 		return;
+
+	//MODDD - bugfix for pilots entering transports sometimes failing to give veterancy (inconsistent - typically happens & expected to)
+	if (rider->getVeterancyCrateCollide() != nullptr)
+	{
+		VeterancyCrateCollide* vetCol = rider->getVeterancyCrateCollide();
+		if (vetCol->isValidToExecute(getObject()))
+		{
+			// able to use the veterancy-transfer effect on this -> do so, don't enter then (implies deleting myself)
+			vetCol->execute(getObject());
+			return;
+		}
+	}
 
 #if !RETAIL_COMPATIBLE_CRC
 	// TheSuperHackers @bugfix Caball009 25/05/2026 Ensure the occupant is only added to a non-destroyed

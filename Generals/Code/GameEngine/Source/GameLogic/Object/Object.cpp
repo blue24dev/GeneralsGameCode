@@ -112,7 +112,7 @@ ObjectID TheObjectIDToDebug = INVALID_ID;
 #endif
 
 // ------------------------------------------------------------------------------------------------
-static const ModelConditionFlags s_allWeaponFireFlags[WEAPONSLOT_COUNT] =
+static const ModelConditionFlags s_allWeaponFireFlags[] =
 {
 	MAKE_MODELCONDITION_MASK5(
 		MODELCONDITION_FIRING_A,
@@ -136,6 +136,7 @@ static const ModelConditionFlags s_allWeaponFireFlags[WEAPONSLOT_COUNT] =
 		MODELCONDITION_USING_WEAPON_C
 	)
 };
+static_assert(ARRAY_SIZE(s_allWeaponFireFlags) == WEAPONSLOT_COUNT, "Incorrect array size");
 
 //-------------------------------------------------------------------------------------------------
 extern void addIcon(const Coord3D *pos, Real width, Int numFramesDuration, RGBColor color);
@@ -715,15 +716,20 @@ void Object::onDestroy()
 	// This is the old cleanUpContain safeguard.  Say goodbye so they don't try to look us up.
 	if( m_containedBy && m_containedBy->getContain() )
 	{
-#if RTS_GENERALS && RETAIL_COMPATIBLE_CRC
-		// TheSuperHackers @bugfix bobtista / Caball009 17/09/2026 Remove stranded tunnel occupants during destruction.
-		// Surrendering can transfer a tunnel without updating its tunnel tracker. If that tunnel is destroyed,
-		// m_containedBy still points to the freed tunnel, and its ID is read here through that stale pointer.
-		// An unregistered ID means the tunnel is gone, so this object is removed from the tunnel trackers directly.
-		// This is a limited workaround that keeps retail compatibility. It cannot detect reuse of the freed memory.
+#if RETAIL_COMPATIBLE_CRC
+		// TheSuperHackers @bugfix Caball009 17/10/2026 Check if m_containedBy is still valid to avoid potential crashes.
 		if (!TheGameLogic->findObjectByID(m_containedBy->getID()))
 		{
+#if RTS_GENERALS
+			// TheSuperHackers @bugfix bobtista / Caball009 17/09/2026 Remove stranded tunnel occupants during destruction.
+			// Surrendering can transfer a tunnel without updating its tunnel tracker. If that tunnel is destroyed,
+			// m_containedBy still points to the freed tunnel, and its ID is read here through that stale pointer.
+			// An unregistered ID means the tunnel is gone, so this object is removed from the tunnel trackers directly.
+			// This is a limited workaround that keeps retail compatibility. It cannot detect reuse of the freed memory.
 			removeFromTunnelContain();
+#else
+			onRemovedFrom(nullptr);
+#endif
 		}
 		else
 #endif
@@ -1640,13 +1646,13 @@ inline Bool isPosDifferent(const Coord3D* a, const Coord3D* b)
 	// so we must put in some cleverness...
 	const Real THRESH = 0.01f;
 
-	if (fabs(a->x - b->x) > THRESH)
+	if (WWMath::Fabs(a->x - b->x) > THRESH)
 		return true;
 
-	if (fabs(a->y - b->y) > THRESH)
+	if (WWMath::Fabs(a->y - b->y) > THRESH)
 		return true;
 
-	if (fabs(a->z - b->z) > THRESH)
+	if (WWMath::Fabs(a->z - b->z) > THRESH)
 		return true;
 
 	return false;
@@ -1662,7 +1668,7 @@ inline Bool isAngleDifferent(Real a, Real b)
 
 	const Real THRESH = 0.01f;	// in radians, this is approx 1/2 degree.
 
-	if (fabs(a - b) > THRESH)
+	if (WWMath::Fabs(a - b) > THRESH)
 		return true;
 
 	return false;
@@ -2773,10 +2779,13 @@ void Object::friend_bindToDrawable( Drawable *draw )
 		for (int i = 0; i < WEAPONSET_COUNT; ++i)
 		{
 			ModelConditionFlagType mcs = TheWeaponSetTypeToModelConditionTypeMap[i];
-			if (m_curWeaponSetFlags.test(i))
-				set.set(mcs);
-			else
-				clr.set(mcs);
+			if( mcs != MODELCONDITION_INVALID )
+			{
+				if (m_curWeaponSetFlags.test(i))
+					set.set(mcs);
+				else
+					clr.set(mcs);
+			}
 		}
 		if (TheGlobalData)
 		{
@@ -4362,7 +4371,7 @@ void Object::adjustModelConditionForWeaponStatus()
 		{
 			WeaponStatus newStatus = w->getStatus();
 
-			const static WeaponSetConditionType s_wsfLookup[WEAPON_STATUS_COUNT] =
+			const static WeaponSetConditionType s_wsfLookup[] =
 			{
 				WSF_NONE,				// READY_TO_FIRE,
 				WSF_NONE,				// OUT_OF_AMMO,
@@ -4370,6 +4379,7 @@ void Object::adjustModelConditionForWeaponStatus()
 				WSF_RELOADING,	// RELOADING_CLIP,
 				WSF_PREATTACK		// PRE_ATTACK,
 			};
+			static_assert(ARRAY_SIZE(s_wsfLookup) == WEAPON_STATUS_COUNT, "Incorrect array size");
 			conditionToSet = s_wsfLookup[newStatus];
 
 			// special case this: say we are firing in bursts: pow-pow-pow-pause, etc.
@@ -4640,10 +4650,10 @@ void Object::unlook()
 
 //			DEBUG_LOG(( "A %s queues an unlook at %f, %f for %x at range %f",
 //									getTemplate()->getName().str(),
-//									m_partitionLastLook.m_where.x,
-//									m_partitionLastLook.m_where.y,
-//									m_partitionLastLook.m_forWhom,
-//									m_partitionLastLook.m_howFar
+//									m_partitionLastLook->m_where.x,
+//									m_partitionLastLook->m_where.y,
+//									m_partitionLastLook->m_forWhom,
+//									m_partitionLastLook->m_howFar
 //									));
 
 	m_partitionLastLook->reset();

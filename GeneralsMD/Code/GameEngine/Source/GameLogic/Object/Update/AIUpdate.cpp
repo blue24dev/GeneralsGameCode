@@ -1330,8 +1330,8 @@ Bool AIUpdateInterface::blockedBy(Object *other)
 
 	// If we are near our final goal, don't get stuck.
 	if (goalCell.x>0 && goalCell.y>0) {
-		Real dx = fabs(goalPos.x-pos.x);
-		Real dy = fabs(goalPos.y-pos.y);
+		Real dx = WWMath::Fabs(goalPos.x-pos.x);
+		Real dy = WWMath::Fabs(goalPos.y-pos.y);
 		if (dx<PATHFIND_CELL_SIZE_F && dy<PATHFIND_CELL_SIZE_F) {
 			return FALSE; // If we're approaching our goal, ignore obstacles.
 		}
@@ -1446,7 +1446,7 @@ Bool AIUpdateInterface::needToRotate()
 		deltaAngle = ThePartitionManager->getRelativeAngle2D( getObject(), &info.posOnPath );
 	}
 
-	if (fabs(deltaAngle)>PI/30)
+	if (WWMath::Fabs(deltaAngle)>PI/30)
 	{
 		return TRUE;
 	}
@@ -2344,7 +2344,7 @@ UpdateSleepTime AIUpdateInterface::doLocomotor()
 							}
 							else
 							{
-								Real dist = sqrtf(dSqr);
+								Real dist = WWMath::Sqrtf(dSqr);
 								if (dist<1) dist = 1;
 								pos.x += 2*PATHFIND_CELL_SIZE_F*dx/(dist*LOGICFRAMES_PER_SECOND);
 								pos.y += 2*PATHFIND_CELL_SIZE_F*dy/(dist*LOGICFRAMES_PER_SECOND);
@@ -2432,7 +2432,10 @@ Bool AIUpdateInterface::isDoingGroundMovement() const
 {
 
   if (getObject()->isDisabledByType( DISABLED_UNMANNED ) &&
-   getObject()->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )
+		//MODDD - anything unmanned, so remove the helicopter check? I'll play that part safe for now
+		//getObject()->isKindOf( KINDOF_PRODUCED_AT_HELIPAD )
+		getObject()->isHelicopter()
+	)
   {
     return TRUE; // an unmanned helicopter gets grounded, eventually.
   }
@@ -2546,7 +2549,7 @@ Real AIUpdateInterface::getLocomotorDistanceToGoal()
 					dest = m_pathHandle.getPath()->getLastNode()->getPosition();
 				}
 				Real distance = ThePartitionManager->getDistanceSquared( me, dest, FROM_CENTER_3D );
-				return sqrt( distance );// Other paths return dots of normalized vectors, so one sqrt ain't so bad
+				return WWMath::Sqrt( distance );// Other paths return dots of normalized vectors, so one sqrt ain't so bad
 			}
 			else
 			{
@@ -2579,7 +2582,7 @@ Real AIUpdateInterface::getLocomotorDistanceToGoal()
 				{
 					if (sqr(dist) > distSqr)
 					{
-						return sqrt(distSqr);
+						return WWMath::Sqrt(distSqr);
 					}
 					else
 					{
@@ -2588,7 +2591,7 @@ Real AIUpdateInterface::getLocomotorDistanceToGoal()
 				}
 
 				if (dist<PATHFIND_CELL_SIZE_F || sqr(dist) < distSqr)
-					return sqrtf(distSqr);
+					return WWMath::Sqrtf(distSqr);
 				else
 					return dist;
 
@@ -3196,6 +3199,45 @@ void AIUpdateInterface::privateIdle(CommandSourceType cmdSource)
 		}
 	}
 
+}
+
+//MODDD - check to see if this is intended to be a helicopter.
+// See notes in 'Object::isHelicopter'.
+// This should typically be handled by some JetAIUpdate subclass - this is meant to be a failsafe.
+Bool AIUpdateInterface::isHelicopter() const
+{
+	// must at least be aircraft
+	const Object* obj = getObject();
+	if (!obj->isKindOf(KINDOF_AIRCRAFT))
+		return FALSE;
+
+	// no expected AIUpdate-subtype but still aircraft?
+	// All I got's 'movesLikeHelicopter' and the 'KINDOF_PRODUCED_AT_HELIPAD' from retail. Going with that for now.
+	//if (movesLikeHelicopter())
+	if (obj->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+		return TRUE;
+
+	return FALSE;
+}
+
+//MODDD - NEW - tell if this behaves like a perpetually hovering aircraft than a jet (circling around / expecting a
+// parking space at an air field).
+// Mainly this is for letting comanches land to allow pilots to enter without needing weird INI hack-arounds like the
+// ProGen mod does.
+// The point of this is to decide if the aircraft should be able to land to take a pilot even if it's using 'JetAIUpdate'
+// instead of 'ChinookAIUpdate'. If it isn't forced to be circling around a point when stopped, that's likely a good
+// enough sign.
+// Note that this kind of specific is checked by AIUpdate's that are aircraft-based, such as JetAIUpdate - outside sources
+// should typically be fine with 'isHelicopter' (i.e., originally would have checked for 'KINDOF_PRODUCED_AT_HELIPAD').
+// The result of this call can vary with how this unit is currently moving - ex: a landed comanche would say 'false' since
+// it isn't even airborne (a min speed of 0 doesn't say much then). Just something to be aware of.
+//MODDD - TODO - if a mod could ever let a jet-like aircraft use ChinookAI, it would need to do a check like this before
+// allowing entry for units so it can know to reject that on the basis of not being able to suddenly drop in-place to
+// let something enter.
+Bool AIUpdateInterface::movesLikeHelicopter() const
+{
+	// There is also 'PreferredHeight' being above-0 to check for, but I think 'isUsingAirborneLocomotor' should be enough.
+	return (getObject()->isUsingAirborneLocomotor() && getCurLocomotor()->getMinSpeed() == 0);
 }
 
 //----------------------------------------------------------------------------------------
@@ -4727,13 +4769,33 @@ Object* AIUpdateInterface::getNextMoodTarget( Bool calledByAI, Bool calledDuring
 		{
 			if( !canAutoAcquireWhileStealthed() )
 			{
-  			const Object *container = obj->getContainedBy();
-  			if( ! (container && container->getContain()->isPassengerAllowedToFire()) )
-  			{
+				//He's stealthed and idle, but if he's garrisoned, then that's a whole different matter....
+				const Object *container = obj->getContainedBy();
+				if( !container )
+				{
+					//Not contained
+					return nullptr;
+				}
+
+#if RTS_GENERALS && RETAIL_COMPATIBLE_CRC
+				// TheSuperHackers @bugfix Caball009 22/09/2026 Return early to prevent a crash.
+				// This is needed when a Tunnel Network with units is transferred to another player and then sold or destroyed.
+				// The units are not properly transferred and are left in an invalid state.
+				if (!container->getContain())
+				{
+					// remove all such units from the tunnel tracker and destroy them
+					TheGameLogic->friend_destroyInTunnelContain(obj);
+
+					return nullptr;
+				}
+#endif
+
+				if( !container->getContain()->isPassengerAllowedToFire() )
+				{
 					// Sorry, stealthed and not allowed to idle fire when stealthed.
 					// Being in a firing container is an exception to this veto.
-  				return nullptr;
-  			}
+					return nullptr;
+				}
 			}
 		}
 	}
@@ -5592,7 +5654,8 @@ Int AIUpdateInterface::friend_getWaypointGoalPathSize() const
 }
 
 // ------------------------------------------------------------------------------------------------
-Bool AIUpdateInterface::hasLocomotorForSurface(LocomotorSurfaceType surfaceType)
+//MODDD - added 'const'
+Bool AIUpdateInterface::hasLocomotorForSurface(LocomotorSurfaceType surfaceType) const
 {
 	LocomotorSurfaceTypeMask surfaceMask = (LocomotorSurfaceTypeMask)surfaceType;
 	if (m_locomotorSet.findLocomotor(surfaceMask))

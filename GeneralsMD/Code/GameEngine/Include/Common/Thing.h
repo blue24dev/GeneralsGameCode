@@ -143,6 +143,9 @@ public:
 
 	void transformPoint( const Coord3D *in, Coord3D *out );								///< transform this point using the m_transform matrix of this thing
 
+	//MODDD
+	Bool landingRequiresParkingSpace() const;
+
 protected:
 
 	// Virtual method since objects can be on bridges and need to calculate height above terrain differently.

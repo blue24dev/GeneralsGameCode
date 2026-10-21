@@ -1615,7 +1615,7 @@ void InGameUI::handleBuildPlacements()
 					if (isInForceAttackMode())
 					{
 						const Real snapRadians = DEG_TO_RADF(45);
-						angle = WWMath::Round(angle / snapRadians) * snapRadians;
+						angle = WWMath::Roundf(angle / snapRadians) * snapRadians;
 					}
 				}
 			}
@@ -6227,6 +6227,7 @@ void InGameUI::drawPlayerInfoList()
 			rankValue,
 			xpValue
 		};
+		static_assert(ARRAY_SIZE(currentValues) == PlayerInfoList::LabelType_Count, "Incorrect array size");
 		for (column = 0; column < ARRAY_SIZE(currentValues); ++column)
 		{
 			UnsignedInt &lastValue = m_playerInfoList.lastValues.values[column][row];

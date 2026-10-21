@@ -104,31 +104,6 @@ void JetAIUpdate::setFlag( FlagType f, Bool v)
 		m_flags &= ~(1<<f);
 }
 
-//MODDD - new
-Bool JetAIUpdate::canLandToPickUpObjectWantingToEnter()
-{
-	return movesLikeHelicopter();
-}
-
-//MODDD - NEW - tell if this behaves like a perpetually hovering aircraft than a jet (circling around / expecting a
-// parking space at an air field).
-// Mainly this is for letting comanches land to allow pilots to enter without needing weird INI hack-arounds like the
-// ProGen mod does.
-// Beats me why the original devs didn't make a separate 'HelicopterAIUpdate', particularly start with that and
-// subclass that for 'ChinookAIUpdate' with supply truck behavior with a mux or something.
-// In fact, look at 'JetAIUpdate::makeStateMachine' choosing to use 'JetAIStateMachine' or 'HeliAIStateMachine' based
-// off of 'm_needsRunway' and not much else involves that! Why would this ever not be coordinated with PRODUCED_AT_HELIPAD?
-// The point of this is to decide if the aircraft should be able to land to take a pilot even if it's using 'JetAIUpdate'
-// instead of 'ChinookAIUpdate'. If it isn't forced to be circling around a point when stopped, that's likely a good
-// enough sign.
-//MODDD - TODO - if a mod could ever let a jet-like aircraft use ChinookAI, it would need to do a check like this before
-// allowing entry for units so it can know to reject that on the basis of not being able to suddenly drop in-place to
-// let something enter.
-Bool JetAIUpdate::movesLikeHelicopter() const
-{
-	return (getObject()->isUsingAirborneLocomotor() && getCurLocomotor()->getMinSpeed() == 0);
-}
-
 //-------------------------------------------------------------------------------------------------
 Bool JetAIUpdate::isOutOfSpecialReloadAmmo() const
 {
@@ -520,9 +495,9 @@ public:
 			return STATE_FAILURE;
 
 		//MODDD - if this is a jet leaving the parking space, no more repairs
-		if (jetAI->getJetAIUpdateModuleData()->m_needsRunway && m_taxiMode == FROM_PARKING)
+		if (jetAI->landingRequiresParkingSpace() && m_taxiMode == FROM_PARKING)
 		{
-			jetAI->setFlag(JetAIUpdate::PARKED_AT_AIRFIELD, false);
+			jetAI->setFlag(JetAIUpdate::DOCKED_AT_AIRFIELD, false);
 		}
 
 		jetAI->setCanPathThroughUnits(true);
@@ -558,8 +533,8 @@ public:
 
 		Coord3D intermedPt;
 		Bool intermed = false;
-		Real orient = atan2(ppinfo.runwayPrep.y - ppinfo.parkingSpace.y, ppinfo.runwayPrep.x - ppinfo.parkingSpace.x);
-		if (fabs(stdAngleDiff(orient, ppinfo.parkingOrientation)) > PI/128)
+		Real orient = WWMath::Atan2(ppinfo.runwayPrep.y - ppinfo.parkingSpace.y, ppinfo.runwayPrep.x - ppinfo.parkingSpace.x);
+		if (WWMath::Fabs(stdAngleDiff(orient, ppinfo.parkingOrientation)) > PI/128)
 		{
 			intermedPt.z = (ppinfo.parkingSpace.z + ppinfo.runwayPrep.z) * 0.5f;
 			intermed = intersectInfiniteLine2D(
@@ -641,7 +616,7 @@ public:
 					const std::vector<Coord3D> *pCreationLocations = pp->getCreationLocations( jet->getID() );
 					if( !pCreationLocations )
 					{
-						DEBUG_CRASH( ("No creation locations specified for runway for JetAIBehavior -- taxiing from hanger (Kris).") );
+						DEBUG_CRASH( ("No creation locations specified for runway for JetAIBehavior -- taxiing from hangar (Kris).") );
 						return STATE_FAILURE;
 					}
 					std::vector<Coord3D>::const_iterator it;
@@ -1033,7 +1008,7 @@ public:
 		//MODDD - if this is a helicopter taking off, no more repairs
 		if (m_landing == false)
 		{
-			jetAI->setFlag(JetAIUpdate::PARKED_AT_AIRFIELD, false);
+			jetAI->setFlag(JetAIUpdate::DOCKED_AT_AIRFIELD, false);
 		}
 
 		jetAI->friend_setTakeoffInProgress(!m_landing);
@@ -1056,7 +1031,9 @@ public:
 #endif
 
 		Coord3D landingApproach;
-		if (jet->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+		//MODDD
+		//if (jet->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+		if (!jetAI->landingRequiresParkingSpace())
 		{
 			if (m_landing)
 			{
@@ -1126,7 +1103,7 @@ public:
 		}
 		else
 		{
-			Real dist = sqrtf(dSqr);
+			Real dist = WWMath::Sqrtf(dSqr);
 			if (dist<1) dist = 1;
 			pos.x += PATHFIND_CELL_SIZE_F*dx/(dist*LOGICFRAMES_PER_SECOND);
 			pos.y += PATHFIND_CELL_SIZE_F*dy/(dist*LOGICFRAMES_PER_SECOND);
@@ -1138,7 +1115,9 @@ public:
 		jet->setOrientation(m_parkingOrientation);
 #endif
 
-		if (jet->isKindOf(KINDOF_PRODUCED_AT_HELIPAD) || !m_landing)
+		//MODDD
+		//if (jet->isKindOf(KINDOF_PRODUCED_AT_HELIPAD) || !m_landing)
+		if (!jetAI->landingRequiresParkingSpace() || !m_landing)
 		{
 			TheAI->pathfinder()->adjustDestination(jet, jetAI->getLocomotorSet(), &m_path[m_index]);
 			TheAI->pathfinder()->updateGoal(jet, &m_path[m_index], LAYER_GROUND);
@@ -1256,7 +1235,7 @@ public:
 		// being done at that exact moment.
 		if (m_landing == false)
 		{
-			jetAI->setFlag(JetAIUpdate::PARKED_AT_AIRFIELD, false);
+			jetAI->setFlag(JetAIUpdate::DOCKED_AT_AIRFIELD, false);
 		}
 
 		// kill any drift...
@@ -1384,7 +1363,9 @@ public:
 		if( !jetAI )
 			return STATE_FAILURE;
 
-		if (jet->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+		//MODDD
+		//if (jet->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+		if (!jetAI->landingRequiresParkingSpace())
 		{
 			return STATE_SUCCESS;
 		}
@@ -1417,7 +1398,7 @@ public:
 			return STATE_FAILURE;
 
 		const Real THRESH = 0.001f;
-		if (fabs(stdAngleDiff(jet->getOrientation(), ppinfo.parkingOrientation)) <= THRESH)
+		if (WWMath::Fabs(stdAngleDiff(jet->getOrientation(), ppinfo.parkingOrientation)) <= THRESH)
 			return STATE_SUCCESS;
 
 		// magically position it correctly.
@@ -1802,7 +1783,7 @@ public:
 
 		//MODDD - starting the reload state implies having landed at an air field, even if just for repairs & ammo is full
 		// (this state will still reach this point before quickly switching to the 'AI_IDLE' one, maybe? Jets or helicopters?).
-		jetAI->setFlag(JetAIUpdate::PARKED_AT_AIRFIELD, true);
+		jetAI->setFlag(JetAIUpdate::DOCKED_AT_AIRFIELD, true);
 
 		jetAI->friend_setTakeoffInProgress(false);
 		jetAI->friend_setLandingInProgress(false);
@@ -1912,7 +1893,9 @@ public:
 			}
 		}
 
-		if (jet->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+		//MODDD
+		//if (jet->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+		if (!jetAI->landingRequiresParkingSpace())
 		{
 			m_goalPosition = jetAI->friend_getLandingPosForHelipadStuff();
 		}
@@ -1922,7 +1905,9 @@ public:
 			if (!pp->reserveSpace(jet->getID(), jetAI->friend_getParkingOffset(), &ppinfo))
 				return STATE_FAILURE;
 
-			m_goalPosition = jetAI->friend_needsRunway() ? ppinfo.runwayApproach : ppinfo.parkingSpace;
+			//MODDD
+			//m_goalPosition = jetAI->friend_needsRunway() ? ppinfo.runwayApproach : ppinfo.parkingSpace;
+			m_goalPosition = jetAI->usesSequenceForTakeoff() ? ppinfo.runwayApproach : ppinfo.parkingSpace;
 		}
 		setAdjustsDestination(false);		// precision is necessary
 
@@ -2082,7 +2067,11 @@ JetAIUpdateModuleData::JetAIUpdateModuleData()
 //-------------------------------------------------------------------------------------------------
 AIStateMachine* JetAIUpdate::makeStateMachine()
 {
-	if (getJetAIUpdateModuleData()->m_needsRunway)
+	//MODDD
+	// It is tempting to make this require being a helicopter, but keep in mind mods like 'CNC Redux' that hack together
+	// an orca (helicopter-like) using a 1-parking-space 'helipad' (air field) by still being a jet.
+	//if (getJetAIUpdateModuleData()->m_needsRunway)
+	if (landingRequiresParkingSpace())
 		return newInstance(JetAIStateMachine)( getObject(), "JetAIStateMachine");
 	else
 		return newInstance(HeliAIStateMachine)( getObject(), "HeliAIStateMachine");
@@ -2123,7 +2112,38 @@ Bool JetAIUpdate::isIdle() const
 	if (getFlag(HAS_PENDING_COMMAND))
 		return false;
 
-	return AIUpdateInterface::isIdle();
+	//MODDD - borrowing this idea from ChinookAIUpdate: store the parent 'isIdle()' call and check to see if anything
+	// wants to enter/exit while landed first
+	// ------------
+	//return AIUpdateInterface::isIdle();
+	// ------------
+	if (!AIUpdateInterface::isIdle())
+		return false;
+
+	if (!getFlag(ALLOW_AIR_LOCO))
+	{
+		// ditto: if we are waiting to disgorge some folks, we aren't 'idle'
+		ContainModuleInterface* contain = getObject()->getContain();
+		if (contain && contain->hasObjectsWantingToEnterOrExit())
+			return false;
+
+		//MODDD - if getting repaired, also count this as not-idle.
+		// This stops an 'aiMoveToPosition' call from 'AIUpdateInterface::processCollision' that can possibly make a landed
+		// helicopter take off even if 'AICMD_MOVE_AWAY_FROM_UNIT' and 'isAllowedToAdjustDestination' are set up properly...
+		// yuck.
+		const Object* jet = getObject();
+		if (
+			isDockedAtAirField() &&
+			// must be docked for a reason in order to not be considerd idle (reloading / getting repaired)
+			(
+				isReloading() || jet->getBodyModule()->getHealth() < jet->getBodyModule()->getMaxHealth()
+			)
+		)
+			return false;
+	}
+
+	return true;
+	// ------------
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -2242,9 +2262,9 @@ UpdateSleepTime JetAIUpdate::update()
 		if (pp != nullptr)
 		{
 			if (
-				//MODDD - replacing check with 'getFlag(PARKED_AT_AIRFIELD)'
+				//MODDD - replacing check with 'getFlag(DOCKED_AT_AIRFIELD)'
 				//!getFlag(ALLOW_AIR_LOCO) &&
-				getFlag(PARKED_AT_AIRFIELD) && 
+				getFlag(DOCKED_AT_AIRFIELD) && 
 						//MODDD - I don't think the 'HAS_PENDING_COMMAND' check here is necessary.
 						// if this is a helicopter at full health, not taking off for that reason will cause it to stay on the ground
 						// until told to move (ex: using the 'stop' button while it's grounded for repairs).
@@ -2252,7 +2272,9 @@ UpdateSleepTime JetAIUpdate::update()
 						// 'HAS_PENDING_COMMAND' further down - that disallowing progression if we're in a reload state is the dead lock.
 						//!getFlag(HAS_PENDING_COMMAND) &&
 						(isReloading() || !getFlag(HAS_PENDING_COMMAND)) &&
-						jet->isKindOf(KINDOF_PRODUCED_AT_HELIPAD) &&
+						//MODDD
+						//jet->isKindOf(KINDOF_PRODUCED_AT_HELIPAD) &&
+						!landingRequiresParkingSpace() &&
 						jet->getBodyModule()->getHealth() == jet->getBodyModule()->getMaxHealth() &&
 					//MODDD - require that nothing wanting to enter this
 					!waitingToEnterOrExit
@@ -2286,15 +2308,15 @@ UpdateSleepTime JetAIUpdate::update()
 				// be strange).
 				// No issue requiring this for everything - should be the only reason jets ever land anyway so this is always set
 				// when grounded then.
-				pp->setHealee(jet, getFlag(PARKED_AT_AIRFIELD));
+				pp->setHealee(jet, getFlag(DOCKED_AT_AIRFIELD));
 			}
 		}
 
 		//MODDD - moved a later condition to here and included some other things for safety
 		// (only behavior from retail is the 'RELOAD_AMMO' check)
-		// Also, note that being 'PARKED_AT_AIRFIELD' implies having landed, so no need to check for
+		// Also, note that being 'DOCKED_AT_AIRFIELD' implies having landed, so no need to check for
 		// '!getFlag(ALLOW_AIR_LOCO)' too.
-		Bool isBusyAtAirField = (getFlag(PARKED_AT_AIRFIELD) &&
+		Bool isBusyAtAirField = (getFlag(DOCKED_AT_AIRFIELD) &&
 			(
 				getStateMachine()->getCurrentStateID() == RELOAD_AMMO ||
 				jet->getBodyModule()->getHealth() < jet->getBodyModule()->getMaxHealth() ||
@@ -2365,7 +2387,9 @@ UpdateSleepTime JetAIUpdate::update()
 	//MODDD - based off a block in 'ChinookAIUpdate::update' that also checks 'waitingToEnterOrExit' several times
 	// Also, keep in mind 'isIdle()' will fail if currently docked at an air field for repairs
 	// ------------------------
-	if (jet->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) && AIUpdateInterface::isIdle() && !getFlag(HAS_PENDING_COMMAND))
+	//MODDD
+	//if (jet->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) && AIUpdateInterface::isIdle() && !getFlag(HAS_PENDING_COMMAND))
+	if (!landingRequiresParkingSpace() && AIUpdateInterface::isIdle() && !getFlag(HAS_PENDING_COMMAND))
 	{
 		if (waitingToEnterOrExit)
 		{
@@ -2490,7 +2514,9 @@ UpdateSleepTime JetAIUpdate::update()
 		chooseLocomotorSet(LOCOMOTORSET_NORMAL);
 	}
 
-	if( !jet->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )
+	//MODDD
+	//if( !jet->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )
+	if ( landingRequiresParkingSpace() )
 	{
 		Drawable *draw = jet->getDrawable();
 		if( draw )
@@ -2635,7 +2661,7 @@ void JetAIUpdate::positionLockon()
 	Real dx = getObject()->getPosition()->x - pos.x;
 	Real dy = getObject()->getPosition()->y - pos.y;
 	if (dx || dy)
-		m_lockonDrawable->setOrientation(atan2(dy, dx));
+		m_lockonDrawable->setOrientation(WWMath::Atan2(dy, dx));
 
 	// the Gaussian sum, to avoid keeping a running total:
 	//
@@ -2764,7 +2790,10 @@ void JetAIUpdate::privateFollowPath( std::vector<Coord3D>* path, Object *ignoreO
 		if( ignoreObject )
 			ignoreObstacle( ignoreObject );
 		setLastCommandSource( cmdSource );
-		if (getObject()->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+
+		//MODDD
+		//if (getObject()->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+		if (!usesSequenceForTakeoff())
 			getStateMachine()->setState( TAKING_OFF_AWAIT_CLEARANCE );
 		else
 			getStateMachine()->setState( TAXI_FROM_HANGAR );
@@ -2785,7 +2814,9 @@ void JetAIUpdate::privateFollowPathAppend( const Coord3D *pos, CommandSourceType
 //----------------------------------------------------------------------------------------
 void JetAIUpdate::doLandingCommand(Object *airfield, CommandSourceType cmdSource)
 {
-	if (getObject()->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+	//MODDD
+	//if (getObject()->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+	if (!landingRequiresParkingSpace())
 	{
 		m_landingPosForHelipadStuff = *airfield->getPosition();
 
@@ -2802,8 +2833,11 @@ void JetAIUpdate::doLandingCommand(Object *airfield, CommandSourceType cmdSource
 		if (pp == nullptr)
 			continue;
 
-		if (getObject()->isKindOf(KINDOF_PRODUCED_AT_HELIPAD) ||
-				pp->reserveSpace(getObject()->getID(), friend_getParkingOffset(), nullptr))
+		if (
+			//MODDD
+			//getObject()->isKindOf(KINDOF_PRODUCED_AT_HELIPAD) ||
+			!landingRequiresParkingSpace() ||
+			pp->reserveSpace(getObject()->getID(), friend_getParkingOffset(), nullptr))
 		{
 			// if we had a space at another airfield, release it
 			ParkingPlaceBehaviorInterface* oldPP = getPP(getObject()->getProducerID());
@@ -2826,7 +2860,9 @@ void JetAIUpdate::doLandingCommand(Object *airfield, CommandSourceType cmdSource
 //----------------------------------------------------------------------------------------
 void JetAIUpdate::notifyVictimIsDead()
 {
-	if (getJetAIUpdateModuleData()->m_needsRunway)
+	//MODDD
+	//if (getJetAIUpdateModuleData()->m_needsRunway)
+	if (landingRequiresParkingSpace())
 		m_returnToBaseFrame = TheGameLogic->getFrame();
 }
 
@@ -2869,7 +2905,9 @@ void JetAIUpdate::privateGetRepaired( Object *repairDepot, CommandSourceType cmd
 Bool JetAIUpdate::isParkedAt(const Object* obj) const
 {
 	if (!getFlag(ALLOW_AIR_LOCO) &&
-			!getObject()->isKindOf(KINDOF_PRODUCED_AT_HELIPAD) &&
+			//MODDD
+			//!getObject()->isKindOf(KINDOF_PRODUCED_AT_HELIPAD) &&
+			landingRequiresParkingSpace() &&
 			obj != nullptr)
 	{
 		Object* airfield;
@@ -2891,6 +2929,17 @@ void JetAIUpdate::aiDoCommand(const AICommandParms* parms)
 	// and a script tells it to do something with a condition of TRUE!
 	getProducerLocation();
 
+	//MODDD - if this is a repair order and we've already had the order or are in progress, ignore this.
+	// This is to let a large selection of aircraft, some told and not yet told to repair, only affect things that aren't
+	// already repairing / intending to repair at the given air field.
+	if (parms->m_cmd == AICMD_GET_REPAIRED)
+	{
+		if (parms->m_obj->getID() == getAirFieldDockIntentID())
+		{
+			return;
+		}
+	}
+
 	if (!isAllowedToRespondToAiCommands(parms))
 		return;
 
@@ -2909,7 +2958,7 @@ void JetAIUpdate::aiDoCommand(const AICommandParms* parms)
 		//MODDD - only allow this shortcut if this is a jet.
 		// helicopters can be docked to reload and need to be able to immediately take off when healing stops
 		// (added bounding if-then)
-		if (!getObject()->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ))
+		if (landingRequiresParkingSpace())
 		{
 			// uber-special-case... if we are told to idle, but are reloading ammo, ignore it for now,
 			// since we're already doing "nothing" and responding to this will cease our reload...
@@ -2918,7 +2967,9 @@ void JetAIUpdate::aiDoCommand(const AICommandParms* parms)
 			return;
 		}
 	}
-	else if( parms->m_cmd == AICMD_IDLE && getObject()->isAirborneTarget() && !getObject()->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )
+	//MODDD
+	//else if( parms->m_cmd == AICMD_IDLE && getObject()->isAirborneTarget() && !getObject()->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )
+	else if( parms->m_cmd == AICMD_IDLE && getObject()->isAirborneTarget() && landingRequiresParkingSpace() )
 	{
 		getStateMachine()->clear();
 		setLastCommandSource( CMD_FROM_AI );
@@ -2932,6 +2983,8 @@ void JetAIUpdate::aiDoCommand(const AICommandParms* parms)
 			case AICMD_IDLE:
 			case AICMD_BUSY:
 			case AICMD_FOLLOW_EXITPRODUCTION_PATH:
+			//MODDD - adding, see note in ChinookAIUpdate.cpp
+			case AICMD_MOVE_AWAY_FROM_UNIT:
 				// don't need (or want) to take off for these
 				break;
 
@@ -3050,6 +3103,103 @@ void JetAIUpdate::friend_purgePendingCommand()
 	setFlag(HAS_PENDING_COMMAND, false);
 }
 
+//MODDD - does this count as a helicopter or a jet?
+// Could use the 'KINDOF_PRODUCED_AT_HELIPAD' check because the retail game seems to keep that assumption 1-1 a lot -
+// it's up to what works best with a large ecosystem of mods made since.
+Bool JetAIUpdate::isHelicopter() const
+{
+	return !landingRequiresParkingSpace();
+}
+
+//MODDD - new
+Bool JetAIUpdate::canLandToPickUpObjectWantingToEnter() const
+{
+	return movesLikeHelicopter();
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+Bool JetAIUpdate::isDockedAtAirField() const
+{
+	// only set when landed at an air field, not in the middle of nowhere to let a pilot in
+	return getFlag(DOCKED_AT_AIRFIELD);
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+Bool JetAIUpdate::isLandingAtAirField() const
+{
+	// For here, need to know if this is landing at an airfield specifically - checking the state should work.
+	// Note that 'LANDING_NOAIRFIELD' is separate from 'LANDING' to track just that.
+	StateID stateID = getStateMachine()->getCurrentStateID();
+	return
+	(
+		getFlag(LANDING_IN_PROGRESS) &&
+		(
+			stateID == LANDING_AWAIT_CLEARANCE ||
+			stateID == LANDING ||
+			stateID == ORIENT_FOR_PARKING_PLACE ||
+			stateID == TAXI_FROM_LANDING
+		)
+	);
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+Bool JetAIUpdate::isMovingToAirField() const
+{
+	StateID stateID = getStateMachine()->getCurrentStateID();
+	return
+	(
+		stateID == RETURNING_FOR_LANDING
+	);
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+ObjectID JetAIUpdate::getAirFieldDockedOrLandingAtID() const
+{
+	if (isDockedAtAirField() || isLandingAtAirField())
+	{
+		// the 'producer' is changed anytime the unit gets a command, autonomous or not, to enter/get-repaired-at an air field.
+		return getObject()->getProducerID();
+	}
+	return INVALID_ID;
+}
+
+//MODDD - applicable for an aircraft AIUpdate class
+ObjectID JetAIUpdate::getAirFieldDockIntentID() const
+{
+	if (isDockedAtAirField() || isLandingAtAirField() || isMovingToAirField())
+	{
+		return getObject()->getProducerID();
+	}
+	return INVALID_ID;
+}
+
+//MODDD - whether this unit needs a parking space (typically within an air field) to land.
+// If yes, this implies the aircraft expects a parking space exists somewhere to host it and tends to return to it
+// when idle and airborne.
+// If no, the aircraft is perpetually airborne without a strong reason (ex: temporarily landed to pick up a passenger
+// for the transport feature, or now a pilot).
+// (also for reference, I can only assume the terms 'parking space' and 'parking place' can be used interchangeably)
+// TODO - could support a hovering-in-place aircraft (helicopter) preferring to land when idle, like stallion helicopter
+// transports from Red Alert 2. (just don't let chinooks carrying supplies do this because wasting them from a misclick would be frustrating).
+// UPDATE - since 'ParkingPlaceBehavior.cpp' needs to know this even without a particular object available yet (ex: producing
+// something of that type -> ThingTemplate reference is all there is), this has since been decided at startup and cached per
+// ThingTemplate, available as 'ThingTemplate::landingRequiresParkingSpace'.
+Bool JetAIUpdate::landingRequiresParkingSpace() const
+{
+	return getJetAIUpdateModuleData()->m_needsRunway;
+}
+
+// MODDD - Whether this aircraft goes through the parking space(aka hanger) <-> taxi <-> landing/takeoff sequence on
+// entering/ leaving the air field.It is tempting to call this 'isConventionalTakeOff' like this appears for actual jets
+// in the retail game, but several mods (such as 'Contra''s air foce gen or 'CNC Redux''s orca) are able to make this
+// look like vertical takeoff instead.
+// Short version: for the retail behavior that mods have been based off of, making this 1-1 with
+// 'landingRequiresParkingSpace' will work, but I would like there to be better ways to mix-and-match these things.
+Bool JetAIUpdate::usesSequenceForTakeoff() const
+{
+	return getJetAIUpdateModuleData()->m_needsRunway;
+}
+
 // ------------------------------------------------------------------------------------------------
 /** CRC */
 // ------------------------------------------------------------------------------------------------
@@ -3117,7 +3267,9 @@ void JetAIUpdate::xfer( Xfer *xfer )
 	else
 	{
 		//We don't have to be accurate -- this is a patch.
-		if( getFlag(TAKEOFF_IN_PROGRESS) || getFlag(LANDING_IN_PROGRESS) || getObject()->isSignificantlyAboveTerrain() || getObject()->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )
+		//MODDD
+		//if( getFlag(TAKEOFF_IN_PROGRESS) || getFlag(LANDING_IN_PROGRESS) || getObject()->isSignificantlyAboveTerrain() || getObject()->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )
+		if( getFlag(TAKEOFF_IN_PROGRESS) || getFlag(LANDING_IN_PROGRESS) || getObject()->isSignificantlyAboveTerrain() || !landingRequiresParkingSpace() )
 		{
 			m_enginesOn = TRUE;
 		}

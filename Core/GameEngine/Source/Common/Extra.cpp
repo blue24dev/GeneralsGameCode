@@ -401,6 +401,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	Bool foundJetAIUpdateBehavior = false;
 	Bool foundChinookAIUpdateBehavior = false;
 	AIUpdateModuleData* aiUpdateModuleData = nullptr;
+	Bool _landingRequiresParkingSpace = false;
 	
 	// Whether this thing gets a cost reduction for being a renewable income source at the very end.
 	// There is checking kindof's like FS_BLACK_MARKET or FS_SUPPLY_DROP_ZONE, but I'd rather have a more accurate check
@@ -756,11 +757,17 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			foundJetAIUpdateBehavior = true;
 			aiUpdateModuleData = (AIUpdateModuleData*)data;
+
+			JetAIUpdateModuleData* _data = (JetAIUpdateModuleData*)data;
+			// Copying the 'JetAIUpdate::landingRequiresParkingSpace' check
+			_landingRequiresParkingSpace = _data->m_needsRunway;
 		}
 		else if ( modNameKey == ChinookAIUpdateNameKey )
 		{
 			foundChinookAIUpdateBehavior = true;
 			aiUpdateModuleData = (AIUpdateModuleData*)data;
+			// Copying the 'ChinookAIUpdate::landingRequiresParkingSpace' check
+			_landingRequiresParkingSpace = false;
 		}
 
 	}
@@ -790,6 +797,9 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		// checks for 'ChinookAIUpdate' too for combat(trainable) helicopters that actually use that instead of 'JetAIUpdate'
 		if (foundJetAIUpdateBehavior || foundChinookAIUpdateBehavior)
 		{
+			// send what's been figured from reading the specific module
+			_this->m_landingRequiresParkingSpace = _landingRequiresParkingSpace;
+
 			if (!foundContainBehavior)
 			{
 				// Add a bogus 'TransportContain' with a capacity of 0 slots that forbids everything - that should do it.
@@ -807,6 +817,12 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 
 				mi.addModuleInfo(_this, TransportContainName, moduleTag, data, TransportContain::getInterfaceMask(), false, false);
 			}
+		}
+		else
+		{
+			// an AIRCRAFT not using a JetAIUpdate nor ChinookAIUpdate?
+			// Have to decide if this is a helicopter or not. All I got's the retail PRODUCET_AT_HELIPAD check.
+			_this->m_landingRequiresParkingSpace = !_this->isKindOf(KINDOF_PRODUCED_AT_HELIPAD);
 		}
 	}
 
@@ -1007,7 +1023,7 @@ void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
 #if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR)
 	Bool renewableMoneySourceCostReduction = false;
 #endif
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	// more specific check for supply drop zones (know to let OCLs know they're for adjusted-value moeny crates)
 	Bool renewableMoneyOCLSource = false;
 #endif
@@ -1089,7 +1105,7 @@ void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
 			OCLUpdateModuleData* _data = (OCLUpdateModuleData*)data;
 			(void)_data;
 			
-#if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR) || MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR) || EXTRA_MONEY_CRATE_OCL_TRACKING
 			// Does this eventually lead to a money crate?
 			// ---
 			// Contra's TechReinforcementPad used 'FactionOCL' in the INI instead - not handling that case for now
@@ -1131,7 +1147,7 @@ void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
 #if defined(RENEWABLE_MONEY_SOURCE_COST_SCALAR)
 					renewableMoneySourceCostReduction = true;
 #endif
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 					// this too
 					renewableMoneyOCLSource = true;
 #endif
@@ -1158,7 +1174,7 @@ void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
 		}
 	}
 #endif
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 	if (renewableMoneyOCLSource)
 	{
 		_this->m_isRenewableMoneyOCLSource = true;
@@ -1173,7 +1189,7 @@ Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_helper(const Th
 	if (automaticChangesPostINIParsing_thing_hasMoneyCrateCollide(tt))
 	{
 		// also let this OCL know to look out for being called from something that can spawn money crates
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 		ocl->m_checkForRenewableMoneySource = true;
 #endif
 		leadsToMoneyCrate = true;
@@ -1184,7 +1200,7 @@ Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_helper(const Th
 	Bool outcome = automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_checkSpawned(tt, processedOCLList);
 	if (outcome)
 	{
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 		ocl->m_checkForRenewableMoneySource = true;
 #endif
 		leadsToMoneyCrate = true;
@@ -1376,7 +1392,7 @@ Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_checkSpawned(co
 					{
 						if (automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate(ocl, processedOCLList))
 						{
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 							ocl->m_checkForRenewableMoneySource = true;
 #endif
 							leadsToMoneyCrate = true;
@@ -1395,7 +1411,7 @@ Bool automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate_checkSpawned(co
 			{
 				if (automaticChangesPostINIParsing_thing_queryLeadsToMoneyCrate(ocl, processedOCLList))
 				{
-#if MONEY_AUTO_ADJUSTMENT_SUPPORT
+#if EXTRA_MONEY_CRATE_OCL_TRACKING
 					ocl->m_checkForRenewableMoneySource = true;
 #endif
 					leadsToMoneyCrate = true;

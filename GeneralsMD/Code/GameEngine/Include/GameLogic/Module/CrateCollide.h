@@ -98,7 +98,12 @@ enum SabotageVictimType CPP_11(: Int)
 
   void doSabotageFeedbackFX( const Object *other, SabotageVictimType type = SAB_VICTIM_GENERIC );
 
-protected:
+	//MODDD
+	void execute( Object *other );
+
+	//MODDD - letting below be public, just make sure you know what you're doing.
+	// Main point is to be able to simulate 'isValidToExecute' + 'execute' calls to force interactions sometimes.
+//protected:
 
 	/// This is the game logic execution function that all real CrateCollides will implement
 	virtual Bool executeCrateBehavior( Object *other ) = 0;

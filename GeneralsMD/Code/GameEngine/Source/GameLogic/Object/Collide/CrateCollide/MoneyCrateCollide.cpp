@@ -131,6 +131,20 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 	return TRUE;
 }
 
+//MODDD - new, to add a check for already being destroyed this frame
+Bool MoneyCrateCollide::isValidToExecute( const Object *other ) const
+{
+	//MODDD - needed when the crate's been destroyed by something else in the same frame to avoid double-dipping.
+	// ex: money crates now that they can have an execution triggered the same frame they were going to collide with
+	// something anyway it seems?
+	if (getObject()->isDestroyed())
+	{
+		return FALSE;
+	}
+
+	return CrateCollide::isValidToExecute(other);
+}
+
 //------------------------------------------------------------------------------------------------
 Int MoneyCrateCollide::getUpgradedSupplyBoost( Object *other ) const
 {

@@ -125,7 +125,7 @@ void EjectPilotDie::onDie( const DamageInfo * damageInfo )
 				if (!isDieApplicableHijacked(dyingObject, damageInfo))
 				{
 					// if the hijacker can't come out in the module that's supposed to eject it, time to die!
-					HijackUtil::deleteExistingHijacker(dyingObject->getHijackerInMeID());
+					HijackUtil::clearHijackerInObject(dyingObject, TRUE);
 					return;
 				}
 

@@ -403,3 +403,9 @@ void Thing::transformPoint( const Coord3D *in, Coord3D *out )
 	out->z = vectorOut.Z;
 
 }
+
+//MODDD - uses something now cached in the ThingTemplate for easy access, as this never changes per instance
+Bool Thing::landingRequiresParkingSpace() const
+{
+	return m_template->landingRequiresParkingSpace();
+}

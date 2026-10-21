@@ -84,6 +84,7 @@ class StealthDetectorUpdate;
 class LockWeaponCreate;
 class SpyVisionUpdate;
 class VeterancyCrateCollide;
+class MoneyCrateCollide;
 
 
 //-------------------------------------------------------------------------------------------------
@@ -177,6 +178,7 @@ public:
 	virtual LockWeaponCreate* getLockWeaponCreate() { return nullptr; }
 	virtual SpyVisionUpdate* getSpyVision() { return nullptr; }
 	virtual VeterancyCrateCollide* getVeterancyCrateCollide() { return nullptr; }
+	virtual MoneyCrateCollide* getMoneyCrateCollide() { return nullptr; }
 
 	virtual ParkingPlaceBehaviorInterface* getParkingPlaceBehaviorInterface() override { return nullptr; }
 	virtual RebuildHoleBehaviorInterface* getRebuildHoleBehaviorInterface() override { return nullptr; }

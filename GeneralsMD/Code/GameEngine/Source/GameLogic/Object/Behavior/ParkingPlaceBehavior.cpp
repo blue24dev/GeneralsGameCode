@@ -287,7 +287,9 @@ ParkingPlaceBehavior::ParkingPlaceInfo* ParkingPlaceBehavior::findEmptyPPI()
 // note: called from client, so MUST NOT modify self in any way, or desyncs will occur
 Bool ParkingPlaceBehavior::shouldReserveDoorWhenQueued(const ThingTemplate* thing) const
 {
-	if (thing->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+	//MODDD
+	//if (thing->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+	if (!thing->landingRequiresParkingSpace())
 		return false;
 
 	return true;
@@ -300,7 +302,9 @@ Bool ParkingPlaceBehavior::hasAvailableSpaceFor(const ThingTemplate* thing) cons
 	if (!m_gotInfo)	// degenerate case, shouldn't happen, but just in case...
 		return false;
 
-	if (thing->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+	//MODDD
+	//if (thing->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+	if (!thing->landingRequiresParkingSpace())
 		return true;
 
 	for (std::vector<ParkingPlaceInfo>::const_iterator it = m_spaces.begin(); it != m_spaces.end(); ++it)
@@ -758,7 +762,7 @@ UpdateSleepTime ParkingPlaceBehavior::update()
 					healInfo.in.m_sourceID = getObject()->getID();
   				healInfo.in.m_amount = HEAL_RATE_FRAMES * d->m_healAmount * SECONDS_PER_LOGICFRAME_REAL;
 
-//          if ( objToHeal->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )
+//          if ( objToHeal->isHelicopter() )
 //            healInfo.in.m_amount += HEAL_RATE_FRAMES * d->m_extraHealAmount4Helicopters * SECONDS_PER_LOGICFRAME_REAL;
 
 					BodyModuleInterface *body = objToHeal->getBodyModule();
@@ -781,7 +785,9 @@ ExitDoorType ParkingPlaceBehavior::reserveDoorForExit( const ThingTemplate* objT
 	buildInfo();
 	purgeDead();
 
-	if (objType->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+	//MODDD
+	//if (objType->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+	if (!objType->landingRequiresParkingSpace())
 	{
 		return DOOR_NONE_NEEDED;
 	}
@@ -828,7 +834,9 @@ void ParkingPlaceBehavior::exitObjectViaDoor( Object *newObj, ExitDoorType exitD
 	static NameKeyType jetKey = TheNameKeyGenerator->nameToKey( "JetAIUpdate" );
 	JetAIUpdate* ju = (JetAIUpdate *)newObj->findUpdateModule( jetKey );
 	Real parkingOffset = ju ? ju->friend_getParkingOffset() : 0.0f;
-	Bool producedAtHelipad = newObj->isKindOf(KINDOF_PRODUCED_AT_HELIPAD);
+	//MODDD
+	//Bool producedAtHelipad = newObj->isKindOf(KINDOF_PRODUCED_AT_HELIPAD);
+	Bool producedAtHelipad = !newObj->landingRequiresParkingSpace();
 
 	PPInfo ppinfo;
 	DUMPMATRIX3D(getObject()->getTransformMatrix());
@@ -881,7 +889,9 @@ void ParkingPlaceBehavior::exitObjectViaDoor( Object *newObj, ExitDoorType exitD
 		}
 		if( !movedToRallyPoint )
 		{
-			if( !newObj->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )
+			//MODDD
+			//if( !newObj->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )
+			if( newObj->landingRequiresParkingSpace() )
 			{
 				std::vector<Coord3D> exitPath;
 				exitPath.push_back(ppinfo.parkingSpace);
