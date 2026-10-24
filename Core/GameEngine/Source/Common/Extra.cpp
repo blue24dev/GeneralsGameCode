@@ -1728,8 +1728,8 @@ Real moneyScalarAdjustmentFilter(const Player* player, Bool isRenewable)
 	*/
 	const UnsignedInt startMin = 15;
 	const UnsignedInt endMin = 60;
-	const Real startModifier = 1.0f;
-	const Real endModifier = 1.75f;
+	const Real startModifier = 1.15f;
+	const Real endModifier = 4.00f;
 	#endif
 
 	Real scalar = 1.0f;
