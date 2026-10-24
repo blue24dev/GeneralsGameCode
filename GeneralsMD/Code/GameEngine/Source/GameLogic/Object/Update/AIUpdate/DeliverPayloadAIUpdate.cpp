@@ -814,14 +814,14 @@ StateReturnType DeliveringState::update() // Kick a dude out every so often
 					{
 						//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-						if (owner->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
+						if (owner->m_OCLSourcePlayerIndex != -1)
 						{
 							// pass it on
-							payload->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex = owner->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
+							payload->m_OCLSourcePlayerIndex = owner->m_OCLSourcePlayerIndex;
 						}
 #endif
 #if MONEY_CRATE_DROP_SAFETY
-						payload->m_supplyDropZoneProducerID = owner->m_supplyDropZoneProducerID;
+						payload->m_OCLSourceObjectID = owner->m_OCLSourceObjectID;
 #endif
 						payload->setProducer( owner );
 

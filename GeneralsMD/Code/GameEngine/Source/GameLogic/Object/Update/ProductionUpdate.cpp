@@ -816,7 +816,7 @@ UpdateSleepTime ProductionUpdate::update()
 								create->onBuildComplete();
 							}
 							*/
-							call_objectOnBuildComplete(newObj);
+							rts_extra::call_objectOnBuildComplete(newObj);
 
 							if( production->getProductionQuantity() == production->getProductionQuantityRemaining() )
 							{

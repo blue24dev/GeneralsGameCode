@@ -66,6 +66,12 @@ class GhostObjectManager;
 class CommandButton;
 enum BuildableStatus CPP_11(: Int);
 
+//MODDD - for being aware of these to friend them
+namespace rts_extra
+{
+	Bool checkIfObjInDestroyList(const Object* objCheck);
+}
+
 
 typedef const CommandButton* ConstCommandButtonPtr;
 
@@ -292,7 +298,7 @@ public:
 	void friend_awakenUpdateModule(Object* obj, UpdateModulePtr update, UnsignedInt whenToWakeUp);
 	
 	//MODDD - debug
-	friend Bool checkIfObjInDestroyList(const Object* objCheck);
+	friend Bool rts_extra::checkIfObjInDestroyList(const Object* objCheck);
 
 	Bool isQuitToDesktopRequested() const { return m_quitToDesktopAfterMatch; }
 
@@ -331,6 +337,7 @@ private:
 
 	bool onNewGame(GameMessage *msg);
 	bool onClearGameData(GameMessage *msg, AIGroupPtr &currentlySelectedGroup);
+	bool onLogicCrcForPlayback(GameMessage *msg);
 	bool onBeginPathBuild(GameMessage *msg);
 	bool onEndPathBuild(GameMessage *msg);
 	bool onSetRallyPoint(GameMessage *msg);

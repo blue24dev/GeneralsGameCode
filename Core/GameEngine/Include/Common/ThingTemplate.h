@@ -65,6 +65,13 @@ class WeaponTemplateSet;
 class ArmorTemplateSet;
 class FXList;
 
+//MODDD - for being aware of these to friend them
+namespace rts_extra
+{
+	void automaticThingTemplateChanges(ThingTemplate* _this);
+	void automaticChangesPostINIParsing_thing(ThingTemplate* _this);
+}
+
 // TYPEDEFS FOR FILE //////////////////////////////////////////////////////////////////////////////
 typedef std::map<AsciiString, AudioEventRTS> PerUnitSoundMap;
 typedef std::map<AsciiString, const FXList*> PerUnitFXMap;
@@ -652,8 +659,8 @@ public:
 	const WeaponTemplateSetVector& getWeaponTemplateSets() const {return m_weaponTemplateSets;}
 
 	//MODDD
-	friend void automaticThingTemplateChanges(ThingTemplate* _this);
-	friend void automaticChangesPostINIParsing_thing(ThingTemplate* _this);
+	friend void rts_extra::automaticThingTemplateChanges(ThingTemplate* _this);
+	friend void rts_extra::automaticChangesPostINIParsing_thing(ThingTemplate* _this);
 
 	//MODDD - despite the as-is comment below, letthig these be public now that a few places might benefit from more
 	// direct checks (though, heed the note that you're sure a different accessor shouldn't be used instead)

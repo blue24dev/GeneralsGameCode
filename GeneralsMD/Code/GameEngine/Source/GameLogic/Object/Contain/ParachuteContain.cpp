@@ -48,6 +48,7 @@
 
 //MODDD
 #include "GameLogic/Module/MoneyCrateCollide.h"
+#include "Common/PlayerList.h"
 
 
 const Real NO_START_Z = 1e10;
@@ -543,18 +544,13 @@ void ParachuteContain::onRemoving( Object *rider )
 	// The point of this check isn't to make stealing crates from another player impossible - this requires the calling
 	// supply drop zone to no longer exist before the crates touch the ground (then it's finder's-keeper's as usual).
 #if MONEY_CRATE_DROP_SAFETY
-	if (rider->isDestroyed())
+	// the 'isDestroyed' check stops double-dipping if the crate touched the supply drop zone first to already execute (deposit money) as expected.
+	if (!rider->isDestroyed() && rider->getMoneyCrateCollide() && rider->m_OCLSourceObjectID != INVALID_ID)
 	{
-		int x;
-		x = 4;
-	}
-
-	if (!rider->isDestroyed() && rider->getMoneyCrateCollide() && rider->m_supplyDropZoneProducerID != INVALID_ID)
-	{
-		Object* testSrc = TheGameLogic->findObjectByID(rider->m_supplyDropZoneProducerID);
-		if (testSrc && !testSrc->isEffectivelyDead())
+		Object* OCLSourceObject = TheGameLogic->findObjectByID(rider->m_OCLSourceObjectID);
+		if (OCLSourceObject && !OCLSourceObject->isEffectivelyDead())
 		{
-			Int sourcePlayerIndex = rider->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
+			Int sourcePlayerIndex = rider->m_OCLSourcePlayerIndex;
 			// Note that 'playerIndex' can have a flag baked into it indicating whether this crate was produced by a neutral tech
 			// structure, captured or not (in case of non-capturable flat areas, like neutral supply drop zones in several mods).
 			if (sourcePlayerIndex & (1 << 31))
@@ -562,12 +558,15 @@ void ParachuteContain::onRemoving( Object *rider )
 				sourcePlayerIndex &= ~(1 << 31);
 			}
 
-			// if the owner is a civilian building, don't use this trick because forcing landed money to go to no one playing
-			// the game is lame
-			if (!testSrc->getControllingPlayer()->isUnaffiliated() && testSrc->getControllingPlayer()->getPlayerIndex() == sourcePlayerIndex)
+			// If the money drop was called by a civilian player, don't use this trick because forcing landed money to go to
+			// no one playing the game is lame. Also, make sure the drop zone hasn't changed ownership since (going to say all bets are off then).
+			if (!ThePlayerList->getNthPlayer(sourcePlayerIndex)->isUnaffiliated() && OCLSourceObject->getControllingPlayer()->getPlayerIndex() == sourcePlayerIndex)
 			{
-				rider->getMoneyCrateCollide()->execute(testSrc);
-				// should make the crate disapper from the collection - stop
+				// original supply drop zone exists and belongs to the same player at the time the plane dropping the crates
+				// entered the map - act as though the crate were collected by the supply drop zone no matter where the crate
+				// actually landed.
+				rider->getMoneyCrateCollide()->execute(OCLSourceObject);
+				// should make the crate disapper - stop
 				return;
 			}
 		}

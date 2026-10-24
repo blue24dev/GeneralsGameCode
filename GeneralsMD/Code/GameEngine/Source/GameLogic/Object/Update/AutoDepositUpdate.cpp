@@ -122,18 +122,15 @@ void AutoDepositUpdate::awardInitialCaptureBonus( Player *player )
 
 	//MODDD - going to cache the value and let the player upgrade bonus apply, may as well.
 	// ---
-	/*
-	player->getMoney()->deposit( getAutoDepositUpdateModuleData()->m_initialCaptureBonus );
-	player->getScoreKeeper()->addMoneyEarned( getAutoDepositUpdateModuleData()->m_initialCaptureBonus );
-	*/
+	//player->getMoney()->deposit( getAutoDepositUpdateModuleData()->m_initialCaptureBonus );
+	//player->getScoreKeeper()->addMoneyEarned( getAutoDepositUpdateModuleData()->m_initialCaptureBonus );
 	// ---
 	//MODDD - money cheat check
 	int moneyAmount = getAutoDepositUpdateModuleData()->m_initialCaptureBonus;
-	
-	APPLY_MONEY_CHEAT(player, moneyAmount)
-	
-	player->getMoney()->deposit( moneyAmount );
-	player->getScoreKeeper()->addMoneyEarned( moneyAmount );
+	// going to call this non-renewable for cheat categorization (less likely to get bonuses), but renewable for score-keeping.
+	RECEIVE_MONEY_FILTER(player, moneyAmount, FALSE, MONEYSOURCE_RENEWABLE)
+
+	//MODDD - 'deposit'/'addMoneyEarned' calls are now part of above
 	// ---
 
 	//MODDD - lol wrong comment there. Anyway, 'getAutoDepositUpdateModuleData()->m_initialCaptureBonus' -> 'moneyAmount'
@@ -179,15 +176,16 @@ UpdateSleepTime AutoDepositUpdate::update()
 		int moneyAmount = modData->m_depositAmount + getUpgradedSupplyBoost();
 
 		//MODDD - money cheat check
-		APPLY_MONEY_CHEAT(getObject()->getControllingPlayer(), moneyAmount)
+		//MODDD - TODO - make whether to actually do 'deposit'/'addMoneyEarned' calls a param for the 'm_isActualMoney' check below
+		RECEIVE_MONEY_FILTER(getObject()->getControllingPlayer(), moneyAmount, TRUE, MONEYSOURCE_RENEWABLE)
 
 		if( modData->m_isActualMoney )
 		{
-			getObject()->getControllingPlayer()->getMoney()->deposit( moneyAmount );
+			//MODDD - 'deposit'/'addMoneyEarned' calls are now part of above
+			// (leaving below to note something strange found as-is)
 
 			//MODDD - why isn't this just using 'moneyAmount'? other places use the same post-adjustment value instead of the raw input
 			//getObject()->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( modData->m_depositAmount);
-			getObject()->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( moneyAmount );
 		}
 
 		if (moneyAmount > 0 && getObject()->isLogicallyVisible())
@@ -226,7 +224,7 @@ UpdateSleepTime AutoDepositUpdate::update()
 Int AutoDepositUpdate::getUpgradedSupplyBoost() const
 {
 	//MODDD - condensed into a utility
-	return ::getUpgradedSupplyBoost(getObject(), &getAutoDepositUpdateModuleData()->m_upgradeBoost);
+	return rts_extra::getUpgradedSupplyBoost(getObject(), &getAutoDepositUpdateModuleData()->m_upgradeBoost);
 }
 
 // ------------------------------------------------------------------------------------------------

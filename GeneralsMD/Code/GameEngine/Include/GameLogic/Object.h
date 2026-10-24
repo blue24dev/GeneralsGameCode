@@ -1007,10 +1007,10 @@ private:
 public:
 	Bool m_calledForDeletion;
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-	Int m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex;
+	Int m_OCLSourcePlayerIndex;
 #endif
 #if MONEY_CRATE_DROP_SAFETY
-	ObjectID m_supplyDropZoneProducerID;
+	ObjectID m_OCLSourceObjectID;
 #endif
 
 	private:

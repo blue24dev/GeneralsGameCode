@@ -260,10 +260,9 @@ void SalvageCrateCollide::doMoney( Object *other )
 	if( money > 0 )
 	{
 		//MODDD - money cheat check
-		APPLY_MONEY_CHEAT(other->getControllingPlayer(), money)
-
-		other->getControllingPlayer()->getMoney()->deposit( money );
-		other->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( money );
+		RECEIVE_MONEY_FILTER(other->getControllingPlayer(), money, FALSE, MONEYSOURCE_SALVAGE)
+			
+		//MODDD - 'deposit'/'addMoneyEarned' calls are now part of above
 
 		//Display cash income floating over the crate.  Position is me, everything else is them.
 		UnicodeString moneyString;

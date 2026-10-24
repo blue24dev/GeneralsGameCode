@@ -478,6 +478,11 @@ void Player::init(const PlayerTemplate* pt)
 	m_scoreKeeper.reset(m_playerIndex);
 	m_playerTemplate = pt;
 
+	//MODDD - let the score know what the current starting money is.
+	// This may be overridden by map script soon - that is fine, whatever reflecs the amount of money the user ends up
+	// seeing they start with.
+	m_scoreKeeper.setMoneyStartedWith(m_money.countMoney());
+
 	// reset rank info
 	resetRank();
 	m_sciencesDisabled.clear();
@@ -2529,10 +2534,9 @@ void Player::doBountyForKill(const Object* killer, const Object* victim)
 	if( bounty )
 	{
 		//MODDD - money cheat check
-		APPLY_MONEY_CHEAT(this, bounty)
+		RECEIVE_MONEY_FILTER(this, bounty, FALSE, MONEYSOURCE_BOUNTY)
 
-		getMoney()->deposit( bounty );
-		m_scoreKeeper.addMoneyEarned( bounty );
+		//MODDD - 'deposit'/'addMoneyEarned' calls are now part of above
 
 		//Display cash income floating over the recipient.
 		UnicodeString moneyString;
@@ -2558,7 +2562,7 @@ Bool Player::addSkillPoints(Int delta)
 	//MODDD
 #if RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS || NOOB_MODE
 	// let the filter make changes if applicable
-	Real newMod = playerPromotionExperienceRateFilter(this, m_skillPointsModifier);
+	Real newMod = rts_extra::playerPromotionExperienceRateFilter(this, m_skillPointsModifier);
 	delta = REAL_TO_INT_CEIL(newMod * INT_TO_REAL(delta));
 #else
 	// retail

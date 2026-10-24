@@ -158,8 +158,8 @@ void InstantDeathBehavior::onDie( const DamageInfo *damageInfo )
 		const ObjectCreationList* ocl = v[idx];
 		//MODDD
 #if MONEY_AUTO_ADJUSTMENT_SUPPORT
-		if (getObject()->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex != -1)
-			ObjectCreationList::create_RECoMCCiO(ocl, getObject(), nullptr, 0, getObject()->m_runExtraChecksOnMoneyCrateCollideInObjs_playerIndex);
+		if (getObject()->m_OCLSourcePlayerIndex != -1)
+			ObjectCreationList::create_alt(ocl, getObject(), nullptr, 0, getObject()->m_OCLSourcePlayerIndex);
 		else
 #endif
 		ObjectCreationList::create(ocl, getObject(), nullptr);

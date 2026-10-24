@@ -5262,11 +5262,6 @@ Path *Pathfinder::buildActualPath( const Object *obj, LocomotorSurfaceTypeMask a
 	return path;
 }
 
-//MODDD - debugging
-#include <fstream>
-#include <iostream>
-#include <iomanip>
-
 /**
  * Work backwards from goal cell to construct final path.
  */
@@ -5323,7 +5318,7 @@ void Pathfinder::prependCells( Path *path, const Coord3D *fromPos,
 	if (!cell)
 	{
 		FILE* outputFile = fopen("test_crash_AIPathfind.txt", "a");
-		printTimeStamp(outputFile);
+		rts_extra::printTimeStamp(outputFile);
 		fputs(" - 'cell' is unexpectedly 'nullptr' in 'Pathfinder::prependCells'!\n", outputFile);
 		
 		// Try 'prevCell'.

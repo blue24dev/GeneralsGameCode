@@ -561,10 +561,9 @@ StateReturnType HackInternetState::update()
 				}
 				
 				//MODDD - money cheat check
-				APPLY_MONEY_CHEAT(owner->getControllingPlayer(), amount)
+				RECEIVE_MONEY_FILTER(owner->getControllingPlayer(), amount, TRUE, MONEYSOURCE_RENEWABLE)
 
-				money->deposit( amount );
-				owner->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( amount );
+				//MODDD - 'deposit'/'addMoneyEarned' calls are now part of above
 
 				//Grant the unit some experience for a successful hack.
 				xp->addExperiencePoints( ai->getXpPerCashUpdate() );

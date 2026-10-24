@@ -1340,10 +1340,10 @@ void GlobalData::parseGameDataDefinition( INI* ini )
 
 	//MODDD
 #if CUSTOM_GAME_DATA_CHANGES
-	automaticGlobalDataChanges();
+	rts_extra::automaticGlobalDataChanges();
 #endif
 #if CUSTOM_ATTRIBUTE_CHANGES
-	automaticGlobalDataWeaponBonusChanges();
+	rts_extra::automaticGlobalDataWeaponBonusChanges();
 #endif
 	
 	// override INI values with user preferences

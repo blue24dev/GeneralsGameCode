@@ -9,6 +9,7 @@
 #include "Common/ThingFactory.h"
 #include "Common/ThingTemplate.h"
 #include "Common/Upgrade.h"
+#include "Common/NameKeyGenerator.h"
 #include "GameNetwork/GameInfo.h"
 #include "GameClient/ControlBar.h"
 
@@ -48,7 +49,16 @@
 #include "GameLogic/Module/InstantDeathBehavior.h"
 #include "GameLogic/Module/CreateObjectDie.h"
 #include "GameLogic/Module/MinefieldBehavior.h"
+
+#include "GameLogic/Module/ContainModule.h"
 #include "GameLogic/Module/TransportContain.h"
+
+//MODDD - debugging (things seem to build fine without these now?)
+/*
+#include <fstream>
+#include <iostream>
+#include <iomanip>
+*/
 
 // It would make sense to consider 'CUSTOM_ATTRIBUTE_CHANGES' sections "MODDD - for me only".
 
@@ -66,6 +76,9 @@ int g_dummy = 0;
 #if EXTRA_DEBUG_HELP
 std::vector<int> g_destroyObjectSource;
 #endif
+
+namespace rts_extra
+{
 
 //MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
 // Condensed several snippets of copied script into this, with a few additions to fix the bug on buildings
@@ -1703,7 +1716,7 @@ void automaticGlobalDataChanges()
 
 
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
-Real moneyScalarAdjustmentFilter(const Player* player)
+Real moneyScalarAdjustmentFilter(const Player* player, Bool isRenewable)
 {
 	#if RUN_EXTRA_MONEY_CHEATS
 	// The income bonus for AI players can increase over the course of a long game.
@@ -1722,7 +1735,9 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 	Real scalar = 1.0f;
 
 	#if RUN_EXTRA_MONEY_CHEATS
-	if (player->getPlayerType() == PLAYER_COMPUTER)
+	// Note that the logic for steadily-increasing money cheats over time is only for renewable sources to compensate
+	// for AI players being less ambitious at building renewable income sources than human players for that point of the game.
+	if (player->getPlayerType() == PLAYER_COMPUTER && isRenewable)
 	{
 		UnsignedInt frame = TheGameLogic->getFrame();
 		if (frame <= (LOGICFRAMES_PER_SECOND * 60) * startMin)
@@ -1741,6 +1756,11 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 			scalar *= endModifier;
 		}
 	}
+	else
+	{
+		// non-renewable: lowest bonus only
+		scalar *= startModifier;
+	}
 	#endif
 
 	#if NOOB_MODE
@@ -1754,15 +1774,40 @@ Real moneyScalarAdjustmentFilter(const Player* player)
 }
 
 // See if the player should receive extra money on top of the intended amount
-UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit)
+UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit, Bool isRenewable)
 {
-	Real scalar = moneyScalarAdjustmentFilter(player);
+	Real scalar = moneyScalarAdjustmentFilter(player, isRenewable);
 	if (scalar != 1.0f)
 	{
+		// Record the money added by cheats (if the scalar is under 1.0, this will be negative - that's technically right)
+		// Note that 'RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE''s reduction is not part of this.
+		// ---
+		// Getting the difference between the 'adjustedMoney' and original input to avoid the risk of more rounding error
+		//Int moneyAddedByScalarCheats = (Int)(((Real)amountToDeposit) * (scalar - 1.0f));
+		Int adjustedMoney = (Int)(((Real)amountToDeposit) * scalar);
+		Int moneyAddedByScalarCheats = adjustedMoney - (Int)amountToDeposit;
+		player->getScoreKeeper()->addMoneyEarned(moneyAddedByScalarCheats, MONEYSOURCE_SCALARCHEATS);
 		return (UnsignedInt)(((Real)amountToDeposit) * scalar);
 	}
 
 	return amountToDeposit;
+}
+
+// Variant to specify a scalar to apply in addition to the one decided by the presence of cheats for this player.
+// This additional 'preScalar' is not considered part of cheats - its impact won't be part of the
+// 'MONEYSOURCE_SCALARCHEATS' money bucket.
+UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit, Bool isRenewable, Real preScalar)
+{
+	Real scalar = moneyScalarAdjustmentFilter(player, isRenewable);
+	if (scalar != 1.0f)
+	{
+		Int adjustedMoney = (Int)(((Real)amountToDeposit) * (preScalar * scalar));
+		Int moneyAddedByScalarCheats = adjustedMoney - (Int)((Real)amountToDeposit * preScalar);
+		player->getScoreKeeper()->addMoneyEarned(moneyAddedByScalarCheats, MONEYSOURCE_SCALARCHEATS);
+		return (UnsignedInt)(((Real)amountToDeposit) * scalar);
+	}
+
+	return (UnsignedInt)(amountToDeposit * preScalar);
 }
 #endif // RUN_EXTRA_MONEY_CHEATS
 
@@ -1871,10 +1916,246 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 #endif // RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS
 
 
-//MODDD - debugging
-#include <fstream>
-#include <iomanip>
-#include "GameLogic/Module/ContainModule.h"
+int printBuffer_spaces(char* dest, int spacesToAdd)
+{
+	int i;
+	for (i = 0; i < spacesToAdd; ++i)
+	{
+		dest[i] = ' ';
+	}
+	return spacesToAdd;
+}
+
+// NOTE - does not handle null char termination!
+int printBuffer_text(char* dest, size_t destCount, const char* val)
+{
+	int res = 0;
+	int len = strlen(val);
+	if (len > destCount)
+	{
+		// clip it
+		len = destCount;
+	}
+	memcpy(&dest[res], val, len);
+	res += len;
+	return res;
+}
+
+// NOTE - does not handle null char termination!
+int printBuffer_textLeftAligned(char* dest, size_t destCount, const char* val)
+{
+	int res = 0;
+	res += printBuffer_text(&dest[0], destCount, val);
+
+	if (res < destCount)
+	{
+		// add padding spaces to the right
+		res += printBuffer_spaces(&dest[res], destCount - res);
+	}
+	return res;
+}
+
+int printBuffer_numberRightAlignedSep(char* dest, size_t destCount, int val)
+{
+	int res = 0;
+	static char buf[64];
+	bool isNeg = (val < 0);
+	if (isNeg)
+	{
+		// invert to remove the minus sign from the resulting as-string conversion
+		val *= -1;
+	}
+	//std::string val_s = std::to_string(val);
+	snprintf(buf, 64, "%d", val);
+	int len = strlen(buf);
+	// 1 less to the len if negative - want digits, don't include the minus
+	int digitGroupCount = (int)ceil((float)len / 3.0f);
+	int digitsThisGroup;
+	int commasToAdd = digitGroupCount - 1;
+	int adjustedLen = len + commasToAdd;
+
+	int modTest = len % 3;
+	if (modTest == 0) modTest += 3;
+	digitsThisGroup = modTest;
+	
+	int read = 0;
+	int skip = 0;
+
+	if (isNeg)
+	{
+		// add 1 for the minus sign
+		++adjustedLen;
+	}
+	
+	if (adjustedLen > destCount)
+	{
+		// uh-oh, not enough space - cut from the left
+		skip = adjustedLen - destCount;
+		adjustedLen = destCount;
+	}
+	
+	res += printBuffer_spaces(&dest[res], destCount - adjustedLen);
+
+	if (skip > 0)
+	{
+		// If the resulting number is too many characters (minus sign, commas included), advance 'read' to start reading
+		// a later character of the as-string conversion of the number to print.
+		// Also shrink vars that affect the final printout like 'digitsThisGroup' and 'digitGroupCount' as more of the
+		// number to use for the printout is skipped.
+		// This mirrors the final printout loop below.
+		// (the minus sign isn't part of this - its space is already factored in as the 1st character if present)
+		int digitGroupCount_mem = digitGroupCount;
+		int i;
+		for (i = 0; i < digitGroupCount_mem; ++i)
+		{
+			int digitsThisGroup_mem = digitsThisGroup;
+			int i2;
+			for (i2 = 0; i2 < digitsThisGroup_mem; ++i2)
+			{
+				--skip;
+				++read;
+				--digitsThisGroup;
+				if (skip == 0)break;
+			}
+			if (skip == 0)break;
+			
+			// reset
+			digitsThisGroup = 3;
+
+			if (i < digitGroupCount_mem - 1)
+			{
+				--skip;
+				// this skipped comma doesn't correspond to a character in the received number so don't increment 'read' here
+				if (skip == 0)
+				{
+					// still reduce this before leaving!
+					--digitGroupCount;
+					break;
+				}
+			}
+			--digitGroupCount;
+		}
+	}
+
+	if (isNeg)
+	{
+		// minus sign
+		dest[res] = '-';
+		++res;
+	}
+	
+	int i;
+	for (i = 0; i < digitGroupCount; ++i)
+	{
+		int i2;
+		for (i2 = 0; i2 < digitsThisGroup; ++i2)
+		{
+			dest[res] = buf[read];
+			++res;
+			++read;
+		}
+		// any other groups after this have all 3 digits
+		digitsThisGroup = 3;
+		if (i < digitGroupCount - 1)
+		{
+			// if another group is coming after, add a group comma
+			dest[res] = ',';
+			++res;
+		}
+	}
+	return res;
+}
+
+// Print out some extra stats per player, since editing ScoreScreen.wnd looks like a nightmarish task. Consider this for
+// not just the retail game ScoreScreen.wnd, but also for any mod you come across.
+// Namely, goes into more detail on the money received per player: from supply collection, renewable sources like
+// supply drop zones or oil derricks, various forms of cheats, etc.
+void extraScoreScreenStatsPrintOut_header()
+{
+	FILE* outputFile = fopen("ScoreScreenExtra.txt", "a");
+	printTimeStamp(outputFile);
+	fputs("\n", outputFile);
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
+	fprintf(outputFile, "Player                        |Start        |Gathered     |Renewable    |Bounty      |Salvage       |Steal        |Steal(Victim)|Scalar Cheats|Map Script   |Total Collect\n");
+#else
+	fprintf(outputFile, "Player                        |Start        |Gathered     |Renewable    |Bounty      |Salvage       |Steal        |Steal(Victim)|Map Script   |Total Collect\n");
+#endif
+	fclose(outputFile);
+}
+
+void extraScoreScreenStatsPrintOut_player(Player* player)
+{
+	ScoreKeeper *scoreKpr = player->getScoreKeeper();
+	if (!scoreKpr)
+		return;
+	
+	//const char* playerName = TheNameKeyGenerator->keyToName(player->getPlayerNameKey()).str();
+	AsciiString playerName;
+	playerName.translate(player->getPlayerDisplayName());
+
+	// Note that start money includes what's added by the 'noob' bonus - I don't think that's worthwhile to separate out.
+	Int moneyStartedWith = scoreKpr->getMoneyStartedWith();
+	// Money from gathering supplies from finite sources - namely supply piles and supply docks. Also counts touching money
+	// crates found on the map or otherwise not called-in by a structure (ex: supply drop zone).
+	Int moneyFromGathering = scoreKpr->getMoneyReceived(MONEYSOURCE_GATHERED);
+	// Money from continual sources of money - namely black markets, hackers, supply drop zone crates, oil derricks.
+	// Going to go ahead and count the initial capture bonus for oil derricks too.
+	Int moneyFromRenewable = scoreKpr->getMoneyReceived(MONEYSOURCE_RENEWABLE);
+	// Money from the GLA bounty effect - going to be 0 if this is non-applicable or a promotion point is never spent on that.
+	Int moneyFromBounty = scoreKpr->getMoneyReceived(MONEYSOURCE_BOUNTY);
+	// Money from collecting salvage piles that happened to give money, also likely only applicable for GLA players.
+	Int moneyFromSalvage = scoreKpr->getMoneyReceived(MONEYSOURCE_SALVAGE);
+	// Money from stealing from other players - cash hack support power, black lotus cash steal, or saboteur infiltration
+	Int moneyFromSteal = scoreKpr->getMoneyReceived(MONEYSOURCE_STEAL);
+	// Money lost to other players using steal abilities on me
+	Int moneyFromStealVictim = scoreKpr->getMoneyReceived(MONEYSOURCE_STEAL_VICTIM);
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
+	// Money from scalar cheats applied to money collected over the course of a game from the 'noob' bonus or AI-player cheats.
+	// This is distinct from money granted by map script - see below.
+	Int moneyFromScalarCheats = scoreKpr->getMoneyReceived(MONEYSOURCE_SCALARCHEATS);
+#endif
+	// Money granted to a player after the start of a game by map script, typically very often to make it seem as though
+	// a computer player has infinite money - a lot of mods do this for generals challenge maps and possibly skirmish AI
+	// for harder difficulties.
+	Int moneyFromMapScript = scoreKpr->getMoneyReceived(MONEYSOURCE_MAPSCRIPT);
+	// Total money collected over the course of a game - sum of everything above except for start money.
+	// Note that the 'supplied collected' shown in the score screen still doesn't factor in money granted by map scripts even after the start of a game, so adding it in here.
+	Int moneyTotalCollected = scoreKpr->getTotalMoneyCollected();
+
+	FILE* outputFile = fopen("ScoreScreenExtra.txt", "a");
+	static char lineBuffer[512];
+	int off = 0;
+
+	off += printBuffer_textLeftAligned(&lineBuffer[off], 30, playerName.str());
+
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyStartedWith);
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromGathering);
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromRenewable);
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromBounty);
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromSalvage);
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromSteal);
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromStealVictim);
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromScalarCheats);
+#endif
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromMapScript);
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyTotalCollected);
+
+	fputs(lineBuffer, outputFile);
+
+	fclose(outputFile);
+}
+
 
 //MODDD - DEBUG
 Bool checkIfObjInDestroyList(const Object* objCheck)
@@ -2114,3 +2395,5 @@ void objectContainedByOnDeleteCheck(Object* currentObject, int callSource)
 		}
 	}
 }
+
+}// namespace rts_extra

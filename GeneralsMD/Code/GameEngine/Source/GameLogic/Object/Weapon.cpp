@@ -1946,7 +1946,7 @@ void WeaponStore::postProcessLoad()
 	//MODDD - since there isn't a 'validate' method to call like 'thingTemplate->validate()' in ThingFactory.cpp,
 	// handle post-processing here
 #if CUSTOM_ATTRIBUTE_CHANGES
-	automaticWeaponTemplateChanges(weapon);
+	rts_extra::automaticWeaponTemplateChanges(weapon);
 #endif
 	//MODDD
 	weapon->validateAutoReloadWhenIdleFrames();
@@ -2061,7 +2061,7 @@ void Weapon::computeBonus(const Object *source, WeaponBonusConditionFlags extraB
 
 	//MODDD
 	#if CUSTOM_ATTRIBUTE_CHANGES
-	addCustomWeaponBonuses(this, source, bonus);
+	rts_extra::addCustomWeaponBonuses(this, source, bonus);
 	#endif
 }
 

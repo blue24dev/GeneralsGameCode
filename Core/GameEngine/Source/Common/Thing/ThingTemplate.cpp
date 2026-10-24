@@ -1182,7 +1182,7 @@ void ThingTemplate::validateAudio()
 void ThingTemplate::validate()
 {
 	//MODDD
-  automaticThingTemplateChanges(this);
+  rts_extra::automaticThingTemplateChanges(this);
 	determineHasInactiveBodyModule();
 
 	if (m_shadowTextureName.isEmpty())
@@ -1623,7 +1623,7 @@ Int ThingTemplate::calcTimeToBuild( const Player* player) const
 	//MODDD - cheat filter
 #if RUN_BUILD_TIME_CHEATS || NOOB_MODE
 	// If using cheats, let this filter decide if and how to apply them
-	Int buildTime = buildTimeAdjustmentFilter(player, this);
+	Int buildTime = rts_extra::buildTimeAdjustmentFilter(player, this);
 #else
 	// retail - nothing special
 	Int buildTime = getBuildTime() * LOGICFRAMES_PER_SECOND;

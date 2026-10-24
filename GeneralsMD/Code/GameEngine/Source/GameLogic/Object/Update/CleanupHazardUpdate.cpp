@@ -81,6 +81,8 @@ CleanupHazardUpdate::CleanupHazardUpdate( Thing *thing, const ModuleData* module
 	m_weaponTemplate						= nullptr;
 	m_moveRange									= 0.0f;
 	m_pos.zero();
+	//MODDD
+	m_cleanAll = false;
 
 }
 
@@ -145,6 +147,8 @@ UpdateSleepTime CleanupHazardUpdate::update()
 			{
 				//Either the player or a script gave a NEW order so abandon the cleanup area cause.
 				m_moveRange = 0.0f;
+				//MODDD - also go back to not cleaning up allied-produced biohazards
+				m_cleanAll = false;
 				return UPDATE_SLEEP_NONE;
 			}
 		}
@@ -177,6 +181,8 @@ UpdateSleepTime CleanupHazardUpdate::update()
 			{
 				//Abort clean area because there's nothing left to clean!
 				m_moveRange = 0.0f;
+				//MODDD - also go back to not cleaning up allied-produced biohazards
+				m_cleanAll = false;
 			}
 			else
 			{
@@ -264,9 +270,21 @@ Object* CleanupHazardUpdate::scanClosestTarget()
 	Object *bestTargetInRange = nullptr;
 	m_bestTargetID = INVALID_ID;
 
+	//MODDD - NEW - require being for a neutral or enemy player - ignore allied-produced hazards by default
+	// If the new 'm_cleanAll' is set, also allow allied sources
+	Int allowedRelationships = PartitionFilterRelationship::ALLOW_NEUTRAL | PartitionFilterRelationship::ALLOW_ENEMIES;
+	if (m_cleanAll)
+	{
+		allowedRelationships |= PartitionFilterRelationship::ALLOW_ALLIES;
+	}
+
 	PartitionFilterAcceptByKindOf kindFilter(MAKE_KINDOF_MASK(KINDOF_CLEANUP_HAZARD), KINDOFMASK_NONE);
-	PartitionFilterSameMapStatus filterMapStatus(getObject());
-	PartitionFilter* filters[] = { &kindFilter, &filterMapStatus, nullptr };
+	//MODDD - why use 'getObject()' instead of 'me'?
+	PartitionFilterSameMapStatus filterMapStatus(me);
+	//MODDD - new filter: allow deciding whether to cleanup allied-produced biohazards
+	PartitionFilterRelationship filterRelationship(me, allowedRelationships);
+	//MODDD - added 'filterRelationship'
+	PartitionFilter* filters[] = { &kindFilter, &filterRelationship, &filterMapStatus, nullptr };
 
 	if( m_moveRange > 0.0f )
 	{
@@ -299,6 +317,8 @@ void CleanupHazardUpdate::setCleanupAreaParameters( const Coord3D *pos, Real ran
 	//from the specified position.
 	m_moveRange = range;
 	m_pos = *pos;
+	//MODDD - record that this has been set to know to cleanup any toxins from using such a deliberate command
+	m_cleanAll = true;
 
 	if( ai )
 	{

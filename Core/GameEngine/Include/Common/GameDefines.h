@@ -196,7 +196,8 @@
 #endif
 
 #ifndef ALLOW_MONEY_PER_MINUTE_FOR_PLAYER
-#define ALLOW_MONEY_PER_MINUTE_FOR_PLAYER (0) // When enabled, a money-per-minute stat is calculated and displayed in-game
+//MODDD - sure, let's try this out - changed from 0 to 1
+#define ALLOW_MONEY_PER_MINUTE_FOR_PLAYER (1) // When enabled, a money-per-minute stat is calculated and displayed in-game
 #endif
 
 // Previously the configurable shroud sat behind #if defined(RTS_DEBUG)
@@ -652,7 +653,7 @@
 // ----------------------------------------------------------------------------------------------------------
 // Some post-setting convenience features
 #if CUSTOM_ATTRIBUTE_CHANGES
-	#define HEALTH_ADJUSTMENT_FILTER(_obj, _health) _health = healthAdjustmentFilter(_obj, _health);
+	#define HEALTH_ADJUSTMENT_FILTER(_obj, _health) _health = rts_extra::healthAdjustmentFilter(_obj, _health);
 #else
 	// nothing - no effect
 	#define HEALTH_ADJUSTMENT_FILTER(_obj, _health)
@@ -660,26 +661,49 @@
 
 #if CUSTOM_ATTRIBUTE_CHANGES
 	// run through the filter
-	#define SPECIALPOWER_RELOADTIME_ADJUSTMENT_FILTER(_obj, _reloadTime, _isSharedNSync) _reloadTime = specialPowerReloadTimeAdjustmentFilter(_obj, _reloadTime, _isSharedNSync);
+	#define SPECIALPOWER_RELOADTIME_ADJUSTMENT_FILTER(_obj, _reloadTime, _isSharedNSync) _reloadTime = rts_extra::specialPowerReloadTimeAdjustmentFilter(_obj, _reloadTime, _isSharedNSync);
 #else
 	// nothing - no effect
 	#define SPECIALPOWER_RELOADTIME_ADJUSTMENT_FILTER(_obj, _reloadTime, _isSharedNSync)
 #endif
 
+// no-cheat variants for any compile to use if explicitly requested
+#define RECEIVE_MONEY_FILTER_NOCHEAT(_player, _moneyAmount, _isRenewable, _moneySource)\
+_player->getMoney()->deposit(_moneyAmount);\
+_player->getScoreKeeper()->addMoneyEarned(_moneyAmount, _moneySource);
+#define RECEIVE_MONEY_FILTER_EX_NOCHEAT(_player, _moneyAmount, _isRenewable, _preScalar, _moneySource)\
+_moneyAmount = (Real)_moneyAmount * _preScalar;\
+_player->getMoney()->deposit(_moneyAmount);\
+_player->getScoreKeeper()->addMoneyEarned(_moneyAmount, _moneySource);
+
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 	// run through the filter to see if this player benefits from cheats
-	#define APPLY_MONEY_CHEAT(_player, _moneyAmount) _moneyAmount = getCheatAdjustedMoneyAmount(_player, _moneyAmount);
+	#define RECEIVE_MONEY_FILTER(_player, _moneyAmount, _isRenewable, _moneySource)\
+UnsignedInt _moneyAmount##_original = _moneyAmount;\
+_moneyAmount = rts_extra::getCheatAdjustedMoneyAmount(_player, _moneyAmount, _isRenewable);\
+_player->getMoney()->deposit(_moneyAmount);\
+_player->getScoreKeeper()->addMoneyEarned(_moneyAmount##_original, _moneySource);
+	#define RECEIVE_MONEY_FILTER_EX(_player, _moneyAmount, _isRenewable, _preScalar, _moneySource) _moneyAmount = rts_extra::getCheatAdjustedMoneyAmount(_player, _moneyAmount, _isRenewable, _preScalar);\
+UnsignedInt _moneyAmount##_original = _moneyAmount * _preScalar;\
+_moneyAmount = rts_extra::getCheatAdjustedMoneyAmount(_player, _moneyAmount, _isRenewable, _preScalar);\
+_player->getMoney()->deposit(_moneyAmount);\
+_player->getScoreKeeper()->addMoneyEarned(_moneyAmount##_original, _moneySource);
 #else
-	// nothing - no effect
-	#define APPLY_MONEY_CHEAT(_player, _moneyAmount)
+	// no effect, just do the 'deposit'/'addMoneyEarned' this now replaces
+	#define RECEIVE_MONEY_FILTER(_player, _moneyAmount, _isRenewable, _moneySource) RECEIVE_MONEY_FILTER_NOCHEAT(_player, _moneyAmount, _isRenewable, _moneySource)
+	#define RECEIVE_MONEY_FILTER_EX(_player, _moneyAmount, _isRenewable, _preScalar, _moneySource) RECEIVE_MONEY_FILTER_EX_NOCHEAT(_player, _moneyAmount, _isRenewable, _preScalar, _moneySource)
 #endif
 
 // If any of these flags is set, several places need to be aware
+/*
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE || RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE
 	#define MONEY_AUTO_ADJUSTMENT_SUPPORT 1
 #else
 	#define MONEY_AUTO_ADJUSTMENT_SUPPORT 0
 #endif
+*/
+// Nope - on all the time now! pending to reorganize a bit
+#define MONEY_AUTO_ADJUSTMENT_SUPPORT 1
 
 #if MONEY_AUTO_ADJUSTMENT_SUPPORT || MONEY_CRATE_DROP_SAFETY
 	#define EXTRA_MONEY_CRATE_OCL_TRACKING 1

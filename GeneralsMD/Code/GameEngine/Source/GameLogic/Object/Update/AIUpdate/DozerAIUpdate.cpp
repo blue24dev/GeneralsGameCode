@@ -601,7 +601,7 @@ StateReturnType DozerActionDoActionState::update()
 							create->onBuildComplete();
 						}
 						*/
-						call_objectOnBuildComplete(goalObject, TRUE);
+						rts_extra::call_objectOnBuildComplete(goalObject, TRUE);
 					}
 
 					// Creation is another valid and essential time to call this.  This building now Looks.
