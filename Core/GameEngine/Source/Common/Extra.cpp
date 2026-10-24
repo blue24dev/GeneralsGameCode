@@ -2076,9 +2076,9 @@ void extraScoreScreenStatsPrintOut_header()
 	printTimeStamp(outputFile);
 	fputs("\n", outputFile);
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
-	fprintf(outputFile, "Player                        |Start        |Gathered     |Renewable    |Bounty      |Salvage       |Steal        |Steal(Victim)|Scalar Cheats|Map Script   |Total Collect\n");
+	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Bounty       |Salvage        |Steal         |Steal (Victim)|Scalar Cheats |Map Script    |Total Collect \n");
 #else
-	fprintf(outputFile, "Player                        |Start        |Gathered     |Renewable    |Bounty      |Salvage       |Steal        |Steal(Victim)|Map Script   |Total Collect\n");
+	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Bounty       |Salvage        |Steal         |Steal (Victim)|Map Script    |Total Collect \n");
 #endif
 	fclose(outputFile);
 }
@@ -2150,6 +2150,8 @@ void extraScoreScreenStatsPrintOut_player(Player* player)
 	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromMapScript);
 	off += printBuffer_text(&lineBuffer[off], 1, "|");
 	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyTotalCollected);
+
+	off += printBuffer_text(&lineBuffer[off], 1, "\n");
 
 	fputs(lineBuffer, outputFile);
 
