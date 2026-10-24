@@ -118,7 +118,7 @@ public:
 
 	//MODDD - also, instead of expecting every single ObjectCreationNugget subclass to implement this, letting a default redirect to the normal 'create' overload
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-	virtual Object* create_RECoMCCiO( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+	virtual Object* create_alt( Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const
 	{
 		return create(primaryObj, primary, secondary, angle, lifetimeFrames);
 	}
@@ -133,7 +133,7 @@ public:
 
 	//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-	virtual Object* create_RECoMCCiO( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const;
+	virtual Object* create_alt( Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const;
 #endif
 
 	/**
@@ -145,7 +145,7 @@ public:
 
 	//MODDD - also, instead of expecting every single ObjectCreationNugget subclass to implement this, letting a default redirect to the normal 'create' overload
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-	virtual Object* create_RECoMCCiO( Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Bool createOwner, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const
+	virtual Object* create_alt( Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Bool createOwner, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const
 	{
 		return create(primaryObj, primary, secondary, createOwner, lifetimeFrames);
 	}
@@ -226,10 +226,10 @@ public:
 
 	//MODDD - overload to take a bool for being for a renewable income source (eventually produces money crates)
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-	static Object* create_RECoMCCiO(const ObjectCreationList* ocl, Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex )
+	static Object* create_alt(const ObjectCreationList* ocl, Object* primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex )
 	{
 		if (ocl)
-			return ocl->createInternal_RECoMCCiO( primaryObj, primary, secondary, angle, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+			return ocl->createInternal_alt( primaryObj, primary, secondary, angle, lifetimeFrames, OCLSourcePlayerIndex );
 		return nullptr;
 	}
 #endif
@@ -247,10 +247,10 @@ public:
 
 	//MODDD - overload to take a bool for being for a renewable income source (eventually produces money crates)
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-	static Object* create_RECoMCCiO( const ObjectCreationList* ocl, Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex )
+	static Object* create_alt( const ObjectCreationList* ocl, Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex )
 	{
 		if (ocl)
-			return ocl->createInternal_RECoMCCiO( primary, secondary, lifetimeFrames, runExtraChecksOnMoneyCrateCollideInObjs_playerIndex );
+			return ocl->createInternal_alt( primary, secondary, lifetimeFrames, OCLSourcePlayerIndex );
 		return nullptr;
 	}
 #endif
@@ -279,7 +279,7 @@ private:
 
 	//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-	Object* createInternal_RECoMCCiO(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex) const;
+	Object* createInternal_alt(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex) const;
 #endif
 
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primary'
@@ -287,7 +287,7 @@ private:
 	
 	//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-	Object* createInternal_RECoMCCiO(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const;
+	Object* createInternal_alt(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const;
 #endif
 
 	// note, this list doesn't own the nuggets; all nuggets are owned by the Store.

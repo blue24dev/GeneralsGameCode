@@ -1244,7 +1244,7 @@ void ScriptActions::createUnitOnTeamAt(const AsciiString& unitName, const AsciiS
 				TheAI->pathfinder()->addObjectToPathfindMap(obj);
 		  }
 			//MODDD - in case of other things expected during setup like LockWeaponCreate
-			call_objectOnBuildComplete(obj);
+			rts_extra::call_objectOnBuildComplete(obj);
 		}
 	} else {
 		DEBUG_LOG(("WARNING - ThingTemplate '%s' not found.", objType.str()));
@@ -4275,14 +4275,15 @@ void ScriptActions::doSetMoney(const AsciiString& playerName, Int money)
 	
 	//MODDD - if this is a deposit, add the money, mainly so money given to AI players can be seen and you can feel less bad
 	// (not sure if some maps could just force the money to a certain amount instead of adding to it)
-	// also - don't count money granted at the start of a game, not that that would be too impactful - the frame # check should handle that
-	if (TheGameLogic->getFrame() > 5)
+	if (TheGameLogic->getFrame() < 5)
 	{
-		Int moneyDelta = money - (Int)moneyValPre;
-		if (moneyDelta > 0)
-		{
-			player->getScoreKeeper()->addMoneyEarned( moneyDelta );
-		}
+		// consider this the start of the game - replace whatever start money value there is
+		player->getScoreKeeper()->setMoneyStartedWith(money);
+	}
+	else
+	{
+		// consider this during the game
+		player->getScoreKeeper()->onMoneySet(moneyValPre, money);
 	}
 }
 
@@ -4306,10 +4307,16 @@ void ScriptActions::doGiveMoney(const AsciiString& playerName, Int money)
 	else
 		m->deposit(money);
 
-	//MODDD - if this is a deposit, add the money to the score, mainly so money given to AI players can be seen and you can feel less bad
-	if (money > 0)
+	//MODDD - handle score for this
+	if (TheGameLogic->getFrame() < 5)
 	{
-		player->getScoreKeeper()->addMoneyEarned( money );
+		// consider this the start of the game - replace whatever start money value there is
+		player->getScoreKeeper()->setMoneyStartedWith(m->countMoney());
+	}
+	else
+	{
+		// consider this during the game
+		player->getScoreKeeper()->addMoneyEarned( money, MONEYSOURCE_MAPSCRIPT );
 	}
 }
 

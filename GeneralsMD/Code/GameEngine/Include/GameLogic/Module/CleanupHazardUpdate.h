@@ -87,4 +87,6 @@ protected:
 	//Cleanup area (temporary values).
 	Coord3D m_pos;
 	Real		m_moveRange;
+	//MODDD
+	Bool m_cleanAll;
 };

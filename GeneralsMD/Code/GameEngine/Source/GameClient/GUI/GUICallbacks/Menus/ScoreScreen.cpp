@@ -316,6 +316,10 @@ void ScoreScreenInit( WindowLayout *layout, void *userData )
 		buttonSaveReplay->winEnable(FALSE);
 
 	s_needToFinishSinglePlayerInit = FALSE;
+	
+	//MODDD
+	rts_extra::extraScoreScreenStatsPrintOut_header();
+
 	if (TheGameLogic->isInReplayGame())
 	{
 		if (buttonSaveReplay)
@@ -378,7 +382,6 @@ void ScoreScreenInit( WindowLayout *layout, void *userData )
 		s_blankLayout->hide(FALSE);
 		s_blankLayout->bringForward();
 	}
-
 }
 
 void FixupScoreScreenMovieWindow()
@@ -1422,6 +1425,9 @@ static inline int CheckForApocalypse( ScoreKeeper *s, const char* szWeapon )
 //-------------------------------------------------------------------------------------------------
 void populatePlayerInfo( Player *player, Int pos)
 {
+	//MODDD - going on to fill out a row on the score screen for a player, so go ahead and print out extra info for this player too
+	rts_extra::extraScoreScreenStatsPrintOut_player(player);
+
 	if(!player || pos < 0 || pos >= MAX_SLOTS)
 		return;
 	Color color = player->getPlayerColor();

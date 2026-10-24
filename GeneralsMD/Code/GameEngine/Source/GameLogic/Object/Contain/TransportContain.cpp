@@ -473,7 +473,7 @@ void TransportContain::createPayload()
 
 			//MODDD - should run this. Ex: 'LockWeaponCreate::onBuildComplete()' was being missed in units spawned
 			// through support powers, causing slightly different behavior from units made normally (called that).
-			call_objectOnBuildComplete(payload);
+			rts_extra::call_objectOnBuildComplete(payload);
 
 		}
 		contain->enableLoadSounds( TRUE );

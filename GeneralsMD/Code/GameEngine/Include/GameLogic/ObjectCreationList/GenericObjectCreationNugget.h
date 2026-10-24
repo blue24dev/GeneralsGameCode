@@ -36,14 +36,14 @@ public:
 	
 	//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-	virtual Object* create_RECoMCCiO(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const override;
+	virtual Object* create_alt(Object* primary, const Object* secondary, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const override;
 #endif
 
 	virtual Object* create(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames = 0 ) const override;
 
 	//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-	virtual Object* create_RECoMCCiO(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const override;
+	virtual Object* create_alt(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Real angle, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const override;
 #endif
 
 	//MODDD - public so hijacker-related script can apply the initial force a particular OCL would extert on a spawned
@@ -70,7 +70,7 @@ protected:
 	Object* reallyCreate(const Coord3D *pos, const Matrix3D *mtx, Real orientation, const Object *sourceObj, UnsignedInt lifetimeFrames ) const;
 	//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-	Object* reallyCreate_RECoMCCiO(const Coord3D *pos, const Matrix3D *mtx, Real orientation, const Object *sourceObj, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const;
+	Object* reallyCreate_alt(const Coord3D *pos, const Matrix3D *mtx, Real orientation, const Object *sourceObj, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const;
 #endif
 	static void parseDebrisObjectNames( INI* ini, void *instance, void *store, const void* /*userData*/ );
 

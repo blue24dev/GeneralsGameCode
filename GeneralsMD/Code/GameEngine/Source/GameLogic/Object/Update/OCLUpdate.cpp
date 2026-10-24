@@ -243,7 +243,7 @@ UpdateSleepTime OCLUpdate::update()
 				{
 					playerIndexToSend |= (1 << 31);
 				}
-				ObjectCreationList::create_RECoMCCiO( data->m_ocl, getObject(), &creationCoord, getObject()->getPosition(), getObject()->getOrientation(), 0, playerIndexToSend );
+				ObjectCreationList::create_alt( data->m_ocl, getObject(), &creationCoord, getObject()->getPosition(), getObject()->getOrientation(), 0, playerIndexToSend );
 			}
 			else
 #endif

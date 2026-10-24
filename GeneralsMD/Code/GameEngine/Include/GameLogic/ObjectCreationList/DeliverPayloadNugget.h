@@ -41,7 +41,7 @@ public:
 
 	//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-	virtual Object* create_RECoMCCiO(Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const override;
+	virtual Object* create_alt(Object *primaryObj, const Coord3D *primary, const Coord3D *secondary, Real angle, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const override;
 #endif
 
 	//MODDD - disarming mines gives experience. Removed 'const' on 'primaryObj'
@@ -49,7 +49,7 @@ public:
 	
 	//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
-	virtual Object* create_RECoMCCiO(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames, Int runExtraChecksOnMoneyCrateCollideInObjs_playerIndex ) const override;
+	virtual Object* create_alt(Object* primaryObj, const Coord3D *primary, const Coord3D* secondary, Bool createOwner, UnsignedInt lifetimeFrames, Int OCLSourcePlayerIndex ) const override;
 #endif
 
 	static void parsePayload( INI* ini, void *instance, void *store, const void* /*userData*/ );

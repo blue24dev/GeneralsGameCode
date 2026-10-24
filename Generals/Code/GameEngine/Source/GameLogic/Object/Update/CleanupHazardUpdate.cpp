@@ -265,13 +265,8 @@ Object* CleanupHazardUpdate::scanClosestTarget()
 	m_bestTargetID = INVALID_ID;
 
 	PartitionFilterAcceptByKindOf kindFilter(MAKE_KINDOF_MASK(KINDOF_CLEANUP_HAZARD), KINDOFMASK_NONE);
-	//MODDD - why use 'getObject()' instead of 'me'?
-	PartitionFilterSameMapStatus filterMapStatus(me);
-
-	//MODDD -  require being for a neutral or enemy player - ignore allied-produced hazards by default
-	PartitionFilterRelationship filterRelationship(me, PartitionFilterRelationship::ALLOW_NEUTRAL | PartitionFilterRelationship::ALLOW_ENEMIES);
-	//MODDD - added 'filterRelationship'
-	PartitionFilter* filters[] = { &kindFilter, &filterRelationship, &filterMapStatus, nullptr };
+	PartitionFilterSameMapStatus filterMapStatus(getObject());
+	PartitionFilter* filters[] = { &kindFilter, &filterMapStatus, nullptr };
 
 	if( m_moveRange > 0.0f )
 	{
