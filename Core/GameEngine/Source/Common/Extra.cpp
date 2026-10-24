@@ -2063,9 +2063,9 @@ void extraScoreScreenStatsPrintOut_header()
 	printTimeStamp(outputFile);
 	fputs("\n", outputFile);
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
-	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Bounty       |Salvage        |Steal         |Steal (Victim)|Scalar Cheats |Map Script    |Total Collect \n");
+	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Bounty        |Salvage       |Steal         |Steal (Victim)|Scalar Cheats |Map Script    |Total Collect \n");
 #else
-	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Bounty       |Salvage        |Steal         |Steal (Victim)|Map Script    |Total Collect \n");
+	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Bounty        |Salvage       |Steal         |Steal (Victim)|Map Script    |Total Collect \n");
 #endif
 	fclose(outputFile);
 }
@@ -2168,7 +2168,7 @@ void printTimeStamp(FILE* outputFile)
 	fprintf
 	(
 		outputFile,
-		"%u-%2u-%2u %2u:%2u:%2u.%3u Frame: %u",
+		"%u-%02u-%02u %02u:%02u:%02u.%03u Frame: %u",
 		lt.wYear,
 		lt.wMonth,
 		lt.wDay,
