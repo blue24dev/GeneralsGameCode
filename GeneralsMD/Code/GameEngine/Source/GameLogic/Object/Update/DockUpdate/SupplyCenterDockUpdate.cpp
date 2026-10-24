@@ -123,13 +123,10 @@ Bool SupplyCenterDockUpdate::action( Object* docker, Object *drone )
 
 	if( value > 0)
 	{
-		Money *ownerPlayerMoney = ownerPlayer->getMoney();
-
 		//MODDD - money cheat check
-		APPLY_MONEY_CHEAT(ownerPlayer, value)
+		RECEIVE_MONEY_FILTER(ownerPlayer, value, FALSE, MONEYSOURCE_GATHERED)
 
-		ownerPlayerMoney->deposit(value);
-		ownerPlayer->getScoreKeeper()->addMoneyEarned(value);
+		//MODDD - 'deposit'/'addMoneyEarned' calls are now part of above
 
 
 		if( data->m_grantTemporaryStealthFrames > 0 )

@@ -642,7 +642,7 @@ void GameEngine::init()
 		initSubsystem(TheGameResultsQueue,"TheGameResultsQueue", GameResultsInterface::createNewGameResultsInterface(), nullptr);
 
 		//MODDD
-		automaticChangesPostINIParsing();
+		rts_extra::automaticChangesPostINIParsing();
 
 	#ifdef DUMP_PERF_STATS///////////////////////////////////////////////////////////////////////////
 	GetPrecisionTimer(&endTime64);//////////////////////////////////////////////////////////////////

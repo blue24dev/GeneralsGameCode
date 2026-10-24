@@ -9,9 +9,6 @@
 
 #pragma once
 
-// This is one cool include!
-#include "Common/STLTypedefs.h"
-
 class Player;
 class ThingTemplate;
 class WeaponTemplate;
@@ -28,6 +25,8 @@ extern int g_dummy;
 extern std::vector<int> g_destroyObjectSource;
 #endif
 
+namespace rts_extra
+{
 //MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
 void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCreateCalls = FALSE);
 
@@ -37,6 +36,8 @@ Real getShroudClearingRangeForLookAdjusted(const Object* obj);
 Int getUpgradedSupplyBoost(const Object* collectingObject, const std::list<upgradePair>* upgradeBoostList);
 void automaticThingTemplateChanges(ThingTemplate* _this);
 void automaticChangesPostINIParsing();
+void automaticChangesPostINIParsing_things();
+void automaticChangesPostINIParsing_thing(ThingTemplate* _this);
 
 #if CUSTOM_ATTRIBUTE_CHANGES
 void automaticWeaponTemplateChanges(WeaponTemplate* _this);
@@ -53,8 +54,9 @@ void automaticGlobalDataChanges();
 #endif
 
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
-Real moneyScalarAdjustmentFilter(const Player* player);
-UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit);
+Real moneyScalarAdjustmentFilter(const Player* player, Bool isRenewable);
+UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit, Bool isRenewable);
+UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit, Bool isRenewable, Real preScalar);
 #endif
 #if RUN_BUILD_TIME_CHEATS || NOOB_MODE
 Int buildTimeAdjustmentFilter(const Player* player, const ThingTemplate* tt);
@@ -62,6 +64,9 @@ Int buildTimeAdjustmentFilter(const Player* player, const ThingTemplate* tt);
 #if RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS || NOOB_MODE
 Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModifier);
 #endif
+
+void extraScoreScreenStatsPrintOut_header();
+void extraScoreScreenStatsPrintOut_player(Player* player);
 
 //MODDD - DEBUG
 Bool checkIfObjInDestroyList(const Object* objCheck);
@@ -73,3 +78,5 @@ void printDeletionCriticalInfo(FILE* outputFile, const Object* objToPrint, const
 void printItemsInContainedList(FILE* outputFile, const Object* objContainer);
 void printItemsInContainedList(FILE* outputFile, const Object* objContainer, const Object* objToLookFor);
 void objectContainedByOnDeleteCheck(Object* currentObject, int callSource);
+
+}// namespace rts_extra

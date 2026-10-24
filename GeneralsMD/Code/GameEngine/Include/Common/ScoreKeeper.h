@@ -62,6 +62,24 @@ class ThingTemplate;
 //-----------------------------------------------------------------------------
 // TYPE DEFINES ///////////////////////////////////////////////////////////////
 //-----------------------------------------------------------------------------
+
+//MODDD - enum for 'addMoneyEarned' to be able to categorize the income source
+enum MoneySourceType CPP_11(: Int)
+{
+	MONEYSOURCE_GATHERED,
+	MONEYSOURCE_RENEWABLE,
+	MONEYSOURCE_BOUNTY,
+	MONEYSOURCE_SALVAGE,
+	MONEYSOURCE_STEAL,
+	MONEYSOURCE_STEAL_VICTIM,
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
+	MONEYSOURCE_SCALARCHEATS,
+#endif
+	MONEYSOURCE_MAPSCRIPT,
+
+	MONEYSOURCE_COUNT
+};
+
 class ScoreKeeper : public Snapshot
 {
 public:
@@ -71,8 +89,18 @@ public:
 	void reset( Int playerIdx );			///< Zero out the variables
 	Int calculateScore();				///< Performs the equation to calculate the score
 
+	//MODDD - new
+	Int getMoneyStartedWith();
+	void setMoneyStartedWith( Int money );
+
+	//MODDD - new
+	Int getMoneyReceived( MoneySourceType moneySource );
+	Int getTotalMoneyCollected();
+	void onMoneySet( Int moneyOld, Int moneyNew );
+
 	void addMoneySpent( Int money );								///< Adds money to the amount spent
-	void addMoneyEarned( Int money );								///< Adds money to the earned amount
+	//MODDD - added 'moneySource' param
+	void addMoneyEarned( Int money, MoneySourceType moneySource );								///< Adds money to the earned amount
 
 	void addObjectBuilt( const Object *o );
 	void addObjectDestroyed( const Object *o );
@@ -117,6 +145,14 @@ private:
 	Int m_totalFactionBuildingsCaptured;	///< The total number of faction buildings captured
 	Int m_currentScore;								///< Based off the stats, this is the current score
 
+	//MODDD - record how much money the player actually started with.
+	// Could be overwritten by map scripts in the first frame so this will record the final value the player most likely
+	// actually began the game with at frame #0. (unfortunately this won't be accurate if a map script fudges that momentarily after)
+	Int m_moneyStartedWith;
+	//MODDD - be able to record money per type of income source.
+	// This is in addition to 'm_totalMoneyEarned' to preserve how retail shows it in the score screen & involves it in the final score.
+	Int m_moneyReceived[MONEYSOURCE_COUNT];
+
 	Int m_myPlayerIdx;								///< We need to not score kills on ourselves... so we need to know who we are
 
 	typedef std::map<const ThingTemplate *, Int> ObjectCountMap;
@@ -132,8 +168,9 @@ private:
 //-----------------------------------------------------------------------------
 // INLINING ///////////////////////////////////////////////////////////////////
 //-----------------------------------------------------------------------------
-inline void ScoreKeeper::addMoneySpent( Int money )							{	m_totalMoneySpent += money; }
-inline void ScoreKeeper::addMoneyEarned( Int money )						{	m_totalMoneyEarned += money; }
+//MODDD - implementation moved to .cpp file
+//inline void ScoreKeeper::addMoneySpent( Int money )							{	m_totalMoneySpent += money; }
+//inline void ScoreKeeper::addMoneyEarned( Int money )						{	m_totalMoneyEarned += money; }
 
 //-----------------------------------------------------------------------------
 // EXTERNALS //////////////////////////////////////////////////////////////////

@@ -601,7 +601,7 @@ static Object * placeObjectAtPosition(Int slotNum, AsciiString objectTemplateNam
 			create->onBuildComplete();
 		}
 		*/
-		call_objectOnBuildComplete(obj);
+		rts_extra::call_objectOnBuildComplete(obj);
 
 		// Since the team now has members, activate it.
 		// srj sez: team should not be null, but could be for ill-formed user maps. so don't crash.
@@ -2374,7 +2374,7 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 					create->onBuildComplete();
 				}
 				*/
-				call_objectOnBuildComplete(obj);
+				rts_extra::call_objectOnBuildComplete(obj);
 
 				// Since the team now has members, activate it.
 				team->setActive();
@@ -4223,7 +4223,7 @@ static void unitTimings()
 							create->onBuildComplete();
 						}
 						*/
-						call_objectOnBuildComplete(obj);
+						rts_extra::call_objectOnBuildComplete(obj);
 						// Since the team now has members, activate it.
 						team->setActive();
 						TheAI->pathfinder()->addObjectToPathfindMap(obj);

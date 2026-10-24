@@ -119,7 +119,7 @@ void ReplaceObjectUpgrade::upgradeImplementation()
 		create->onBuildComplete();
 	}
 	*/
-	call_objectOnBuildComplete(replacementObject);
+	rts_extra::call_objectOnBuildComplete(replacementObject);
 
 	if( replacementObject->getControllingPlayer() )
 	{

@@ -502,7 +502,7 @@ void UpgradeCenter::parseUpgradeDefinition( INI *ini )
 	//MODDD - since there isn't a 'validate' method to call like 'thingTemplate->validate()' in ThingFactory.cpp,
 	// handle post-processing here
 #if CUSTOM_ATTRIBUTE_CHANGES
-	automaticUpgradeTemplateChanges(upgrade);
+	rts_extra::automaticUpgradeTemplateChanges(upgrade);
 #endif
 }
 

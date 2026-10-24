@@ -7147,7 +7147,7 @@ Real Object::getShroudClearingRangeForLook() const
 	//MODDD - let there change the shroud clearing range based on the state of the object if wanted
 	else
 	{
-		shroudClearingRange = getShroudClearingRangeForLookAdjusted(this);
+		shroudClearingRange = rts_extra::getShroudClearingRangeForLookAdjusted(this);
 	}
 
 #if defined(RTS_DEBUG)

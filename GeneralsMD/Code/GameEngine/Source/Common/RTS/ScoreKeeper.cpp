@@ -107,12 +107,93 @@ void ScoreKeeper::reset( Int playerIdx )
 	m_objectsBuilt.clear();
 	m_objectsCaptured.clear();
 	m_objectsLost.clear();
-	for(int i = 0; i < MAX_PLAYER_COUNT; ++i)
 	{
-		m_objectsDestroyed[i].clear();
-		m_totalBuildingsDestroyed[i] = m_totalUnitsDestroyed[i] = 0;
+		int i;
+		for(i = 0; i < MAX_PLAYER_COUNT; ++i)
+		{
+			m_objectsDestroyed[i].clear();
+			m_totalBuildingsDestroyed[i] = m_totalUnitsDestroyed[i] = 0;
+		}
 	}
+
+	//MODDD
+	m_moneyStartedWith = 0;
+	{
+		int i;
+		for(i = 0; i < MONEYSOURCE_COUNT; ++i)
+		{
+			m_moneyReceived[i] = 0;
+		}
+	}
+
 	m_myPlayerIdx	= playerIdx;
+}
+
+//MODDD - new
+Int ScoreKeeper::getMoneyStartedWith()
+{
+	return m_moneyStartedWith;
+}
+
+//MODDD - new
+void ScoreKeeper::setMoneyStartedWith( Int money )
+{
+	m_moneyStartedWith = money;
+}
+
+//MODDD - new
+Int ScoreKeeper::getMoneyReceived( MoneySourceType moneySource )
+{
+	return m_moneyReceived[moneySource];
+}
+
+//MODDD - new
+// This is for all possible ways money could be received including granted by map scripts over the course of the game.
+// The only way this is different from the existing 'getTotalMoneyEarned' is that one doesn't count money from map scripts.
+Int ScoreKeeper::getTotalMoneyCollected()
+{
+	Int totalMoney = 0;
+	int i;
+	for (i = 0; i < MONEYSOURCE_COUNT; ++i)
+	{
+		totalMoney += m_moneyReceived[i];
+	}
+	return totalMoney;
+}
+
+//MODDD - new method to handle the case that the amount of money the player has is set to a certain amount after the first
+// frame (#0) of the game. Not sure when/why this would ever happen but this is a catch-all for that kind of scenario.
+// The point is to decide how much money this change counts as 'earning' (the difference between the old and newly assigned
+// values for money).
+// As goofy as it might seem, going to allow this to be negative if the change reduces the player's money, since this would
+// only affect the money received by map script (technically this could mean more money was lost in total than gained from
+// map scripts).
+// Ex: if a map script sets the player money to $100 after 20 minutes, this is most likely a loss as the player is likely
+// to have more money than that at any given time during normal gameplay.
+void ScoreKeeper::onMoneySet( Int moneyOld, Int moneyNew )
+{
+	Int moneyDelta = moneyNew - moneyOld;
+	addMoneyEarned(moneyDelta, MONEYSOURCE_MAPSCRIPT);
+}
+
+//MODDD - implementation moved from .h file
+void ScoreKeeper::addMoneySpent( Int money )
+{
+	m_totalMoneySpent += money;
+}
+
+//MODDD - implementation moved from .h file, new param 'moneySource'
+void ScoreKeeper::addMoneyEarned( Int money, MoneySourceType moneySource )
+{
+	//MODDD - to preserve retail behavior ('supplied collected' column in the score screen), don't count map-script grants.
+	// The total from the text file will include this by summing up all the buckets, however.
+	if (moneySource != MONEYSOURCE_MAPSCRIPT)
+	{
+		m_totalMoneyEarned += money;
+	}
+
+	//MODDD - also add to the corresponding 'm_moneyReceived' bucket
+	m_moneyReceived[moneySource] += money;
 }
 
 void ScoreKeeper::addObjectBuilt( const Object *o)
@@ -341,6 +422,10 @@ Int ScoreKeeper::calculateScore()
 	score += m_totalBuildingsBuilt * 100;
 	for (Int i = 0; i < MAX_PLAYER_COUNT; ++i)
 	{
+		//MODDD - TODO - this seems a bit overly simple. Does this mean allied buildings/units destroyed give you score?
+		// That doesn't sound right.
+		// See if that's really the case in a test & consider making this a relationship check to see if kills against
+		// that player should be considered a 'good' thing.
 		if(i == m_myPlayerIdx)
 			continue;
 		score += m_totalUnitsDestroyed[i] * 100;

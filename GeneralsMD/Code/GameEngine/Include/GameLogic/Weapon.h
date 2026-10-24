@@ -49,6 +49,14 @@ class INI;
 class ParticleSystemTemplate;
 enum NameKeyType CPP_11(: Int);
 
+//MODDD - for being aware of these to friend them
+#if CUSTOM_ATTRIBUTE_CHANGES
+namespace rts_extra
+{
+	void automaticWeaponTemplateChanges(WeaponTemplate* _this);
+}
+#endif
+
 //-------------------------------------------------------------------------------------------------
 const Int NO_MAX_SHOTS_LIMIT = 0x7fffffff;
 
@@ -496,7 +504,9 @@ public:
 	void postProcessLoad();
 
 	//MODDD
-	friend void automaticWeaponTemplateChanges(WeaponTemplate* _this);
+#if CUSTOM_ATTRIBUTE_CHANGES
+	friend void rts_extra::automaticWeaponTemplateChanges(WeaponTemplate* _this);
+#endif
 
 protected:
 

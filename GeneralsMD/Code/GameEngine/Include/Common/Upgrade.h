@@ -42,6 +42,14 @@ enum NameKeyType CPP_11(: Int);
 class Image;
 enum AcademyClassificationType CPP_11(: Int);
 
+//MODDD - for being aware of these to friend them
+#if CUSTOM_ATTRIBUTE_CHANGES
+namespace rts_extra
+{
+	void automaticUpgradeTemplateChanges(UpgradeTemplate* _this);
+}
+#endif
+
 //-------------------------------------------------------------------------------------------------
 //-------------------------------------------------------------------------------------------------
 enum UpgradeStatusType CPP_11(: Int)
@@ -208,7 +216,7 @@ public:
 
 	//MODDD
 #if CUSTOM_ATTRIBUTE_CHANGES
-	friend void automaticUpgradeTemplateChanges(UpgradeTemplate* _this);
+	friend void rts_extra::automaticUpgradeTemplateChanges(UpgradeTemplate* _this);
 #endif
 
 protected:

@@ -438,7 +438,7 @@ Object *BuildAssistant::buildObjectNow( Object *constructorObject, const ThingTe
 			create->onBuildComplete();
 		}
 		*/
-		call_objectOnBuildComplete(obj, checkForSpecialPowerModuleCreateCalls);
+		rts_extra::call_objectOnBuildComplete(obj, checkForSpecialPowerModuleCreateCalls);
 
 		// Creation is another valid and essential time to call this. This building now Looks.
 		obj->handlePartitionCellMaintenance();

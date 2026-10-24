@@ -112,12 +112,8 @@ public:
 		AudioEventRTS sound(m_soundName);
 		if (primary)
 		{
-			//MODDD - TEMP FIX - this null check should not be needed!!
-			if (primary->getControllingPlayer() != nullptr)
-			{
-				sound.setPlayerIndex(primary->getControllingPlayer()->getPlayerIndex());
-				sound.setPosition(primary->getPosition());
-			}
+			sound.setPlayerIndex(primary->getControllingPlayer()->getPlayerIndex());
+			sound.setPosition(primary->getPosition());
 		}
 
 		TheAudio->addAudioEvent(&sound);
