@@ -1737,29 +1737,32 @@ Real moneyScalarAdjustmentFilter(const Player* player, Bool isRenewable)
 	#if RUN_EXTRA_MONEY_CHEATS
 	// Note that the logic for steadily-increasing money cheats over time is only for renewable sources to compensate
 	// for AI players being less ambitious at building renewable income sources than human players for that point of the game.
-	if (player->getPlayerType() == PLAYER_COMPUTER && isRenewable)
+	if (player->getPlayerType() == PLAYER_COMPUTER)
 	{
-		UnsignedInt frame = TheGameLogic->getFrame();
-		if (frame <= (LOGICFRAMES_PER_SECOND * 60) * startMin)
+		if (isRenewable)
 		{
-			scalar *= startModifier;
-		}
-		else if(frame <= (LOGICFRAMES_PER_SECOND * 60) * endMin)
-		{
-			Real fracto = (Real)(frame - ((LOGICFRAMES_PER_SECOND * 60) * startMin)) / (Real)((LOGICFRAMES_PER_SECOND * 60) * (endMin - startMin));
-			Real fracto_inv = 1.0f - fracto;
+			UnsignedInt frame = TheGameLogic->getFrame();
+			if (frame <= (LOGICFRAMES_PER_SECOND * 60) * startMin)
+			{
+				scalar *= startModifier;
+			}
+			else if(frame <= (LOGICFRAMES_PER_SECOND * 60) * endMin)
+			{
+				Real fracto = (Real)(frame - ((LOGICFRAMES_PER_SECOND * 60) * startMin)) / (Real)((LOGICFRAMES_PER_SECOND * 60) * (endMin - startMin));
+				Real fracto_inv = 1.0f - fracto;
 			
-			scalar *= endModifier + (startModifier - endModifier) * fracto_inv;
+				scalar *= endModifier + (startModifier - endModifier) * fracto_inv;
+			}
+			else
+			{
+				scalar *= endModifier;
+			}
 		}
 		else
 		{
-			scalar *= endModifier;
+			// non-renewable: lowest bonus only
+			scalar *= startModifier;
 		}
-	}
-	else
-	{
-		// non-renewable: lowest bonus only
-		scalar *= startModifier;
 	}
 	#endif
 
