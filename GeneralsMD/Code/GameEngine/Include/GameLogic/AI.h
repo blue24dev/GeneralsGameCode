@@ -1084,6 +1084,8 @@ private:
 // had nodes removed/added. If more precision is needed, that should be addressed.
 // Possible idea: a count of node add/remove operations that's adjusted accordingly in the handle and recorded by the caller -> stop if the cached node-op count disagrees.
 // Included here instead of 'AIPathfind.h' so 'AIUpdate.h' can get its size to use it as a non-pointer member field.
+//MODDD - UPDATE - since some TheSuperHackers changes, like '1abf73d5d299d790990f54f184151961c1c7c8bb - bugfix(pathfinder): Stop a unit from following a destroyed path after moving allies out of its way',
+// consider verifying if this work-around is still necessary.
 class PathHandle
 {
 public:

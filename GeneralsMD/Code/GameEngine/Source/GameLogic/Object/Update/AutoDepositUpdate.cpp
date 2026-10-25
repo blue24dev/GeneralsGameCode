@@ -176,9 +176,10 @@ UpdateSleepTime AutoDepositUpdate::update()
 		int moneyAmount = modData->m_depositAmount + getUpgradedSupplyBoost();
 
 		//MODDD - money cheat check
-		//MODDD - TODO - make whether to actually do 'deposit'/'addMoneyEarned' calls a param for the 'm_isActualMoney' check below
-		RECEIVE_MONEY_FILTER(getObject()->getControllingPlayer(), moneyAmount, TRUE, MONEYSOURCE_RENEWABLE)
+		RECEIVE_MONEY_FILTER_DEPOSIT_CONDITIONAL(getObject()->getControllingPlayer(), moneyAmount, TRUE, MONEYSOURCE_RENEWABLE, modData->m_isActualMoney)
 
+		//MODDD - whole block covered by the '_DEPOSIT_CONDITIONAL' variant above
+		/*
 		if( modData->m_isActualMoney )
 		{
 			//MODDD - 'deposit'/'addMoneyEarned' calls are now part of above
@@ -187,6 +188,7 @@ UpdateSleepTime AutoDepositUpdate::update()
 			//MODDD - why isn't this just using 'moneyAmount'? other places use the same post-adjustment value instead of the raw input
 			//getObject()->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( modData->m_depositAmount);
 		}
+		*/
 
 		if (moneyAmount > 0 && getObject()->isLogicallyVisible())
 		{

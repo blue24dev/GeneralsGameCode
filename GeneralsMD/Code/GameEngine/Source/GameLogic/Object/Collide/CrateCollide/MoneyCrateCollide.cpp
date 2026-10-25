@@ -59,10 +59,12 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 	money += getUpgradedSupplyBoost(other);
 
 	//MODDD - new vars
-	Real moneyScalar = 1.0f;
-	Bool applyMoneyCheats = false;
-	Bool fromARenewableSource = false;
+	Real moneyPreScalar = 1.0f;
+	// (not involved without necessarily being 'mine' for now)
+	//Bool fromARenewableSource = false;
 	Bool fromMyRenewableSource = false;
+	MoneySourceType moneySource;
+	Bool runMajorCheats;
 
 	//MODDD - money cheat check.
 	// Question: did this crate come from a renewable income source (supply drop zone), or was it granted for some other
@@ -76,7 +78,7 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 	if (getObject()->m_OCLSourcePlayerIndex != -1)
 	{
 		// this much is known
-		fromARenewableSource = true;
+		//fromARenewableSource = true;
 
 		// First, decide whether this is the same player that caused the crate to be created (ex: supply drop zone owner)
 		// as the player that has a unit touching the crate to collect it for them
@@ -98,11 +100,11 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 #if RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE
 		if (!fromTechStructure)
 		{
-			moneyScalar = 0.5f;
+			moneyPreScalar = 0.5f;
 		}
 		else
 		{
-			moneyScalar = 0.75f;
+			moneyPreScalar = 0.75f;
 		}
 #endif
 
@@ -111,45 +113,26 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 			collectingPlayerIndex == sourcePlayerIndex ||
 			(fromTechStructure && ThePlayerList->isPlayerUnaffiliated(ThePlayerList->getNthPlayer(sourcePlayerIndex)))
 		);
-#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
-		// run cheats if the collector is the same as the source, or if this is a tech structure and the source player is neutral/civilian
-		// (there's still pre-source-code-release co-op maps using the civilian player as a participating 'player', but
-		// this shouldn't cause too much extra weirdness)
-		applyMoneyCheats = fromMyRenewableSource;
-#else
-		// no potential for money cheats in this compile - always off
-#endif
 	}
 
 	//MODDD - decide the 'moneySource'
-	MoneySourceType moneySource;
 	if (fromMyRenewableSource)
 	{
-		// from my supply drop zone
+		// from my supply drop zone means the highest extent of scalar cheats applies
 		moneySource = MONEYSOURCE_RENEWABLE;
+		runMajorCheats = true;
 	}
 	else
 	{
 		// stolen from someone else's supply drop zone or simply found
 		moneySource = MONEYSOURCE_GATHERED;
+		runMajorCheats = false;
 	}
 
 	//MODDD - replacing 'deposit'/'addMoneyEarned' with this
-	// Also go ahead and apply cheats (if applicable for this build) if this isn't a renewable source, since there could be
-	// a cheat for gathering things anyway
-	if (applyMoneyCheats || !fromARenewableSource)
-	{
-		// Provide 'moneyScalar' to be applied in addition to the internal scalar decided by the presence of cheats or not.
-		// This will still correctly determine how much money is produced by scalar cheats.
-		RECEIVE_MONEY_FILTER_EX(other->getControllingPlayer(), money, fromARenewableSource, moneyScalar, moneySource)
-	}
-	else
-	{
-		// no money cheats - apply the half-effective thing if that's on anyway
-		//RECEIVE_MONEY_FILTER_EX_NOCHEAT(other->getControllingPlayer(), money, fromARenewableSource, moneyScalar, moneySource)
-		// actually per above, just force 'fromARenewableSource' to FALSE so less cheats are applied here
-		RECEIVE_MONEY_FILTER_EX(other->getControllingPlayer(), money, FALSE, moneyScalar, moneySource)
-	}
+	// Provide 'moneyPreScalar' to be applied in addition to the internal scalar decided by the presence of cheats or not.
+	// This will still correctly determine how much money is produced by scalar cheats if applicable.
+	RECEIVE_MONEY_FILTER_EX(other->getControllingPlayer(), money, runMajorCheats, moneyPreScalar, moneySource)
 
 	//Play a crate pickup sound.
 	AudioEventRTS soundToPlay = TheAudio->getMiscAudio()->m_crateMoney;
