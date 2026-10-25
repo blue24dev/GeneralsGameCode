@@ -679,14 +679,24 @@ _moneyAmount = (Real)_moneyAmount * _preScalar;\
 _player->getMoney()->deposit(_moneyAmount);\
 _player->getScoreKeeper()->addMoneyEarned(_moneyAmount, _moneySource);
 
+// Variant of 'RECEIVE_MONEY_FILTER' that allows an extra conditional param to decide the 'deposit'/'addMoneyEarned' calls
+#define RECEIVE_MONEY_FILTER_DEPOSIT_CONDITIONAL_NOCHEAT(_player, _moneyAmount, _runMajorCheats, _moneySource, _canApplyMoney)\
+if (_canApplyMoney)\
+{\
+_player->getMoney()->deposit(_moneyAmount);\
+_player->getScoreKeeper()->addMoneyEarned(_moneyAmount, _moneySource);\
+}
+
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 	// run through the filter to see if this player benefits from cheats ('getCheatAdjustedMoneyAmount' includes 'deposit'/'addMoneyEarned' calls)
 	#define RECEIVE_MONEY_FILTER(_player, _moneyAmount, _runMajorCheats, _moneySource) _moneyAmount = rts_extra::getCheatAdjustedMoneyAmount(_player, _moneyAmount, _runMajorCheats, _moneySource);
 	#define RECEIVE_MONEY_FILTER_EX(_player, _moneyAmount, _runMajorCheats, _preScalar, _moneySource) _moneyAmount = rts_extra::getCheatAdjustedMoneyAmount(_player, _moneyAmount, _runMajorCheats, _preScalar, _moneySource);
+	#define RECEIVE_MONEY_FILTER_DEPOSIT_CONDITIONAL(_player, _moneyAmount, _runMajorCheats, _moneySource, _canApplyMoney) _moneyAmount = rts_extra::getCheatAdjustedMoneyAmountConditional(_player, _moneyAmount, _runMajorCheats, _moneySource, _canApplyMoney);
 #else
 	// no effect, just do the 'deposit'/'addMoneyEarned' this now replaces
 	#define RECEIVE_MONEY_FILTER(_player, _moneyAmount, _runMajorCheats, _moneySource) RECEIVE_MONEY_FILTER_NOCHEAT(_player, _moneyAmount, _runMajorCheats, _moneySource)
 	#define RECEIVE_MONEY_FILTER_EX(_player, _moneyAmount, _runMajorCheats, _preScalar, _moneySource) RECEIVE_MONEY_FILTER_EX_NOCHEAT(_player, _moneyAmount, _runMajorCheats, _preScalar, _moneySource)
+	#define RECEIVE_MONEY_FILTER_DEPOSIT_CONDITIONAL(_player, _moneyAmount, _runMajorCheats, _moneySource, _canApplyMoney) RECEIVE_MONEY_FILTER_DEPOSIT_CONDITIONAL_NOCHEAT(_player, _moneyAmount, _runMajorCheats, _moneySource, _canApplyMoney)
 #endif
 
 // If any of these flags is set, several places need to be aware
