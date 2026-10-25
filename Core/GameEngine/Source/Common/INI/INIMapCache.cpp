@@ -148,7 +148,7 @@ void INI::parseMapCacheDefinition( INI* ini )
 	{
 		// maps without localized name tags
 		AsciiString tempdisplayname;
-		tempdisplayname = name.reverseFind('\\') + 1;
+		tempdisplayname = getFileName(name.str());
 		md.m_displayName.translate(tempdisplayname);
 		//MODDD
 #if !MAP_NAME_PLAYER_COUNT_EXTENSION_ALWAYS
