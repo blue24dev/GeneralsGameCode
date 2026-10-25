@@ -668,30 +668,35 @@
 #endif
 
 // no-cheat variants for any compile to use if explicitly requested
-#define RECEIVE_MONEY_FILTER_NOCHEAT(_player, _moneyAmount, _isRenewable, _moneySource)\
+#define RECEIVE_MONEY_FILTER_NOCHEAT(_player, _moneyAmount, _runMajorCheats, _moneySource)\
 _player->getMoney()->deposit(_moneyAmount);\
 _player->getScoreKeeper()->addMoneyEarned(_moneyAmount, _moneySource);
-#define RECEIVE_MONEY_FILTER_EX_NOCHEAT(_player, _moneyAmount, _isRenewable, _preScalar, _moneySource)\
+// NOTE - this mutates the variable reference '_moneyAmount' to refer to the amount of money after applying 'preScalar'.
+// This works well for things that expect to use the amount of money that reached the player somewhere later, such as
+// 'SupplyCenterDockUpdate.cpp' displaying the 'value' as floating text on the UI.
+#define RECEIVE_MONEY_FILTER_EX_NOCHEAT(_player, _moneyAmount, _runMajorCheats, _preScalar, _moneySource)\
 _moneyAmount = (Real)_moneyAmount * _preScalar;\
 _player->getMoney()->deposit(_moneyAmount);\
 _player->getScoreKeeper()->addMoneyEarned(_moneyAmount, _moneySource);
 
+// Variant of 'RECEIVE_MONEY_FILTER' that allows an extra conditional param to decide the 'deposit'/'addMoneyEarned' calls
+#define RECEIVE_MONEY_FILTER_DEPOSIT_CONDITIONAL_NOCHEAT(_player, _moneyAmount, _runMajorCheats, _moneySource, _canApplyMoney)\
+if (_canApplyMoney)\
+{\
+_player->getMoney()->deposit(_moneyAmount);\
+_player->getScoreKeeper()->addMoneyEarned(_moneyAmount, _moneySource);\
+}
+
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
-	// run through the filter to see if this player benefits from cheats
-	#define RECEIVE_MONEY_FILTER(_player, _moneyAmount, _isRenewable, _moneySource)\
-UnsignedInt _moneyAmount##_original = _moneyAmount;\
-_moneyAmount = rts_extra::getCheatAdjustedMoneyAmount(_player, _moneyAmount, _isRenewable);\
-_player->getMoney()->deposit(_moneyAmount);\
-_player->getScoreKeeper()->addMoneyEarned(_moneyAmount##_original, _moneySource);
-	#define RECEIVE_MONEY_FILTER_EX(_player, _moneyAmount, _isRenewable, _preScalar, _moneySource) _moneyAmount = rts_extra::getCheatAdjustedMoneyAmount(_player, _moneyAmount, _isRenewable, _preScalar);\
-UnsignedInt _moneyAmount##_original = _moneyAmount * _preScalar;\
-_moneyAmount = rts_extra::getCheatAdjustedMoneyAmount(_player, _moneyAmount, _isRenewable, _preScalar);\
-_player->getMoney()->deposit(_moneyAmount);\
-_player->getScoreKeeper()->addMoneyEarned(_moneyAmount##_original, _moneySource);
+	// run through the filter to see if this player benefits from cheats ('getCheatAdjustedMoneyAmount' includes 'deposit'/'addMoneyEarned' calls)
+	#define RECEIVE_MONEY_FILTER(_player, _moneyAmount, _runMajorCheats, _moneySource) _moneyAmount = rts_extra::getCheatAdjustedMoneyAmount(_player, _moneyAmount, _runMajorCheats, _moneySource);
+	#define RECEIVE_MONEY_FILTER_EX(_player, _moneyAmount, _runMajorCheats, _preScalar, _moneySource) _moneyAmount = rts_extra::getCheatAdjustedMoneyAmount(_player, _moneyAmount, _runMajorCheats, _preScalar, _moneySource);
+	#define RECEIVE_MONEY_FILTER_DEPOSIT_CONDITIONAL(_player, _moneyAmount, _runMajorCheats, _moneySource, _canApplyMoney) _moneyAmount = rts_extra::getCheatAdjustedMoneyAmountConditional(_player, _moneyAmount, _runMajorCheats, _moneySource, _canApplyMoney);
 #else
 	// no effect, just do the 'deposit'/'addMoneyEarned' this now replaces
-	#define RECEIVE_MONEY_FILTER(_player, _moneyAmount, _isRenewable, _moneySource) RECEIVE_MONEY_FILTER_NOCHEAT(_player, _moneyAmount, _isRenewable, _moneySource)
-	#define RECEIVE_MONEY_FILTER_EX(_player, _moneyAmount, _isRenewable, _preScalar, _moneySource) RECEIVE_MONEY_FILTER_EX_NOCHEAT(_player, _moneyAmount, _isRenewable, _preScalar, _moneySource)
+	#define RECEIVE_MONEY_FILTER(_player, _moneyAmount, _runMajorCheats, _moneySource) RECEIVE_MONEY_FILTER_NOCHEAT(_player, _moneyAmount, _runMajorCheats, _moneySource)
+	#define RECEIVE_MONEY_FILTER_EX(_player, _moneyAmount, _runMajorCheats, _preScalar, _moneySource) RECEIVE_MONEY_FILTER_EX_NOCHEAT(_player, _moneyAmount, _runMajorCheats, _preScalar, _moneySource)
+	#define RECEIVE_MONEY_FILTER_DEPOSIT_CONDITIONAL(_player, _moneyAmount, _runMajorCheats, _moneySource, _canApplyMoney) RECEIVE_MONEY_FILTER_DEPOSIT_CONDITIONAL_NOCHEAT(_player, _moneyAmount, _runMajorCheats, _moneySource, _canApplyMoney)
 #endif
 
 // If any of these flags is set, several places need to be aware

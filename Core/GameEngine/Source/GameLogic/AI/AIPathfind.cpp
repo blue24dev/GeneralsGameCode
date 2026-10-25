@@ -188,6 +188,9 @@ void Pathfinder::reset()
 	m_isTunneling = false;
 
 	m_moveAlliesDepth = 0;
+#if !RETAIL_COMPATIBLE_PATHFINDING
+	std::fill(m_moveAlliesObjects, m_moveAlliesObjects + ARRAY_SIZE(m_moveAlliesObjects), INVALID_ID);
+#endif
 
 	// pathfind grid cells have not been classified yet
 	m_isMapReady = false;
@@ -6431,9 +6434,12 @@ if (g_UT_startTiming) return false;
 		}
 	}
 	LatchRestore<Int> recursiveDepth(m_moveAlliesDepth, m_moveAlliesDepth+1);
-	if (m_moveAlliesDepth > 2) {
+	if (m_moveAlliesDepth > MOVE_ALLIES_MAX_DEPTH) {
 		return false;
 	}
+#if !RETAIL_COMPATIBLE_PATHFINDING
+	m_moveAlliesObjects[m_moveAlliesDepth - 1] = obj->getID();
+#endif
 
 	Bool centerInCell;
 	Int radius;
@@ -6447,13 +6453,15 @@ if (g_UT_startTiming) return false;
 	}
 
 	//MODDD - DEBUG. Pointer to every object told to move out of the way by this loop.
-	std::list<Object*> objectListDebug;
-	Object* objectReachedThisIteration = nullptr;
-	int nodeIndex = 0;
+	// (undone for now)
+	//std::list<Object*> objectListDebug;
+	//Object* objectReachedThisIteration = nullptr;
+	//int nodeIndex = 0;
 	
 	//MODDD - debug
-	//for( node = path->getLastNode(); node && node != path->getFirstNode(); node = node->getPrevious() )	{
-	for( node = path->getLastNode(); node && node != path->getFirstNode(); nodeIndex++, objectListDebug.push_back(objectReachedThisIteration), objectReachedThisIteration = nullptr, node = node->getPrevious() )	{
+	// (undone for now)
+	for( node = path->getLastNode(); node && node != path->getFirstNode(); node = node->getPrevious() )	{
+	//for( node = path->getLastNode(); node && node != path->getFirstNode(); nodeIndex++, objectListDebug.push_back(objectReachedThisIteration), objectReachedThisIteration = nullptr, node = node->getPrevious() )	{
 		ICoord2D curCell;
 		worldToCell(node->getPosition(), &curCell);
 		Int i, j;
@@ -6513,7 +6521,21 @@ if (g_UT_startTiming) return false;
 #endif
 
 				//MODDD - debug
-				objectReachedThisIteration = otherObj;
+				// (undone for now)
+				//objectReachedThisIteration = otherObj;
+#if !RETAIL_COMPATIBLE_PATHFINDING
+				// TheSuperHackers @bugfix bobtista 13/10/2026 Do not order a unit whose moveAllies call is still walking its path. The order destroys that path.
+				Bool isOuterCaller = false;
+				for (Int k = 0; k < m_moveAlliesDepth - 1; ++k) {
+					if (m_moveAlliesObjects[k] == unitId) {
+						isOuterCaller = true;
+						break;
+					}
+				}
+				if (isOuterCaller) {
+					continue;
+				}
+#endif
 
 				//DEBUG_LOG(("Moving ally"));
 				otherObj->getAI()->aiMoveAwayFromUnit(obj, CMD_FROM_AI);

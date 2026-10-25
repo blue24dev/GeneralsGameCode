@@ -18,6 +18,8 @@ class Weapon;
 class WeaponBonus;
 struct upgradePair;
 
+enum MoneySourceType;
+
 extern int g_dummy;
 
 #if EXTRA_DEBUG_HELP
@@ -54,9 +56,11 @@ void automaticGlobalDataChanges();
 #endif
 
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
-Real moneyScalarAdjustmentFilter(const Player* player, Bool isRenewable);
-UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit, Bool isRenewable);
-UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit, Bool isRenewable, Real preScalar);
+Real moneyScalarAdjustmentFilter(const Player* player, Bool runMajorCheats);
+UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, MoneySourceType moneySource);
+UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, Real preScalar, MoneySourceType moneySource);
+UnsignedInt getCheatAdjustedMoneyAmountConditional(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, MoneySourceType moneySource, Bool canApplyMoney);
+UnsignedInt getCheatAdjustedMoneyAmountConditional(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, Real preScalar, MoneySourceType moneySource, Bool canApplyMoney);
 #endif
 #if RUN_BUILD_TIME_CHEATS || NOOB_MODE
 Int buildTimeAdjustmentFilter(const Player* player, const ThingTemplate* tt);
