@@ -2166,7 +2166,7 @@ void extraScoreScreenStatsPrintOut_player(Player* player)
 	Int moneyFromSalvage = scoreKpr->getMoneyReceived(MONEYSOURCE_SALVAGE);
 	// Money from stealing from other players - cash hack support power, black lotus cash steal, or saboteur infiltration
 	Int moneyFromSteal = scoreKpr->getMoneyReceived(MONEYSOURCE_STEAL);
-	// Money lost to other players using steal abilities on me
+	// Money lost to other players using steal abilities on me (not factored into the total in the score screen nor generated text file)
 	Int moneyFromStealVictim = scoreKpr->getMoneyReceived(MONEYSOURCE_STEAL_VICTIM);
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 	// Money from scalar cheats applied to money collected over the course of a game from the 'noob' bonus or AI-player cheats.
@@ -2179,6 +2179,7 @@ void extraScoreScreenStatsPrintOut_player(Player* player)
 	Int moneyFromMapScript = scoreKpr->getMoneyReceived(MONEYSOURCE_MAPSCRIPT);
 	// Total money collected over the course of a game - sum of everything above except for start money.
 	// Note that the 'supplied collected' shown in the score screen still doesn't factor in money granted by map scripts even after the start of a game, so adding it in here.
+	// Also, as said above, the 'steal (victim)' column isn't included in this - it's just neat to see how much was stolen from a player.
 	Int moneyTotalCollected = scoreKpr->getTotalMoneyCollected();
 
 	FILE* outputFile = fopen("ScoreScreenExtra.txt", "a");

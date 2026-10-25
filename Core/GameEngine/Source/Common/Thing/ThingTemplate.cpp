@@ -334,7 +334,8 @@ void ModuleInfo::addModuleInfo(ThingTemplate *thingTemplate,
 	// there must be a module tag present, and it must be unique across all module infos
 	// for this thing template
 	//
-#if defined(RTS_DEBUG)
+	//MODDD - was "#if defined(RTS_DEBUG)"
+#if INI_ADD_MODULE_VALIDATE_UNIQUENESS
 	// get module info
 	const Nugget *nugget;
 

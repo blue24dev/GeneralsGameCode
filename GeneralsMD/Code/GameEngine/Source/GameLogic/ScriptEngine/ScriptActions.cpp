@@ -4275,7 +4275,7 @@ void ScriptActions::doSetMoney(const AsciiString& playerName, Int money)
 	
 	//MODDD - if this is a deposit, add the money, mainly so money given to AI players can be seen and you can feel less bad
 	// (not sure if some maps could just force the money to a certain amount instead of adding to it)
-	if (TheGameLogic->getFrame() < 5)
+	if (TheGameLogic->getFrame() == 0)
 	{
 		// consider this the start of the game - replace whatever start money value there is
 		player->getScoreKeeper()->setMoneyStartedWith(money);
@@ -4308,7 +4308,7 @@ void ScriptActions::doGiveMoney(const AsciiString& playerName, Int money)
 		m->deposit(money);
 
 	//MODDD - handle score for this
-	if (TheGameLogic->getFrame() < 5)
+	if (TheGameLogic->getFrame() == 0)
 	{
 		// consider this the start of the game - replace whatever start money value there is
 		player->getScoreKeeper()->setMoneyStartedWith(m->countMoney());
