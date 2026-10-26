@@ -286,29 +286,6 @@ Player* getRandomEnemyPlayer(Player* currentPlayer)
 	return availablePlayerList[randomVal];
 }
 
-// Also, a method to get the first slot player since 'getLocalPlayer' would return different a result in
-// multiplayer per machine (mismatch candy).
-// Note that this can return null if there are no active players left (everyone left but the game's still running for a
-// bit - ex: post-defeat before the current game quits itself for real).
-Player* getFirstSlotPlayer()
-{
-	int i;
-	for (i=0; i < ThePlayerList->m_slotSoftMax; ++i)
-	{
-		// Check that the player is active.
-		// Ex: in multiplayer, if player #0 leaves, they're inactive so consider player to be "the" player if they're still here
-		Player* player = ThePlayerList->getPlayerFromSlotIndex_requireActiveParticipant(i);
-		if (player == nullptr)
-		{
-			continue;
-		}
-
-		return player;
-	}
-
-	return nullptr;
-}
-
 //-------------------------------------------------------------------------------------------------
 /** Ctor */
 //-------------------------------------------------------------------------------------------------
@@ -6182,7 +6159,7 @@ Player *ScriptEngine::getPlayerFromAsciiString(const AsciiString& playerString)
 		// ---
 		//MODDD - replacing this. 'getLocalPlayer' will return a different choice per machine in network games (ex: whether you're "player0" or "player1"
 		// in GC maps played in the new co-op mode with FGC_GENERALS_CHALLENGE).
-		// The new 'getFirstSlotPlayer' will get the first slot-based player on all machines, or the only player in single-player (cover all use cases).
+		// The new 'getFirstSlotActiveParticipantPlayer' will get the first slot-based player on all machines, or the only player in single-player (cover all use cases).
 		// ---
 		// LAST UPDATE - turns out the original is still best for retail (FGC_NONE), oddly enough.
 		// This won't have issues used in GC/campaign played normally (always single player), and in skirmish/network games,
@@ -6193,7 +6170,7 @@ Player *ScriptEngine::getPlayerFromAsciiString(const AsciiString& playerString)
 #else
 		// Still makes sense if either constant is on in case of GC/campaign being played in co-op mode.
 		// Eliminates sync risks. Just make the map scripts smarter per map to fine tune stuff per player if you really want to.
-		return getFirstSlotPlayer();
+		return ThePlayerList->getFirstSlotActiveParticipantPlayer();
 		// Old way (bad assumption for campaign maps: player name isn't standardized)
 		// return ThePlayerList->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey("player0"));
 #endif
@@ -6336,7 +6313,7 @@ Team * ScriptEngine::getTeamNamed(const AsciiString& teamName)
 		// ---
 		//return ThePlayerList->getLocalPlayer()->getDefaultTeam();
 		// ---
-		Player* thePlayer = getFirstSlotPlayer();
+		Player* thePlayer = ThePlayerList->getFirstSlotActiveParticipantPlayer();
 		if (thePlayer != nullptr)
 		{
 			return thePlayer->getDefaultTeam();

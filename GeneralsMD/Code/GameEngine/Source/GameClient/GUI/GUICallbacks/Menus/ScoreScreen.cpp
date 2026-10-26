@@ -316,15 +316,18 @@ void ScoreScreenInit( WindowLayout *layout, void *userData )
 		buttonSaveReplay->winEnable(FALSE);
 
 	s_needToFinishSinglePlayerInit = FALSE;
-	
+
 	//MODDD
-	rts_extra::extraScoreScreenStatsPrintOut_header();
+	rts_extra::extraScoreScreenStatsPrintOut();
 
 	if (TheGameLogic->isInReplayGame())
 	{
 		if (buttonSaveReplay)
 			buttonSaveReplay->winHide(TRUE);
 
+		//MODDD - TODO - consider testing for replays of generals challenge / campaign maps done in co-op mode with
+		// the various FGC setting choices. Resulting score screen should look the same as having played the game
+		// I imagine (ex: do single player's "USA Enemies" condensing for all enemy-aligned players).
 		if (TheRecorder->isMultiplayer())
 		{
 			initReplayMultiPlayer();
@@ -363,6 +366,9 @@ void ScoreScreenInit( WindowLayout *layout, void *userData )
 	}
 
 	// challenge maps have no replay (design and technical issues)
+	//MODDD - TODO - per a comment above, also revise this point?
+	// I have a hard time believing replays wouldn't work for generals challenge games if co-op support is one of the first
+	// things I could pull off...
 	Bool isChallengeCampaign = TheCampaignManager->getCurrentCampaign() ? TheCampaignManager->getCurrentCampaign()->isChallengeCampaign() : FALSE;
 	if (isChallengeCampaign)
 	{
@@ -1425,9 +1431,6 @@ static inline int CheckForApocalypse( ScoreKeeper *s, const char* szWeapon )
 //-------------------------------------------------------------------------------------------------
 void populatePlayerInfo( Player *player, Int pos)
 {
-	//MODDD - going on to fill out a row on the score screen for a player, so go ahead and print out extra info for this player too
-	rts_extra::extraScoreScreenStatsPrintOut_player(player);
-
 	if(!player || pos < 0 || pos >= MAX_SLOTS)
 		return;
 	Color color = player->getPlayerColor();
@@ -2042,170 +2045,25 @@ winName.format("ScoreScreen.wnd:StaticTextScore%d", pos);
 	}
 }
 
-/** We Grab information about the players differently in Multiplayer.  We only want the players
-		listed in the slots */
-//-------------------------------------------------------------------------------------------------
-void grabMultiPlayerInfo()
+//MODDD - NEW
+// Helper to add rows to the score screen for all non-slot players of the same side & relation with the local player
+// combo - ex: 3 allied china players -> "China Allies" of all their stats summed up for one row.
+// Originally from towards the end of 'grabSinglePlayerInfo'.
+void populateComputerPlayerInfoBySideRelation(Player* basePlayer, Int& playerCount)
 {
-	typedef std::map<Int, Player *> ScoreMap;
-	typedef ScoreMap::iterator ScoreMapIt;
-	typedef ScoreMap::reverse_iterator RevScoreMapIt;
-
-	Int playerCount = 0;
-	ScoreMap scores;
-	ScoreMapIt it;
-	scores.clear();
-	Int adder = 1; // Varible used to add on an offset to the score to make sure we don't add people to the same map
-
-	Player *localPlayer = ThePlayerList->getLocalPlayer();
-	if (localPlayer)
+	enum
 	{
-		const Image *image = TheMappedImageCollection->findImageByName("MutiPlayer_ScoreScreen");
-		if(image)
-		{
-			parent->winSetEnabledImage(0, image);
-			parent->winSetStatus(parent->winGetStatus() | WIN_STATUS_IMAGE );
-		}
-	}
+		USA_FRIEND = 0,
+		CHINA_FRIEND,
+		GLA_FRIEND,
+		USA_ENEMY,		// Keep friends with friends, enemys with enemys
+		CHINA_ENEMY,
+		GLA_ENEMY,
 
-	// Add each player and score to the map. THis allows us to sort the players based on score.
-	for( Int i = 0; i < MAX_SLOTS; ++i)
-	{
-		Player *player = ThePlayerList->getPlayerFromSlotIndex(i);
-		if (player)
-		{
-			Int score = player->getScoreKeeper()->calculateScore();
-			it = scores.find( score );
-			if (it != scores.end())
-			score += adder++;
-			scores[score] = player;
-			++playerCount;
-		}
-	}
-	hideWindows(playerCount);
-	Int count =0;
-	RevScoreMapIt revIt;
-	// display the players based on Score
-	for ( revIt = scores.rbegin(); revIt != scores.rend(); ++revIt)
-	{
-		Player *p = revIt->second;
-		if(p->isPlayerObserver())
-			setObserverWindows( p, count );
-		else
-			populatePlayerInfo( p, count);
-		count ++;
-	}
+		MAX_RELATIONS
+	};
 
-	DEBUG_ASSERTCRASH(count == playerCount, ("For some reason we added %d players to the scores map, but only read %d", playerCount, count));
-
-	//MODDD - NEW. Add info about AI controlled non-neutral, non-civilian factions too, why not?
-	// Just keep in mind - this is limited to showing 8 rows for the assumed 8 multiplayer-available players.
-	// If there were ever a case where <# of human players doing co-op> + <# of baked-in map AI players> exceeds 8, rows after 8 would be missing.
-	// That can be an argument for combining AI players into one "Enemy General" row - see points below for more detail.
-	// Or, edit other places to allow more than 8 rows?
-  //MODDD - TODO. For FGC_CAMPAIGN.
-	// Instead of using the same logic below for that, could be more accurate to the original single-player scorescreen behavior.
-	// Look at 'grabSinglePlayerInfo' to see how it groups computer players together to copy that much over, but would
-	// prefer to keep slot players separate to see individual score info there (people like to see their own stats).
-	// Grouping only computer players together as rows like "GLA Enemies" like as-is, and still keeping slot players separate should suffice.
-	// ---
-#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE || FORCE_GAME_CONTEXT == FGC_CAMPAIGN
-	for (int i = 0; i < ThePlayerList->getPlayerCount(); i++) {
-		// Iterate through all players (not necessarily slot players, includes players baked into the map).
-		// Only want players baked into the map here, i.e. the AI controlled general that owns the map.
-		// There may be multiple "players" that make up this even though it isn't obvious (same color).
-		// Going to handwave that for now, if they show up, oh well. Solve it later if you really care enough,
-		// kind of like how single-player logic for the score screen combines all 'enemies'.
-		// Look to there for inspiration I suppose.
-		Player* player = ThePlayerList->getNthPlayer(i);
-		// Exclude slot players - already added by the loop above
-		if (ThePlayerList->getSlotIndex(player->getPlayerIndex()) != -1)
-		{
-			continue;
-		}
-
-		// A player with an invalid or empty name isn't being used - avoid that too
-		// Actually just an observer check is enough - also for 'getPlayerCount()' instead of 'MAX_PLAYERS' for the loop's condition above
-		// old condition: (!player || player->getPlayerNameKey() == NAMEKEY_INVALID || KEYNAME(player->getPlayerNameKey()).getLength() == 0 || player->isPlayerObserver())
-		if (player->isPlayerObserver())
-		{
-			continue;
-		}
-
-		// Exclude neutral and civilian players.
-		if (ThePlayerList->isPlayerUnaffiliated(player))
-		{
-			continue;
-		}
-		
-		// Also, exclude human-marked players.
-		// This would cover the dummy "ThePlayer" in GC maps, and any other non-slot human-marked players, not interesting
-		// because they wouldn't have a connected human player (non-slot) nor computer to make the player do anything.
-		if (player->getPlayerType() == PLAYER_HUMAN)
-		{
-			continue;
-		}
-
-		// All passed - add a row for this player
-		populatePlayerInfo(player, count);
-		count ++;
-	}
-#endif
-}
-
-enum
-{
-	USA_FRIEND = 0,
-	CHINA_FRIEND,
-	GLA_FRIEND,
-	USA_ENEMY,		// Keep friends with friends, enemys with enemys
-	CHINA_ENEMY,
-	GLA_ENEMY,
-
-	MAX_RELATIONS
-};
-/**	Grab the single player info */
-//-------------------------------------------------------------------------------------------------
-void grabSinglePlayerInfo()
-{
-	Int playerCount = 0;
-	Player *player, *localPlayer;
-	localPlayer = ThePlayerList->getLocalPlayer();
-
-	if(localPlayer)
-	{
-		if(!localPlayer->isPlayerObserver())
-		{
-			populatePlayerInfo(localPlayer, playerCount);
-			++playerCount;
-		}
-		else
-		{
-			for(Int k = 0; k < MAX_PLAYER_COUNT; ++k)
-			{
-				localPlayer = ThePlayerList->getNthPlayer(k);
-				if(localPlayer->getPlayerType() == PLAYER_HUMAN)
-				{
-					populatePlayerInfo(localPlayer, playerCount);
-					++playerCount;
-					break;
-				}
-				localPlayer = nullptr;
-			}
-		}
-		PlayerTemplate const *fact = ThePlayerList->getLocalPlayer()->getPlayerTemplate();
-		if(fact != nullptr)
-		{
-			const Image *image = TheMappedImageCollection->findImageByName(ThePlayerList->getLocalPlayer()->getPlayerTemplate()->getScoreScreen());
-			if(image)
-			{
-				parent->winSetEnabledImage(0, image);
-				parent->winSetStatus(parent->winGetStatus() | WIN_STATUS_IMAGE );
-			}
-		}
-	}
-	if(!localPlayer)
-		return;
+	Player *player;
 	AsciiString side;
 	// okay, there's all kinds of hard coding going on here.  THe reason why! well,
 	// We have no way of telling what sides we have in the game.  Hence, the hardcoding.
@@ -2249,13 +2107,32 @@ void grabSinglePlayerInfo()
 		for(Int i = 0; i < MAX_PLAYER_COUNT; ++i)
 		{
 			player = ThePlayerList->getNthPlayer(i);
-			if(player && player != localPlayer &&
-				 side.compare(player->getBaseSide()) == 0)
+			
+			//MODDD - for compatibility with co-op mode (this check will work regardless of FGC setting too)
+			// ------
+			//if(player && player != localPlayer &&
+			//	 side.compare(player->getBaseSide()) == 0)
+			// ------
+			// If this player has an associated slot (even single player uses #0 for the local player now), this isn't part
+			// of the consideration.
+			if (ThePlayerList->getSlotIndex(player->getPlayerIndex()) != -1)
 			{
-				if ((TheGameLogic->isInSinglePlayerGame() == FALSE) || (player->getListInScoreScreen() == TRUE))
+				continue;
+			}
+
+			// other part of the original condition
+			if (side.compare(player->getBaseSide()) == 0)
+			// ------
+			{
+				//MODDD - I don't understand the point of the 'isInSinglePlayerGame' check.
+				// The original context of this whole helper, 'grabSinglePlayerInfo', is only ever called for single player games.
+				// Removing that part of the check.
+				//if ((TheGameLogic->isInSinglePlayerGame() == FALSE) || (player->getListInScoreScreen() == TRUE))
+				if (player->getListInScoreScreen())
 				{
-					if((isFriend == TRUE && localPlayer->getRelationship(player->getDefaultTeam()) == ALLIES) ||
-							(isFriend == FALSE && localPlayer->getRelationship(player->getDefaultTeam()) == ENEMIES))
+					//MODDD - replaced 'localPlayer' references with 'basePlayer' param for this helper
+					if((isFriend == TRUE && basePlayer->getRelationship(player->getDefaultTeam()) == ALLIES) ||
+							(isFriend == FALSE && basePlayer->getRelationship(player->getDefaultTeam()) == ENEMIES))
 					{
 						ScoreKeeper *sk = player->getScoreKeeper();
 						sg.m_totalBuildingsBuilt += sk->getTotalBuildingsBuilt();
@@ -2286,6 +2163,276 @@ void grabSinglePlayerInfo()
 			++playerCount;
 		}
 	}
+}
+
+//MODDD - NEW
+// Helper to add rows to the table representing visually distinct players among non-slot-players.
+// Typically in generals challenge maps, many, if not all enemy computer players baked into the map have the same color
+// to appear like they are one cohesive player.
+void populateComputerPlayerInfoForGeneralsChallenge(Int& playerCount)
+{
+	// Thanks! - https://stackoverflow.com/questions/34168099/does-c-have-ordered-hash
+	std::map<Color, std::vector<Player*>> colorToPlayerMap;
+	std::vector<std::map<Color, std::vector<Player*>>::iterator> colorToPlayerMap_order;
+	
+	// Iterate through all players (not necessarily slot players, includes players baked into the map).
+	// Only want players baked into the map here - likely representing the opposing general.
+	// There may be multiple "players" that make up this even though it isn't obvious (same color).
+	// Player baked into the map with the same color will be condensed into one row.
+	// Only immediate example I can think of that has enemy players with different colors is the 'Firestorm' mod - demo
+	// general challenge had separate yellow and orange baked-in enemy map players.
+	int i;
+	for (i = 0; i < ThePlayerList->getPlayerCount(); ++i)
+	{
+		Player* player = ThePlayerList->getNthPlayer(i);
+		// Exclude slot players - already added by the loop above
+		if (ThePlayerList->getSlotIndex(player->getPlayerIndex()) != -1)
+		{
+			continue;
+		}
+
+		// A player with an invalid or empty name isn't being used - avoid that too
+		// Actually just an observer check is enough - also for 'getPlayerCount()' instead of 'MAX_PLAYERS' for the loop's condition above
+		// old condition: (!player || player->getPlayerNameKey() == NAMEKEY_INVALID || KEYNAME(player->getPlayerNameKey()).getLength() == 0 || player->isPlayerObserver())
+		if (player->isPlayerObserver())
+		{
+			continue;
+		}
+
+		// Exclude neutral and civilian players.
+		if (ThePlayerList->isPlayerUnaffiliated(player))
+		{
+			continue;
+		}
+
+		// If specifically excluded from the score screen, well, don't.
+		// I doubt any generals challenge map would ever use this, but just in case - may as well honor it.
+		if (!player->getListInScoreScreen())
+		{
+			continue;
+		}
+		
+		// Also, exclude human-marked players.
+		// This would cover the dummy "ThePlayer" in GC maps, and any other non-slot human-marked players, not interesting
+		// because they wouldn't have a connected human player (non-slot) nor computer to make the player do anything.
+		if (player->getPlayerType() == PLAYER_HUMAN)
+		{
+			continue;
+		}
+		
+		// All passed - add this player to a color bucket (create it if necessary)
+		Color color = player->getPlayerColor();
+		if (!colorToPlayerMap.contains(color))
+		{
+			colorToPlayerMap_order.push_back(colorToPlayerMap.insert(std::make_pair(color, std::vector<Player*>())).first);
+		}
+		colorToPlayerMap[color].push_back(player);
+	}
+
+	// Unravel the color-to-player map (based off the as-is script that now makes up 'populateComputerPlayerInfoBySideRelation').
+	int colorBucketCount = colorToPlayerMap_order.size();
+	std::vector<std::map<Color, std::vector<Player*>>::iterator>::const_iterator itr_order;
+	for (itr_order = colorToPlayerMap_order.begin(); itr_order != colorToPlayerMap_order.end(); ++itr_order)
+	{
+		ScoreGather sg;
+		sg.m_totalBuildingsBuilt = 0;
+		sg.m_totalBuildingsDestroyed = 0;
+		sg.m_totalBuildingsLost = 0;
+		sg.m_totalMoneyEarned = 0;
+		sg.m_totalMoneySpent = 0;
+		sg.m_totalUnitsBuilt = 0;
+		sg.m_totalUnitsDestroyed = 0;
+		sg.m_totalUnitsLost = 0;
+		sg.m_sideImage = nullptr;
+
+		// For this color bucket, sum up the stats for all players with that color
+		// At least one player is guaranteed per color (map's key).
+		std::pair<Color, std::vector<Player*>> entry = **itr_order;
+		Color color = entry.first;
+		std::vector<Player*> players = entry.second;
+		std::vector<Player*>::iterator itr_player;
+		for (itr_player = players.begin(); itr_player != players.end(); ++itr_player)
+		{
+			Player* player = *itr_player;
+			ScoreKeeper *sk = player->getScoreKeeper();
+			sg.m_totalBuildingsBuilt += sk->getTotalBuildingsBuilt();
+			sg.m_totalBuildingsDestroyed += sk->getTotalBuildingsDestroyed();
+			sg.m_totalBuildingsLost += sk->getTotalBuildingsLost();
+			sg.m_totalMoneyEarned += sk->getTotalMoneyEarned();
+			sg.m_totalMoneySpent += sk->getTotalMoneySpent();
+			sg.m_totalUnitsBuilt += sk->getTotalUnitsBuilt();
+			sg.m_totalUnitsDestroyed += sk->getTotalUnitsDestroyed();
+			sg.m_totalUnitsLost += sk->getTotalUnitsLost();
+			sg.m_sideImage = player->getPlayerTemplate()->getSideIconImage();
+		}
+
+		// Create the UI row to represent this color bucket (group of players with matching color).
+		// NOTE - not able to expect string table support for this, so using hardcoded text for now.
+		// This is why a 'TheGameText->fetch' call isn't used on 'label' (using 'labelFinal' for the expected UnicodeString).
+		AsciiString label;
+		if (colorBucketCount > 1)
+		{
+			int i_color = itr_order - colorToPlayerMap_order.begin();
+			label.format("Enemy General #%d", (i_color + 1));
+		}
+		else
+		{
+			// only 1 color bucket - no need for numbering
+			label.set("Enemy General");
+		}
+		UnicodeString labelFinal;
+		labelFinal.translate(label);
+
+		populateSideInfo(labelFinal, &sg, playerCount, color);
+		++playerCount;
+	}
+}
+
+/** We Grab information about the players differently in Multiplayer.  We only want the players
+		listed in the slots */
+//-------------------------------------------------------------------------------------------------
+void grabMultiPlayerInfo()
+{
+	typedef std::map<Int, Player *> ScoreMap;
+	typedef ScoreMap::iterator ScoreMapIt;
+	typedef ScoreMap::reverse_iterator RevScoreMapIt;
+
+	Int playerCount = 0;
+	ScoreMap scores;
+	ScoreMapIt it;
+	scores.clear();
+	Int adder = 1; // Varible used to add on an offset to the score to make sure we don't add people to the same map
+
+	Player *localPlayer = ThePlayerList->getLocalPlayer();
+	if (localPlayer)
+	{
+		const Image *image = TheMappedImageCollection->findImageByName("MutiPlayer_ScoreScreen");
+		if(image)
+		{
+			parent->winSetEnabledImage(0, image);
+			parent->winSetStatus(parent->winGetStatus() | WIN_STATUS_IMAGE );
+		}
+	}
+
+	// Add each player and score to the map. THis allows us to sort the players based on score.
+	for( Int i = 0; i < MAX_SLOTS; ++i)
+	{
+		Player *player = ThePlayerList->getPlayerFromSlotIndex(i);
+		if (player)
+		{
+			Int score = player->getScoreKeeper()->calculateScore();
+			it = scores.find( score );
+			if (it != scores.end())
+			score += adder++;
+			scores[score] = player;
+			++playerCount;
+		}
+	}
+	//MODDD - not yet, moved further down
+	//hideWindows(playerCount);
+	Int count =0;
+	RevScoreMapIt revIt;
+	// display the players based on Score
+	for ( revIt = scores.rbegin(); revIt != scores.rend(); ++revIt)
+	{
+		Player *p = revIt->second;
+		if(p->isPlayerObserver())
+			setObserverWindows( p, count );
+		else
+			populatePlayerInfo( p, count);
+		count ++;
+	}
+
+	DEBUG_ASSERTCRASH(count == playerCount, ("For some reason we added %d players to the scores map, but only read %d", playerCount, count));
+
+	//MODDD - NEW. Custom handling per non-standard FGC choices after populating the slot players above, since this often
+	// implies a co-op mode against computer players baked into the map (campaign or generals-challenge maps).
+	// Just keep in mind - this is limited to showing 8 rows for the assumed 8 multiplayer-available players.
+	// If there were ever a case where <# of human players doing co-op> + <# of baked-in map AI players> exceeds 8, rows after
+	// the eighth one would be missing.
+	// That can be an argument for combining AI players into one "Enemy General" row - see points below for more detail.
+	// Or, edit other places to allow more than 8 rows?
+#if FORCE_GAME_CONTEXT == FGC_CAMPAIGN
+	// Use the "first" as the basis for all relationships for consistent answers, though all players should agree on what
+	// baked-in players are allies/enemies using themselves as the 'local' player too.
+	Player* firstPlayer = ThePlayerList->getFirstSlotParticipantPlayer();
+	populateComputerPlayerInfoBySideRelation(firstPlayer, playerCount);
+#elif FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
+	populateComputerPlayerInfoForGeneralsChallenge(playerCount);
+#endif
+	//MODDD - moved to here
+	hideWindows(playerCount);
+}
+
+//MODDD - enum definition startin with "USA_FRIEND = 0" moved to helper 'populateComputerPlayerInfoBySideRelation'
+
+/**	Grab the single player info */
+//-------------------------------------------------------------------------------------------------
+void grabSinglePlayerInfo()
+{
+	Int playerCount = 0;
+	//MODDD - 'player' function var removed
+	Player *localPlayer;
+	localPlayer = ThePlayerList->getLocalPlayer();
+
+	//MODDD - moved from below, since as-is would effectively do nothing for the rest of the mission if this check failed here.
+	if(!localPlayer)
+		return;
+
+	if(!localPlayer->isPlayerObserver())
+	{
+		//MODDD - fall through to reach this now
+		//populatePlayerInfo(localPlayer, playerCount);
+		//++playerCount;
+	}
+	else
+	{
+		//MODDD - NOTE - what is the use case for this? Single player where the 'local' player is marked observer? what?
+		// Note that it doesn't even verify the found 'PLAYER_HUMAN' player isn't an observer?
+		// In any case, this looks like trying to find the first human player to be the 'local' player from as-is so piggy-
+		// backing off my way to be able to find the 1st player from explicit map-player name (ex: "ThePlayer").
+		// ------------
+		//for(Int k = 0; k < MAX_PLAYER_COUNT; ++k)
+		//{
+		//	localPlayer = ThePlayerList->getNthPlayer(k);
+		//	if(localPlayer->getPlayerType() == PLAYER_HUMAN)
+		//	{
+		//		populatePlayerInfo(localPlayer, playerCount);
+		//		++playerCount;
+		//		break;
+		//	}
+		//	localPlayer = nullptr;
+		//}
+		// ------------
+		// note: not 'ActiveParticipant' since the game is over - the 'active' part of the check isn't meaningful
+		localPlayer = ThePlayerList->getFirstSlotParticipantPlayer();
+		// ------------
+
+		//MODDD - in case above failed again, somehow (most likely the intent of the original null check being below)
+		if(!localPlayer)
+			return;
+	}
+
+	//MODDD - old location for the "if(!localPlayer)" check
+
+	//MODDD - condensed the result of any route reaching here: populate a row for the local player
+	populatePlayerInfo(localPlayer, playerCount);
+	++playerCount;
+
+	PlayerTemplate const *fact = ThePlayerList->getLocalPlayer()->getPlayerTemplate();
+	if(fact != nullptr)
+	{
+		const Image *image = TheMappedImageCollection->findImageByName(ThePlayerList->getLocalPlayer()->getPlayerTemplate()->getScoreScreen());
+		if(image)
+		{
+			parent->winSetEnabledImage(0, image);
+			parent->winSetStatus(parent->winGetStatus() | WIN_STATUS_IMAGE );
+		}
+	}
+
+	//MODDD - long block of script to condense ally/enemy computer player info turned into a helper for ease of use
+	populateComputerPlayerInfoBySideRelation(localPlayer, playerCount);
+
 	hideWindows(playerCount);
 
 }

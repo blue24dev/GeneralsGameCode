@@ -253,12 +253,7 @@ void GameLogic::clearGameData( Bool showScoreScreen )
 {
 	if( !isInGame() )
 	{
-		//MODDD - changing this to just skip to 'reset' instead, so calling is still valid here
-		// ---
-		//DEBUG_CRASH(("We tried to clear the game data when we weren't in a game"));
-		// ---
-		TheGameEngine->reset();
-		// ---
+		DEBUG_CRASH(("We tried to clear the game data when we weren't in a game"));
 		return;
 	}
 
@@ -929,14 +924,7 @@ bool GameLogic::onClearGameData(MAYBE_UNUSED GameMessage *msg, AIGroupPtr &curre
 #endif
 	}
 	currentlySelectedGroup = nullptr;
-
-	//MODDD - adding this if-then for safety since calling this w/o being in game just skips to
-	// 'GameEngine::reset', didn't before
-	// (MODDD - TODO - verify if this still makes sense, the inner 'TheGameLogic->clearGameData();' was changed to 'clearGameData' since my change)
-	if (TheGameLogic->isInGame())
-	{
-		clearGameData();
-	}
+	clearGameData();
 
 	return true;
 }

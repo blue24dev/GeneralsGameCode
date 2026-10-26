@@ -2129,7 +2129,7 @@ int printBuffer_numberRightAlignedSep(char* dest, size_t destCount, int val)
 // not just the retail game ScoreScreen.wnd, but also for any mod you come across.
 // Namely, goes into more detail on the money received per player: from supply collection, renewable sources like
 // supply drop zones or oil derricks, various forms of cheats, etc.
-void extraScoreScreenStatsPrintOut_header()
+void extraScoreScreenStatsPrintOut()
 {
 	FILE* outputFile = fopen("ScoreScreenExtra.txt", "a");
 	printTimeStamp(outputFile);
@@ -2139,18 +2139,90 @@ void extraScoreScreenStatsPrintOut_header()
 #else
 	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Bounty        |Salvage       |Steal         |Steal (Victim)|Map Script    |Total Collect \n");
 #endif
+
+	//MODDD - grabMultiPlayerInfo's loop to get
+	for( Int i = 0; i < ThePlayerList->m_slotSoftMax; ++i)
+	{
+		// filtering out observer players - not useful for these extra stats
+		Player *player = ThePlayerList->getPlayerFromSlotIndex_requireParticipant(i);
+		if (player != nullptr)
+		{
+			extraScoreScreenStatsPrintOut_player(outputFile, player);
+		}
+	}
+
+	// For the rest of the computer players baked into the map, using the same checks as ScoreScreen.cpp's 'populateComputerPlayerInfoForGeneralsChallenge'
+	//MODDD - TODO - if this generates noise (obviously irrelevant players grabbed) for FGC_NONE skirmish/LAN games, consider '#if' checks for FGC's
+	int i;
+	for (i = 0; i < ThePlayerList->getPlayerCount(); ++i)
+	{
+		Player* player = ThePlayerList->getNthPlayer(i);
+		if (ThePlayerList->getSlotIndex(player->getPlayerIndex()) != -1)
+		{
+			continue;
+		}
+
+		if (player->isPlayerObserver())
+		{
+			continue;
+		}
+
+		// Exclude neutral and civilian players.
+		if (ThePlayerList->isPlayerUnaffiliated(player))
+		{
+			continue;
+		}
+
+		if (!player->getListInScoreScreen())
+		{
+			continue;
+		}
+
+		if (player->getPlayerType() == PLAYER_HUMAN)
+		{
+			continue;
+		}
+
+		// All passed - add this player
+		extraScoreScreenStatsPrintOut_player(outputFile, player);
+	}
+
 	fclose(outputFile);
 }
 
-void extraScoreScreenStatsPrintOut_player(Player* player)
+void extraScoreScreenStatsPrintOut_player(FILE* outputFile, Player* player)
 {
 	ScoreKeeper *scoreKpr = player->getScoreKeeper();
 	if (!scoreKpr)
 		return;
-	
+
+	AsciiString playerNameDisp;
+	playerNameDisp.translate(player->getPlayerDisplayName());
+
 	//const char* playerName = TheNameKeyGenerator->keyToName(player->getPlayerNameKey()).str();
-	AsciiString playerName;
-	playerName.translate(player->getPlayerDisplayName());
+	AsciiString playerNameToPrint;
+	playerNameToPrint.set(playerNameDisp);
+	if (ThePlayerList->getSlotIndex(player->getPlayerIndex()) != -1)
+	{
+		// slot player - always ignore the raw name since it's not very interesting
+	}
+	else
+	{
+		// baked-in player being printed out - only include the raw name if it's different from the display name
+		const char* playerName = TheNameKeyGenerator->keyToName(player->getPlayerNameKey()).str();
+		
+		if (playerNameDisp.compare(playerName) == 0)
+		{
+			// match - nothing to do
+		}
+		else
+		{
+			// include the raw name in parenthesis
+			playerNameToPrint.concat("(");
+			playerNameToPrint.concat(playerName);
+			playerNameToPrint.concat(")");
+		}
+	}
 
 	// Note that start money includes what's added by the 'noob' bonus - I don't think that's worthwhile to separate out.
 	Int moneyStartedWith = scoreKpr->getMoneyStartedWith();
@@ -2182,11 +2254,11 @@ void extraScoreScreenStatsPrintOut_player(Player* player)
 	// Also, as said above, the 'steal (victim)' column isn't included in this - it's just neat to see how much was stolen from a player.
 	Int moneyTotalCollected = scoreKpr->getTotalMoneyCollected();
 
-	FILE* outputFile = fopen("ScoreScreenExtra.txt", "a");
+	//FILE* outputFile = fopen("ScoreScreenExtra.txt", "a");
 	static char lineBuffer[512];
 	int off = 0;
 
-	off += printBuffer_textLeftAligned(&lineBuffer[off], 30, playerName.str());
+	off += printBuffer_textLeftAligned(&lineBuffer[off], 30, playerNameToPrint.str());
 
 	off += printBuffer_text(&lineBuffer[off], 1, "|");
 	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyStartedWith);
@@ -2215,7 +2287,7 @@ void extraScoreScreenStatsPrintOut_player(Player* player)
 
 	fputs(lineBuffer, outputFile);
 
-	fclose(outputFile);
+	//fclose(outputFile);
 }
 
 
