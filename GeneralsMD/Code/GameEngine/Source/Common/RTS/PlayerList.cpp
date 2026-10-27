@@ -983,6 +983,29 @@ Player *PlayerList::getPlayerFromSlotIndex_requireOccupied(Int slotIndex) const
 	return getPlayerFromSlotIndex(slotIndex);
 }
 
+//MODDD - new. See notes below - this was made after the fact to skip the 'active' check, so this is better for
+// post-game things like a score screen or checks that don't want results to vary with a player being defeated/gone
+Player *PlayerList::getPlayerFromSlotIndex_requireParticipant(Int slotIndex) const
+{
+	// If 'TheGameInfo' is null, this lookup for slot info to verify being non-open/closed & non-observer isn't possible.
+	// This is the case for playing the single player campaign in the original/retail state of the game, not my co-op
+	// additions. Of course 'you' are here playing the game as the only valid 'slot' (local player), so skipping this works
+	// out just fine then.
+	if (TheGameInfo != nullptr)
+	{
+		GameSlot *slot = TheGameInfo->getSlot(slotIndex);
+		if (!slot->isParticipant())
+		{
+			// regardless of a player being connected (ex: observer), not relevant for the caller
+			return nullptr;
+		}
+	}
+
+	// passed/skipped the above filter - pass along whatever the base variant finds
+	// and may as well bundle in a 'is-active' check
+	return getPlayerFromSlotIndex(slotIndex);
+}
+
 //MODDD - new. Variant of above that includes a filter for coming from a slot that's actively participating in the game
 // (filled by someone, not observer) if that information is available ('TheGameInfo' is present).
 // Mainly a convenience feature to bundle whether there is 'TheGameInfo' to check and the result of a player-lookup being
@@ -1011,6 +1034,46 @@ Player *PlayerList::getPlayerFromSlotIndex_requireActiveParticipant(Int slotInde
 		return nullptr;
 	}
 	return p;
+}
+
+//MODDD - similar to getting the local player for the campaign / generals challenge maps, but to get a consistent answer
+// for the '1st' player actually playing the game
+Player* PlayerList::getFirstSlotParticipantPlayer() const
+{
+	int i;
+	for(i = 0; i < ThePlayerList->m_slotSoftMax; ++i)
+	{
+		Player* playerTest = ThePlayerList->getPlayerFromSlotIndex_requireParticipant(i);
+		if (playerTest != nullptr)
+		{
+			return playerTest;
+		}
+	}
+
+	// should not be possible - how could all slots be closed/open/observer?
+	return nullptr;
+}
+
+//MODDD - see above, includes an 'active' check.
+// This is good for in-game to get an idea for 'who' to pick in place of a 'local player' reference (different results
+// for non-standard FGC settings / co-op mode would be mismatch candy).
+// Note that this can return null if there are no active players left (everyone left but the game's still running for a
+// bit - ex: post-defeat before the current game quits itself for real).
+Player* PlayerList::getFirstSlotActiveParticipantPlayer() const
+{
+	int i;
+	for (i = 0; i < ThePlayerList->m_slotSoftMax; ++i)
+	{
+		// Check that the player is active.
+		// Ex: in multiplayer, if player #0 leaves, they're inactive so consider the next available player to be "the" player instead
+		Player* player = ThePlayerList->getPlayerFromSlotIndex_requireActiveParticipant(i);
+		if (player != nullptr)
+		{
+			return player;
+		}
+	}
+
+	return nullptr;
 }
 
 //-----------------------------------------------------------------------------

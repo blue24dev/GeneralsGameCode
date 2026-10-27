@@ -153,11 +153,22 @@ Int ScoreKeeper::getMoneyReceived( MoneySourceType moneySource )
 Int ScoreKeeper::getTotalMoneyCollected()
 {
 	Int totalMoney = 0;
-	int i;
-	for (i = 0; i < MONEYSOURCE_COUNT; ++i)
-	{
-		totalMoney += m_moneyReceived[i];
-	}
+
+	// Going to add everything one-by-one so STEAL_VICTIM isn't included
+	// (it's interesting to see how much money you lost to other players stealing from you, but reducing your
+	// total because of it isn't what most expect to see)
+	totalMoney += m_moneyReceived[MONEYSOURCE_GATHERED];
+	totalMoney += m_moneyReceived[MONEYSOURCE_RENEWABLE];
+	totalMoney += m_moneyReceived[MONEYSOURCE_BOUNTY];
+	totalMoney += m_moneyReceived[MONEYSOURCE_SALVAGE];
+	totalMoney += m_moneyReceived[MONEYSOURCE_STEAL];
+	//totalMoney += m_moneyReceived[MONEYSOURCE_STEAL_VICTIM];
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
+	totalMoney += m_moneyReceived[MONEYSOURCE_SCALARCHEATS];
+#endif
+	// no longer receives negative changes - see 'onMoneySet''s description for more info
+	totalMoney += m_moneyReceived[MONEYSOURCE_MAPSCRIPT];
+
 	return totalMoney;
 }
 
@@ -169,10 +180,22 @@ Int ScoreKeeper::getTotalMoneyCollected()
 // only affect the money received by map script (technically this could mean more money was lost in total than gained from
 // map scripts).
 // Ex: if a map script sets the player money to $100 after 20 minutes, this is most likely a loss as the player is likely
-// to have more money than that at any given time during normal gameplay.
+// to have more money than that at any given time during normal gameplay -> the force to a new value results in a negative delta.
+// UPDATE - nevermind the counting-sets-to-less-money idea.
+// In some maps, such as the 'Contra' mod's GLA boss general challenge map, an incapacitated AI player has its money
+// set to $0 - this could cause a massive negative 'moneyDelta' from all the money the player had at the time that could
+// make it difficult to see the money the player actually received by map script over time.
+// Going to disallow anything that sets the money to $0 or otherwise causes a negative delta at all for safety.
 void ScoreKeeper::onMoneySet( Int moneyOld, Int moneyNew )
 {
 	Int moneyDelta = moneyNew - moneyOld;
+
+	if (moneyDelta <= 0)
+	{
+		// don't count this change
+		return;
+	}
+
 	addMoneyEarned(moneyDelta, MONEYSOURCE_MAPSCRIPT);
 }
 
@@ -185,14 +208,14 @@ void ScoreKeeper::addMoneySpent( Int money )
 //MODDD - implementation moved from .h file, new param 'moneySource'
 void ScoreKeeper::addMoneyEarned( Int money, MoneySourceType moneySource )
 {
-	//MODDD - to preserve retail behavior ('supplied collected' column in the score screen), don't count map-script grants.
+	// To preserve retail behavior ('supplied collected' column in the score screen), don't count map-script grants.
 	// The total from the text file will include this by summing up all the buckets, however.
 	if (moneySource != MONEYSOURCE_MAPSCRIPT)
 	{
 		m_totalMoneyEarned += money;
 	}
 
-	//MODDD - also add to the corresponding 'm_moneyReceived' bucket
+	// Also add to the corresponding 'm_moneyReceived' bucket
 	m_moneyReceived[moneySource] += money;
 }
 

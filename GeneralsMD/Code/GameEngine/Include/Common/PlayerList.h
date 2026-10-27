@@ -176,8 +176,11 @@ public:
 	Player *getPlayerFromSlotIndex(Int slotIndex) const;
 
 	//MODDD - new
-	Player *getPlayerFromSlotIndex_requireOccupied(Int slotIndex) const;
-	Player *getPlayerFromSlotIndex_requireActiveParticipant(Int slotIndex) const;
+	Player* getPlayerFromSlotIndex_requireOccupied(Int slotIndex) const;
+	Player* getPlayerFromSlotIndex_requireParticipant(Int slotIndex) const;
+	Player* getPlayerFromSlotIndex_requireActiveParticipant(Int slotIndex) const;
+	Player* getFirstSlotParticipantPlayer() const;
+	Player* getFirstSlotActiveParticipantPlayer() const;
 
 protected:
 
