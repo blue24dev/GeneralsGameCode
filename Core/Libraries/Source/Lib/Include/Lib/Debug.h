@@ -74,6 +74,13 @@
 // are, but 'AsciiString.h' is included before 'GameCommon.h' -> things in 'GameDefines.h' do not reach 'AsciiString.h'.
 #define DEBUG_HELP_FOR_RELEASE 1
 
+//MODDD - setting for whether ThingTemplate.cpp: 'ModuleInfo::addModuleInfo' should do validation to make sure the
+// module tag being added isn't already in use. As far as I know, this is only called for by a map's 'map.ini' file
+// adding new modules to existing objects(ThingTemplate's) with 'AddModule' blocks.
+// As-is, this was determined by 'RTS_DEBUG' (being a debug build or not).
+// Should this be moved to "Core/GameEngine/Include/Common/Debug.h" if this only affects the game exe?
+#define INI_ADD_MODULE_VALIDATE_UNIQUENESS 1
+
 // These are stolen from the WW3D Debug file. REALLY useful. :-)
 #define STRING_IT(a) #a
 #define TOKEN_IT(a) STRING_IT(,##a)

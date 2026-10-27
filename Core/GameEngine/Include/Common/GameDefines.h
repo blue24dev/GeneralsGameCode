@@ -361,11 +361,16 @@
 // Not supporting a check for this because their AI would be dead anyway - just leave the slot empty if you don't have any friends.
 //#define FORCE_HUMAN_PLAYER_START_MONEY 35000
 
-// Blocks scripts that set money, not ones that add money.
+// Blocks scripts that set money, not ones that add(give) money for human players.
 // Good if starting player money is forced so that a map script doesn't immediately override it at the start of the game.
-// If a map mistakenly uses a script to add instead of set money at the start of a game, it will work anyway.
-// This doesn't affect start moeny set by the skirmish menu.
-//#define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS 1
+// This also includes preserving money set by the skirmish menu (would be overridden by map script setting the money at frame #0).
+//#define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS 0
+
+// Blocks scripts that add(give) money for computer players.
+// Use this to avoid one of the more obnoxious forms of cheats: endless computer player money.
+// Money scaler cheats are a fairer compromise that gives the computer player more money but cutting them off will
+// eventually have an impact.
+//#define BLOCK_GIVE_MONEY_SCRIPT_FOR_COMPUTER_PLAYERS 0
 
 // Makes player-built renewable sources of income (hackers, black markets, supply drop zones) half as effective.
 // This coincides with other possible edits to slow down the pace of the entire game - easy to end up with far more money than you
@@ -630,6 +635,7 @@
 
 #define FORCE_HUMAN_PLAYER_START_MONEY 0
 #define BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS 1
+#define BLOCK_GIVE_MONEY_SCRIPT_FOR_COMPUTER_PLAYERS 1
 #define RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE 1
 #define RENEWABLE_MONEY_SOURCE_COST_SCALAR 0.8
 #define FORCE_AI_TEAM_BUILD_DELAY_SECONDS 0

@@ -11,6 +11,7 @@
 #include "Common/Upgrade.h"
 #include "Common/NameKeyGenerator.h"
 #include "Common/ScoreKeeper.h"
+#include "Common/Recorder.h"
 #include "GameNetwork/GameInfo.h"
 #include "GameClient/ControlBar.h"
 
@@ -2145,28 +2146,141 @@ int printBuffer_numberRightAlignedSep(char* dest, size_t destCount, int val)
 // not just the retail game ScoreScreen.wnd, but also for any mod you come across.
 // Namely, goes into more detail on the money received per player: from supply collection, renewable sources like
 // supply drop zones or oil derricks, various forms of cheats, etc.
-void extraScoreScreenStatsPrintOut_header()
+void extraScoreScreenStatsPrintOut()
 {
 	FILE* outputFile = fopen("ScoreScreenExtra.txt", "a");
 	printTimeStamp(outputFile);
-	fputs("\n", outputFile);
+
+	AsciiString gameStr;
+	const char* gameBuildStr;
+	const char* gameTypeStr;
+#if FORCE_GAME_CONTEXT == FGC_NONE
+	gameBuildStr = "Standard";
+#elif FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
+	gameBuildStr = "Generals Challenge";
+#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
+	gameBuildStr = "Campaign";
+#else
+	// ???
+	gameBuildStr = "Unknown";
+#endif
+
+	// TODO - test this - is checking 'TheGameLogic->isInInternetGame()', etc. still ok here when
+	// "TheGameLogic->isInReplayGame()" is the case?
+	// Feels like there should be no reason for a replay to be unable to get that info too.
+	if(TheGameLogic->isInInternetGame())
+	{
+		gameTypeStr = "Internet";
+	}
+	else if( TheGameLogic->isInLanGame())
+	{
+		gameTypeStr = "LAN";
+	}
+	else if( TheGameLogic->isInSkirmishGame())
+	{
+		gameTypeStr = "Skirmish";
+	}
+	else
+	{
+		gameTypeStr = "Campaign";
+	}
+
+	gameStr.format("Build:%s - %s", gameBuildStr, gameTypeStr);
+	if (TheGameLogic->isInReplayGame())
+	{
+		gameStr.concat(" - Replay");
+	}
+
+	fprintf(outputFile, "%s\n", gameStr.str());
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Bounty        |Salvage       |Steal         |Steal (Victim)|Scalar Cheats |Map Script    |Total Collect \n");
 #else
 	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Bounty        |Salvage       |Steal         |Steal (Victim)|Map Script    |Total Collect \n");
 #endif
+
+	//MODDD - grabMultiPlayerInfo's loop to get
+	for( Int i = 0; i < ThePlayerList->m_slotSoftMax; ++i)
+	{
+		// filtering out observer players - not useful for these extra stats
+		Player *player = ThePlayerList->getPlayerFromSlotIndex_requireParticipant(i);
+		if (player != nullptr)
+		{
+			extraScoreScreenStatsPrintOut_player(outputFile, player);
+		}
+	}
+
+	// For the rest of the computer players baked into the map, using the same checks as ScoreScreen.cpp's 'populateComputerPlayerInfoForGeneralsChallenge'
+	//MODDD - TODO - if this generates noise (obviously irrelevant players grabbed) for FGC_NONE skirmish/LAN games, consider '#if' checks for FGC's
+	int i;
+	for (i = 0; i < ThePlayerList->getPlayerCount(); ++i)
+	{
+		Player* player = ThePlayerList->getNthPlayer(i);
+		if (ThePlayerList->getSlotIndex(player->getPlayerIndex()) != -1)
+		{
+			continue;
+		}
+
+		if (player->isPlayerObserver())
+		{
+			continue;
+		}
+
+		// Exclude neutral and civilian players.
+		if (ThePlayerList->isPlayerUnaffiliated(player))
+		{
+			continue;
+		}
+
+		if (!player->getListInScoreScreen())
+		{
+			continue;
+		}
+
+		if (player->getPlayerType() == PLAYER_HUMAN)
+		{
+			continue;
+		}
+
+		// All passed - add this player
+		extraScoreScreenStatsPrintOut_player(outputFile, player);
+	}
+
 	fclose(outputFile);
 }
 
-void extraScoreScreenStatsPrintOut_player(Player* player)
+void extraScoreScreenStatsPrintOut_player(FILE* outputFile, Player* player)
 {
 	ScoreKeeper *scoreKpr = player->getScoreKeeper();
 	if (!scoreKpr)
 		return;
-	
+
+	AsciiString playerNameDisp;
+	playerNameDisp.translate(player->getPlayerDisplayName());
+
 	//const char* playerName = TheNameKeyGenerator->keyToName(player->getPlayerNameKey()).str();
-	AsciiString playerName;
-	playerName.translate(player->getPlayerDisplayName());
+	AsciiString playerNameToPrint;
+	playerNameToPrint.set(playerNameDisp);
+	if (ThePlayerList->getSlotIndex(player->getPlayerIndex()) != -1)
+	{
+		// slot player - always ignore the raw name since it's not very interesting
+	}
+	else
+	{
+		// baked-in player being printed out - only include the raw name if it's different from the display name
+		const char* playerName = TheNameKeyGenerator->keyToName(player->getPlayerNameKey()).str();
+		
+		if (playerNameDisp.compare(playerName) == 0)
+		{
+			// match - nothing to do
+		}
+		else
+		{
+			// include the raw name in parenthesis
+			playerNameToPrint.concat("(");
+			playerNameToPrint.concat(playerName);
+			playerNameToPrint.concat(")");
+		}
+	}
 
 	// Note that start money includes what's added by the 'noob' bonus - I don't think that's worthwhile to separate out.
 	Int moneyStartedWith = scoreKpr->getMoneyStartedWith();
@@ -2182,7 +2296,7 @@ void extraScoreScreenStatsPrintOut_player(Player* player)
 	Int moneyFromSalvage = scoreKpr->getMoneyReceived(MONEYSOURCE_SALVAGE);
 	// Money from stealing from other players - cash hack support power, black lotus cash steal, or saboteur infiltration
 	Int moneyFromSteal = scoreKpr->getMoneyReceived(MONEYSOURCE_STEAL);
-	// Money lost to other players using steal abilities on me
+	// Money lost to other players using steal abilities on me (not factored into the total in the score screen nor generated text file)
 	Int moneyFromStealVictim = scoreKpr->getMoneyReceived(MONEYSOURCE_STEAL_VICTIM);
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 	// Money from scalar cheats applied to money collected over the course of a game from the 'noob' bonus or AI-player cheats.
@@ -2195,13 +2309,14 @@ void extraScoreScreenStatsPrintOut_player(Player* player)
 	Int moneyFromMapScript = scoreKpr->getMoneyReceived(MONEYSOURCE_MAPSCRIPT);
 	// Total money collected over the course of a game - sum of everything above except for start money.
 	// Note that the 'supplied collected' shown in the score screen still doesn't factor in money granted by map scripts even after the start of a game, so adding it in here.
+	// Also, as said above, the 'steal (victim)' column isn't included in this - it's just neat to see how much was stolen from a player.
 	Int moneyTotalCollected = scoreKpr->getTotalMoneyCollected();
 
-	FILE* outputFile = fopen("ScoreScreenExtra.txt", "a");
+	//FILE* outputFile = fopen("ScoreScreenExtra.txt", "a");
 	static char lineBuffer[512];
 	int off = 0;
 
-	off += printBuffer_textLeftAligned(&lineBuffer[off], 30, playerName.str());
+	off += printBuffer_textLeftAligned(&lineBuffer[off], 30, playerNameToPrint.str());
 
 	off += printBuffer_text(&lineBuffer[off], 1, "|");
 	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyStartedWith);
@@ -2230,7 +2345,7 @@ void extraScoreScreenStatsPrintOut_player(Player* player)
 
 	fputs(lineBuffer, outputFile);
 
-	fclose(outputFile);
+	//fclose(outputFile);
 }
 
 

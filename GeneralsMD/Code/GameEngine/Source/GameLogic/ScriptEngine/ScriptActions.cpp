@@ -4258,9 +4258,8 @@ void ScriptActions::doSetMoney(const AsciiString& playerName, Int money)
 	
 	//MODDD
 #if BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS
-	if (player->getPlayerType() == PLAYER_HUMAN) {
+	if (player->getPlayerType() == PLAYER_HUMAN)
 		return;
-	}
 #endif
 
 	Money *m = player->getMoney();
@@ -4275,7 +4274,7 @@ void ScriptActions::doSetMoney(const AsciiString& playerName, Int money)
 	
 	//MODDD - if this is a deposit, add the money, mainly so money given to AI players can be seen and you can feel less bad
 	// (not sure if some maps could just force the money to a certain amount instead of adding to it)
-	if (TheGameLogic->getFrame() < 5)
+	if (TheGameLogic->getFrame() == 0)
 	{
 		// consider this the start of the game - replace whatever start money value there is
 		player->getScoreKeeper()->setMoneyStartedWith(money);
@@ -4298,6 +4297,20 @@ void ScriptActions::doGiveMoney(const AsciiString& playerName, Int money)
 		return;
 	}
 
+	//MODDD
+#if BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS
+	// Check for adding money to a human player at the first frame of a certain amount.
+	// If so, stop - this is most likely a mistake on the mappers part to add money instead of set it.
+	if (TheGameLogic->getFrame() == 0 && player->getPlayerType() == PLAYER_HUMAN && money >= 10000)
+		return;
+#endif
+
+	//MODDD
+#if BLOCK_GIVE_MONEY_SCRIPT_FOR_COMPUTER_PLAYERS
+	if (player->getPlayerType() == PLAYER_COMPUTER)
+		return;
+#endif
+
 	Money *m = player->getMoney();
 	if (!m)
 		return;
@@ -4308,7 +4321,7 @@ void ScriptActions::doGiveMoney(const AsciiString& playerName, Int money)
 		m->deposit(money);
 
 	//MODDD - handle score for this
-	if (TheGameLogic->getFrame() < 5)
+	if (TheGameLogic->getFrame() == 0)
 	{
 		// consider this the start of the game - replace whatever start money value there is
 		player->getScoreKeeper()->setMoneyStartedWith(m->countMoney());

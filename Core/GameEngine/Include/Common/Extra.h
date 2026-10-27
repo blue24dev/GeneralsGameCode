@@ -69,8 +69,8 @@ Int buildTimeAdjustmentFilter(const Player* player, const ThingTemplate* tt);
 Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModifier);
 #endif
 
-void extraScoreScreenStatsPrintOut_header();
-void extraScoreScreenStatsPrintOut_player(Player* player);
+void extraScoreScreenStatsPrintOut();
+void extraScoreScreenStatsPrintOut_player(FILE* outputFile, Player* player);
 
 //MODDD - DEBUG
 Bool checkIfObjInDestroyList(const Object* objCheck);
