@@ -11,6 +11,7 @@
 #include "Common/Upgrade.h"
 #include "Common/NameKeyGenerator.h"
 #include "Common/ScoreKeeper.h"
+#include "Common/Recorder.h"
 #include "GameNetwork/GameInfo.h"
 #include "GameClient/ControlBar.h"
 
@@ -2133,7 +2134,48 @@ void extraScoreScreenStatsPrintOut()
 {
 	FILE* outputFile = fopen("ScoreScreenExtra.txt", "a");
 	printTimeStamp(outputFile);
-	fputs("\n", outputFile);
+
+	AsciiString gameStr;
+	const char* gameBuildStr;
+	const char* gameTypeStr;
+#if FORCE_GAME_CONTEXT == FGC_NONE
+	gameBuildStr = "Standard";
+#elif FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
+	gameBuildStr = "Generals Challenge";
+#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
+	gameBuildStr = "Campaign";
+#else
+	// ???
+	gameBuildStr = "Unknown";
+#endif
+
+	// TODO - test this - is checking 'TheGameLogic->isInInternetGame()', etc. still ok here when
+	// "TheGameLogic->isInReplayGame()" is the case?
+	// Feels like there should be no reason for a replay to be unable to get that info too.
+	if(TheGameLogic->isInInternetGame())
+	{
+		gameTypeStr = "Internet";
+	}
+	else if( TheGameLogic->isInLanGame())
+	{
+		gameTypeStr = "LAN";
+	}
+	else if( TheGameLogic->isInSkirmishGame())
+	{
+		gameTypeStr = "Skirmish";
+	}
+	else
+	{
+		gameTypeStr = "Campaign";
+	}
+
+	gameStr.format("Build:%s - %s", gameBuildStr, gameTypeStr);
+	if (TheGameLogic->isInReplayGame())
+	{
+		gameStr.concat(" - Replay");
+	}
+
+	fprintf(outputFile, "%s\n", gameStr.str());
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Bounty        |Salvage       |Steal         |Steal (Victim)|Scalar Cheats |Map Script    |Total Collect \n");
 #else

@@ -4258,9 +4258,8 @@ void ScriptActions::doSetMoney(const AsciiString& playerName, Int money)
 	
 	//MODDD
 #if BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS
-	if (player->getPlayerType() == PLAYER_HUMAN) {
+	if (player->getPlayerType() == PLAYER_HUMAN)
 		return;
-	}
 #endif
 
 	Money *m = player->getMoney();
@@ -4297,6 +4296,20 @@ void ScriptActions::doGiveMoney(const AsciiString& playerName, Int money)
 	if (!player) {
 		return;
 	}
+
+	//MODDD
+#if BLOCK_SET_MONEY_SCRIPT_FOR_HUMAN_PLAYERS
+	// Check for adding money to a human player at the first frame of a certain amount.
+	// If so, stop - this is most likely a mistake on the mappers part to add money instead of set it.
+	if (TheGameLogic->getFrame() == 0 && player->getPlayerType() == PLAYER_HUMAN && money >= 10000)
+		return;
+#endif
+
+	//MODDD
+#if BLOCK_GIVE_MONEY_SCRIPT_FOR_COMPUTER_PLAYERS
+	if (player->getPlayerType() == PLAYER_COMPUTER)
+		return;
+#endif
 
 	Money *m = player->getMoney();
 	if (!m)
