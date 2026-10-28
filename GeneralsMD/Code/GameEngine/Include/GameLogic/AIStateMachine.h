@@ -271,8 +271,12 @@ protected:
 	void setAdjustsDestination(Bool b) { m_adjustDestinations = b; }
 	Bool getAdjustsDestination() const;
 
-	void setGoalPos(const Coord3D* pos) { m_goalPosition = *pos; }
-	const Coord3D* getGoalPos() const { return &m_goalPosition; }
+	//MODDD - removing setters/getters - very misleading!
+	// nothing ever uses these - type info about specific States isn't typically available from anywhere else.
+	// Anything non-virtual is likely a helper expected for internal use only.
+	// (or possibly during state setup when the specific state type info is briefly known)
+	//void setGoalPos(const Coord3D* pos) { m_goalPosition = *pos; }
+	//const Coord3D* getGoalPos() const { return &m_goalPosition; }
 
 	virtual Bool computePath();												///< compute the path
 

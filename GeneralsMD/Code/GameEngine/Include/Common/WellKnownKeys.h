@@ -881,7 +881,8 @@ DEFINE_KEY(skirmishDifficulty)
 	Type: Bool
 	Usage: (optional) if present, signifies if the player is the local player
 */
-DEFINE_KEY(multiplayerIsLocal)
+//MODDD - local player is no longer determined this way (disabling line)
+//DEFINE_KEY(multiplayerIsLocal)
 
 /**
 	Which: Player Properties

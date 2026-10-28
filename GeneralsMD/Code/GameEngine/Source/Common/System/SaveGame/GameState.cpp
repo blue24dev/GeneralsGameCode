@@ -686,7 +686,7 @@ SaveCode GameState::_loadGame( AvailableGameInfo gameInfo )
 
 	//MODDD - Consider this 'setup'. See further down - loading most games ends up calling
 	// 'TheGameLogic->startNewGame( TRUE )' and loading the rest of the objects/etc. afterwards.
-	gameStatus = GAMESTATUS_SETUP;
+	g_gameStatus = GAMESTATUS_SETUP;
 
 	//
 	// clear the save directory of any temporary "scratch pad" maps that were extracted
@@ -795,7 +795,7 @@ SaveCode GameState::_loadGame( AvailableGameInfo gameInfo )
 	// 'loadGame' here to do that.
 	if( gameInfo.saveGameInfo.saveFileType != SAVE_FILE_TYPE_MISSION )
 	{
-		gameStatus = GAMESTATUS_INGAME;
+		g_gameStatus = GAMESTATUS_INGAME;
 	}
 	return SC_OK;
 
