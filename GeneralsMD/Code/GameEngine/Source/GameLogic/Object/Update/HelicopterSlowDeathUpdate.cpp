@@ -278,7 +278,7 @@ void HelicopterSlowDeathBehavior::beginSlowDeath( const DamageInfo *damageInfo )
 void HelicopterSlowDeathBehavior::onDelete()
 {
 	// if this is being deleted because the game is ending, don't bother
-	if (gameStatus != GAMESTATUS_TEARDOWN)
+	if (g_gameStatus != GAMESTATUS_TEARDOWN)
 	{
 		attemptEjectPilot(getObject());
 	}

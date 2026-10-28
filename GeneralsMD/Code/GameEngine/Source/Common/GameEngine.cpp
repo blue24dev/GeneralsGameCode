@@ -776,7 +776,7 @@ void GameEngine::init()
 void GameEngine::reset()
 {
 	//MODDD
-	gameStatus = GAMESTATUS_TEARDOWN;
+	g_gameStatus = GAMESTATUS_TEARDOWN;
 
 	WindowLayout *background = TheWindowManager->winCreateLayout("Menus/BlankWindow.wnd");
 	DEBUG_ASSERTCRASH(background,("We Couldn't Load Menus/BlankWindow.wnd"));
@@ -804,7 +804,7 @@ void GameEngine::reset()
 	}
 
 	//MODDD
-	gameStatus = GAMESTATUS_NONE;
+	g_gameStatus = GAMESTATUS_NONE;
 }
 
 /// -----------------------------------------------------------------------------------------------

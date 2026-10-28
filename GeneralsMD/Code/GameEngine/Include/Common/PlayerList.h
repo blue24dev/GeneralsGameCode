@@ -91,7 +91,8 @@ public:
 	//MODDD
 	Player* findNeutralPlayer();
 	Player* findCivilianPlayer();
-	Player* findFirstSlotPlayer();
+	Player* campaign_findFirstSlotPlayerByExpectedName();
+	Player* campaign_findFirstSlotPlayerFallback();
 
 	virtual void newGame(); // called during GameLogic::startNewGame()
 	virtual void newMap();	 // Called after a new map is loaded.

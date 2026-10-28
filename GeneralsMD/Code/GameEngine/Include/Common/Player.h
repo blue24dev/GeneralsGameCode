@@ -224,6 +224,10 @@ public:
 	void deletePlayerAI();
 
 	UnicodeString getPlayerDisplayName() { return m_playerDisplayName; }
+
+	//MODDD - setter - should not be used often, likely never after game setup
+	void setPlayerDisplayName(UnicodeString playerDisplayName) { m_playerDisplayName = playerDisplayName; }
+
 	NameKeyType getPlayerNameKey() const { return m_playerNameKey; }
 
 	AsciiString getSide() const { return m_side; }

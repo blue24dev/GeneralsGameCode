@@ -1126,11 +1126,11 @@ void Object::finishInGameInit()
 //MODDD - all new
 Bool Object::isInitLocked()
 {
-	return objectInitLock || this->objectInitLockLocal;
+	return g_objectInitLock || this->objectInitLockLocal;
 }
 Bool Object::isInitLockedHard()
 {
-	return objectInitLock;
+	return g_objectInitLock;
 }
 Int Object::getMoneySpentOnMe()
 {
@@ -1481,7 +1481,7 @@ void Object::onDestroy()
 	//MODDD - if there's a hijacker associated with this vehicle, clean it up now!
 	// too bad if an eject system didn't get to it yet
 	// (note that this should come after 'onDelete' module calls in case something chooses to eject at the very last moment)
-	if (gameStatus != GAMESTATUS_TEARDOWN)
+	if (g_gameStatus != GAMESTATUS_TEARDOWN)
 	{
 		HijackUtil::clearHijackerInObject(this);
 	}

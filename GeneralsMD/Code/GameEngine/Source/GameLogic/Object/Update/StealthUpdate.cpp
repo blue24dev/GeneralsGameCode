@@ -157,7 +157,7 @@ StealthUpdate::StealthUpdate( Thing *thing, const ModuleData* moduleData ) : Upd
 
 	//MODDD - require the game to be 'in-game' to start with the stealth delay applied.
 	// Otherwise (placed during map startup), may as well begin stealthed.
-	if (gameStatus == GAMESTATUS_INGAME)
+	if (g_gameStatus == GAMESTATUS_INGAME)
 	{
 		m_stealthAllowedFrame = TheGameLogic->getFrame() + data->m_stealthDelay;
 	}

@@ -147,8 +147,8 @@ enum { OBJ_HASH_SIZE	= 8192 };
 GameLogic *TheGameLogic = nullptr;
 
 //MODDD
-GameStatus gameStatus = GAMESTATUS_NONE;
-Bool objectInitLock = FALSE;
+GameStatus g_gameStatus = GAMESTATUS_NONE;
+Bool g_objectInitLock = FALSE;
 
 #if REAL_TIME_TOD_CHANGE
 // Goes from 0, counts up, and loops back to 0 on reaching 'TOD_CYCLE_LENGTH_FRAMES'.
@@ -1214,161 +1214,6 @@ void GameLogic::setGameMode( GameMode mode )
 	updateDisplayBusyState();
 }
 
-#if FORCE_GAME_CONTEXT == FGC_CAMPAIGN
-// Figure out which side baked into the map represents "me", the one creating the game or joining someone
-// else's in a network game.
-// Needed because campaign maps are a special case: unlike skirmish and generals challenge maps that create
-// a new player for the current user and spawn a starting building/unit(s) per faction info, campaign maps
-// have to assume the first non-computer side/player is who the user will actually play as.
-// This is awkward for multiplayer where there isn't a standard to decide which side/player users after the
-// first (host of the game) will play as.
-// One side should have its dict receive a 'TRUE' value at 'TheKey_multiplayerIsLocal' - this will be the side
-// the currrent machine(user) will play as in-game.
-// Lastly, this isn't needed for FGC_CHALLENGE_FORCE/CAMPAIGN because both cases use the skirmish map system
-// (always a "player#" that knows which belongs to the current machine).
-//MODDD - TODO - couldn't 'populateSlotPlayerRefs' in PlayerList handle this too?
-// Do whatever a side having 'TheKey_multiplayerIsLocal' does to declare that this player is for the local user/machine.
-SidesInfo* getMultiplayerLocalSide()
-{
-	// ---
-	// Old way: find the 'i-th' human-marked side throughout the sides in start->end order (not alphabetical).
-	// Example: whoever created the game gets the 1st human-marked side. Whoever joined (player 2) gets the 2nd
-	// human marked side, etc.
-	/*
-	UnsignedInt targetHumanSideToEncounter;
-	if (TheGameInfo != nullptr)
-	{
-		// The current skirmish/network game knows who 'I' am.
-		targetHumanSideToEncounter = TheGameInfo->getLocalSlotNum();
-	}
-	else
-	{
-		// Shell map.
-		// Since the 'd->getBool(TheKey_playerIsHuman)' way of determining the local player is disabled in
-		// PlayerList this time (handles it for non-network-game cases like the shell map normally), handling that case here.
-		// Use the first human-marked side as before would have.
-		targetHumanSideToEncounter = 0;
-	}
-
-	UnsignedInt humanSidesEncountered = 0;
-	int i;
-	for (i = 0; i < TheSidesList->getNumSides(); ++i)
-	{
-		SidesInfo* sideInfo = TheSidesList->getSideInfo(i);
-		Dict* sideDict = sideInfo->getDict();
-		if (sideDict->getBool(TheKey_playerIsHuman))
-		{
-			if (targetHumanSideToEncounter == humanSidesEncountered)
-			{
-				sideDict->setBool(TheKey_multiplayerIsLocal, TRUE);
-				break;
-			}
-			++humanSidesEncountered;
-		}
-	}
-	*/
-
-	// New way. Old way had an issue for maps that had multiple non-computer marked players (not necessarily left for a human player).
-	// So, going back to picking players by having specific names, so maps need to adhere to this standard to work right (hopefully
-	// they all do / most do & the few that don't can have some names shifted).
-	// 1st player is expected to be called "ThePlayer" or "player0" (do not use both, "ThePlayer" will get precedence).
-	if (TheGameLogic->getGameMode() == GAME_SHELL)
-	{
-		// Shell map: use the first human-marked side as before
-		int i;
-		for (i = 0; i < TheSidesList->getNumSides(); ++i)
-		{
-			SidesInfo* sideInfo = TheSidesList->getSideInfo(i);
-			Dict* sideDict = sideInfo->getDict();
-			if (sideDict->getBool(TheKey_playerIsHuman))
-			{
-				return sideInfo;
-			}
-		}
-		// Failure. ??? Not sure
-		/*
-		AsciiString errorText;
-		errorText.format("fatal error! FGC_CAMPAIGN is on and your shell map lacks a single non-computer player.");
-		RELEASE_CRASH(errorText.str());
-		*/
-		return nullptr;
-	}
-
-	UnsignedInt localSlotNum;
-	if (TheGameInfo != nullptr)
-	{
-		localSlotNum = TheGameInfo->getLocalSlotNum();
-	}
-	else
-	{
-		// single player in retail - first & only player
-		localSlotNum = 0;
-	}
-
-	AsciiString targetPlayerName;
-	SidesInfo* sideInfo;
-	if (localSlotNum == 0)
-	{
-		// The name of the intended side/player to play as in the campaign was inconsistent but was usually one of these.
-		const char* commonPlayerNames[] =
-		{
-			"ThePlayer",
-			"Player",
-			"PlyrPLAYER",
-			"player0",
-			// (test - did any retail maps use this one? Seems reasonable to occur)
-			"PlyrPlayer"
-		};
-		int i;
-
-		for (i = 0; i < sizeof(commonPlayerNames) / sizeof(commonPlayerNames[0]); ++i)
-		{
-			targetPlayerName.set(commonPlayerNames[i]);
-			sideInfo = TheSidesList->findSideInfo(targetPlayerName);
-			if (sideInfo != nullptr)
-			{
-				// done searching
-				return sideInfo;
-			}
-		}
-
-		// None of the guesses worked?
-		// Fallback: use the first human(non-computer)-marked side like the original logic would have.
-		for (i = 0; i < TheSidesList->getNumSides(); ++i)
-		{
-			sideInfo = TheSidesList->getSideInfo(i);
-			Dict* sideDict = sideInfo->getDict();
-			if (sideDict->getBool(TheKey_playerIsHuman))
-			{
-				return sideInfo;
-			}
-		}
-
-		// Failure (no non-computer side - how?)
-		AsciiString errorText;
-		errorText.format("fatal error! FGC_CAMPAIGN is on and this map lacks a side/player for this user to play as.\nThere must be at least one human-marked side/player, though some expected choices such as \"ThePlayer\", \"Player\", or \"player0\" will receive precedence.");
-		RELEASE_CRASH(errorText.str());
-	}
-	else
-	{
-		targetPlayerName.format("player%d", localSlotNum);
-		sideInfo = TheSidesList->findSideInfo(targetPlayerName);
-		if (sideInfo != nullptr)
-		{
-			return sideInfo;
-		}
-
-		// Failure. A fallback like above isn't possible here because several maps have subsequent
-		// non-computer-marked players as-is that clearly aren't intended for multiplayer (not intended
-		// for someone to actually play as). Guessing at that point isn't wise.
-		AsciiString errorText;
-		errorText.format("fatal error! FGC_CAMPAIGN is on and this map lacks a side/player for this user to play as.\nA side/player of \"player%d\" was expected but not found.", localSlotNum);
-		RELEASE_CRASH(errorText.str());
-	}
-	return nullptr;
-}
-#endif
-
 // ------------------------------------------------------------------------------------------------
 /** Entry point for starting a new game, the engine is already in clean state at this
 	* point and ready to load up with all the data */
@@ -1381,7 +1226,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 	// is ok to declare that we're in 'setup mode'.
 	if (!loadingSaveGame)
 	{
-		gameStatus = GAMESTATUS_SETUP;
+		g_gameStatus = GAMESTATUS_SETUP;
 	}
 
 	try
@@ -1394,7 +1239,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 		// indicative of being done with setup.
 		if (!loadingSaveGame)
 		{
-			gameStatus = GAMESTATUS_INGAME;
+			g_gameStatus = GAMESTATUS_INGAME;
 		}
 	}
 	catch (QuitGameException&)
@@ -1404,7 +1249,7 @@ void GameLogic::startNewGame( Bool loadingSaveGame )
 		// after setup/etc. as usual) sometime after failure or interrupting loading for another game.
 		if (!loadingSaveGame)
 		{
-			gameStatus = GAMESTATUS_NONE;
+			g_gameStatus = GAMESTATUS_NONE;
 		}
 
 		if (m_quitToDesktopAfterMatch && TheGameEngine)
@@ -1680,8 +1525,9 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 	GetPrecisionTimer(&endTime64);
 	DEBUG_LOG(("After terrainlogic->loadmap=%f", ((double)(endTime64-startTime64)/(double)(freq64)*1000.0)));
 	#endif
-
-	Int localSlot = 0;
+	
+	//MODDD - local player is no longer determined this way (disabling line)
+	//Int localSlot = 0;
 	Int progressCount = LOAD_PROGRESS_SIDE_POPULATION;
 	//MODDD - replaced 'TheGame' condition with this
 	if (doAutomaticPostGamePlayerSetup)
@@ -1790,8 +1636,12 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 			d.setInt(TheKey_multiplayerStartIndex, slot->getStartPos());
 //			d.setBool(TheKey_multiplayerIsLocal, slot->isLocalPlayer());
 //			d.setBool(TheKey_multiplayerIsLocal, slot->getIP() == game->getLocalIP());
-			const Bool isLocalPlayer = slot->isHuman() && i == TheGameInfo->getLocalSlotNum();
-			d.setBool(TheKey_multiplayerIsLocal, isLocalPlayer);
+
+			//MODDD - local player is no longer determined this way (disabling lines)
+			// ---
+			//const Bool isLocalPlayer = slot->isHuman() && i == TheGameInfo->getLocalSlotNum();
+			//d.setBool(TheKey_multiplayerIsLocal, isLocalPlayer);
+			// ---
 
 /*
 			if (slot->getIP() == game->getLocalIP())
@@ -1811,11 +1661,15 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 					default: break;	 // no setting.
 				}
 			}
-
+			
+			//MODDD - local player is no longer determined this way (disabling lines)
+			/*
 			if (isLocalPlayer)
 			{
 				localSlot = i;
 			}
+			*/
+
 			TheSidesList->addSide(&d);
 
 			AsciiString playerTeamName;
@@ -1832,15 +1686,6 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 			updateLoadProgress(progressCount + i);
 		}
 	}
-
-#if FORCE_GAME_CONTEXT == FGC_CAMPAIGN
-	SidesInfo* sideInfo = getMultiplayerLocalSide();
-	if (sideInfo != nullptr)
-	{
-		Dict* sideDict = sideInfo->getDict();
-		sideDict->setBool(TheKey_multiplayerIsLocal, TRUE);
-	}
-#endif
 
 	//MODDD - don't add the replay observer if replay support won't even be part of the compile
 	// (or if supported eventually, user setting says not to record a replay).
@@ -1880,7 +1725,8 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 		d.setInt(TheKey_playerColor, TheMultiplayerSettings->getColor(0)->getColor());
 		d.setInt(TheKey_playerNightColor, TheMultiplayerSettings->getColor(0)->getNightColor());
 		d.setInt(TheKey_multiplayerStartIndex, 0);
-		d.setBool(TheKey_multiplayerIsLocal, FALSE);
+		//MODDD - local player is no longer determined this way (disabling line)
+		//d.setBool(TheKey_multiplayerIsLocal, FALSE);
 
 		TheSidesList->addSide(&d);
 		d.clear();
@@ -2275,7 +2121,7 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 		// behavior module init (cross dependencies are possible, indirect calls to 'friend_awakenUpdateModule' are
 		// pointless when sleep-updates should be updated at the very end like they are post-load by
 		// 'GameLogic::loadPostProcess').
-		objectInitLock = TRUE;
+		g_objectInitLock = TRUE;
 
 		Int progressCount = LOAD_PROGRESS_LOOP_ALL_THE_FREAKN_OBJECTS;
 		Int timer = timeGetTime();
@@ -2397,7 +2243,7 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 		// as usual).
 		runPostInitOnObjects();
 		runPostInitOnObjectsExtra();
-		objectInitLock = FALSE;
+		g_objectInitLock = FALSE;
 	}
 
 	#ifdef DUMP_PERF_STATS
@@ -2523,7 +2369,10 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 	//MODDD - replaced 'TheGame' condition with this
 	if (doAutomaticPostGamePlayerSetup)
 	{
-		GameSlot *slot = TheGameInfo->getSlot(localSlot);
+		//MODDD - local player is no longer determined this way (replacing line)
+		//GameSlot *slot = TheGameInfo->getSlot(localSlot);
+		GameSlot *slot = TheGameInfo->getSlot(TheGameInfo->getLocalSlotNum());
+
 		DEBUG_ASSERTCRASH(slot, ("Starting a LAN game without ourselves!"));
 
 		if (slot->isHuman())
@@ -3647,7 +3496,7 @@ void GameLogic::friend_awakenUpdateModule(Object* obj, UpdateModulePtr u, Unsign
 	// How the base game never ran into this issue far more often is a mystery to me.
 	// Don't use 'gameStatus != GAMESTATUS_INGAME', or the game will fall to pieces.
 	//if (objectInitLock) {
-	if (objectInitLock && globalXferStatus == XFER_LOAD) {
+	if (g_objectInitLock && globalXferStatus == XFER_LOAD) {
 		return;
 	}
 
@@ -4712,7 +4561,7 @@ void GameLogic::registerObject( Object *obj )
 	// The end of setup can go through all objects and cover them that way.
 	//if (gameStatus == GAMESTATUS_INGAME) {
 	//if (!objectInitLock) {
-	if (!(objectInitLock && globalXferStatus == XFER_LOAD)) {
+	if (!(g_objectInitLock && globalXferStatus == XFER_LOAD)) {
 		addUpdateModulesToQueues(obj, true);
 	}
 }
@@ -5813,7 +5662,7 @@ void GameLogic::xfer( Xfer *xfer )
 
 		//MODDD - see notes above on 'objectInitLock', same applies here for being a for-loop that fills the list
 		// of objects and delaying some init until the end makes the most sense
-		objectInitLock = TRUE;
+		g_objectInitLock = TRUE;
 
 		for( UnsignedInt i = 0; i < objectCount; ++i )
 		{
@@ -5865,7 +5714,7 @@ void GameLogic::xfer( Xfer *xfer )
 
 		//MODDD
 		runPostInitOnObjects();
-		objectInitLock = FALSE;
+		g_objectInitLock = FALSE;
 
 		// TheSuperHackers @fix bobtista 07/03/2026 Reverse object list after load.
 		// Objects are prepended during creation, which reverses the saved order.

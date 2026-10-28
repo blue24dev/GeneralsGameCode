@@ -87,7 +87,7 @@ void VeterancyGainCreate::onCreate()
 
 	//MODDD - no need to run this on loading objects from a saved game, the rank the object had at the time
 	// will be restored
-	if (objectInitLock && globalXferStatus == XFER_LOAD) {
+	if (g_objectInitLock && globalXferStatus == XFER_LOAD) {
 		return;
 	}
 

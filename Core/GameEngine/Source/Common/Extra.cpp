@@ -203,6 +203,18 @@ Real getShroudClearingRangeForLookAdjusted(const Object* obj)
 	return shroudClearingRange;
 }
 
+Bool isCurrentGameCampaign()
+{
+#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
+	return false;
+#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
+	return true;
+#else
+	// if 'TheGameInfo' is null, this is a campaign map (single player with no 'GameInfo').
+	return (TheGameInfo == nullptr);
+#endif
+}
+
 Int getUpgradedSupplyBoost(const Object* collectingObject, const std::list<upgradePair>* upgradeBoostList)
 {
 	Player *player = collectingObject->getControllingPlayer();
@@ -2142,6 +2154,22 @@ int printBuffer_numberRightAlignedSep(char* dest, size_t destCount, int val)
 	return res;
 }
 
+// Get a 'hours:minutes:seconds' string from a frame number given 30 frames = 1 sec
+AsciiString frameNumberToTimeString(UnsignedInt frame)
+{
+	UnsignedInt hours = frame / (LOGICFRAMES_PER_SECOND * 60 * 60);
+	UnsignedInt minutes = (frame % (LOGICFRAMES_PER_SECOND * 60 * 60)) / (LOGICFRAMES_PER_SECOND * 60);
+	UnsignedInt seconds = (frame % (LOGICFRAMES_PER_SECOND * 60)) / (LOGICFRAMES_PER_SECOND);
+	AsciiString toRet;
+	toRet.format(
+		"%u:%02u:%02u",
+		hours,
+		minutes,
+		seconds
+	);
+	return toRet;
+}
+
 // Print out some extra stats per player, since editing ScoreScreen.wnd looks like a nightmarish task. Consider this for
 // not just the retail game ScoreScreen.wnd, but also for any mod you come across.
 // Namely, goes into more detail on the money received per player: from supply collection, renewable sources like
@@ -2149,11 +2177,13 @@ int printBuffer_numberRightAlignedSep(char* dest, size_t destCount, int val)
 void extraScoreScreenStatsPrintOut()
 {
 	FILE* outputFile = fopen("ScoreScreenExtra.txt", "a");
-	printTimeStamp(outputFile);
+	printTimeStamp_noFrame(outputFile);
 
 	AsciiString gameStr;
 	const char* gameBuildStr;
 	const char* gameTypeStr;
+	AsciiString gameDurationStr = frameNumberToTimeString(TheGameLogic->getFrame());
+
 #if FORCE_GAME_CONTEXT == FGC_NONE
 	gameBuildStr = "Standard";
 #elif FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
@@ -2185,24 +2215,26 @@ void extraScoreScreenStatsPrintOut()
 		gameTypeStr = "Campaign";
 	}
 
-	gameStr.format("Build:%s - %s", gameBuildStr, gameTypeStr);
+	const char* mapName = getFileName(TheGlobalData->m_mapName.str());
+	gameStr.format("Map:%s - Build:%s - GameType:%s - ElapsedTime:%s", mapName, gameBuildStr, gameTypeStr, gameDurationStr.str());
 	if (TheGameLogic->isInReplayGame())
 	{
 		gameStr.concat(" - Replay");
 	}
 
-	fprintf(outputFile, "%s\n", gameStr.str());
+	fprintf(outputFile, " - %s\n", gameStr.str());
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
-	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Bounty        |Salvage       |Steal         |Steal (Victim)|Scalar Cheats |Map Script    |Total Collect \n");
+	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Renewable Tech|Bounty        |Salvage       |Steal         |Steal (Victim)|Scalar Cheats |Map Script    |Total Collect \n");
 #else
-	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Bounty        |Salvage       |Steal         |Steal (Victim)|Map Script    |Total Collect \n");
+	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Renewable Tech|Bounty        |Salvage       |Steal         |Steal (Victim)|Map Script    |Total Collect \n");
 #endif
 
-	//MODDD - grabMultiPlayerInfo's loop to get
+	// List the slot players first, like 'grabMultiPlayerInfo' without sorting by score.
 	for( Int i = 0; i < ThePlayerList->m_slotSoftMax; ++i)
 	{
-		// filtering out observer players - not useful for these extra stats
-		Player *player = ThePlayerList->getPlayerFromSlotIndex_requireParticipant(i);
+		// Could filter out observer / unoccupied players with '_requireParticipant', but the score screens hows those so
+		// may as well list them as a row here too
+		Player *player = ThePlayerList->getPlayerFromSlotIndex(i);
 		if (player != nullptr)
 		{
 			extraScoreScreenStatsPrintOut_player(outputFile, player);
@@ -2245,6 +2277,9 @@ void extraScoreScreenStatsPrintOut()
 		extraScoreScreenStatsPrintOut_player(outputFile, player);
 	}
 
+	// add a separating blank line for neatness
+	fputs("\n", outputFile);
+
 	fclose(outputFile);
 }
 
@@ -2260,9 +2295,16 @@ void extraScoreScreenStatsPrintOut_player(FILE* outputFile, Player* player)
 	//const char* playerName = TheNameKeyGenerator->keyToName(player->getPlayerNameKey()).str();
 	AsciiString playerNameToPrint;
 	playerNameToPrint.set(playerNameDisp);
-	if (ThePlayerList->getSlotIndex(player->getPlayerIndex()) != -1)
+
+	// Typically, printing the raw player names for slot players isn't interesting because they use auto-generated names
+	// like "player0", "player1", etc.
+	// For FGC_CAMPAIGN (or a campaign map otherwise), this isn't the case so seeing the map player used for a particular
+	// slot may be more interesting.
+	Bool canPrintRawPlayerNameForSlotPlayers = rts_extra::isCurrentGameCampaign();
+
+	if (!canPrintRawPlayerNameForSlotPlayers && ThePlayerList->getSlotIndex(player->getPlayerIndex()) != -1)
 	{
-		// slot player - always ignore the raw name since it's not very interesting
+		// ignored
 	}
 	else
 	{
@@ -2290,6 +2332,7 @@ void extraScoreScreenStatsPrintOut_player(FILE* outputFile, Player* player)
 	// Money from continual sources of money - namely black markets, hackers, supply drop zone crates, oil derricks.
 	// Going to go ahead and count the initial capture bonus for oil derricks too.
 	Int moneyFromRenewable = scoreKpr->getMoneyReceived(MONEYSOURCE_RENEWABLE);
+	Int moneyFromRenewableTech = scoreKpr->getMoneyReceived(MONEYSOURCE_RENEWABLE_TECH);
 	// Money from the GLA bounty effect - going to be 0 if this is non-applicable or a promotion point is never spent on that.
 	Int moneyFromBounty = scoreKpr->getMoneyReceived(MONEYSOURCE_BOUNTY);
 	// Money from collecting salvage piles that happened to give money, also likely only applicable for GLA players.
@@ -2324,6 +2367,8 @@ void extraScoreScreenStatsPrintOut_player(FILE* outputFile, Player* player)
 	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromGathering);
 	off += printBuffer_text(&lineBuffer[off], 1, "|");
 	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromRenewable);
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromRenewableTech);
 	off += printBuffer_text(&lineBuffer[off], 1, "|");
 	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromBounty);
 	off += printBuffer_text(&lineBuffer[off], 1, "|");
@@ -2364,6 +2409,7 @@ Bool checkIfObjInDestroyList(const Object* objCheck)
 }
 
 // Note that this doesn't end in a newline character.
+// Includes the frame number of the game at the time.
 void printTimeStamp(FILE* outputFile)
 {
 	SYSTEMTIME lt;
@@ -2371,7 +2417,7 @@ void printTimeStamp(FILE* outputFile)
 	fprintf
 	(
 		outputFile,
-		"%u-%02u-%02u %02u:%02u:%02u.%03u Frame: %u",
+		"%u-%02u-%02u %02u:%02u:%02u.%03u Frame:%u",
 		lt.wYear,
 		lt.wMonth,
 		lt.wDay,
@@ -2380,6 +2426,25 @@ void printTimeStamp(FILE* outputFile)
 		lt.wSecond,
 		lt.wMilliseconds,
 		TheGameLogic->getFrame()
+	);
+}
+
+// Similar to above but leaves out the frame number
+void printTimeStamp_noFrame(FILE* outputFile)
+{
+	SYSTEMTIME lt;
+	GetLocalTime(&lt);
+	fprintf
+	(
+		outputFile,
+		"%u-%02u-%02u %02u:%02u:%02u.%03u",
+		lt.wYear,
+		lt.wMonth,
+		lt.wDay,
+		lt.wHour,
+		lt.wMinute,
+		lt.wSecond,
+		lt.wMilliseconds
 	);
 }
 

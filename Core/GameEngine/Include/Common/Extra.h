@@ -34,6 +34,8 @@ void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCrea
 
 Real getShroudClearingRangeForLookAdjusted(const Object* obj);
 
+Bool isCurrentGameCampaign();
+
 // General utilities I came up with to condense some common script. 'common/GameUtility.h' might also be a good place for this.
 Int getUpgradedSupplyBoost(const Object* collectingObject, const std::list<upgradePair>* upgradeBoostList);
 void automaticThingTemplateChanges(ThingTemplate* _this);
@@ -75,6 +77,7 @@ void extraScoreScreenStatsPrintOut_player(FILE* outputFile, Player* player);
 //MODDD - DEBUG
 Bool checkIfObjInDestroyList(const Object* objCheck);
 void printTimeStamp(FILE* outputFile);
+void printTimeStamp_noFrame(FILE* outputFile);
 void printObjectIdentifyingInfo(FILE* outputFile, const Object* objToPrint);
 AsciiString getObjectIdentifyingInfoString(Object* objToPrint);
 void printDeletionCriticalInfo(FILE* outputFile, const Object* objToPrint);
