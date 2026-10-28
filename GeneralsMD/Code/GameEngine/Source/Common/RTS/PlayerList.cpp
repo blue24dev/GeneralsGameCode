@@ -198,13 +198,13 @@ void PlayerList::reset()
 Player* PlayerList::findNeutralPlayer()
 {
 	AsciiString targetPlayerName;
-	Player* playerRef;
+	Player* player;
 
 	targetPlayerName.set("");
-	playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
-	if (playerRef != nullptr)
+	player = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+	if (player != nullptr)
 	{
-		return playerRef;
+		return player;
 	}
 
 	// shouldn't be possible to have no empty-named player - force the retail default of player #0 then?
@@ -217,24 +217,24 @@ Player* PlayerList::findCivilianPlayer()
 {
 	// First, try the strict check: "PlyrCivilian"
 	AsciiString targetPlayerName;
-	Player* playerRef;
+	Player* player;
 
 	targetPlayerName.set("PlyrCivilian");
-	playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
-	if (playerRef != nullptr)
+	player = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+	if (player != nullptr)
 	{
 		// Not part of retail, but could require it to have the 'Civilian' side name. I doubt this would ever not be the case.
-		//if (playerRef->getSide().compare("Civilian") == 0)
-			return playerRef;
+		//if (player->getSide().compare("Civilian") == 0)
+			return player;
 	}
 
 	// just "Civilian"?
 	targetPlayerName.set("Civilian");
-	playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
-	if (playerRef != nullptr)
+	player = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+	if (player != nullptr)
 	{
-		//if (playerRef->getSide().compare("Civilian") == 0)
-			return playerRef;
+		//if (player->getSide().compare("Civilian") == 0)
+			return player;
 	}
 
 	// Try any player who's side is 'Civilian'.
@@ -263,44 +263,54 @@ Player* PlayerList::findCivilianPlayer()
 //MODDD - new
 // Helper to find the first human-intended player, since it could come from an expected name or have to come
 // from the first non-computer-marked player.
-Player* PlayerList::findFirstSlotPlayer()
+Player* PlayerList::campaign_findFirstSlotPlayerByExpectedName()
 {
 	AsciiString targetPlayerName;
-	Player* playerRef;
 	// The name of the intended side/player to play as in the campaign was inconsistent but was usually one of these.
+	// Note that "player0" isn't part of this list so if that's how a player is provided, a follow-up loop checking for
+	// all "player#" names can catch that instead for player #0.
 	const char* commonPlayerNames[] =
 	{
 		"ThePlayer",
 		"Player",
 		"PlyrPLAYER",
-		"player0",
 		// (test - did any retail maps use this one? Seems reasonable to occur)
-		"PlyrPlayer"
+		"PlyrPlayer",
+		// mainly for me (lowercase)
+		"player"
 	};
-	int i;
 
+	int i;
 	for (i = 0; i < sizeof(commonPlayerNames) / sizeof(commonPlayerNames[0]); ++i)
 	{
 		targetPlayerName.set(commonPlayerNames[i]);
-		playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
-		if (playerRef != nullptr)
+		Player* player = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+		if (player != nullptr)
 		{
 			// done searching
-			return playerRef;
+			return player;
 		}
 	}
 
-	// Fallback: find the first non-computer-marked side.
-	for (i = 0; i < MAX_PLAYER_COUNT; i++)
+	// none of the canned names
+	return nullptr;
+}
+
+//MODDD - NEW. Originally part of above, split into a separate helper to be called as a last resort.
+Player* PlayerList::campaign_findFirstSlotPlayerFallback()
+{
+	// Find the first non-computer-marked side.
+	int i;
+	for (i = 0; i < MAX_PLAYER_COUNT; ++i)
 	{
-		playerRef = getNthPlayer(i);
-		if (playerRef->getPlayerType() == PLAYER_HUMAN && !playerRef->isPlayerObserver())
+		Player* player = getNthPlayer(i);
+		if (player->getPlayerType() == PLAYER_HUMAN && !player->isPlayerObserver())
 		{
-			return playerRef;
+			return player;
 		}
 	}
 
-	// ???
+	// oh dear. time to crash
 	return nullptr;
 }
 
@@ -312,25 +322,36 @@ Player* PlayerList::findFirstSlotPlayer()
 // Only the player usually played as per single player logic (by an expected name, or the first non-computer-marked player),
 // and subsequent ones by a "player1", "player2", etc. naming scheme, should be in the slot-to-player indices for
 // skirmish/multiplayer logic to easily reach.
-// This will allow it to mirror the choices of players selected per machine in GameLogic.cpp: getMultiplayerLocalSide.
-// This lets any one machine be aware of who the other slot players are.
 void PlayerList::populateSlotPlayerRefs()
 {
+	int i;
 	// Note that 'm_slotSoftMax' used to be incremented alongside 'setSlotIndex' under the assumption that
 	// players would always be found to assign to slots in increasing order without any gaps. Deciding this at the end
 	// instead for absolute safety.
 	if (TheGameLogic->getGameMode() == GAME_SHELL)
 	{
 		// Shell map: find the first human-marked player, add to the list of slot player refs. That's it.
-		int i;
 		for (i = 0; i < this->getPlayerCount(); ++i)
 		{
-			Player* playerRef = getNthPlayer(i);
-			if (playerRef->getPlayerType() == PLAYER_HUMAN)
+			Player* player = getNthPlayer(i);
+			if (player->getPlayerType() == PLAYER_HUMAN)
 			{
-				setSlotIndex(playerRef->getPlayerIndex(), 0);
+				setSlotIndex(player->getPlayerIndex(), 0);
+				// what retail did
+				setLocalPlayer(player);
 				break;
 			}
+		}
+
+		m_slotSoftMax = determineSlotSoftMax();
+
+		// if the loop never stopped short of this...
+		if (i == this->getPlayerCount())
+		{
+			// an issue with the shell map? bit early for a catastrophic failure methinks
+			AsciiString errorText;
+			errorText.format("fatal error! Shell map doesn\'t have any human-marked sides/players - try starting the .exe with '-quickstart' to get around this.");
+			RELEASE_CRASH(errorText.str());
 		}
 		return;
 	}
@@ -344,43 +365,26 @@ void PlayerList::populateSlotPlayerRefs()
 	// For co-op support, all I can figure is to name players in a standard way (ex: "player<1-7>" like skirmish generation would),
 	// because a map may have multiple non-computer-marked players as-is (can't determine which is meant to be played as by other
 	// connected users in a network game).
-	Bool isCampaignMap;
+	Bool isCampaign = rts_extra::isCurrentGameCampaign();
 
-	// Check the setting for an easy assumption
-#if FORCE_GAME_CONTEXT == FGC_GENERALS_CHALLENGE
-	isCampaignMap = FALSE;
-#elif FORCE_GAME_CONTEXT == FGC_CAMPAIGN
-	isCampaignMap = TRUE;
-#else
-	// No constant to tell us. Check the game mode and the usual generals challenge check.
-	// (remember that playing a campaign or GC map in the skirmish/network from the menus isn't possible here)
-	// Actually just checking for 'TheGameInfo' being null or not (assume single player & not generals challenge) will work out.
-	if (TheGameInfo == nullptr)
-	{
-		isCampaignMap = TRUE;
-	}
-	else
-	{
-		isCampaignMap = FALSE;
-	}
-#endif
-
-	AsciiString targetPlayerName;
-	Player* playerRef;
 	int standardSlotPlayerSearch_firstSlotIndex;
 
-	if (isCampaignMap)
+	if (isCampaign)
 	{
 		// Campaign map - special handling to find the first player, the rest are expected to be named "player#" if
-		// provided by the map (named that way) for co-op support
-
-		// This can't possibly be null or else a similar earlier check (GameLogic.cpp: getMultiplayerLocalSide)
-		// would have already crashed.
-		playerRef = findFirstSlotPlayer();
-		setSlotIndex(playerRef->getPlayerIndex(), 0);
-		
-		// For the remaining possible users, search for the expected name: "player<1-7>".
-		standardSlotPlayerSearch_firstSlotIndex = 1;
+		// provided by the map (named that way) for co-op support.
+		Player* player = campaign_findFirstSlotPlayerByExpectedName();
+		if (player != nullptr)
+		{
+			setSlotIndex(player->getPlayerIndex(), 0);
+			// For the remaining possible users, search for the expected name: "player<1-7>".
+			standardSlotPlayerSearch_firstSlotIndex = 1;
+		}
+		else
+		{
+			// not found - check for "player0" as usual for this one then
+			standardSlotPlayerSearch_firstSlotIndex = 0;
+		}
 	}
 	else
 	{
@@ -388,28 +392,97 @@ void PlayerList::populateSlotPlayerRefs()
 		standardSlotPlayerSearch_firstSlotIndex = 0;
 	}
 
-	// for the remaining slots to figure out (in a new scope for old VC safety, may be unnecessary)
+	// for the remaining slots (often all) to figure out
+	AsciiString targetPlayerName;
+	for (i = standardSlotPlayerSearch_firstSlotIndex; i < MAX_SLOTS; ++i)
 	{
-		int i;
-		for (i = standardSlotPlayerSearch_firstSlotIndex; i < MAX_SLOTS; ++i)
+		targetPlayerName.format("player%d", i);
+		Player* player = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
+		if (player != nullptr)
 		{
-			targetPlayerName.format("player%d", i);
-			playerRef = this->findPlayerWithNameKey(TheNameKeyGenerator->nameToKey(targetPlayerName));
-			if (playerRef != nullptr)
+			setSlotIndex(player->getPlayerIndex(), i);
+		}
+		else
+		{
+			// Not found? Stop searching
+			// Actually no - keep going in case a slot was skipped but there are still players for later set slots
+			// Ex: player1 through 4 is found, 5 isn't but 6 exists - don't give up at 5!
+			//break;
+		}
+	}
+
+	// Finally, decide who the local player is here
+	Int localSlotNum;
+	if (TheGameInfo != nullptr)
+	{
+		localSlotNum = TheGameInfo->getLocalSlotNum();
+	}
+	else
+	{
+		// first suitable human player found in the map as retail would do for a single-player map
+		localSlotNum = 0;
+	}
+
+	// If there still isn't a slot-to-player-index and I'm player #0, allow the fallback from retail.
+	Bool usedFallback = false;
+	if (localSlotNum == 0 && m_slotToPlayerIndices[0] == -1)
+	{
+		// Campaign-only & single-player - otherwise, it's better to give up & crash with a message soon.
+		if (isCampaign && (TheGameInfo == nullptr || !TheNetwork))
+		{
+			usedFallback = true;
+			Player* player = campaign_findFirstSlotPlayerFallback();
+			if (player != nullptr)
 			{
-				setSlotIndex(playerRef->getPlayerIndex(), i);
-			}
-			else
-			{
-				// Not found? Stop searching
-				// Actually no - keep going in case a slot was skipped but there are still players for later set slots
-				// Ex: player1 through 4 is found, 5 isn't but 6 exists - don't give up at 5!
-				//break;
+				setSlotIndex(player->getPlayerIndex(), 0);
 			}
 		}
 	}
 
 	m_slotSoftMax = determineSlotSoftMax();
+
+	Player* playerToBeLocal = getPlayerFromSlotIndex(localSlotNum);
+	if (playerToBeLocal != nullptr)
+	{
+		setLocalPlayer(playerToBeLocal);
+	}
+	else
+	{
+		// That's not good - end in a crash informing the user of an issue with this map (or possibly playing it with the wrong FGC setting for this build)
+		AsciiString errorText;
+		if (isCampaign)
+		{
+			// Campaign maps (co-op or not) require even who to play as to be baked into the map & is picked up by being set/named correctly.
+			// Have a descriptive error message.
+			if (localSlotNum == 0)
+			{
+				// for the first player, mention that some canned names also suffice (retail compatibility)
+				if (usedFallback)
+				{
+					errorText.format("fatal error! This map lacks a side/player for this user to play as.\nThere must be at least one human-marked side/player, though some expected choices such as \"ThePlayer\" or \"player0\" will take precedence.");
+				}
+				else
+				{
+					// multiplayer: first-human-player-fallback isn't allowed
+					errorText.format("fatal error! This map lacks a side/player for this user to play as.\nFor multiplayer, there must be a player of some expected name such as \"ThePlayer\" or \"player0\".");
+				}
+			}
+			else
+			{
+				// mention the explicit "player#" that was missing
+				errorText.format("fatal error! This map lacks a side/player for this user to play as.\nA side/player of \"player%d\" was expected but not found.", localSlotNum);
+			}
+		}
+		else
+		{
+			// This case is puzzling because skirmish/generals-challenge maps (even FGC_GENERALS_CHALLENGE on the correct maps)
+			// should not allow more players to join a game than there are waypoints ("Player_#_Start") to suggest the capacity.
+			errorText.format("fatal error! Could not find an expected side/player of \"player%d\" for this user to play as. This is most likely an issue within the game engine, not the map lacking an expected player by name.\nEnsure you are playing a map with a build with the correct FORCE_GAME_CONTEXT setting, such as a generals challenge map in LAN with FGC_GENERALS_CHALLENGE, or an ordinary skirmish map in LAN with FGC_NONE.", localSlotNum);
+		}
+
+		RELEASE_CRASH(errorText.str());
+		return;
+	}
 }
 
 //MODDD - only used for 'populateSlotPlayerRefs' to decide what the highest slot number in use is after setting slot-to-player indices
@@ -432,6 +505,28 @@ Int PlayerList::determineSlotSoftMax() const
 void PlayerList::postPlayersInit()
 {
 	int i;
+
+#if FORCE_GAME_CONTEXT == FGC_CAMPAIGN
+		// For FGC_CAMPAIGN, set the players associated with a slot to be named after the slot.
+		// ex: if you appear in a skirmish score screen as "Jake's PC", that will be the display name in the score screen instead
+		// of the generic "The Player" typically seen.
+		// This is needed because existing side/player-info from the map is used instead of generating the info right before
+		// "PlayerList::newGame()" is called.
+		for (i = 0; i < ThePlayerList->m_slotSoftMax; ++i)
+		{
+			Player* player = ThePlayerList->getPlayerFromSlotIndex(i);
+			if (player != nullptr)
+			{
+				GameSlot* slot = TheGameInfo->getSlot(i);
+				// a slot no one's using won't have a name
+				if (!slot->isOccupied())
+					continue;
+
+				player->setPlayerDisplayName(slot->getName());
+			}
+		}
+#endif
+
 	for (i=0; i < getPlayerCount(); ++i)
 	{
 		Player* player = ThePlayerList->getNthPlayer(i);
@@ -503,7 +598,9 @@ void PlayerList::newGame()
 		//p->slotIndex = TheSidesList->getSideInfo(i)->slotIndex;
 
 		p->initFromDict(d);
-
+		
+		//MODDD - local player is no longer determined this way (disabling block)
+		/*
 		// Multiplayer override
 		Bool exists;	// throwaway, since we don't care if it exists
 		if (d->getBool(TheKey_multiplayerIsLocal, &exists))
@@ -512,34 +609,17 @@ void PlayerList::newGame()
 			setLocalPlayer(p);
 			//setLocal = true;
 		}
-		
-		//MODDD - NOTE - this block should never be needed to tell who the local player is for FGC_CAMPAIGN.
-		// Who the local player is, is determined by setting 'TheKey_multiplayerIsLocal' for a side & it's reached
-		// parsing that side's dict here (see above).
-		// This works in case a player other than the first human player is the local player for this machine
-		// (co-op mode under FGC_CAMPAIGN).
-		// You could argue that all non-network game modes should also use the 'TheKey_multiplayerIsLocal' way for
-		// consistency and remove this block entirely (probably only campaign & shell game modes relied on this block as of
-		// retail, even generals challenge is just a reskin of skirmish).
-#if FORCE_GAME_CONTEXT != FGC_CAMPAIGN
-		//MODDD
+		*/
+
+		//MODDD - local player is no longer determined this way (disabling block)
+		/*
 		//if (!setLocal && !TheNetwork && d->getBool(TheKey_playerIsHuman))
 		if (!isLocalPlayerSet() && !TheNetwork && d->getBool(TheKey_playerIsHuman))
 		{
 			setLocalPlayer(p);
 			//setLocal = true;
 		}
-#else
-		// Do a check for having the 'IsHuman' bool anyway.
-		// UPDATE - no longer a good assumption in case of non-computer-marked players that aren't intended for someone to play as.
-		// See the 'populateSlotPlayerRefs' after this loop through all sides.
-		/*
-		if (d->getBool(TheKey_playerIsHuman))
-		{
-			setSlotIndex(p->getPlayerIndex(), 0);
-		}
 		*/
-#endif
 
 		// Set the build list.
 		p->setBuildList(TheSidesList->getSideInfo(i)->getBuildList());
@@ -551,8 +631,9 @@ void PlayerList::newGame()
 	m_civilianPlayerTemplate = ThePlayerTemplateStore->findPlayerTemplate( NAMEKEY("FactionCivilian") );
 	m_neutralPlayer = findNeutralPlayer();
 	m_civilianPlayer = findCivilianPlayer();
-	
-	//MODDD
+
+	//MODDD - local player is no longer determined this way (disabling block)
+	/*
 	//if (!setLocal)
 	if (!isLocalPlayerSet())
 	{
@@ -571,6 +652,7 @@ void PlayerList::newGame()
 			}
 		}
 	}
+	*/
 
 	// must reset teams *after* creating players.
 	TheTeamFactory->initFromSides(TheSidesList);
@@ -969,7 +1051,7 @@ Player *PlayerList::getPlayerFromSlotIndex(Int slotIndex) const
 }
 
 //MODDD - new. Variant of above (see notes below)
-Player *PlayerList::getPlayerFromSlotIndex_requireOccupied(Int slotIndex) const
+Player* PlayerList::getPlayerFromSlotIndex_requireOccupied(Int slotIndex) const
 {
 	if (TheGameInfo != nullptr)
 	{
@@ -985,7 +1067,7 @@ Player *PlayerList::getPlayerFromSlotIndex_requireOccupied(Int slotIndex) const
 
 //MODDD - new. See notes below - this was made after the fact to skip the 'active' check, so this is better for
 // post-game things like a score screen or checks that don't want results to vary with a player being defeated/gone
-Player *PlayerList::getPlayerFromSlotIndex_requireParticipant(Int slotIndex) const
+Player* PlayerList::getPlayerFromSlotIndex_requireParticipant(Int slotIndex) const
 {
 	// If 'TheGameInfo' is null, this lookup for slot info to verify being non-open/closed & non-observer isn't possible.
 	// This is the case for playing the single player campaign in the original/retail state of the game, not my co-op
@@ -1010,7 +1092,7 @@ Player *PlayerList::getPlayerFromSlotIndex_requireParticipant(Int slotIndex) con
 // (filled by someone, not observer) if that information is available ('TheGameInfo' is present).
 // Mainly a convenience feature to bundle whether there is 'TheGameInfo' to check and the result of a player-lookup being
 // null into one call (places using this tend not to need any other info about slots).
-Player *PlayerList::getPlayerFromSlotIndex_requireActiveParticipant(Int slotIndex) const
+Player* PlayerList::getPlayerFromSlotIndex_requireActiveParticipant(Int slotIndex) const
 {
 	// If 'TheGameInfo' is null, this lookup for slot info to verify being non-open/closed & non-observer isn't possible.
 	// This is the case for playing the single player campaign in the original/retail state of the game, not my co-op
@@ -1041,12 +1123,12 @@ Player *PlayerList::getPlayerFromSlotIndex_requireActiveParticipant(Int slotInde
 Player* PlayerList::getFirstSlotParticipantPlayer() const
 {
 	int i;
-	for(i = 0; i < ThePlayerList->m_slotSoftMax; ++i)
+	for (i = 0; i < ThePlayerList->m_slotSoftMax; ++i)
 	{
-		Player* playerTest = ThePlayerList->getPlayerFromSlotIndex_requireParticipant(i);
-		if (playerTest != nullptr)
+		Player* player = ThePlayerList->getPlayerFromSlotIndex_requireParticipant(i);
+		if (player != nullptr)
 		{
-			return playerTest;
+			return player;
 		}
 	}
 

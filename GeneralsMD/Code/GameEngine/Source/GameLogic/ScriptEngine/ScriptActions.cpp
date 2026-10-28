@@ -4321,7 +4321,7 @@ void ScriptActions::doGiveMoney(const AsciiString& playerName, Int money)
 		m->deposit(money);
 
 	//MODDD - handle score for this
-	if (TheGameLogic->getFrame() == 0)
+	if (TheGameLogic->getFrame() == 0 && money >= 10000)
 	{
 		// consider this the start of the game - replace whatever start money value there is
 		player->getScoreKeeper()->setMoneyStartedWith(m->countMoney());

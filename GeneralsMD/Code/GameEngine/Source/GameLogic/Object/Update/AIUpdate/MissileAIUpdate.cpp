@@ -522,6 +522,13 @@ void MissileAIUpdate::doAttackState(Bool turnOK)
 			curLoco->setMaxTurnRate(0);
 		}
 		tossExhaust();
+
+		//MODDD - NOTE - could clear 'OBJECT_STATUS_BRAKING' here for safety like I added to 'doKillState', but I don't think
+		// that's necessary if nowhere could turn that flag on at this point (nothing could externally in other script files
+		// for the attached object, right?).
+
+		//MODDD - if you're out of fuel, stop the rest of the logic!
+		return;
 	}
 	else
 	{
@@ -586,20 +593,48 @@ void MissileAIUpdate::doAttackState(Bool turnOK)
 
 	if (m_noTurnDistLeft <= 0.0f)
 	{
+		//MODDD - NOTE - this already is the 'attack' state? Is this an oversight and it should be a switch to something else,
+		// or calling this just resets some things so it still makes sense here?
 		switchToState(ATTACK);
 	}
 
 	// If I was fired at a flyer and have lost target (most likely they died), then I need to do something better
 	// than cloverleaf around their last spot.
+	//MODDD - replaced - if tracking and the target is lost, move toward its most recent location then instead of
+	// spontaneously disappearing
+	//if( m_isTrackingTarget && (getGoalObject() == nullptr) )
+	//	airborneTargetGone();
+	// ------------
 	if( m_isTrackingTarget && (getGoalObject() == nullptr) )
-		airborneTargetGone();
+	{
+		m_isTrackingTarget = false;
+		aiMoveToPosition(getGoalPosition(), CMD_FROM_AI );
+	}
+	// ------------
 }
 
 //-------------------------------------------------------------------------------------------------
 void MissileAIUpdate::doKillState()
 {
+	//MODDD - moved from below
+	Locomotor* curLoco = getCurLocomotor();
+	Object *obj = getObject();
+
 	if (TheGameLogic->getFrame() >= m_fuelExpirationDate)
 	{
+		//MODDD - block copied from 'doAttackState' - important to lose tracking in no-fuel mode
+		// or else this could indefinitely home in on a point just above the ground and never collide with it...
+		// ------
+		if (curLoco)
+		{
+			curLoco->setMaxAcceleration(0);
+			curLoco->setMaxTurnRate(0);
+		}
+		tossExhaust();
+		// Very important to lose braking if it was applied or the missile could refuse to fall into the ground!!
+		obj->clearStatus(MAKE_OBJECT_STATUS_MASK(OBJECT_STATUS_BRAKING));
+		// ------
+
 		if( getMissileAIUpdateModuleData()->m_detonateOnNoFuel )
 		{
 			detonate();
@@ -607,15 +642,23 @@ void MissileAIUpdate::doKillState()
 		}
 
 		// srj sez: killstate missiles should not be allowed to live forever.
-		airborneTargetGone();
+		//MODDD - give it some more time - instantly disappearing moments before hitting the ground when it's supposed to
+		// detonate on contact looks dumb (added condition for being past expiration date before despawning)
+		if (TheGameLogic->getFrame() >= m_fuelExpirationDate + LOGICFRAMES_PER_SECOND * 8)
+		{
+			airborneTargetGone();
+		}
 		return;
 	}
 
 	/* Kill state uses the OBJECT_STATUS_BRAKING, which is a flag to the locomotor to
 		"Cheat" and move directly towards the target.  This ensures that the missile will hit.
 		jba. */
-	Locomotor* curLoco = getCurLocomotor();
-	Object *obj = getObject();
+
+	//MODDD - moved further above
+	//Locomotor* curLoco = getCurLocomotor();
+	//Object *obj = getObject();
+
 	// Objects that are braking don't follow the normal physics, so they end up at their destination exactly.
 	obj->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_BRAKING ) );
 
@@ -648,8 +691,17 @@ void MissileAIUpdate::doKillState()
 	}
 	// If I was fired at a flyer and have lost target (most likely they died), then I need to do something better
 	// than cloverleaf around their last spot.
+	//MODDD - replaced - if tracking and the target is lost, move toward its most recent location then instead of
+	// spontaneously disappearing
+	//if( m_isTrackingTarget && (getGoalObject() == nullptr) )
+	//	airborneTargetGone();
+	// ------------
 	if( m_isTrackingTarget && (getGoalObject() == nullptr) )
-		airborneTargetGone();
+	{
+		m_isTrackingTarget = false;
+		aiMoveToPosition(getGoalPosition(), CMD_FROM_AI );
+	}
+	// ------------
 }
 
 //-------------------------------------------------------------------------------------------------

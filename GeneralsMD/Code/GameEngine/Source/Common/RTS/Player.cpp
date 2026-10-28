@@ -3212,7 +3212,7 @@ Upgrade *Player::addUpgrade( const UpgradeTemplate *upgradeTemplate, UpgradeStat
 		}
 
 		//MODDD - include 'upgradesAffected'
-		if (!objectInitLock && upgradesAffected) {
+		if (!g_objectInitLock && upgradesAffected) {
 			onUpgradeCompleted( upgradeTemplate );
 		}
 	}

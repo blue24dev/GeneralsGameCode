@@ -62,9 +62,10 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 	Real moneyPreScalar = 1.0f;
 	// (not involved without necessarily being 'mine' for now)
 	//Bool fromARenewableSource = false;
-	Bool fromMyRenewableSource = false;
+	Bool fromRenewableSourceAsIntendedDestination = false;
 	MoneySourceType moneySource;
 	Bool runMajorCheats;
+	Bool fromTechStructure = false;
 
 	//MODDD - money cheat check.
 	// Question: did this crate come from a renewable income source (supply drop zone), or was it granted for some other
@@ -83,17 +84,12 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 		// First, decide whether this is the same player that caused the crate to be created (ex: supply drop zone owner)
 		// as the player that has a unit touching the crate to collect it for them
 		Int sourcePlayerIndex = getObject()->m_OCLSourcePlayerIndex;
-		Bool fromTechStructure;
 		// Note that 'playerIndex' can have a flag baked into it indicating whether this crate was produced by a neutral tech
 		// structure, captured or not (in case of non-capturable flat areas, like neutral supply drop zones in several mods).
 		if (sourcePlayerIndex & (1 << 31))
 		{
 			sourcePlayerIndex &= ~(1 << 31);
 			fromTechStructure = true;
-		}
-		else
-		{
-			fromTechStructure = false;
 		}
 		
 		// Regardless of whether the crate was picked up by the intended player, the half-effective setting still applies
@@ -109,17 +105,26 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 #endif
 
 		const PlayerIndex collectingPlayerIndex = other->getControllingPlayer()->getPlayerIndex();
-		fromMyRenewableSource = (
+		// This include being from 'my' drop zone (same player collecting from it) or from a neutral/civilian-controlled
+		// drop zone.
+		fromRenewableSourceAsIntendedDestination = (
 			collectingPlayerIndex == sourcePlayerIndex ||
 			(fromTechStructure && ThePlayerList->isPlayerUnaffiliated(ThePlayerList->getNthPlayer(sourcePlayerIndex)))
 		);
 	}
 
 	//MODDD - decide the 'moneySource'
-	if (fromMyRenewableSource)
+	if (fromRenewableSourceAsIntendedDestination)
 	{
 		// from my supply drop zone means the highest extent of scalar cheats applies
-		moneySource = MONEYSOURCE_RENEWABLE;
+		if (fromTechStructure)
+		{
+			moneySource = MONEYSOURCE_RENEWABLE_TECH;
+		}
+		else
+		{
+			moneySource = MONEYSOURCE_RENEWABLE;
+		}
 		runMajorCheats = true;
 	}
 	else

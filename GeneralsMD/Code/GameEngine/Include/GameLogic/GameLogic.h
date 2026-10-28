@@ -91,8 +91,8 @@ enum GameStatus CPP_11(: Int)
 	GAMESTATUS_TEARDOWN //  During 'GameEngine::reset'
 };
 //MODDD - more globals
-extern GameStatus gameStatus;
-extern Bool objectInitLock;
+extern GameStatus g_gameStatus;
+extern Bool g_objectInitLock;
 #if REAL_TIME_TOD_CHANGE
 extern UnsignedInt tod_frame;
 extern Bool tod_assign;

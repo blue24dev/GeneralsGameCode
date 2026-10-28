@@ -2121,6 +2121,9 @@ StateReturnType AIMoveToState::update()
 {
 	AIUpdateInterface *ai = getMachineOwner()->getAI();
 
+	//MODDD - several other states send the goal position to the host state machine so why not here?
+	getMachine()->setGoalPosition(&m_goalPosition);
+
 	//Kris: 7/01/03 (Temporary debug hook for units not being able to leave maps)
 	if( getMachineOwner()->testStatus( OBJECT_STATUS_RIDER8 ) )
 	{

@@ -126,9 +126,18 @@ void AutoDepositUpdate::awardInitialCaptureBonus( Player *player )
 	//player->getScoreKeeper()->addMoneyEarned( getAutoDepositUpdateModuleData()->m_initialCaptureBonus );
 	// ---
 	//MODDD - money cheat check
+	MoneySourceType moneySource;
+	if (getObject()->isKindOf(KINDOF_TECH_BUILDING))
+	{
+		moneySource = MONEYSOURCE_RENEWABLE_TECH;
+	}
+	else
+	{
+		moneySource = MONEYSOURCE_RENEWABLE;
+	}
 	int moneyAmount = getAutoDepositUpdateModuleData()->m_initialCaptureBonus;
-	// going to call this non-renewable for cheat categorization (less likely to get bonuses), but renewable for score-keeping.
-	RECEIVE_MONEY_FILTER(player, moneyAmount, FALSE, MONEYSOURCE_RENEWABLE)
+	// doing 'runMajorCheats=FALSE' (less scalar cheat bonuses), renewable for score-keeping.
+	RECEIVE_MONEY_FILTER(player, moneyAmount, FALSE, moneySource)
 
 	//MODDD - 'deposit'/'addMoneyEarned' calls are now part of above
 	// ---
@@ -176,7 +185,16 @@ UpdateSleepTime AutoDepositUpdate::update()
 		int moneyAmount = modData->m_depositAmount + getUpgradedSupplyBoost();
 
 		//MODDD - money cheat check
-		RECEIVE_MONEY_FILTER_DEPOSIT_CONDITIONAL(getObject()->getControllingPlayer(), moneyAmount, TRUE, MONEYSOURCE_RENEWABLE, modData->m_isActualMoney)
+		MoneySourceType moneySource;
+		if (getObject()->isKindOf(KINDOF_TECH_BUILDING))
+		{
+			moneySource = MONEYSOURCE_RENEWABLE_TECH;
+		}
+		else
+		{
+			moneySource = MONEYSOURCE_RENEWABLE;
+		}
+		RECEIVE_MONEY_FILTER_DEPOSIT_CONDITIONAL(getObject()->getControllingPlayer(), moneyAmount, TRUE, moneySource, modData->m_isActualMoney)
 
 		//MODDD - whole block covered by the '_DEPOSIT_CONDITIONAL' variant above
 		/*
