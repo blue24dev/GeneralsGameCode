@@ -115,19 +115,24 @@ Bool SupplyCenterDockUpdate::action( Object* docker, Object *drone )
 
 	UnsignedInt value = 0;
 
-	value += getUpgradedSupplyBoostValue( supplyTruckAI );
+	//MODDD - track this separately for extra score stats
+	//value += getUpgradedSupplyBoostValue( supplyTruckAI );
+	UnsignedInt valueSupplyBoost = getUpgradedSupplyBoostValue( supplyTruckAI );
 
 	Player *ownerPlayer = getObject()->getControllingPlayer();
 	while( supplyTruckAI->loseOneBox() )
 		value += ownerPlayer->getSupplyBoxValue();
 
+	//MODDD - from below, see notes there
+	value = rts_extra::depositMoneyFilter(ownerPlayer, value, valueSupplyBoost, FALSE, MONEYSOURCE_GATHERED, MONEYSOURCE_GATHERED_BOOST);
+
 	if( value > 0)
 	{
-		//MODDD - money cheat check
-		RECEIVE_MONEY_FILTER(ownerPlayer, value, FALSE, MONEYSOURCE_GATHERED)
+		//MODDD - money cheat check - what's returned will be at least the 'value'(pre-boost) and supply boost together, in
+		// addition to money added by scalar cheats if applicable.
+		// UPDATE - moving to before the 'value > 0' check above
 
 		//MODDD - 'deposit'/'addMoneyEarned' calls are now part of above
-
 
 		if( data->m_grantTemporaryStealthFrames > 0 )
 		{

@@ -4329,7 +4329,7 @@ void ScriptActions::doGiveMoney(const AsciiString& playerName, Int money)
 	else
 	{
 		// consider this during the game
-		player->getScoreKeeper()->addMoneyEarned( money, MONEYSOURCE_MAPSCRIPT );
+		player->getScoreKeeper()->addMoneyEarned_notDisplayTotal( money, MONEYSOURCE_MAPSCRIPT );
 	}
 }
 

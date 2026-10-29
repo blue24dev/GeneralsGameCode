@@ -561,7 +561,7 @@ StateReturnType HackInternetState::update()
 				}
 				
 				//MODDD - money cheat check
-				RECEIVE_MONEY_FILTER(owner->getControllingPlayer(), amount, TRUE, MONEYSOURCE_RENEWABLE)
+				amount = rts_extra::depositMoneyFilter(owner->getControllingPlayer(), amount, TRUE, MONEYSOURCE_RENEWABLE);
 
 				//MODDD - 'deposit'/'addMoneyEarned' calls are now part of above
 

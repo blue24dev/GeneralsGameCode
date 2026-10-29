@@ -428,7 +428,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	Bool foundJetAIUpdateBehavior = false;
 	Bool foundChinookAIUpdateBehavior = false;
 	AIUpdateModuleData* aiUpdateModuleData = nullptr;
-	Bool _landingRequiresParkingSpace = false;
+	Bool _canOccupyAirFieldParkingSpace = false;
 	
 	// Whether this thing gets a cost reduction for being a renewable income source at the very end.
 	// There is checking kindof's like FS_BLACK_MARKET or FS_SUPPLY_DROP_ZONE, but I'd rather have a more accurate check
@@ -786,15 +786,29 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			aiUpdateModuleData = (AIUpdateModuleData*)data;
 
 			JetAIUpdateModuleData* _data = (JetAIUpdateModuleData*)data;
-			// Copying the 'JetAIUpdate::landingRequiresParkingSpace' check
-			_landingRequiresParkingSpace = _data->m_needsRunway;
+			// Copying the 'JetAIUpdate::canOccupyAirFieldParkingSpace' check
+			_canOccupyAirFieldParkingSpace = _data->m_needsRunway;
+
+			// If this new field isn't specified, default it from whether this has the 'PRODUCED_FROM_HELIPAD' kindof for the
+			// best retail accuracy, or at least clarifty of intent (checking 'm_needsRunway' may be an alternative, though I don't agree as much).
+			if (_data->m_usesJetTakeoff == 0xFFu)
+			{
+				if (_this->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
+				{
+					_data->m_usesJetTakeoff = 0;
+				}
+				else
+				{
+					_data->m_usesJetTakeoff = 1;
+				}
+			}
 		}
 		else if ( modNameKey == ChinookAIUpdateNameKey )
 		{
 			foundChinookAIUpdateBehavior = true;
 			aiUpdateModuleData = (AIUpdateModuleData*)data;
-			// Copying the 'ChinookAIUpdate::landingRequiresParkingSpace' check
-			_landingRequiresParkingSpace = false;
+			// Copying the 'ChinookAIUpdate::canOccupyAirFieldParkingSpace' check
+			_canOccupyAirFieldParkingSpace = false;
 		}
 
 	}
@@ -825,7 +839,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		if (foundJetAIUpdateBehavior || foundChinookAIUpdateBehavior)
 		{
 			// send what's been figured from reading the specific module
-			_this->m_landingRequiresParkingSpace = _landingRequiresParkingSpace;
+			_this->m_canOccupyAirFieldParkingSpace = _canOccupyAirFieldParkingSpace;
 
 			if (!foundContainBehavior)
 			{
@@ -849,7 +863,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			// an AIRCRAFT not using a JetAIUpdate nor ChinookAIUpdate?
 			// Have to decide if this is a helicopter or not. All I got's the retail PRODUCET_AT_HELIPAD check.
-			_this->m_landingRequiresParkingSpace = !_this->isKindOf(KINDOF_PRODUCED_AT_HELIPAD);
+			_this->m_canOccupyAirFieldParkingSpace = !_this->isKindOf(KINDOF_PRODUCED_AT_HELIPAD);
 		}
 	}
 
@@ -1781,10 +1795,12 @@ Real moneyScalarAdjustmentFilter(const Player* player, Bool runMajorCheats)
 
 	return scalar;
 }
+#endif
 
 // See if the player should receive extra money on top of the intended amount
-UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, MoneySourceType moneySource)
+UnsignedInt depositMoneyFilter(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, MoneySourceType moneySource)
 {
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 	Real scalar = moneyScalarAdjustmentFilter(player, runMajorCheats);
 	if (scalar != 1.0f)
 	{
@@ -1796,64 +1812,117 @@ UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDepo
 		Int amountToDepositFinal = (Int)(((Real)amountToDeposit) * scalar);
 		Int moneyAddedByScalarCheats = amountToDepositFinal - (Int)amountToDeposit;
 		player->getMoney()->deposit((UnsignedInt)amountToDepositFinal);
-		player->getScoreKeeper()->addMoneyEarned(moneyAddedByScalarCheats, MONEYSOURCE_SCALARCHEATS);
 		player->getScoreKeeper()->addMoneyEarned(amountToDeposit, moneySource);
+		player->getScoreKeeper()->addMoneyEarned(moneyAddedByScalarCheats, MONEYSOURCE_SCALARCHEATS);
 		return (UnsignedInt)amountToDepositFinal;
 	}
+#endif
 	
 	player->getMoney()->deposit(amountToDeposit);
 	player->getScoreKeeper()->addMoneyEarned(amountToDeposit, moneySource);
 	return amountToDeposit;
 }
 
+// Variant for boost upgrade to offer another boost/source pair
+UnsignedInt depositMoneyFilter(Player* player, UnsignedInt amountToDeposit, UnsignedInt amountToDepositBoost, Bool runMajorCheats, MoneySourceType moneySource, MoneySourceType moneySourceBoost)
+{
+	Int amountToDepositBase = amountToDeposit + amountToDepositBoost;
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
+	Real scalar = moneyScalarAdjustmentFilter(player, runMajorCheats);
+	if (scalar != 1.0f)
+	{
+		Int amountToDepositFinal = (Int)(((Real)amountToDepositBase) * scalar);
+		Int moneyAddedByScalarCheats = amountToDepositFinal - (Int)amountToDeposit;
+		player->getMoney()->deposit((UnsignedInt)amountToDepositFinal);
+		player->getScoreKeeper()->addMoneyEarned(amountToDeposit, moneySource);
+		player->getScoreKeeper()->addMoneyEarned(amountToDepositBoost, moneySourceBoost);
+		player->getScoreKeeper()->addMoneyEarned(moneyAddedByScalarCheats, MONEYSOURCE_SCALARCHEATS);
+		return (UnsignedInt)amountToDepositFinal;
+	}
+#endif
+
+	player->getMoney()->deposit(amountToDepositBase);
+	player->getScoreKeeper()->addMoneyEarned(amountToDeposit, moneySource);
+	player->getScoreKeeper()->addMoneyEarned(amountToDepositBoost, moneySourceBoost);
+	return amountToDepositBase;
+}
+
 // Variant to specify a scalar to apply in addition to the one decided by the presence of cheats for this player.
 // This additional 'preScalar' is not considered part of cheats - its impact won't be part of the
 // 'MONEYSOURCE_SCALARCHEATS' money bucket.
-UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, Real preScalar, MoneySourceType moneySource)
+UnsignedInt depositMoneyFilter(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, Real preScalar, MoneySourceType moneySource)
 {
-	Real scalar = moneyScalarAdjustmentFilter(player, runMajorCheats);
 	UnsignedInt amountToDepositAdj = (UnsignedInt)((Real)amountToDeposit * preScalar);
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
+	Real scalar = moneyScalarAdjustmentFilter(player, runMajorCheats);
 	if (scalar != 1.0f)
 	{
 		// multiply 'amountToDeposit' as a Real with the scalars together before casting to reduce rounding error
 		Int amountToDepositFinal = (Int)(((Real)amountToDeposit) * (preScalar * scalar));
 		Int moneyAddedByScalarCheats = amountToDepositFinal - amountToDepositAdj;
 		player->getMoney()->deposit((UnsignedInt)amountToDepositFinal);
-		player->getScoreKeeper()->addMoneyEarned(moneyAddedByScalarCheats, MONEYSOURCE_SCALARCHEATS);
 		player->getScoreKeeper()->addMoneyEarned(amountToDepositAdj, moneySource);
+		player->getScoreKeeper()->addMoneyEarned(moneyAddedByScalarCheats, MONEYSOURCE_SCALARCHEATS);
 		return (UnsignedInt)amountToDepositFinal;
 	}
+#endif
 	
 	player->getMoney()->deposit(amountToDepositAdj);
 	player->getScoreKeeper()->addMoneyEarned(amountToDepositAdj, moneySource);
 	return amountToDepositAdj;
 }
 
-// Variants of the 2 forms above (non-preScalar & preScalar) to let the user specify whether to do the 'deposit'/'addMoneyEarned' calls.
+// Variant for boost upgrade to offer another boost/source pair
+UnsignedInt depositMoneyFilter(Player* player, UnsignedInt amountToDeposit, UnsignedInt amountToDepositBoost, Bool runMajorCheats, Real preScalar, MoneySourceType moneySource, MoneySourceType moneySourceBoost)
+{
+	Int amountToDepositBase = amountToDeposit + amountToDepositBoost;
+	UnsignedInt amountToDepositAdj = (UnsignedInt)((Real)amountToDeposit * preScalar);
+	UnsignedInt amountToDepositBaseAdj = (UnsignedInt)((Real)amountToDepositBase * preScalar);
+	// determining the boost-adjusted amount this way avoids rounding error (normal + boost must match the total deposited)
+	UnsignedInt amountToDepositBoostAdj = amountToDepositBaseAdj - amountToDepositAdj;
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
+	Real scalar = moneyScalarAdjustmentFilter(player, runMajorCheats);
+	if (scalar != 1.0f)
+	{
+		Int amountToDepositFinal = (Int)(((Real)amountToDepositBase) * (preScalar * scalar));
+		Int moneyAddedByScalarCheats = amountToDepositFinal - amountToDepositBaseAdj;
+		player->getMoney()->deposit((UnsignedInt)amountToDepositFinal);
+		player->getScoreKeeper()->addMoneyEarned(amountToDepositAdj, moneySource);
+		player->getScoreKeeper()->addMoneyEarned(amountToDepositBoostAdj, moneySourceBoost);
+		player->getScoreKeeper()->addMoneyEarned(moneyAddedByScalarCheats, MONEYSOURCE_SCALARCHEATS);
+		return (UnsignedInt)amountToDepositFinal;
+	}
+#endif
+	
+	player->getMoney()->deposit(amountToDepositBaseAdj);
+	player->getScoreKeeper()->addMoneyEarned(amountToDepositAdj, moneySource);
+	player->getScoreKeeper()->addMoneyEarned(amountToDepositBoostAdj, moneySourceBoost);
+	return amountToDepositBaseAdj;
+}
+
+// Variants of above (non/preScalar & non/boost) to let the user specify whether to do the 'deposit'/'addMoneyEarned' calls.
 // Present because 'AudoDepositUpdate.cpp' allows something to specify 'modData->m_isActualMoney' as 'false' to
 // avoid making money for any players (still shows a number as though it did) - effectively making it a dummy.
 // This will still apply cheats (if applicable) to get the adjusted value to make that displaed number accurate for what
 // it would have been regardless.
-UnsignedInt getCheatAdjustedMoneyAmountConditional(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, MoneySourceType moneySource, Bool canApplyMoney)
+// If changes are made to above, replace these with fresh copies and add the conditional checks back in.
+UnsignedInt depositMoneyFilterConditional(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, MoneySourceType moneySource, Bool canApplyMoney)
 {
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 	Real scalar = moneyScalarAdjustmentFilter(player, runMajorCheats);
 	if (scalar != 1.0f)
 	{
-		// Record the money added by cheats (if the scalar is under 1.0, this will be negative - that's technically right)
-		// Note that 'RENEWABLE_MONEY_SOURCE_HALF_EFFECTIVE''s reduction is not part of this.
-		// ---
-		// Getting the difference between the 'amountToDepositFinal' and original input to avoid the risk of more rounding error
-		//Int moneyAddedByScalarCheats = (Int)(((Real)amountToDeposit) * (scalar - 1.0f));
 		Int amountToDepositFinal = (Int)(((Real)amountToDeposit) * scalar);
+		Int moneyAddedByScalarCheats = amountToDepositFinal - (Int)amountToDeposit;
 		if (canApplyMoney)
 		{
-			Int moneyAddedByScalarCheats = amountToDepositFinal - (Int)amountToDeposit;
 			player->getMoney()->deposit((UnsignedInt)amountToDepositFinal);
-			player->getScoreKeeper()->addMoneyEarned(moneyAddedByScalarCheats, MONEYSOURCE_SCALARCHEATS);
 			player->getScoreKeeper()->addMoneyEarned(amountToDeposit, moneySource);
+			player->getScoreKeeper()->addMoneyEarned(moneyAddedByScalarCheats, MONEYSOURCE_SCALARCHEATS);
 		}
 		return (UnsignedInt)amountToDepositFinal;
 	}
+#endif
 
 	if (canApplyMoney)
 	{
@@ -1863,24 +1932,53 @@ UnsignedInt getCheatAdjustedMoneyAmountConditional(Player* player, UnsignedInt a
 	return amountToDeposit;
 }
 
-// Another conditional variant for 'preScalar' - see description above
-UnsignedInt getCheatAdjustedMoneyAmountConditional(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, Real preScalar, MoneySourceType moneySource, Bool canApplyMoney)
+UnsignedInt depositMoneyFilterConditional(Player* player, UnsignedInt amountToDeposit, UnsignedInt amountToDepositBoost, Bool runMajorCheats, MoneySourceType moneySource, MoneySourceType moneySourceBoost, Bool canApplyMoney)
 {
+	Int amountToDepositBase = amountToDeposit + amountToDepositBoost;
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 	Real scalar = moneyScalarAdjustmentFilter(player, runMajorCheats);
-	UnsignedInt amountToDepositAdj = (UnsignedInt)((Real)amountToDeposit * preScalar);
 	if (scalar != 1.0f)
 	{
-		// multiply 'amountToDeposit' as a Real with the scalars together before casting to reduce rounding error
-		Int amountToDepositFinal = (Int)(((Real)amountToDeposit) * (preScalar * scalar));
+		Int amountToDepositFinal = (Int)(((Real)amountToDepositBase) * scalar);
+		Int moneyAddedByScalarCheats = amountToDepositFinal - (Int)amountToDeposit;
 		if (canApplyMoney)
 		{
-			Int moneyAddedByScalarCheats = amountToDepositFinal - amountToDepositAdj;
 			player->getMoney()->deposit((UnsignedInt)amountToDepositFinal);
+			player->getScoreKeeper()->addMoneyEarned(amountToDeposit, moneySource);
+			player->getScoreKeeper()->addMoneyEarned(amountToDepositBoost, moneySourceBoost);
 			player->getScoreKeeper()->addMoneyEarned(moneyAddedByScalarCheats, MONEYSOURCE_SCALARCHEATS);
-			player->getScoreKeeper()->addMoneyEarned(amountToDepositAdj, moneySource);
 		}
 		return (UnsignedInt)amountToDepositFinal;
 	}
+#endif
+
+	if (canApplyMoney)
+	{
+		player->getMoney()->deposit(amountToDepositBase);
+		player->getScoreKeeper()->addMoneyEarned(amountToDeposit, moneySource);
+		player->getScoreKeeper()->addMoneyEarned(amountToDepositBoost, moneySourceBoost);
+	}
+	return amountToDepositBase;
+}
+
+UnsignedInt depositMoneyFilterConditional(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, Real preScalar, MoneySourceType moneySource, Bool canApplyMoney)
+{
+	UnsignedInt amountToDepositAdj = (UnsignedInt)((Real)amountToDeposit * preScalar);
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
+	Real scalar = moneyScalarAdjustmentFilter(player, runMajorCheats);
+	if (scalar != 1.0f)
+	{
+		Int amountToDepositFinal = (Int)(((Real)amountToDeposit) * (preScalar * scalar));
+		Int moneyAddedByScalarCheats = amountToDepositFinal - amountToDepositAdj;
+		if (canApplyMoney)
+		{
+			player->getMoney()->deposit((UnsignedInt)amountToDepositFinal);
+			player->getScoreKeeper()->addMoneyEarned(amountToDepositAdj, moneySource);
+			player->getScoreKeeper()->addMoneyEarned(moneyAddedByScalarCheats, MONEYSOURCE_SCALARCHEATS);
+		}
+		return (UnsignedInt)amountToDepositFinal;
+	}
+#endif
 
 	if (canApplyMoney)
 	{
@@ -1889,7 +1987,38 @@ UnsignedInt getCheatAdjustedMoneyAmountConditional(Player* player, UnsignedInt a
 	}
 	return amountToDepositAdj;
 }
-#endif // RUN_EXTRA_MONEY_CHEATS
+
+UnsignedInt depositMoneyFilterConditional(Player* player, UnsignedInt amountToDeposit, UnsignedInt amountToDepositBoost, Bool runMajorCheats, Real preScalar, MoneySourceType moneySource, MoneySourceType moneySourceBoost, Bool canApplyMoney)
+{
+	Int amountToDepositBase = amountToDeposit + amountToDepositBoost;
+	UnsignedInt amountToDepositAdj = (UnsignedInt)((Real)amountToDeposit * preScalar);
+	UnsignedInt amountToDepositBaseAdj = (UnsignedInt)((Real)amountToDepositBase * preScalar);
+	UnsignedInt amountToDepositBoostAdj = amountToDepositBaseAdj - amountToDepositAdj;
+#if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
+	Real scalar = moneyScalarAdjustmentFilter(player, runMajorCheats);
+	if (scalar != 1.0f)
+	{
+		Int amountToDepositFinal = (Int)(((Real)amountToDepositBase) * (preScalar * scalar));
+		Int moneyAddedByScalarCheats = amountToDepositFinal - amountToDepositBaseAdj;
+		if (canApplyMoney)
+		{
+			player->getMoney()->deposit((UnsignedInt)amountToDepositFinal);
+			player->getScoreKeeper()->addMoneyEarned(amountToDepositAdj, moneySource);
+			player->getScoreKeeper()->addMoneyEarned(amountToDepositBoostAdj, moneySourceBoost);
+			player->getScoreKeeper()->addMoneyEarned(moneyAddedByScalarCheats, MONEYSOURCE_SCALARCHEATS);
+		}
+		return (UnsignedInt)amountToDepositFinal;
+	}
+#endif
+
+	if (canApplyMoney)
+	{
+		player->getMoney()->deposit(amountToDepositBaseAdj);
+		player->getScoreKeeper()->addMoneyEarned(amountToDepositAdj, moneySource);
+		player->getScoreKeeper()->addMoneyEarned(amountToDepositBoostAdj, moneySourceBoost);
+	}
+	return amountToDepositBaseAdj;
+}
 
 #if RUN_BUILD_TIME_CHEATS || NOOB_MODE
 Int buildTimeAdjustmentFilter(const Player* player, const ThingTemplate* tt)
@@ -2208,9 +2337,9 @@ void extraScoreScreenStatsPrintOut()
 
 	fprintf(outputFile, " - %s\n", gameStr.str());
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
-	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Renewable Tech|Bounty        |Salvage       |Steal         |Steal (Victim)|Scalar Cheats |Map Script    |Total Collect \n");
+	fprintf(outputFile, "Player                        |Start         |Gathered      |Gathered UP   |Renewable     |Renewable UP  |Renewable Tech|Renewable T UP|Bounty        |Salvage       |Steal         |Steal (Victim)|Scalar Cheats |Map Script    |Total Collect |Spent         \n");
 #else
-	fprintf(outputFile, "Player                        |Start         |Gathered      |Renewable     |Renewable Tech|Bounty        |Salvage       |Steal         |Steal (Victim)|Map Script    |Total Collect \n");
+	fprintf(outputFile, "Player                        |Start         |Gathered      |Gathered UP   |Renewable     |Renewable UP  |Renewable Tech|Renewable T UP|Bounty        |Salvage       |Steal         |Steal (Victim)|Map Script    |Total Collect |Spent         \n");
 #endif
 
 	// List the slot players first, like 'grabMultiPlayerInfo' without sorting by score.
@@ -2313,10 +2442,13 @@ void extraScoreScreenStatsPrintOut_player(FILE* outputFile, Player* player)
 	// Money from gathering supplies from finite sources - namely supply piles and supply docks. Also counts touching money
 	// crates found on the map or otherwise not called-in by a structure (ex: supply drop zone).
 	Int moneyFromGathering = scoreKpr->getMoneyReceived(MONEYSOURCE_GATHERED);
+	Int moneyFromGatheringBoost = scoreKpr->getMoneyReceived(MONEYSOURCE_GATHERED_BOOST);
 	// Money from continual sources of money - namely black markets, hackers, supply drop zone crates, oil derricks.
 	// Going to go ahead and count the initial capture bonus for oil derricks too.
 	Int moneyFromRenewable = scoreKpr->getMoneyReceived(MONEYSOURCE_RENEWABLE);
+	Int moneyFromRenewableBoost = scoreKpr->getMoneyReceived(MONEYSOURCE_RENEWABLE_BOOST);
 	Int moneyFromRenewableTech = scoreKpr->getMoneyReceived(MONEYSOURCE_RENEWABLE_TECH);
+	Int moneyFromRenewableTechBoost = scoreKpr->getMoneyReceived(MONEYSOURCE_RENEWABLE_TECH_BOOST);
 	// Money from the GLA bounty effect - going to be 0 if this is non-applicable or a promotion point is never spent on that.
 	Int moneyFromBounty = scoreKpr->getMoneyReceived(MONEYSOURCE_BOUNTY);
 	// Money from collecting salvage piles that happened to give money, also likely only applicable for GLA players.
@@ -2338,6 +2470,7 @@ void extraScoreScreenStatsPrintOut_player(FILE* outputFile, Player* player)
 	// Note that the 'supplied collected' shown in the score screen still doesn't factor in money granted by map scripts even after the start of a game, so adding it in here.
 	// Also, as said above, the 'steal (victim)' column isn't included in this - it's just neat to see how much was stolen from a player.
 	Int moneyTotalCollected = scoreKpr->getTotalMoneyCollected();
+	Int moneySpent = scoreKpr->getTotalMoneySpent();
 
 	//FILE* outputFile = fopen("ScoreScreenExtra.txt", "a");
 	static char lineBuffer[512];
@@ -2350,9 +2483,15 @@ void extraScoreScreenStatsPrintOut_player(FILE* outputFile, Player* player)
 	off += printBuffer_text(&lineBuffer[off], 1, "|");
 	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromGathering);
 	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromGatheringBoost);
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
 	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromRenewable);
 	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromRenewableBoost);
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
 	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromRenewableTech);
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromRenewableTechBoost);
 	off += printBuffer_text(&lineBuffer[off], 1, "|");
 	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromBounty);
 	off += printBuffer_text(&lineBuffer[off], 1, "|");
@@ -2369,6 +2508,8 @@ void extraScoreScreenStatsPrintOut_player(FILE* outputFile, Player* player)
 	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyFromMapScript);
 	off += printBuffer_text(&lineBuffer[off], 1, "|");
 	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyTotalCollected);
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneySpent);
 
 	off += printBuffer_text(&lineBuffer[off], 1, "\n");
 

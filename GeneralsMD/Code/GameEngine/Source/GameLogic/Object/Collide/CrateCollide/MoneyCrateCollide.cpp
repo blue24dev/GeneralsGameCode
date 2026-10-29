@@ -56,7 +56,9 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 {
 	UnsignedInt money = getMoneyCrateCollideModuleData()->m_moneyProvided;
 
-	money += getUpgradedSupplyBoost(other);
+	//MODDD - track this separately for extra score stats
+	//money += getUpgradedSupplyBoost(other);
+	UnsignedInt moneySupplyBoost = getUpgradedSupplyBoost(other);
 
 	//MODDD - new vars
 	Real moneyPreScalar = 1.0f;
@@ -64,6 +66,7 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 	//Bool fromARenewableSource = false;
 	Bool fromRenewableSourceAsIntendedDestination = false;
 	MoneySourceType moneySource;
+	MoneySourceType moneySourceBoost;
 	Bool runMajorCheats;
 	Bool fromTechStructure = false;
 
@@ -120,10 +123,12 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 		if (fromTechStructure)
 		{
 			moneySource = MONEYSOURCE_RENEWABLE_TECH;
+			moneySourceBoost = MONEYSOURCE_RENEWABLE_TECH_BOOST;
 		}
 		else
 		{
 			moneySource = MONEYSOURCE_RENEWABLE;
+			moneySourceBoost = MONEYSOURCE_RENEWABLE_BOOST;
 		}
 		runMajorCheats = true;
 	}
@@ -131,13 +136,14 @@ Bool MoneyCrateCollide::executeCrateBehavior( Object *other )
 	{
 		// stolen from someone else's supply drop zone or simply found
 		moneySource = MONEYSOURCE_GATHERED;
+		moneySourceBoost = MONEYSOURCE_GATHERED_BOOST;
 		runMajorCheats = false;
 	}
 
 	//MODDD - replacing 'deposit'/'addMoneyEarned' with this
 	// Provide 'moneyPreScalar' to be applied in addition to the internal scalar decided by the presence of cheats or not.
 	// This will still correctly determine how much money is produced by scalar cheats if applicable.
-	RECEIVE_MONEY_FILTER_EX(other->getControllingPlayer(), money, runMajorCheats, moneyPreScalar, moneySource)
+	money = rts_extra::depositMoneyFilter(other->getControllingPlayer(), money, moneySupplyBoost, runMajorCheats, moneyPreScalar, moneySource, moneySourceBoost);
 
 	//Play a crate pickup sound.
 	AudioEventRTS soundToPlay = TheAudio->getMiscAudio()->m_crateMoney;

@@ -67,8 +67,11 @@ class ThingTemplate;
 enum MoneySourceType CPP_11(: Int)
 {
 	MONEYSOURCE_GATHERED,
+	MONEYSOURCE_GATHERED_BOOST,
 	MONEYSOURCE_RENEWABLE,
+	MONEYSOURCE_RENEWABLE_BOOST,
 	MONEYSOURCE_RENEWABLE_TECH,
+	MONEYSOURCE_RENEWABLE_TECH_BOOST,
 	MONEYSOURCE_BOUNTY,
 	MONEYSOURCE_SALVAGE,
 	MONEYSOURCE_STEAL,
@@ -102,6 +105,8 @@ public:
 	void addMoneySpent( Int money );								///< Adds money to the amount spent
 	//MODDD - added 'moneySource' param
 	void addMoneyEarned( Int money, MoneySourceType moneySource );								///< Adds money to the earned amount
+	//MODDD - new variant
+	void addMoneyEarned_notDisplayTotal( Int money, MoneySourceType moneySource );
 
 	void addObjectBuilt( const Object *o );
 	void addObjectDestroyed( const Object *o );

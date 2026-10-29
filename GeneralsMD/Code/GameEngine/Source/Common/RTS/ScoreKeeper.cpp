@@ -158,7 +158,11 @@ Int ScoreKeeper::getTotalMoneyCollected()
 	// (it's interesting to see how much money you lost to other players stealing from you, but reducing your
 	// total because of it isn't what most expect to see)
 	totalMoney += m_moneyReceived[MONEYSOURCE_GATHERED];
+	totalMoney += m_moneyReceived[MONEYSOURCE_GATHERED_BOOST];
 	totalMoney += m_moneyReceived[MONEYSOURCE_RENEWABLE];
+	totalMoney += m_moneyReceived[MONEYSOURCE_RENEWABLE_BOOST];
+	totalMoney += m_moneyReceived[MONEYSOURCE_RENEWABLE_TECH];
+	totalMoney += m_moneyReceived[MONEYSOURCE_RENEWABLE_TECH_BOOST];
 	totalMoney += m_moneyReceived[MONEYSOURCE_BOUNTY];
 	totalMoney += m_moneyReceived[MONEYSOURCE_SALVAGE];
 	totalMoney += m_moneyReceived[MONEYSOURCE_STEAL];
@@ -175,7 +179,7 @@ Int ScoreKeeper::getTotalMoneyCollected()
 //MODDD - new method to handle the case that the amount of money the player has is set to a certain amount after the first
 // frame (#0) of the game. Not sure when/why this would ever happen but this is a catch-all for that kind of scenario.
 // The point is to decide how much money this change counts as 'earning' (the difference between the old and newly assigned
-// values for money).
+// values for money). (actually going to only handle frame #0 anyway - that's fine.)
 // As goofy as it might seem, going to allow this to be negative if the change reduces the player's money, since this would
 // only affect the money received by map script (technically this could mean more money was lost in total than gained from
 // map scripts).
@@ -196,7 +200,7 @@ void ScoreKeeper::onMoneySet( Int moneyOld, Int moneyNew )
 		return;
 	}
 
-	addMoneyEarned(moneyDelta, MONEYSOURCE_MAPSCRIPT);
+	addMoneyEarned_notDisplayTotal(moneyDelta, MONEYSOURCE_MAPSCRIPT);
 }
 
 //MODDD - implementation moved from .h file
@@ -208,14 +212,20 @@ void ScoreKeeper::addMoneySpent( Int money )
 //MODDD - implementation moved from .h file, new param 'moneySource'
 void ScoreKeeper::addMoneyEarned( Int money, MoneySourceType moneySource )
 {
-	// To preserve retail behavior ('supplied collected' column in the score screen), don't count map-script grants.
-	// The total from the text file will include this by summing up all the buckets, however.
-	if (moneySource != MONEYSOURCE_MAPSCRIPT)
-	{
-		m_totalMoneyEarned += money;
-	}
+	// This is for the 'Supplies Collected' in the score screen, not the total seen in 'ScoreScreenExtra.txt'
+	m_totalMoneyEarned += money;
 
 	// Also add to the corresponding 'm_moneyReceived' bucket
+	m_moneyReceived[moneySource] += money;
+}
+
+//MODDD - new, variant to not add to the 'supplies collected' column shown in the game's score screen
+// ('m_totalMoneyEarned') to preserve retail behavior.
+// The total seen in 'ScoreScreenExtra' can still include this by summing up most of the buckets, however.
+// Ex: MONEYSOURCE_MAPSCRIPT is included in the text file, not in the score screen by only being done through this variant.
+void ScoreKeeper::addMoneyEarned_notDisplayTotal( Int money, MoneySourceType moneySource )
+{
+	// Add to the corresponding 'm_moneyReceived' bucket
 	m_moneyReceived[moneySource] += money;
 }
 

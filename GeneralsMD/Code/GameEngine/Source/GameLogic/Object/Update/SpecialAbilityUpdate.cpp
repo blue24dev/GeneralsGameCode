@@ -1579,7 +1579,7 @@ Bool SpecialAbilityUpdate::attemptTriggerAbilityEffect(Bool& okToLoseStealth)
           //MODDD - why a 'obj->getControllingPlayer()' null check? above is already expecting it to exist
 					object->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( cash, MONEYSOURCE_STEAL );
 				  //MODDD - add the opposite to the victim for the 'steal(victim)' bucket too
-					target->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( -((Int)cash), MONEYSOURCE_STEAL_VICTIM );
+					target->getControllingPlayer()->getScoreKeeper()->addMoneyEarned_notDisplayTotal( -((Int)cash), MONEYSOURCE_STEAL_VICTIM );
 
           //Play the "cash stolen" EVA event if the local player is the victim!
           if( target && target->isLocallyViewed() )

@@ -144,7 +144,7 @@ public:
 	void transformPoint( const Coord3D *in, Coord3D *out );								///< transform this point using the m_transform matrix of this thing
 
 	//MODDD
-	Bool landingRequiresParkingSpace() const;
+	Bool canOccupyAirFieldParkingSpace() const;
 
 protected:
 
