@@ -137,7 +137,7 @@ void AutoDepositUpdate::awardInitialCaptureBonus( Player *player )
 	}
 	int moneyAmount = getAutoDepositUpdateModuleData()->m_initialCaptureBonus;
 	// doing 'runMajorCheats=FALSE' (less scalar cheat bonuses), renewable for score-keeping.
-	RECEIVE_MONEY_FILTER(player, moneyAmount, FALSE, moneySource)
+	moneyAmount = rts_extra::depositMoneyFilter(player, moneyAmount, FALSE, moneySource);
 
 	//MODDD - 'deposit'/'addMoneyEarned' calls are now part of above
 	// ---
@@ -181,20 +181,26 @@ UpdateSleepTime AutoDepositUpdate::update()
 		// makes sure that buildings under construction do not get a bonus CCB
 		if( getObject()->getConstructionPercent() != CONSTRUCTION_COMPLETE )
 			return UPDATE_SLEEP_NONE;
-
-		int moneyAmount = modData->m_depositAmount + getUpgradedSupplyBoost();
+		
+		//MODDD - track this separately for extra score stats
+		//int moneyAmount = modData->m_depositAmount + getUpgradedSupplyBoost();
+		int moneyAmount = modData->m_depositAmount;
+		int moneyAmountSupplyBoost = getUpgradedSupplyBoost();
 
 		//MODDD - money cheat check
 		MoneySourceType moneySource;
+		MoneySourceType moneySourceBoost;
 		if (getObject()->isKindOf(KINDOF_TECH_BUILDING))
 		{
 			moneySource = MONEYSOURCE_RENEWABLE_TECH;
+			moneySourceBoost = MONEYSOURCE_RENEWABLE_TECH_BOOST;
 		}
 		else
 		{
 			moneySource = MONEYSOURCE_RENEWABLE;
+			moneySourceBoost = MONEYSOURCE_RENEWABLE_BOOST;
 		}
-		RECEIVE_MONEY_FILTER_DEPOSIT_CONDITIONAL(getObject()->getControllingPlayer(), moneyAmount, TRUE, moneySource, modData->m_isActualMoney)
+		moneyAmount = rts_extra::depositMoneyFilterConditional(getObject()->getControllingPlayer(), moneyAmount, moneyAmountSupplyBoost, TRUE, moneySource, moneySourceBoost, modData->m_isActualMoney);
 
 		//MODDD - whole block covered by the '_DEPOSIT_CONDITIONAL' variant above
 		/*

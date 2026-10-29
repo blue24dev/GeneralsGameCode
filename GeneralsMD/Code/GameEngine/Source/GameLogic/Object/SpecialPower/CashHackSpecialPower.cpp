@@ -157,7 +157,7 @@ void CashHackSpecialPower::doSpecialPowerAtObject( Object *victim, UnsignedInt c
 			selfMoney->deposit( cash );
 			self->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( cash, MONEYSOURCE_STEAL );
 			//MODDD - add the opposite to the victim for the 'steal(victim)' bucket too
-			victim->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( -((Int)cash), MONEYSOURCE_STEAL_VICTIM );
+			victim->getControllingPlayer()->getScoreKeeper()->addMoneyEarned_notDisplayTotal( -((Int)cash), MONEYSOURCE_STEAL_VICTIM );
 
 			//Display cash income floating over the blacklotus
 			UnicodeString moneyString;

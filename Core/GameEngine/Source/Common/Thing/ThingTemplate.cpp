@@ -1712,9 +1712,9 @@ Bool ThingTemplate::getHasInactiveBodyModule() const
 }
 
 //MODDD
-Bool ThingTemplate::landingRequiresParkingSpace() const
+Bool ThingTemplate::canOccupyAirFieldParkingSpace() const
 {
-	return m_landingRequiresParkingSpace;
+	return m_canOccupyAirFieldParkingSpace;
 }
 
 //---------------------------------------------------------------------------------------ModuleInfo

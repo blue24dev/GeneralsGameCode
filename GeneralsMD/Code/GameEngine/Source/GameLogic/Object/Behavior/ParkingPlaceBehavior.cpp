@@ -289,7 +289,7 @@ Bool ParkingPlaceBehavior::shouldReserveDoorWhenQueued(const ThingTemplate* thin
 {
 	//MODDD
 	//if (thing->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
-	if (!thing->landingRequiresParkingSpace())
+	if (!thing->canOccupyAirFieldParkingSpace())
 		return false;
 
 	return true;
@@ -304,7 +304,7 @@ Bool ParkingPlaceBehavior::hasAvailableSpaceFor(const ThingTemplate* thing) cons
 
 	//MODDD
 	//if (thing->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
-	if (!thing->landingRequiresParkingSpace())
+	if (!thing->canOccupyAirFieldParkingSpace())
 		return true;
 
 	for (std::vector<ParkingPlaceInfo>::const_iterator it = m_spaces.begin(); it != m_spaces.end(); ++it)
@@ -787,7 +787,7 @@ ExitDoorType ParkingPlaceBehavior::reserveDoorForExit( const ThingTemplate* objT
 
 	//MODDD
 	//if (objType->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
-	if (!objType->landingRequiresParkingSpace())
+	if (!objType->canOccupyAirFieldParkingSpace())
 	{
 		return DOOR_NONE_NEEDED;
 	}
@@ -836,7 +836,7 @@ void ParkingPlaceBehavior::exitObjectViaDoor( Object *newObj, ExitDoorType exitD
 	Real parkingOffset = ju ? ju->friend_getParkingOffset() : 0.0f;
 	//MODDD
 	//Bool producedAtHelipad = newObj->isKindOf(KINDOF_PRODUCED_AT_HELIPAD);
-	Bool producedAtHelipad = !newObj->landingRequiresParkingSpace();
+	Bool producedAtHelipad = !newObj->canOccupyAirFieldParkingSpace();
 
 	PPInfo ppinfo;
 	DUMPMATRIX3D(getObject()->getTransformMatrix());
@@ -891,7 +891,7 @@ void ParkingPlaceBehavior::exitObjectViaDoor( Object *newObj, ExitDoorType exitD
 		{
 			//MODDD
 			//if( !newObj->isKindOf( KINDOF_PRODUCED_AT_HELIPAD ) )
-			if( newObj->landingRequiresParkingSpace() )
+			if( newObj->canOccupyAirFieldParkingSpace() )
 			{
 				std::vector<Coord3D> exitPath;
 				exitPath.push_back(ppinfo.parkingSpace);

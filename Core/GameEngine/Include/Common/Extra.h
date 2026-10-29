@@ -59,11 +59,16 @@ void automaticGlobalDataChanges();
 
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
 Real moneyScalarAdjustmentFilter(const Player* player, Bool runMajorCheats);
-UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, MoneySourceType moneySource);
-UnsignedInt getCheatAdjustedMoneyAmount(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, Real preScalar, MoneySourceType moneySource);
-UnsignedInt getCheatAdjustedMoneyAmountConditional(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, MoneySourceType moneySource, Bool canApplyMoney);
-UnsignedInt getCheatAdjustedMoneyAmountConditional(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, Real preScalar, MoneySourceType moneySource, Bool canApplyMoney);
 #endif
+UnsignedInt depositMoneyFilter(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, MoneySourceType moneySource);
+UnsignedInt depositMoneyFilter(Player* player, UnsignedInt amountToDeposit, UnsignedInt amountToDepositBoost, Bool runMajorCheats, MoneySourceType moneySource, MoneySourceType moneySourceBoost);
+UnsignedInt depositMoneyFilter(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, Real preScalar, MoneySourceType moneySource);
+UnsignedInt depositMoneyFilter(Player* player, UnsignedInt amountToDeposit, UnsignedInt amountToDepositBoost, Bool runMajorCheats, Real preScalar, MoneySourceType moneySource, MoneySourceType moneySourceBoost);
+UnsignedInt depositMoneyFilterConditional(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, MoneySourceType moneySource, Bool canApplyMoney);
+UnsignedInt depositMoneyFilterConditional(Player* player, UnsignedInt amountToDeposit, UnsignedInt amountToDepositBoost, Bool runMajorCheats, MoneySourceType moneySource, MoneySourceType moneySourceBoost, Bool canApplyMoney);
+UnsignedInt depositMoneyFilterConditional(Player* player, UnsignedInt amountToDeposit, Bool runMajorCheats, Real preScalar, MoneySourceType moneySource, Bool canApplyMoney);
+UnsignedInt depositMoneyFilterConditional(Player* player, UnsignedInt amountToDeposit, UnsignedInt amountToDepositBoost, Bool runMajorCheats, Real preScalar, MoneySourceType moneySource, MoneySourceType moneySourceBoost, Bool canApplyMoney);
+
 #if RUN_BUILD_TIME_CHEATS || NOOB_MODE
 Int buildTimeAdjustmentFilter(const Player* player, const ThingTemplate* tt);
 #endif

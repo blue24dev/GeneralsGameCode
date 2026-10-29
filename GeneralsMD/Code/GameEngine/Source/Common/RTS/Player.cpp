@@ -2534,7 +2534,7 @@ void Player::doBountyForKill(const Object* killer, const Object* victim)
 	if( bounty )
 	{
 		//MODDD - money cheat check
-		RECEIVE_MONEY_FILTER(this, bounty, FALSE, MONEYSOURCE_BOUNTY)
+		bounty = rts_extra::depositMoneyFilter(this, bounty, FALSE, MONEYSOURCE_BOUNTY);
 
 		//MODDD - 'deposit'/'addMoneyEarned' calls are now part of above
 
@@ -3042,6 +3042,7 @@ Bool Player::canBuild(const ThingTemplate *tmplate) const
 	//MODDD - STUPID HACK
 	//if (FALSE)
 #endif
+	if (FALSE)
 	// -----------------------------------------------------------------------------
 	{
 

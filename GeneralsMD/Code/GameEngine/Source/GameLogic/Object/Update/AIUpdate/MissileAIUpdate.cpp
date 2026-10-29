@@ -602,14 +602,17 @@ void MissileAIUpdate::doAttackState(Bool turnOK)
 	// than cloverleaf around their last spot.
 	//MODDD - replaced - if tracking and the target is lost, move toward its most recent location then instead of
 	// spontaneously disappearing
-	//if( m_isTrackingTarget && (getGoalObject() == nullptr) )
-	//	airborneTargetGone();
+	// (Reverting for now)
+	if( m_isTrackingTarget && (getGoalObject() == nullptr) )
+		airborneTargetGone();
 	// ------------
+	/*
 	if( m_isTrackingTarget && (getGoalObject() == nullptr) )
 	{
 		m_isTrackingTarget = false;
 		aiMoveToPosition(getGoalPosition(), CMD_FROM_AI );
 	}
+	*/
 	// ------------
 }
 
@@ -693,14 +696,17 @@ void MissileAIUpdate::doKillState()
 	// than cloverleaf around their last spot.
 	//MODDD - replaced - if tracking and the target is lost, move toward its most recent location then instead of
 	// spontaneously disappearing
-	//if( m_isTrackingTarget && (getGoalObject() == nullptr) )
-	//	airborneTargetGone();
+	// (Reverting for now)
+	if( m_isTrackingTarget && (getGoalObject() == nullptr) )
+		airborneTargetGone();
 	// ------------
+	/*
 	if( m_isTrackingTarget && (getGoalObject() == nullptr) )
 	{
 		m_isTrackingTarget = false;
 		aiMoveToPosition(getGoalPosition(), CMD_FROM_AI );
 	}
+	*/
 	// ------------
 }
 

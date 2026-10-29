@@ -62,6 +62,8 @@ public:
 	Real										m_lockonAngleSpin;								///< how many times to spin around it
 	Real										m_lockonBlinky;
 	UnsignedInt							m_returnToBaseIdleTime;						///< if we're idle for this long, return to base
+	//MODDD - NEW - logically a boolean but defaults to a bogus value to tell if it's never been set before
+	UnsignedByte m_usesJetTakeoff;
 
 	JetAIUpdateModuleData();
 	static void buildFieldParse(MultiIniFieldParse& p);
@@ -125,7 +127,7 @@ public:
 	Real friend_getOutOfAmmoDamagePerSecond() const { return getJetAIUpdateModuleData()->m_outOfAmmoDamagePerSecond; }
 	Bool friend_keepsParkingSpaceWhenAirborne() const { return getJetAIUpdateModuleData()->m_keepsParkingSpaceWhenAirborne; }
 
-	//MODDD - removing to force use of the new 'landingRequiresParkingSpace' instead
+	//MODDD - removing - replacing references to this
 	//Bool friend_needsRunway() const { return getJetAIUpdateModuleData()->m_needsRunway; }
 
 	Real friend_getTakeoffDistForMaxLift() const { return getJetAIUpdateModuleData()->m_takeoffDistForMaxLift; }
@@ -158,8 +160,8 @@ public:
 	virtual ObjectID getAirFieldDockedOrLandingAtID() const override;
 	virtual ObjectID getAirFieldDockIntentID() const override;
 
-	Bool landingRequiresParkingSpace() const;
-	Bool usesSequenceForTakeoff() const;
+	Bool canOccupyAirFieldParkingSpace() const;
+	Bool usesJetTakeoff() const;
 
 protected:
 
