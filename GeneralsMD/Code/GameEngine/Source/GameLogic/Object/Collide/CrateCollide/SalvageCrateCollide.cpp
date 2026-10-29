@@ -260,7 +260,7 @@ void SalvageCrateCollide::doMoney( Object *other )
 	if( money > 0 )
 	{
 		//MODDD - money cheat check
-		RECEIVE_MONEY_FILTER(other->getControllingPlayer(), money, FALSE, MONEYSOURCE_SALVAGE)
+		money = rts_extra::depositMoneyFilter(other->getControllingPlayer(), money, FALSE, MONEYSOURCE_SALVAGE);
 			
 		//MODDD - 'deposit'/'addMoneyEarned' calls are now part of above
 

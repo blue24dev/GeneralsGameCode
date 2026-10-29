@@ -405,7 +405,7 @@ void Thing::transformPoint( const Coord3D *in, Coord3D *out )
 }
 
 //MODDD - uses something now cached in the ThingTemplate for easy access, as this never changes per instance
-Bool Thing::landingRequiresParkingSpace() const
+Bool Thing::canOccupyAirFieldParkingSpace() const
 {
-	return m_template->landingRequiresParkingSpace();
+	return m_template->canOccupyAirFieldParkingSpace();
 }

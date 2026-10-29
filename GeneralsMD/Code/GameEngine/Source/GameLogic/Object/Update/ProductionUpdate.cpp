@@ -774,6 +774,12 @@ UpdateSleepTime ProductionUpdate::update()
 						//
 						if( d->m_numDoorAnimations == 0 || door == nullptr || door->m_doorWaitOpenFrame != 0 )
 						{
+							//MODDD - add the cost of this unit then since it's really being made! Beats me how this was present for
+							// upgrades finishing and buildings finishing completion but not units coming out of a factory?
+							//MODDD - TODO - like other places, use the money spent at the time of the purchase for this production item, NOT the
+							// cost at the moment!
+							player->getScoreKeeper()->addMoneySpent(production->m_objectToProduce->calcCostToBuild(player));
+
 							//MODDD - stop the object from calling 'gamePostLoad' until after 'exitObjectViaDoor' sets its
 							// position/angle. That way, modules that want to run instantly like shroud generation will do
 							// so at the right place, not the bottom-left corner of the map (point 0,0,0) the first frame.

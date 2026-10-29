@@ -637,7 +637,7 @@ public:
 	//MODDD
 	void determineHasInactiveBodyModule();
 	Bool getHasInactiveBodyModule() const;
-	Bool landingRequiresParkingSpace() const;
+	Bool canOccupyAirFieldParkingSpace() const;
 
 	const WeaponTemplateSet* findWeaponTemplateSet(const WeaponSetFlags& t) const;
 	const ArmorTemplateSet* findArmorTemplateSet(const ArmorSetFlags& t) const;
@@ -809,7 +809,7 @@ private:
 
 	//MODDD
 	Bool m_hasInactiveBodyModule;
-	Bool m_landingRequiresParkingSpace;
+	Bool m_canOccupyAirFieldParkingSpace;
 	//MODDD - for hackery
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
 	public: Bool m_isRenewableMoneyOCLSource;

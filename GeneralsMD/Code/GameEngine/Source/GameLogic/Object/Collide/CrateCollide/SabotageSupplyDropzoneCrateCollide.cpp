@@ -160,7 +160,7 @@ Bool SabotageSupplyDropzoneCrateCollide::executeCrateBehavior( Object *other )
 			//MODDD - why a 'obj->getControllingPlayer()' null check? above is already expecting it to exist
 			obj->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( cash, MONEYSOURCE_STEAL );
 			//MODDD - add the opposite to the victim for the 'steal(victim)' bucket too
-			other->getControllingPlayer()->getScoreKeeper()->addMoneyEarned( -((Int)cash), MONEYSOURCE_STEAL_VICTIM );
+			other->getControllingPlayer()->getScoreKeeper()->addMoneyEarned_notDisplayTotal( -((Int)cash), MONEYSOURCE_STEAL_VICTIM );
 
 			//Play the "cash stolen" EVA event if the local player is the victim!
 			if( other->isLocallyViewed() )
