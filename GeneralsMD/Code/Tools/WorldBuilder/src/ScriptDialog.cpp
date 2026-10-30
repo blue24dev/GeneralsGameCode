@@ -1637,6 +1637,10 @@ void ScriptDialog::OnLoad()
 			updateIcons(TVI_ROOT);
 		}
 
+		//MODDD - update the recently modified tree or else it looks like nothing changed without interacting to trigger
+		// some re-draws or closing/re-opening the dialog
+		CTreeCtrl *pTree = (CTreeCtrl*)GetDlgItem(IDC_SCRIPT_TREE);
+		pTree->Invalidate();
 
 	} catch(...) {
    	  	DEBUG_CRASH(("threw exception in ScriptDialog::OnLoad"));

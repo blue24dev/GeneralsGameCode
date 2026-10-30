@@ -3042,7 +3042,6 @@ Bool Player::canBuild(const ThingTemplate *tmplate) const
 	//MODDD - STUPID HACK
 	//if (FALSE)
 #endif
-	if (FALSE)
 	// -----------------------------------------------------------------------------
 	{
 
