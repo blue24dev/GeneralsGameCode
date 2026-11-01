@@ -1701,9 +1701,11 @@ StateReturnType AIInternalMoveToState::onEnter()
 	else if ( obj->isKindOf( KINDOF_DOZER ) && obj->isKindOf( KINDOF_HARVESTER ) )
 		obj->setModelConditionState( MODELCONDITION_MOVING );
 
-
-
-	if( getAdjustsDestination() && !obj->testStatus( OBJECT_STATUS_RIDER8 ) )
+	//MODDD - replacing the check for 'OBJECT_STATUS_RIDER8' with 'locomotor->isInvalidPositionAllowed()'.
+	// The main point is to avoid using 'OBJECT_STATUS_RIDER8' just for ChinookAIUpdate.cpp's 'ChinookHeadOffMapState'.
+	// This is a broad fix but it makes sense: if this is set to allow invalid positions, why bother updating the position here?
+	//if( getAdjustsDestination() && !obj->testStatus( OBJECT_STATUS_RIDER8 ) )
+	if( getAdjustsDestination() && !ai->getCurLocomotor()->isInvalidPositionAllowed() )
 	{
 		if (!TheAI->pathfinder()->adjustDestination(obj, ai->getLocomotorSet(), &m_goalPosition))
 		{

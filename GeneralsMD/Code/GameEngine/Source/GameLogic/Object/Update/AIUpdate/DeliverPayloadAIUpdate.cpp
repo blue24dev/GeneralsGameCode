@@ -1018,10 +1018,12 @@ StateReturnType ConsiderNewApproachState::onEnter() // Increment local counter o
 	reApproachPoint.y = owner->getPosition()->y + dir->y * minReApproachDist;
 	reApproachPoint.z = 0.0f;	// yeah, yeah, should be terrainpos, but doesn't really matter here...
 
-	ai->aiMoveToPosition( &reApproachPoint, CMD_FROM_AI );
-
+	//MODDD - moved the 'setAllowInvalidPosition' line from after to before 'aiMoveToPosition'
+	// ---
 	// we allow these guys to go to invalid (ie, off-map) positions
 	ai->getCurLocomotor()->setAllowInvalidPosition(true);
+
+	ai->aiMoveToPosition( &reApproachPoint, CMD_FROM_AI );
 
 	return STATE_CONTINUE;
 }
@@ -1056,7 +1058,9 @@ void ConsiderNewApproachState::onExit( StateExitType status )
 	}
 
 	// go back to normal.
-	ai->getCurLocomotor()->setAllowInvalidPosition(true);
+	//MODDD - changed param from 'true' to 'false'.
+	// Why was this 'true'? Was this an oversight? I imagine this was the default of 'false' before this state was involved.
+	ai->getCurLocomotor()->setAllowInvalidPosition(false);
 }
 
 //-------------------------------------------------------------------------------------------------

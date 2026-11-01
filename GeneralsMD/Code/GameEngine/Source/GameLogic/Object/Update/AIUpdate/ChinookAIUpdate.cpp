@@ -167,37 +167,34 @@ public:
 		Object *owner = getMachineOwner();
 		ChinookAIUpdate* ai = (ChinookAIUpdate*)owner->getAIUpdateInterface();
 
-		owner->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_RIDER8 ) );
-		ai->aiMoveToPosition( ai->getOriginalPosition(), CMD_FROM_AI );
+		//MODDD - no longer needed - the same impact this used to have will be implied from 'setAllowInvalidPosition' instead
+		//owner->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_RIDER8 ) );
+		//MODDD - moved the 'setAllowInvalidPosition' line from after to before 'aiMoveToPosition' so the state's 'onEnter'
+		// can react to that
 		ai->getCurLocomotor()->setAllowInvalidPosition(true);
+		ai->aiMoveToPosition( ai->getOriginalPosition(), CMD_FROM_AI );
 
 		return STATE_CONTINUE;
 	}
 
 	virtual StateReturnType update() override
 	{
+		//MODDD - NOTE
+		// A temporary state is used while the chinook moves to the destination (track what happens in 'ai->aiMoveToPosition'
+		// above), blocking 'update' calls to here. In other words, simply returning 'STATE_SUCCESS' would also work - this
+		// would mean that finishing the most recent move order alone (presumably off the map anyway) would guarantee a
+		// despawn no matter where the chinook ends up.
+
 		Object *owner = getMachineOwner();
 
-		//MODDD - why? just check for having reached the destination to move to, assuming that was out of view well enough
-		// (borrowed from 'AIInternalMoveToState::update()')
-		// ---
-		/*
 		Region3D mapRegion;
-		TheTerrainLogic->getExtentIncludingBorder( &mapRegion );
+		//MODDD - replaced 'getExtentIncludingBorder' with 'getExtent'.
+		// Bugfix for something spawned in a border region moving into the map & back, reaching this point in the script,
+		// and never despawning since they are technically withing the 'map + border' region. A check for being outside
+		// strictly the visible/playable map (anywhere in the perma-black-surrounding-shroud) is better to catch this.
+		// Ex: MD_USA02.map in retail
+		TheTerrainLogic->getExtent( &mapRegion );
 		if( !mapRegion.containsWithin( owner->getPosition()->asCoord2D() ) )
-		*/
-		// ---
-		// Actually, nevermind this replacement too. A temporary state is used instead while the chinook moves to the destination,
-		// presumably off the map. Just by that finishing to reach here, go ahead and imply it's fine to despawn.
-		// There might be a smarter way to handle this like using this as the state to check for being at the target instead
-		// of the temporary state (don't use a temporary one at all to do that), but I don't feel like staring at this anymore.
-		/*
-		AIUpdateInterface *ai = owner->getAI();
-		Real onPathDistToGoal = ai->getLocomotorDistanceToGoal();
-		//DEBUG_LOG(("onPathDistToGoal = %f %s",onPathDistToGoal, obj->getTemplate()->getName().str()));
-		if (ai->getCurLocomotor() && (onPathDistToGoal < ai->getCurLocomotor()->getCloseEnoughDist()))
-		*/
-		// ---
 		{
 #if EXTRA_DEBUG_HELP
 			g_destroyObjectSource.push_back(45);
@@ -209,12 +206,12 @@ public:
 		return STATE_CONTINUE;
 	}
 
-	//MODDD - missing param to be an override?
-	virtual void onExit( StateExitType status ) override
-	{
-		Object *owner = getMachineOwner();
-		owner->clearStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_RIDER8 ) );
-	}
+	//MODDD - missing param to be an override? - actually no longer needed at all
+	//virtual void onExit( StateExitType status ) override
+	//{
+	//	Object *owner = getMachineOwner();
+	//	owner->clearStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_RIDER8 ) );
+	//}
 };
 EMPTY_DTOR(ChinookHeadOffMapState)
 
