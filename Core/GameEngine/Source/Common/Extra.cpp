@@ -5,6 +5,7 @@
 #include "Common/Extra.h"
 #include "Common/Player.h"
 #include "Common/PlayerList.h"
+#include "Common/PlayerTemplate.h"
 #include "Common/KindOf.h"
 #include "Common/ThingFactory.h"
 #include "Common/ThingTemplate.h"
@@ -1750,6 +1751,8 @@ Real moneyScalarAdjustmentFilter(const Player* player, Bool runMajorCheats)
 	const UnsignedInt endMin = 80;
 	const Real startModifier = 1.1f;
 	const Real endModifier = 4.0f;
+	// separate from the time system
+	const Real minModifier = 1.1f;
 	#endif
 
 	Real scalar = 1.0f;
@@ -1781,7 +1784,7 @@ Real moneyScalarAdjustmentFilter(const Player* player, Bool runMajorCheats)
 		else
 		{
 			// non-renewable: lowest bonus only
-			scalar *= startModifier;
+			scalar *= minModifier;
 		}
 	}
 	#endif
@@ -2117,7 +2120,7 @@ Real playerPromotionExperienceRateFilter(const Player* player, Real expRateModif
 #endif // RUN_PLAYER_PROMOTION_EXPERIENCE_RATE_CHEATS
 
 
-int printBuffer_spaces(char* dest, int spacesToAdd)
+size_t printBuffer_space(char* dest, size_t spacesToAdd)
 {
 	int i;
 	for (i = 0; i < spacesToAdd; ++i)
@@ -2128,10 +2131,10 @@ int printBuffer_spaces(char* dest, int spacesToAdd)
 }
 
 // NOTE - does not handle null char termination!
-int printBuffer_text(char* dest, size_t destCount, const char* val)
+size_t printBuffer_text(char* dest, size_t destCount, const char* val)
 {
-	int res = 0;
-	int len = strlen(val);
+	size_t res = 0;
+	size_t len = strlen(val);
 	if (len > destCount)
 	{
 		// clip it
@@ -2143,22 +2146,22 @@ int printBuffer_text(char* dest, size_t destCount, const char* val)
 }
 
 // NOTE - does not handle null char termination!
-int printBuffer_textLeftAligned(char* dest, size_t destCount, const char* val)
+size_t printBuffer_textLeftAligned(char* dest, size_t destCount, const char* val)
 {
-	int res = 0;
+	size_t res = 0;
 	res += printBuffer_text(&dest[0], destCount, val);
 
 	if (res < destCount)
 	{
 		// add padding spaces to the right
-		res += printBuffer_spaces(&dest[res], destCount - res);
+		res += printBuffer_space(&dest[res], destCount - res);
 	}
 	return res;
 }
 
-int printBuffer_numberRightAlignedSep(char* dest, size_t destCount, int val)
+size_t printBuffer_numberRightAlignedSep(char* dest, size_t destCount, int val)
 {
-	int res = 0;
+	size_t res = 0;
 	static char buf[64];
 	bool isNeg = (val < 0);
 	if (isNeg)
@@ -2168,12 +2171,12 @@ int printBuffer_numberRightAlignedSep(char* dest, size_t destCount, int val)
 	}
 	//std::string val_s = std::to_string(val);
 	snprintf(buf, 64, "%d", val);
-	int len = strlen(buf);
+	size_t len = strlen(buf);
 	// 1 less to the len if negative - want digits, don't include the minus
 	int digitGroupCount = (int)ceil((float)len / 3.0f);
 	int digitsThisGroup;
 	int commasToAdd = digitGroupCount - 1;
-	int adjustedLen = len + commasToAdd;
+	size_t adjustedLen = len + commasToAdd;
 
 	int modTest = len % 3;
 	if (modTest == 0) modTest += 3;
@@ -2195,7 +2198,7 @@ int printBuffer_numberRightAlignedSep(char* dest, size_t destCount, int val)
 		adjustedLen = destCount;
 	}
 	
-	res += printBuffer_spaces(&dest[res], destCount - adjustedLen);
+	res += printBuffer_space(&dest[res], destCount - adjustedLen);
 
 	if (skip > 0)
 	{
@@ -2337,9 +2340,9 @@ void extraScoreScreenStatsPrintOut()
 
 	fprintf(outputFile, " - %s\n", gameStr.str());
 #if RUN_EXTRA_MONEY_CHEATS || NOOB_MODE
-	fprintf(outputFile, "Player                        |Start         |Gathered      |Gathered UP   |Renewable     |Renewable UP  |Renewable Tech|Renewable T UP|Bounty        |Salvage       |Steal         |Steal (Victim)|Scalar Cheats |Map Script    |Total Collect |Spent         \n");
+	fprintf(outputFile, "Slot|Player Name                             |Player Faction                |Start Money   |Gathered      |Gathered UP   |Renewable     |Renewable UP  |Renewable Tech|Renewable T UP|Bounty        |Salvage       |Steal         |Steal (Victim)|Scalar Cheats |Map Script    |Total Collect |Spent         \n");
 #else
-	fprintf(outputFile, "Player                        |Start         |Gathered      |Gathered UP   |Renewable     |Renewable UP  |Renewable Tech|Renewable T UP|Bounty        |Salvage       |Steal         |Steal (Victim)|Map Script    |Total Collect |Spent         \n");
+	fprintf(outputFile, "Slot|Player Name                             |Player Faction                |Start Money   |Gathered      |Gathered UP   |Renewable     |Renewable UP  |Renewable Tech|Renewable T UP|Bounty        |Salvage       |Steal         |Steal (Victim)|Map Script    |Total Collect |Spent         \n");
 #endif
 
 	// List the slot players first, like 'grabMultiPlayerInfo' without sorting by score.
@@ -2437,6 +2440,21 @@ void extraScoreScreenStatsPrintOut_player(FILE* outputFile, Player* player)
 		}
 	}
 
+	Int slotDisp = ThePlayerList->getSlotIndex(player->getPlayerIndex());
+	const char* factionDisp;
+	const PlayerTemplate* pt = player->getPlayerTemplate();
+	AsciiString templateDisp;
+	if (pt != nullptr)
+	{
+		templateDisp.translate(pt->getDisplayName());
+		factionDisp = templateDisp.str();
+	}
+	else
+	{
+		// ?
+		factionDisp = "";
+	}
+
 	// Note that start money includes what's added by the 'noob' bonus - I don't think that's worthwhile to separate out.
 	Int moneyStartedWith = scoreKpr->getMoneyStartedWith();
 	// Money from gathering supplies from finite sources - namely supply piles and supply docks. Also counts touching money
@@ -2476,8 +2494,22 @@ void extraScoreScreenStatsPrintOut_player(FILE* outputFile, Player* player)
 	static char lineBuffer[512];
 	int off = 0;
 
-	off += printBuffer_textLeftAligned(&lineBuffer[off], 30, playerNameToPrint.str());
+	if (slotDisp != -1)
+	{
+		// start slots at #1 because that's more intuitive to most
+		off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 4, slotDisp + 1);
+	}
+	else
+	{
+		off += printBuffer_space(&lineBuffer[off], 4);
+	}
 
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
+
+	off += printBuffer_textLeftAligned(&lineBuffer[off], 40, playerNameToPrint.str());
+
+	off += printBuffer_text(&lineBuffer[off], 1, "|");
+	off += printBuffer_textLeftAligned(&lineBuffer[off], 30, factionDisp);
 	off += printBuffer_text(&lineBuffer[off], 1, "|");
 	off += printBuffer_numberRightAlignedSep(&lineBuffer[off], 14, moneyStartedWith);
 	off += printBuffer_text(&lineBuffer[off], 1, "|");

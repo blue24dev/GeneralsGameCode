@@ -102,6 +102,9 @@
 #include "GameClient/InGameUI.h"
 #include "GameClient/ChallengeGenerals.h"
 
+//MODDD
+#include "Common/FramePacer.h"
+
 
 //-----------------------------------------------------------------------------
 // DEFINES ////////////////////////////////////////////////////////////////////
@@ -133,6 +136,9 @@ static GameWindow *challengeWinLossText = nullptr;
 static GameWindow *gadgetParent = nullptr;
 
 static Bool overidePlayerDisplayName = FALSE;
+
+//MODDD
+static Bool isContinueButtonRestart = FALSE;
 
 //External declarations
 NameKeyType listboxChatWindowScoreScreenID = NAMEKEY_INVALID;
@@ -191,7 +197,8 @@ void populateSideInfo( UnicodeString side,ScoreGather *sg, Int pos, Color color)
 // PUBLIC FUNCTIONS ///////////////////////////////////////////////////////////
 //-----------------------------------------------------------------------------
 
-void startNextCampaignGame()
+//MODDD - why wasn't this static?
+static void startNextCampaignGame()
 {
 	TheShell->popImmediate();
 	TheShell->hideShell();
@@ -223,6 +230,33 @@ void startNextCampaignGame()
 	msg->appendIntegerArgument(TheCampaignManager->getRankPoints());
 
 	InitRandom(0);
+}
+
+//MODDD - new
+void restartSinglePlayerMission()
+{
+	TheShell->popImmediate();
+	TheShell->hideShell();
+
+	// Based off of startNextCampaignGame above and QuitMenu.cpp: restartMissionMenu
+	AsciiString replayFile = TheRecorder->getCurrentReplayFilename();
+	if (replayFile.isNotEmpty())
+	{
+		//MODDD - TODO - is this point reached for a playback of a single player map recorded game? Does it work?
+		TheRecorder->playbackFile(replayFile);
+	}
+	else
+	{
+		// Note that getting the GameMode at this point ('TheGameLogic->getGameMode()') always returned 'GAME_NONE' for me.
+		Int fps = TheFramePacer->getFramesPerSecondLimit();
+		TheWritableGlobalData->m_pendingFile = TheGlobalData->m_mapName;
+		GameMessage *msg = TheMessageStream->appendMessage( GameMessage::MSG_NEW_GAME );
+		msg->appendIntegerArgument(GAME_SINGLE_PLAYER);
+		msg->appendIntegerArgument(TheCampaignManager->getGameDifficulty());
+		msg->appendIntegerArgument(TheCampaignManager->getRankPoints());
+		msg->appendIntegerArgument(fps);
+		InitRandom(0);
+	}
 }
 
 
@@ -266,6 +300,9 @@ void ScoreScreenInit( WindowLayout *layout, void *userData )
 
 	DontShowMainMenu = TRUE; //KRIS
 	buttonIsFinishCampaign = FALSE;
+
+	//MODDD
+	isContinueButtonRestart = FALSE;
 
 	//Store the keys so we have them later
 	parentID = TheNameKeyGenerator->nameToKey( "ScoreScreen.wnd:ParentScoreScreen" );
@@ -574,16 +611,26 @@ WindowMsgHandledType ScoreScreenSystem( GameWindow *window, UnsignedInt msg,
 						ReplayWasPressed = TRUE;
 					if( screenType == SCORESCREEN_SINGLEPLAYER)
 					{
-						AsciiString mapName = TheCampaignManager->getCurrentMap();
-
-						if( mapName.isEmpty() )
+						//MODDD - if this is a restart button, do that
+						if (isContinueButtonRestart)
 						{
-							ReplayWasPressed = FALSE;
-							TheShell->pop();
+							// assumed this only happens in a single-player map context
+							restartSinglePlayerMission();
 						}
+						// (the as-is script is bound by this 'else')
 						else
 						{
-							startNextCampaignGame();
+							AsciiString mapName = TheCampaignManager->getCurrentMap();
+
+							if( mapName.isEmpty() )
+							{
+								ReplayWasPressed = FALSE;
+								TheShell->pop();
+							}
+							else
+							{
+								startNextCampaignGame();
+							}
 						}
 					}
 				}
@@ -963,6 +1010,8 @@ void finishSinglePlayerInit()
 		}
 
 		GadgetButtonSetText(buttonContinue, TheGameText->fetch("GUI:Retry"));
+		//MODDD
+		isContinueButtonRestart = TRUE;
 
 	}
 
