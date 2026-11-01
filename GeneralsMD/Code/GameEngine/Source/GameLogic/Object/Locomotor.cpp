@@ -650,27 +650,15 @@ void LocomotorStore::reset()
 	// cleanup overrides.
 	LocomotorTemplateMap::iterator it;
 	for (it = m_locomotorTemplates.begin(); it != m_locomotorTemplates.end(); ) {
-		//MODDD - incrementing 'it' in advance, see further below
-		LocomotorTemplateMap::iterator itCurrent = it;
-		++it;
-
-		Overridable *locoTemp = itCurrent->second->deleteOverrides();
+		Overridable *locoTemp = it->second->deleteOverrides();
 		if (!locoTemp)
 		{
-			//MODDD - prepending with 'it =' so that the iterator changes to what occurs after the erased iterator.
-			// Otherwise this risks leaving 'it' as garbage memory.
-			// UPDATE - doing this this breaks VC6 compatibility as 'std::map' (underlying type of 'LocomotorTemplateMap')
-			// had 'void' return type for its iterator's 'erase' method instead of returning an iterator to the next item.
-			// Changed any existing occurrences of 'it' to the new 'itCurrent' so 'it' can be incremented in advance.
-			m_locomotorTemplates.erase(itCurrent);
+			m_locomotorTemplates.erase(it++);
 		}
-		//MODDD - iteration already handled
-		/*
 		else
 		{
 			++it;
 		}
-		*/
 	}
 }
 
