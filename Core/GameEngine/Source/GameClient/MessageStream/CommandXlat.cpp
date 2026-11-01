@@ -723,7 +723,9 @@ void pickAndPlayUnitVoiceResponse( const DrawableList *list, GameMessage::Type m
 					//if( info && info->m_air )
 					if( info && info->m_air && templ->hasAudio(TTAUDIO_voiceAttackAir) )
 						soundToPlayPtr = templ->getVoiceAttackAir();
-					else
+
+					// TheSuperHackers @tweak Stubbjax 31/10/2026 Fall back to VoiceAttack if VoiceAttackAir is invalid.
+					if (!soundToPlayPtr || !TheAudio->isValidAudioEvent(soundToPlayPtr))
 						soundToPlayPtr = templ->getVoiceAttack();
 
 					objectWithSound = obj;
@@ -797,8 +799,11 @@ void pickAndPlayUnitVoiceResponse( const DrawableList *list, GameMessage::Type m
 					//Low priority sounds -- only do this if uninitialized.
 					if( info && info->m_air )
 						soundToPlayPtr = templ->getVoiceAttackAir();
-					else
+
+					// TheSuperHackers @tweak Stubbjax 31/10/2026 Fall back to VoiceAttack if VoiceAttackAir is invalid.
+					if (!soundToPlayPtr || !TheAudio->isValidAudioEvent(soundToPlayPtr))
 						soundToPlayPtr = templ->getVoiceAttack();
+
 					objectWithSound = obj;
 				}
 
