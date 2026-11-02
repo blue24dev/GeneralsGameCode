@@ -235,7 +235,9 @@ static void startNextCampaignGame()
 //MODDD - new
 void restartSinglePlayerMission()
 {
-	TheShell->popImmediate();
+	//MODDD - send a param 'TRUE' so the layer beneath isn't initialized (flicker to the skirmish background before the
+	// fade-in effect leading to the game).
+	TheShell->popImmediate(TRUE);
 	TheShell->hideShell();
 
 	// Based off of startNextCampaignGame above and QuitMenu.cpp: restartMissionMenu
