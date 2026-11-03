@@ -444,7 +444,8 @@ void Shell::pop()
 	* from the shutdown() for the screen, it will be immediately popped off
 	* the stack */
 //-------------------------------------------------------------------------------------------------
-void Shell::popImmediate()
+//MODDD - added optional param 'impendingPush'
+void Shell::popImmediate( Bool impendingPush )
 {
 	WindowLayout *screen = top();
 
@@ -468,7 +469,8 @@ void Shell::popImmediate()
 	screen->runShutdown( &immediatePop );
 
 	// pop the screen of the stack
-	doPop( FALSE );
+	//MODDD - constant 'FALSE' arg -> 'impendingPush'
+	doPop( impendingPush );
 
 	if (TheIMEManager)
 		TheIMEManager->detach();
