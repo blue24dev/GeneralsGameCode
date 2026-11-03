@@ -2693,6 +2693,10 @@ void Object::reactToTurretChange( WhichTurretType turret, Real oldRotation, Real
 
 	if( rotationChange )
 	{
+		//MODDD - TODO - this seems unnecessary. Maybe a more precise 'containReactToTurrentChange' instead?
+		// This reaching 'OpenContain::containReactToTransformChange()' -> 'redployOccupants' many many frames even though
+		// the occupants of a firebase aren't affected by the turret's rotation seems odd.
+		// Idea: Allow the Contain's INI to specify whether it does 'redployOccupants' every time the turret rotates (default to 'no').
 		if (getContain())
 			getContain()->containReactToTransformChange();
 	}

@@ -148,11 +148,7 @@
 // Note: Retail compatibility must not be broken before this project officially does.
 // Use RETAIL_COMPATIBLE_CRC, RETAIL_COMPATIBLE_DATA and RETAIL_COMPATIBLE_XFER_SAVE to guard breaking changes.
 
-// RETAIL_COMPATIBLE_CRC is default defined in BaseDefines.h
-
-#ifndef RETAIL_COMPATIBLE_DATA
-#define RETAIL_COMPATIBLE_DATA (1) // Game and tool data files are expected to be compatible with retail Generals 1.08 and Zero Hour 1.04
-#endif
+// RETAIL_COMPATIBLE_CRC and RETAIL_COMPATIBLE_DATA are default defined in BaseDefines.h
 
 #ifndef RETAIL_COMPATIBLE_XFER_SAVE
 //MODDD - was 1, changed to 0 for more fixes

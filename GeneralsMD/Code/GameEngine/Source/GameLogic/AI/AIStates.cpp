@@ -1701,9 +1701,11 @@ StateReturnType AIInternalMoveToState::onEnter()
 	else if ( obj->isKindOf( KINDOF_DOZER ) && obj->isKindOf( KINDOF_HARVESTER ) )
 		obj->setModelConditionState( MODELCONDITION_MOVING );
 
-
-
-	if( getAdjustsDestination() && !obj->testStatus( OBJECT_STATUS_RIDER8 ) )
+	//MODDD - replacing the check for 'OBJECT_STATUS_RIDER8' with 'locomotor->isInvalidPositionAllowed()'.
+	// The main point is to avoid using 'OBJECT_STATUS_RIDER8' just for ChinookAIUpdate.cpp's 'ChinookHeadOffMapState'.
+	// This is a broad fix but it makes sense: if this is set to allow invalid positions, why bother updating the position here?
+	//if( getAdjustsDestination() && !obj->testStatus( OBJECT_STATUS_RIDER8 ) )
+	if( getAdjustsDestination() && !ai->getCurLocomotor()->isInvalidPositionAllowed() )
 	{
 		if (!TheAI->pathfinder()->adjustDestination(obj, ai->getLocomotorSet(), &m_goalPosition))
 		{
@@ -1814,12 +1816,15 @@ StateReturnType AIInternalMoveToState::update()
 	Object *obj = getMachineOwner();
 	AIUpdateInterface *ai = obj->getAI();
 
+	//MODDD - disabling leftover debug hooks
+	/*
 	//Kris: 7/01/03 (Temporary debug hook for units not being able to leave maps)
 	Bool blah = FALSE;
 	if( getMachineOwner()->testStatus( OBJECT_STATUS_RIDER8 ) )
 	{
 		blah = TRUE;
 	}
+	*/
 
 	//If we're deployed, don't move! But keep the state around until we can packup (edge case).
 	//if( obj->testStatus( OBJECT_STATUS_DEPLOYED ) )
@@ -1838,11 +1843,14 @@ StateReturnType AIInternalMoveToState::update()
 		}
 		if (thePath==nullptr)
 		{
+			//MODDD - disabling leftover debug hooks
+			/*
 			//Kris: 7/01/03 (Temporary debug hook for units not being able to leave maps)
 			if( blah )
 			{
 				blah = blah;
 			}
+			*/
 			return STATE_FAILURE;
 		}
 		m_waitingForPath = false;
@@ -1928,11 +1936,14 @@ StateReturnType AIInternalMoveToState::update()
 			// goal moved - repath
 			if (!computePath())
 			{
+				//MODDD - disabling leftover debug hooks
+				/*
 				//Kris: 7/01/03 (Temporary debug hook for units not being able to leave maps)
 				if( blah )
 				{
 					blah = blah;
 				}
+				*/
 				return STATE_FAILURE;
 			}
 
@@ -1976,11 +1987,14 @@ StateReturnType AIInternalMoveToState::update()
 			ai->setLocomotorGoalNone();
 		}
 		DEBUG_ASSERTLOG(!getMachine()->getWantsDebugOutput(), ("AIInternalMoveToState::update: reached end of path, exiting state with success"));
+		//MODDD - disabling leftover debug hooks
+		/*
 		//Kris: 7/01/03 (Temporary debug hook for units not being able to leave maps)
 		if( blah )
 		{
 			blah = blah;
 		}
+		*/
 		return STATE_SUCCESS;
 	}
 
@@ -2067,12 +2081,15 @@ AIMoveToState::AIMoveToState(StateMachine *machine) : m_isMoveTo(true), AIIntern
 StateReturnType AIMoveToState::onEnter()
 {
 
+	//MODDD - disabling leftover debug hooks
+	/*
 	//Kris: 7/01/03 (Temporary debug hook for units not being able to leave maps)
 	if( getMachineOwner()->testStatus( OBJECT_STATUS_RIDER8 ) )
 	{
 		int blah = 0;
 		blah++;
 	}
+	*/
 	setAdjustsDestination(true);
 
 	//If we have a goal object and are trying to ignore it as an obstacle...
@@ -2122,14 +2139,20 @@ StateReturnType AIMoveToState::update()
 	AIUpdateInterface *ai = getMachineOwner()->getAI();
 
 	//MODDD - several other states send the goal position to the host state machine so why not here?
-	getMachine()->setGoalPosition(&m_goalPosition);
-
+	// Reverted - there may be small side-effects to doing this that I can't figure out at the moment.
+	// Ex: some walker robots in Contra sometimes momentarily walking in place or choosing to stand oddly out of range when
+	// they should be approaching something they're targeting (seen in guard mode).
+	//getMachine()->setGoalPosition(&m_goalPosition);
+	
+	//MODDD - disabling leftover debug hooks
+	/*
 	//Kris: 7/01/03 (Temporary debug hook for units not being able to leave maps)
 	if( getMachineOwner()->testStatus( OBJECT_STATUS_RIDER8 ) )
 	{
 		Int blah = 0;
 		blah++;
 	}
+	*/
 
 	UnsignedInt adjustment = ai->getMoodMatrixActionAdjustment(MM_Action_Move);
 	if (m_isMoveTo && (adjustment & MAA_Action_To_AttackMove))

@@ -248,6 +248,10 @@ void W3DTerrainLogic::getExtentIncludingBorder( Region3D *extent ) const
 	extent->lo.y -= border;
 	extent->hi.x = (m_mapDX * MAP_XY_FACTOR)-border;
 	extent->hi.y = (m_mapDY * MAP_XY_FACTOR)-border;
+
+	//MODDD - for whatever reason this was absent - not sure if anywhere involves the 'z' coordinates of this call, though.
+	extent->lo.z = m_mapMinZ;
+	extent->hi.z = m_mapMaxZ;
 }
 
 //-------------------------------------------------------------------------------------------------

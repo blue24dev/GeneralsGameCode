@@ -115,6 +115,18 @@ public:
 	// UpdateModule
 	virtual UpdateSleepTime update() override;				///< called once per frame
 
+	//MODDD - bugfix for disabled 'IsEnclosingContainer=No' (ex: firebase) not updating infantry positions on garrisoning
+	// while low-power. Notice that even in retail, infantry can enter/exit and fire from garrisonable buildings even if
+	// they're low power (obviously without this fix), so no part of that behavior was ever linked to having power.
+	// I think a contain module's 'update' being skipped just for being disabled wasn't deliberate on the original dev's part.
+	// If you intend to disable occupants from firing from something disabled, I think going a different route than
+	// skipping 'update' here is best like letting occupants query a containing object for being disabled by a type that
+	// prevents fireports from being used (not currently supported by retail - would need to add your own INI setting).
+	//MODDD - TODO - there is still the small visual bug of infantry animation failing to loop if they attack a stationary
+	// target while garrisoned in a firebase. To best test, override the radar van to have an instane amount of health and
+	// make garrisoned rocket infantry attack a stationary radar van - the firing animation will not loop after running once.
+	virtual DisabledMaskType getDisabledTypesToProcess() const override { return DISABLEDMASK_ALL; }
+
 	// ContainModuleInterface
 	virtual OpenContain *asOpenContain() override { return this; }  ///< treat as open container
 

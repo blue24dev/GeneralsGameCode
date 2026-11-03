@@ -167,7 +167,7 @@ static void surrenderQuitMenu()
 	TheInGameUI->setClientQuiet( TRUE );
 }
 
-static void restartMissionMenu()
+void restartMissionMenu()
 {
 	// destroy the quit menu
 	destroyQuitMenu();
