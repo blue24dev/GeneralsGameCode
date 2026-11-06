@@ -109,4 +109,7 @@ public:
 	LocomotorSurfaceTypeMask getValidSurfaces() const { return m_validLocomotorSurfaces; }
 	Bool isDownhillOnly() const { return m_downhillOnly; };
 
+	//MODDD - new
+	size_t getLocomotorCount() const { return m_locomotors.size(); }
+
 };
