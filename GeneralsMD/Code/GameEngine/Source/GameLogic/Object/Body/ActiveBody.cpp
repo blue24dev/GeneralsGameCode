@@ -735,11 +735,13 @@ void ActiveBody::attemptDamage( DamageInfo *damageInfo )
 			MemoryPoolObjectHolder hold( iter );
 			for( Object *them = iter->first(); them; them = iter->next() )
 			{
-				if (!shouldRetaliate(them)) {
-					continue;
-				}
+				//MODDD - moved this block & null-check to before the 'shouldRetaliate' check
 				AIUpdateInterface *ai = them->getAI();
 				if (ai==nullptr) {
+					continue;
+				}
+
+				if (!shouldRetaliate(them)) {
 					continue;
 				}
 				//If we have AI and we're mobile, then assist!
@@ -828,12 +830,9 @@ Bool ActiveBody::shouldRetaliate(Object *obj)
 		return false;
 	}
 	// Any unit that isn't idle won't retaliate. [8/25/2003]
-	if (obj->getAI()) {
-		if (!obj->getAI()->isIdle()) {
-			return false;
-		}
-	} else {
-		return false; // Non-ai can't retaliate. [8/26/2003]
+	//MODDD - removed 'obj->getAI()' null-check since stopping early for that is handled by the caller now
+	if (!obj->getAI()->isIdle()) {
+		return false;
 	}
 	// Stealthed units don't retaliate unless they're detected. [8/25/2003]
 	if ( obj->getStatusBits().test( OBJECT_STATUS_STEALTHED ) &&
@@ -844,6 +843,15 @@ Bool ActiveBody::shouldRetaliate(Object *obj)
 	if (obj->testStatus(OBJECT_STATUS_IS_USING_ABILITY)) {
 		return false;
 	}
+
+	//MODDD - if this is an object incapable of picking a locomotor (none ever set by a line like "Locomotor = SET_" in
+	// the INI), this should've had an KINDOF_IMMOBILE flag anyway I imagine?
+	//MODDD - TODO - is checking 'ai->getCurLocomotor()' for being null here a good idea? Doubt it's necessary
+	if (obj->getAI()->getLocomotorSet().getLocomotorCount() == 0)
+	{
+		return false;
+	}
+
 	return true;
 }
 
