@@ -20,6 +20,7 @@
 
 #include "Common/ReplaySimulation.h"
 
+#include "Common/CRCDebug.h"
 #include "Common/GameEngine.h"
 #include "Common/LocalFileSystem.h"
 #include "Common/Recorder.h"
@@ -170,11 +171,12 @@ int ReplaySimulation::simulateReplaysInWorkerProcesses(const std::vector<AsciiSt
 			filenameWide.translate(filenames[filenamePositionStarted]);
 			UnicodeString command;
 			// Pass -useCwd, so that the worker keeps the working directory that it inherits from this process.
-			command.format(L"\"%s\"%s%s -useCwd -replay \"%s\"",
+			command.format(L"\"%s\"%s%s%s -useCwd -replay \"%s\"",
 				exePath,
 				//MODDD - TheGlobalData->m_windowed -> g_setting_getWindowed()
 				g_setting_getWindowed() ? L" -win" : L"",
 				TheGlobalData->m_headless ? L" -headless" : L"",
+				TheDebugIgnoreReplaySyncErrors ? L" -ignoreReplaySyncErrors" : L"",
 				filenameWide.str());
 
 			processes.push_back(WorkerProcess());
