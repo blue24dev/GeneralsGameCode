@@ -1758,7 +1758,7 @@ Real moneyScalarAdjustmentFilter(const Player* player, Bool runMajorCheats)
 	const UnsignedInt startMin = 10;
 	const UnsignedInt endMin = 50;
 	const Real startModifier = 2.00f;
-	const Real endModifier = 5.00f;
+	const Real endModifier = 4.00f;
 	// separate from the time system
 	const Real minModifier = 1.25f;
 	#endif
