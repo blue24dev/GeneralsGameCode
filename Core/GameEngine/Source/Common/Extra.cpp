@@ -1757,8 +1757,8 @@ Real moneyScalarAdjustmentFilter(const Player* player, Bool runMajorCheats)
 	*/
 	const UnsignedInt startMin = 10;
 	const UnsignedInt endMin = 50;
-	const Real startModifier = 1.50f;
-	const Real endModifier = 10.00f;
+	const Real startModifier = 2.00f;
+	const Real endModifier = 5.00f;
 	// separate from the time system
 	const Real minModifier = 1.25f;
 	#endif
@@ -2046,7 +2046,7 @@ Int buildTimeAdjustmentFilter(const Player* player, const ThingTemplate* tt)
 	const UnsignedInt endMin = 60;
 	//const Real startModifier = 1.00f;
 	//const Real endModifier = 0.70f;
-	const Real startModifier = 0.95f;
+	const Real startModifier = 0.90f;
 	const Real endModifier = 0.75f;
 	#endif
 
