@@ -1160,10 +1160,6 @@ UpdateSleepTime ChinookAIUpdate::update()
 			// we're completely healed, so take off again
 			pp->setHealee(getObject(), false);
 
-			//MODDD - since we're done healing, may as well disassociate me from the air field this frame too, not just the
-			// airfield from me
-			setAirfieldForHealing(INVALID_ID);
-
 			setMyState(TAKING_OFF, nullptr, nullptr, CMD_FROM_AI);
 
 #if !RETAIL_COMPATIBLE_CRC
@@ -1179,6 +1175,10 @@ UpdateSleepTime ChinookAIUpdate::update()
 				}
 			}
 #endif
+
+			//MODDD - since we're done healing, may as well disassociate me from the air field this frame too, not just the
+			// airfield from me
+			setAirfieldForHealing(INVALID_ID);
 		}
 		else
 		{
