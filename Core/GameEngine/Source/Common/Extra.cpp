@@ -967,8 +967,8 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	}
 
 	// EXTRA SLOW-DOWN FOR EVERYTHING
-	//_this->m_buildTime *= 1.35f;
-	_this->m_buildTime *= 1.80f;
+	_this->m_buildTime *= 1.30f;
+	//_this->m_buildTime *= 1.80f;
 
 	// Make things that are exclusively dozers cheaper.
 	// This that are dozers and harvesters at the same time (GLA workers) don't need as much of a reduction.
