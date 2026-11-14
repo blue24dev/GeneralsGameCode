@@ -773,6 +773,7 @@ public:
 	//MODDD
 	Bool isDockedAtAirField() const;
 	Bool isLandingAtAirField() const;
+	Object* getBuildTarget() const;
 
 	Bool getReceivingDifficultyBonus() const { return m_isReceivingDifficultyBonus; }
 	void setReceivingDifficultyBonus(Bool receive);
@@ -1006,6 +1007,7 @@ private:
 	// Not going to trust tinkering with other things for safety - untrackable bugs from bad memory involving 'm_stateMap' is a nightmare.
 public:
 	Bool m_calledForDeletion;
+	Bool m_onDieProducedNonNegligibleObject;
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
 	Int m_OCLSourcePlayerIndex;
 #endif

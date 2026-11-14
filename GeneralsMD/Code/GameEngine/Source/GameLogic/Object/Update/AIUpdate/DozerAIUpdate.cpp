@@ -2531,6 +2531,17 @@ void DozerAIUpdate::aiDoCommand(const AICommandParms* parms)
 
 }
 
+//MODDD
+Object* DozerAIUpdate::getBuildTarget() const
+{
+	if (m_currentTask == DOZER_TASK_BUILD)
+	{
+		return m_stateMachine->getGoalObject();
+	}
+	// non-applicable
+	return nullptr;
+}
+
 //------------------------------------------------------------------------------------------------
 void DozerAIUpdate::startBuildingSound( const AudioEventRTS *sound, ObjectID constructionSiteID )
 {

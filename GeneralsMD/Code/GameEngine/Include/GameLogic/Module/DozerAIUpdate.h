@@ -271,6 +271,8 @@ public:
 	//
 	virtual void aiDoCommand(const AICommandParms* parms) override;
 
+	//MODDD
+	virtual Object* getBuildTarget() const override;
 
 protected:
 

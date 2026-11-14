@@ -1738,7 +1738,19 @@ Bool Team::hasAnyBuildings() const
 		// causing some campaign/scripted scenario to suddenly end in defeat for a reason that wouldn't have happened
 		// in retail (possibly breaking existing maps).
 		if (obj->isTemporaryBuilder())
+		{
+			// Actually, check if what this temporary builder is building would keep the player in the game when finished.
+			// This is so if a GLA hole underneath a rebuilding structure is destroyed but the structure is still being worked
+			// on by this temp worker, that's enough to keep the player in the game (left alone, this building will finish even
+			// if the player has 0 other builder units / buildings).
+			const Object* buildTarget = obj->getBuildTarget();
+			if (buildTarget != nullptr && buildTarget->isKindOf(KINDOF_STRUCTURE))
+			{
+				return true;
+			}
+
 			continue;
+		}
 
 		//MODDD - add a check for a DOZER too. It's capable of adding new buildings, so why not.
 		if (obj->isKindOf(KINDOF_DOZER))
@@ -1756,6 +1768,9 @@ Bool Team::hasAnyBuildings() const
 // ------------------------------------------------------------------------
 Bool Team::hasAnyBuildings(KindOfMaskType kindOf) const
 {
+	//MODDD - may as well do this here
+	kindOf.set(KINDOF_STRUCTURE);
+
 	for (DLINK_ITERATOR<Object> iter = iterate_TeamMemberList(); !iter.done(); iter.advance())
 	{
 		//MODDD - may as well cache 'iter.cur()'
@@ -1773,13 +1788,22 @@ Bool Team::hasAnyBuildings(KindOfMaskType kindOf) const
 
 		//MODDD
 		if (obj->isTemporaryBuilder())
+		{
+			const Object* buildTarget = obj->getBuildTarget();
+			if (buildTarget != nullptr && buildTarget->isKindOfMulti(kindOf, KINDOFMASK_NONE))
+			{
+				return true;
+			}
+
 			continue;
+		}
 
 		//MODDD
 		if (obj->isKindOf(KINDOF_DOZER))
 			return true;
 
-		kindOf.set(KINDOF_STRUCTURE);
+		//MODDD - moving this to the top, may as well?
+		//kindOf.set(KINDOF_STRUCTURE);
 		//MODDD - '_allowRebuildHoleRedirect' variant
 		if (obj->isKindOfMulti_allowRebuildHoleRedirect(kindOf, KINDOFMASK_NONE))
 			return true;
@@ -2607,7 +2631,27 @@ Bool Team::hasAnyBuildFacility() const
 			continue;
 		
 		if (obj->isTemporaryBuilder())
+		{
+			const Object* buildTarget = obj->getBuildTarget();
+
+			KindOfMaskType bits;
+			bits.set(KINDOF_DOZER);
+			bits.set(KINDOF_FS_POWER);
+			bits.set(KINDOF_FS_FACTORY);
+			bits.set(KINDOF_FS_SUPPLY_CENTER);
+			bits.set(KINDOF_FS_ADVANCED_TECH);
+			bits.set(KINDOF_FS_BARRACKS);
+			bits.set(KINDOF_FS_WARFACTORY);
+			bits.set(KINDOF_FS_AIRFIELD);
+			bits.set(KINDOF_FS_NAVALFACTORY);
+
+			if (buildTarget != nullptr && buildTarget->isAnyKindOf(bits))
+			{
+				return true;
+			}
+
 			continue;
+		}
 		// ------------
 		
 		//MODDD - replacing this with all of below (mostly from 'Team::hasAnyBuildings')

@@ -215,6 +215,9 @@ public:
 
 	virtual Int getUpgradedSupplyBoost() const override;
 
+	//MODDD
+	virtual Object* getBuildTarget() const override;
+
 protected:
 
 // Dozer data
