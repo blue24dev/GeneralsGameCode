@@ -94,8 +94,8 @@ void CreateObjectDie::onDie( const DamageInfo * damageInfo )
 		return;
 
 	//MODDD - if this OCL will produce a non-negligible object (ex: not debris; a selectable object), set a flag to cancel
-	// refunds in case this is a building
-	if (data->m_ocl->m_producesNonNegligibleObject)
+	// refunds in case this is a building (and yes, "CreationList = NONE" has been observed in the INI).
+	if (data->m_ocl != nullptr && data->m_ocl->m_producesNonNegligibleObject)
 	{
 		getObject()->m_onDieProducedNonNegligibleObject = true;
 	}
