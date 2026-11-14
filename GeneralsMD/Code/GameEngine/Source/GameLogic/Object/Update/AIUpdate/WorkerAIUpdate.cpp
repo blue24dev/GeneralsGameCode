@@ -1490,6 +1490,17 @@ Int WorkerAIUpdate::getUpgradedSupplyBoost() const
 		return 0;
 }
 
+//MODDD
+Object* WorkerAIUpdate::getBuildTarget() const
+{
+	if (m_currentTask == DOZER_TASK_BUILD)
+	{
+		return m_stateMachine->getGoalObject();
+	}
+	// non-applicable
+	return nullptr;
+}
+
 
 // ------------------------------------------------------------------------------------------------
 /** CRC */

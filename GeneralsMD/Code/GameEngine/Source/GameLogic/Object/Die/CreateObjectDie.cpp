@@ -93,6 +93,13 @@ void CreateObjectDie::onDie( const DamageInfo * damageInfo )
 	if (!isDieApplicable(damageInfo))
 		return;
 
+	//MODDD - if this OCL will produce a non-negligible object (ex: not debris; a selectable object), set a flag to cancel
+	// refunds in case this is a building
+	if (data->m_ocl->m_producesNonNegligibleObject)
+	{
+		getObject()->m_onDieProducedNonNegligibleObject = true;
+	}
+
 	Object *damageDealer = TheGameLogic->findObjectByID( damageInfo->in.m_sourceID );
 
 //MODDD

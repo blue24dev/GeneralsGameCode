@@ -186,8 +186,9 @@ public:
 	ObjectCreationList()
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
 		:
-		m_checkForRenewableMoneySource(false)
+		m_checkForRenewableMoneySource(false),
 #endif
+		m_producesNonNegligibleObject(false)
 	{
 		// empty
 	}
@@ -267,6 +268,7 @@ public:
 	//MODDD - something for hackery
 	bool m_checkForRenewableMoneySource;
 #endif
+	bool m_producesNonNegligibleObject;
 
 private:
 
