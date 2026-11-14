@@ -5790,6 +5790,20 @@ void ScriptEngine::updateScriptsForMapResize_script(Script *pScript, Real xOffse
 DECLARE_PERF_TIMER(ScriptEngine)
 void ScriptEngine::update()
 {
+	//MODDD - TEST - after the 30 minute mark, alternate no-AI every minute for a test
+	// ------------
+	UnsignedInt now = TheGameLogic->getFrame();
+	if (now >= LOGICFRAMES_PER_SECOND * 60 * 30)
+	{
+		UnsignedInt modulo = now % (LOGICFRAMES_PER_SECOND * 60 * 2);
+		if (modulo < LOGICFRAMES_PER_SECOND * 60)
+		{
+			// no AI this frame
+			return;
+		}
+	}
+	// ------------
+
 	USE_PERF_TIMER(ScriptEngine)
 #ifdef SPECIAL_SCRIPT_PROFILING
 #ifdef DEBUG_LOGGING

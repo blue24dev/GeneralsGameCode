@@ -3081,20 +3081,6 @@ void AIPlayer::doUpgradesAndSkills()
 //DECLARE_PERF_TIMER(AIPlayer_update)
 void AIPlayer::update()
 {
-	//MODDD - TEST - after the 30 minute mark, alternate no-AI every minute for a test
-	// ------------
-	UnsignedInt now = TheGameLogic->getFrame();
-	if (now >= LOGICFRAMES_PER_SECOND * 60 * 30)
-	{
-		UnsignedInt modulo = now % (LOGICFRAMES_PER_SECOND * 60 * 2);
-		if (modulo < LOGICFRAMES_PER_SECOND * 60)
-		{
-			// no AI this frame
-			return;
-		}
-	}
-	// ------------
-
 	//USE_PERF_TIMER(AIPlayer_update)
 
 	doBaseBuilding();		// See if it's time to build another building.
