@@ -344,6 +344,7 @@ public:
 	virtual Bool isMovingToAirField() const { return false; }
 	virtual ObjectID getAirFieldDockedOrLandingAtID() const { return INVALID_ID; }
 	virtual ObjectID getAirFieldDockIntentID() const { return INVALID_ID; }
+	virtual Object* getBuildTarget() const { return nullptr; }
 
 	virtual void joinTeam();			///< This unit just got added to a team & needs to catch up.
 
@@ -721,7 +722,9 @@ private:
 	// it does no sanity checking; it just jams it in.
 	Bool chooseLocomotorSetExplicit(LocomotorSetType wst);
 
-private:
+	//MODDD - I disagree, let subclasses access these dangit
+//private:
+	protected:
 	UnsignedInt					m_priorWaypointID;						///< ID of the path we followed to before the most recent one
 	UnsignedInt					m_currentWaypointID;					///< ID of the most recent one...
 

@@ -837,6 +837,7 @@ void Object::initConstructor(const ThingTemplate* tt)
 
 	//MODDD - NEW. well gee, I would certainly hope not this early
 	m_calledForDeletion = false;
+	m_onDieProducedNonNegligibleObject = false;
 	//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
 	m_OCLSourcePlayerIndex = -1;
@@ -1400,7 +1401,11 @@ void Object::onDestroy()
 	// The 'OBJECT_STATUS_RECONSTRUCTING' check is for being a GLA hole that's rebuilding - not part of this feature.
 	// Also, if I understand right, buildings being sold use a construction percent below 100 to steadily count down
 	// but lack the '..._UNDER_CONSTRUCTION' status. So redundant refunds shouldn't be an issue.
-	if ( this->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION) && !this->testStatus(OBJECT_STATUS_RECONSTRUCTING) )
+	if (
+		this->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION) &&
+		!this->testStatus(OBJECT_STATUS_RECONSTRUCTING) &&
+		!m_onDieProducedNonNegligibleObject
+	)
 	{
 		Player *thisPlayer = this->getControllingPlayer();
 		Money *money = thisPlayer->getMoney();
@@ -3093,6 +3098,12 @@ Bool Object::isDockedAtAirField() const
 Bool Object::isLandingAtAirField() const
 {
 	return m_ai->isLandingAtAirField();
+}
+
+//MODDD
+Object* Object::getBuildTarget() const
+{
+	return m_ai->getBuildTarget();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -5928,6 +5939,9 @@ void Object::xfer( Xfer *xfer )
 		m_moduleTagNameKeyToEjectHijacker = TheNameKeyGenerator->nameToKey(tempStr);
 	}
 
+	//MODDD - does this even need to be saved, unsure? Does this all of 'onDie' -> 'onDestroy' take place within
+	// a single frame (no opportunity to save the game between those places being reached)?
+	xfer->xferBool(&m_onDieProducedNonNegligibleObject);
 	//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
 	xfer->xferInt( &m_OCLSourcePlayerIndex );

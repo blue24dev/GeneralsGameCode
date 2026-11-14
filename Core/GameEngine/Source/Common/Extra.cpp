@@ -1493,6 +1493,8 @@ void automaticChangesPostINIParsing_OCL(ObjectCreationList& ocl, std::set<AsciiS
 		ObjectCreationNugget* nugget = *itN;
 		if (nugget->getTypeID() == OCL_NUGGET_TYPE_DELIVER_PAYLOAD)
 		{
+			ocl.m_producesNonNegligibleObject = true;
+
 			const DeliverPayloadNugget* deliverPayloadNugget = (const DeliverPayloadNugget*)nugget;
 			const AsciiString& transportName = deliverPayloadNugget->getTransportName();
 			if (transportName.isEmpty())
@@ -1521,6 +1523,11 @@ void automaticChangesPostINIParsing_OCL(ObjectCreationList& ocl, std::set<AsciiS
 					((ThingTemplate*)transportTTRef)->setKindOf(KINDOF_FORCEATTACKABLE, 1);
 				}
 			}
+		}
+		else if (nugget->getTypeID() == OCL_NUGGET_TYPE_CREATE_OBJECT)
+		{
+			ocl.m_producesNonNegligibleObject = true;
+
 		}
 	}
 }
