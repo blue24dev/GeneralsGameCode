@@ -941,7 +941,9 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			_this->m_buildCost *= 1.15f;
 			if (_this->m_visionRange > 0)
 			{
-				_this->m_visionRange *= 1.5f;
+				// Mod: CNC Redux - not as much
+				//_this->m_visionRange *= 1.5f;
+				_this->m_visionRange *= 1.25f;
 			}
 		}
 		else
@@ -979,7 +981,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	// Extra shroud-clearing range boost for everything
 	if (_this->m_shroudClearingRange > 0)
 	{
-		_this->m_shroudClearingRange *= 1.5f;
+		_this->m_shroudClearingRange *= 1.25f;
 	}
 
 	// Make things that are exclusively dozers cheaper.
@@ -1573,6 +1575,30 @@ void automaticGlobalDataWeaponBonusChanges()
 
 void addCustomWeaponBonuses(const Weapon* _this, const Object* source, WeaponBonus& bonus)
 {
+	// Mod: CNC REDUX - no special boost for base defenses, mainly
+	if (source->isKindOf(KINDOF_FS_BASE_DEFENSE))
+	{
+		// boost the range of base defense weapons
+		Real current = bonus.getField(WeaponBonus::RANGE);
+		bonus.setField(WeaponBonus::RANGE, current + 0.10f);
+	}
+	else if (source->isKindOf(KINDOF_INFANTRY))
+	{
+		// Go ahead and give infantry some constant bonuses since their garrisoned bonus has been toned down.
+		Real current = bonus.getField(WeaponBonus::RANGE);
+		bonus.setField(WeaponBonus::RANGE, current + 0.25f);
+		current = bonus.getField(WeaponBonus::DAMAGE);
+		bonus.setField(WeaponBonus::DAMAGE, current + 0.10f);
+	}
+	else
+	{
+		// Everything else can get a little more range anyway
+		Real current = bonus.getField(WeaponBonus::RANGE);
+		bonus.setField(WeaponBonus::RANGE, current + 0.15f);
+	}
+
+	// Mod: Other
+	/*
 #if RTS_ZEROHOUR
 	if (source->getTemplate()->isMaxSimultaneousDeterminedBySuperweaponRestriction() || source->getTemplate()->getMaxSimultaneousOfType() == 1)
 	{
@@ -1602,6 +1628,7 @@ void addCustomWeaponBonuses(const Weapon* _this, const Object* source, WeaponBon
 		Real current = bonus.getField(WeaponBonus::RANGE);
 		bonus.setField(WeaponBonus::RANGE, current + 0.15f);
 	}
+	*/
 }
 
 Real getHealthMulti(const ThingTemplate* _this)
