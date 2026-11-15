@@ -939,13 +939,19 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			// to be less spammable since each one's health boost is more noticeable
 			_this->m_buildCost *= 1.15f;
-			_this->m_visionRange *= 1.5f;
+			if (_this->m_visionRange > 0)
+			{
+				_this->m_visionRange *= 1.5f;
+			}
 		}
 		else
 		{
 			// all other buildings
 			_this->m_buildTime *= 1.15f;
-			_this->m_visionRange *= 1.25f;
+			if (_this->m_visionRange > 0)
+			{
+				_this->m_visionRange *= 1.25f;
+			}
 		}
 	}
 	else
@@ -969,6 +975,12 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	// EXTRA SLOW-DOWN FOR EVERYTHING
 	_this->m_buildTime *= 1.30f;
 	//_this->m_buildTime *= 1.80f;
+
+	// Extra shroud-clearing range boost for everything
+	if (_this->m_shroudClearingRange > 0)
+	{
+		_this->m_shroudClearingRange *= 1.5f;
+	}
 
 	// Make things that are exclusively dozers cheaper.
 	// This that are dozers and harvesters at the same time (GLA workers) don't need as much of a reduction.
