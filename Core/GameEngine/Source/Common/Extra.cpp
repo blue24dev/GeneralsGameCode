@@ -930,7 +930,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		if (_this->isKindOf(KINDOF_FS_SUPERWEAPON))
 		{
 			// superweapons cost a bit more but already take a while to build - less factor there
-			_this->m_buildCost *= 1.25f;
+			automaticThingTemplateChanges_multiplyBuildCost(_this, 1.25f);
 			_this->m_buildTime *= 1.05f;
 		}
 		else
@@ -938,7 +938,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		if(_this->isKindOf(KINDOF_FS_BASE_DEFENSE))
 		{
 			// to be less spammable since each one's health boost is more noticeable
-			_this->m_buildCost *= 1.15f;
+			automaticThingTemplateChanges_multiplyBuildCost(_this, 1.15f);
 			if (_this->m_visionRange > 0)
 			{
 				// Mod: CNC Redux - not as much
@@ -992,13 +992,13 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			// Worker
 			// (200 -> 130)
-			_this->m_buildCost *= 0.65f;
+			automaticThingTemplateChanges_multiplyBuildCost(_this, 0.65f);
 		}
 		else
 		{
 			// (1000 -> 500)
 			// Normal dozer (vehicle)
-			_this->m_buildCost *= 0.50f;
+			automaticThingTemplateChanges_multiplyBuildCost(_this, 0.50f);
 		}
 	}
 	else
@@ -1006,17 +1006,17 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		// Also, if something isn't a dozer and is a harvester (chinook, supply truck), cut the price by 25%.
 		if (_this->isKindOf(KINDOF_HARVESTER) && !(_this->isKindOf(KINDOF_CAN_ATTACK)) )
 		{
-			_this->m_buildCost *= 0.75f;
+			automaticThingTemplateChanges_multiplyBuildCost(_this, 0.75f);
 		}
 #if RTS_ZEROHOUR
 		// and those
 		else if (_this->isKindOf(KINDOF_FS_SUPPLY_CENTER))
 		{
-			_this->m_buildCost *= 0.75f;
+			automaticThingTemplateChanges_multiplyBuildCost(_this, 0.75f);
 		}
 		else if (_this->isKindOf(KINDOF_FS_WARFACTORY))
 		{
-			_this->m_buildCost *= 0.75f;
+			automaticThingTemplateChanges_multiplyBuildCost(_this, 0.75f);
 		}
 #endif
 	}
@@ -1025,6 +1025,19 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	// (ex: diminishing returns for a range boosted by bonuses during the game)
 #endif
 
+}
+
+// helper to affect 'RefundValue' as well
+void automaticThingTemplateChanges_multiplyBuildCost(ThingTemplate* _this, Real scalar)
+{
+	if (_this->m_buildCost > 0)
+	{
+		_this->m_buildCost *= scalar;
+	}
+	if (_this->m_refundValue > 0)
+	{
+		_this->m_refundValue *= scalar;
+	}
 }
 
 // prototypes
@@ -1224,10 +1237,7 @@ void automaticChangesPostINIParsing_thing(ThingTemplate* _this)
 		// note that tech structures often never define 'BuildCost' (leftover default of 0)
 		//MODDD - TODO - could there be a discrepency between value for targeting by special powers & the actual build value of
 		// something, so things retain the retail value regardless of post-parsing hackery? Just a thought.
-		if (_this->m_buildCost > 0)
-		{
-			_this->m_buildCost *= (Real)RENEWABLE_MONEY_SOURCE_COST_SCALAR;
-		}
+		automaticThingTemplateChanges_multiplyBuildCost(_this, (Real)RENEWABLE_MONEY_SOURCE_COST_SCALAR);
 	}
 #endif
 #if EXTRA_MONEY_CRATE_OCL_TRACKING

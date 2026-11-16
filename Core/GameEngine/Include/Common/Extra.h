@@ -39,6 +39,7 @@ Bool isCurrentGameCampaign();
 // General utilities I came up with to condense some common script. 'common/GameUtility.h' might also be a good place for this.
 Int getUpgradedSupplyBoost(const Object* collectingObject, const std::list<upgradePair>* upgradeBoostList);
 void automaticThingTemplateChanges(ThingTemplate* _this);
+void automaticThingTemplateChanges_multiplyBuildCost(ThingTemplate* _this, Real scalar);
 void automaticChangesPostINIParsing();
 void automaticChangesPostINIParsing_things();
 void automaticChangesPostINIParsing_thing(ThingTemplate* _this);

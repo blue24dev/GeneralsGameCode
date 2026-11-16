@@ -70,6 +70,7 @@ namespace rts_extra
 {
 	void automaticThingTemplateChanges(ThingTemplate* _this);
 	void automaticChangesPostINIParsing_thing(ThingTemplate* _this);
+	void automaticThingTemplateChanges_multiplyBuildCost(ThingTemplate* _this, Real scalar);
 }
 
 // TYPEDEFS FOR FILE //////////////////////////////////////////////////////////////////////////////
@@ -661,6 +662,7 @@ public:
 	//MODDD
 	friend void rts_extra::automaticThingTemplateChanges(ThingTemplate* _this);
 	friend void rts_extra::automaticChangesPostINIParsing_thing(ThingTemplate* _this);
+	friend void rts_extra::automaticThingTemplateChanges_multiplyBuildCost(ThingTemplate* _this, Real scalar);
 
 	//MODDD - despite the as-is comment below, letthig these be public now that a few places might benefit from more
 	// direct checks (though, heed the note that you're sure a different accessor shouldn't be used instead)
