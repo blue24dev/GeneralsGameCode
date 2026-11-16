@@ -939,13 +939,19 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		{
 			// to be less spammable since each one's health boost is more noticeable
 			automaticThingTemplateChanges_multiplyBuildCost(_this, 1.15f);
-			_this->m_visionRange *= 1.5f;
+			if (_this->m_visionRange > 0)
+			{
+				_this->m_visionRange *= 1.5f;
+			}
 		}
 		else
 		{
 			// all other buildings
 			_this->m_buildTime *= 1.15f;
-			_this->m_visionRange *= 1.25f;
+			if (_this->m_visionRange > 0)
+			{
+				_this->m_visionRange *= 1.25f;
+			}
 		}
 	}
 	else
