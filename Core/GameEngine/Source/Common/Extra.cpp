@@ -790,6 +790,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 			// Copying the 'JetAIUpdate::canOccupyAirFieldParkingSpace' check
 			_canOccupyAirFieldParkingSpace = _data->m_needsRunway;
 
+#if !PRESERVE_RETAIL_INI_JETAIUPDATE
 			// If this new field isn't specified, default it from whether this has the 'PRODUCED_FROM_HELIPAD' kindof for the
 			// best retail accuracy, or at least clarifty of intent (checking 'm_needsRunway' may be an alternative, though I don't agree as much).
 			if (_data->m_usesJetTakeoff == 0xFFu)
@@ -803,6 +804,7 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 					_data->m_usesJetTakeoff = 1;
 				}
 			}
+#endif
 		}
 		else if ( modNameKey == ChinookAIUpdateNameKey )
 		{
@@ -839,8 +841,10 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		// checks for 'ChinookAIUpdate' too for combat(trainable) helicopters that actually use that instead of 'JetAIUpdate'
 		if (foundJetAIUpdateBehavior || foundChinookAIUpdateBehavior)
 		{
+#if !PRESERVE_RETAIL_INI_JETAIUPDATE
 			// send what's been figured from reading the specific module
 			_this->m_canOccupyAirFieldParkingSpace = _canOccupyAirFieldParkingSpace;
+#endif
 
 			if (!foundContainBehavior)
 			{
@@ -862,9 +866,11 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 		}
 		else
 		{
+#if !PRESERVE_RETAIL_INI_JETAIUPDATE
 			// an AIRCRAFT not using a JetAIUpdate nor ChinookAIUpdate?
 			// Have to decide if this is a helicopter or not. All I got's the retail PRODUCET_AT_HELIPAD check.
 			_this->m_canOccupyAirFieldParkingSpace = !_this->isKindOf(KINDOF_PRODUCED_AT_HELIPAD);
+#endif
 		}
 	}
 
