@@ -300,6 +300,12 @@
 // game is played normally so it should always be safe to have this setting turned off.
 #define PRESERVE_OLD_INI_NAME_REDIRECT_FIXES_ZEROHOUR_GC 0
 
+// Whether to maintain some of the old ways 'JetAIUpdate' in the INI decides aircraft behavior.
+// If on, means using the 'KINDOF_PRODUCED_AT_HELIPAD' in most places.
+// If off, 'NeedsRunway' will often be used instead and the newly provided 'UsesJetTakeoff' will be available to further
+// fine-tune aircraft behavior.
+#define PRESERVE_RETAIL_INI_JETAIUPDATE 0
+
 // Setting to play maps intended for specific/single-player scenarios through the skirmish/network menu.
 // This is needed because there is no way for the game to automatically tell which maps were intended for
 // skirmish/network, generals challenge, or the campaign, so how to handle the map has to be hardcoded into

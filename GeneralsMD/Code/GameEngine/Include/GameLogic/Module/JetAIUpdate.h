@@ -62,8 +62,10 @@ public:
 	Real										m_lockonAngleSpin;								///< how many times to spin around it
 	Real										m_lockonBlinky;
 	UnsignedInt							m_returnToBaseIdleTime;						///< if we're idle for this long, return to base
+#if !PRESERVE_RETAIL_INI_JETAIUPDATE
 	//MODDD - NEW - logically a boolean but defaults to a bogus value to tell if it's never been set before
 	UnsignedByte m_usesJetTakeoff;
+#endif
 
 	JetAIUpdateModuleData();
 	static void buildFieldParse(MultiIniFieldParse& p);

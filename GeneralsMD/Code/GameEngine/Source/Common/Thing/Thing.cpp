@@ -407,5 +407,9 @@ void Thing::transformPoint( const Coord3D *in, Coord3D *out )
 //MODDD - uses something now cached in the ThingTemplate for easy access, as this never changes per instance
 Bool Thing::canOccupyAirFieldParkingSpace() const
 {
+#if !PRESERVE_RETAIL_INI_JETAIUPDATE
 	return m_template->canOccupyAirFieldParkingSpace();
+#else
+	return !isKindOf(KINDOF_PRODUCED_AT_HELIPAD);
+#endif
 }

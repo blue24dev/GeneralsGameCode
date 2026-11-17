@@ -2027,8 +2027,10 @@ JetAIUpdateModuleData::JetAIUpdateModuleData()
 	m_lockonFreq = 0.5;
 	m_lockonAngleSpin = 720;
 	m_returnToBaseIdleTime = 0;
+#if !PRESERVE_RETAIL_INI_JETAIUPDATE
 	//MODDD
 	m_usesJetTakeoff = 0xFFu;
+#endif
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -2057,8 +2059,10 @@ JetAIUpdateModuleData::JetAIUpdateModuleData()
 		{ "LockonAngleSpin",							INI::parseAngleReal, nullptr, offsetof( JetAIUpdateModuleData, m_lockonAngleSpin ) },
 		{ "LockonBlinky",									INI::parseBool, nullptr, offsetof( JetAIUpdateModuleData, m_lockonBlinky ) },
 		{ "ReturnToBaseIdleTime",					INI::parseDurationUnsignedInt, nullptr, offsetof( JetAIUpdateModuleData, m_returnToBaseIdleTime ) },
+#if !PRESERVE_RETAIL_INI_JETAIUPDATE
 		//MODDD
 		{ "UsesJetTakeoff",								INI::parseBoolToByte, nullptr, offsetof( JetAIUpdateModuleData, m_usesJetTakeoff ) },
+#endif
 		{ nullptr, nullptr, nullptr, 0 }
 	};
   p.add(dataFieldParse);
@@ -2804,7 +2808,7 @@ void JetAIUpdate::privateFollowPath( std::vector<Coord3D>* path, Object *ignoreO
 
 		//MODDD
 		//if (getObject()->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
-		if (!usesJetTakeoff())
+		if (!canOccupyAirFieldParkingSpace())
 			getStateMachine()->setState( TAKING_OFF_AWAIT_CLEARANCE );
 		else
 			getStateMachine()->setState( TAXI_FROM_HANGAR );
@@ -2872,8 +2876,11 @@ void JetAIUpdate::doLandingCommand(Object *airfield, CommandSourceType cmdSource
 void JetAIUpdate::notifyVictimIsDead()
 {
 	//MODDD
-	//if (getJetAIUpdateModuleData()->m_needsRunway)
+#if PRESERVE_RETAIL_INI_JETAIUPDATE
+	if (getJetAIUpdateModuleData()->m_needsRunway)
+#else
 	if (canOccupyAirFieldParkingSpace())
+#endif
 		m_returnToBaseFrame = TheGameLogic->getFrame();
 }
 
@@ -3201,7 +3208,11 @@ ObjectID JetAIUpdate::getAirFieldDockIntentID() const
 // ThingTemplate, available as 'ThingTemplate::canOccupyAirFieldParkingSpace'.
 Bool JetAIUpdate::canOccupyAirFieldParkingSpace() const
 {
+#if !PRESERVE_RETAIL_INI_JETAIUPDATE
 	return getJetAIUpdateModuleData()->m_needsRunway;
+#else
+	return !getObject()->isKindOf(KINDOF_PRODUCED_AT_HELIPAD);
+#endif
 }
 
 // MODDD - Whether this aircraft goes through the parking space(aka hanger) <-> taxi <-> landing/takeoff sequence on
@@ -3216,7 +3227,11 @@ Bool JetAIUpdate::canOccupyAirFieldParkingSpace() const
 // state of this new field).
 Bool JetAIUpdate::usesJetTakeoff() const
 {
+#if !PRESERVE_RETAIL_INI_JETAIUPDATE
 	return getJetAIUpdateModuleData()->m_usesJetTakeoff;
+#else
+	return getJetAIUpdateModuleData()->m_needsRunway;
+#endif
 }
 
 // ------------------------------------------------------------------------------------------------

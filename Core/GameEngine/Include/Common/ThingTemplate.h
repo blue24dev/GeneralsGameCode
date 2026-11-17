@@ -811,7 +811,9 @@ private:
 
 	//MODDD
 	Bool m_hasInactiveBodyModule;
+#if !PRESERVE_RETAIL_INI_JETAIUPDATE
 	Bool m_canOccupyAirFieldParkingSpace;
+#endif
 	//MODDD - for hackery
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
 	public: Bool m_isRenewableMoneyOCLSource;
