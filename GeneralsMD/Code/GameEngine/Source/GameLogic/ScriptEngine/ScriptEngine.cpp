@@ -5793,9 +5793,9 @@ void ScriptEngine::update()
 	//MODDD - TEST - after the 30 minute mark, alternate no-AI every minute for a test
 	// ------------
 	UnsignedInt now = TheGameLogic->getFrame();
-	if (now >= LOGICFRAMES_PER_SECOND * 60 * 30)
+	if (now >= LOGICFRAMES_PER_SECOND * 60 * 40)
 	{
-		UnsignedInt modulo = now % (LOGICFRAMES_PER_SECOND * 60 * 2);
+		UnsignedInt modulo = now % (LOGICFRAMES_PER_SECOND * 60 * 4);
 		if (modulo < LOGICFRAMES_PER_SECOND * 60)
 		{
 			// no AI this frame
