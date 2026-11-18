@@ -124,15 +124,10 @@ public:
 	//MODDD - new
 	virtual Bool canBeSpecialPowerSource() const override;
 
-//  This is the althernate way to one-at-a-time BlackLotus' specials; we'll keep it commented her until Dustin decides, or until 12/10/02
-//	Bool isBusy() const { return FALSE; }
-
 	virtual Real getPercentReady() const override;		///< get the percent ready (1.0 = ready now, 0.5 = half charged up etc.)
 
 	virtual UnsignedInt getReadyFrame() const override;		///< get the frame at which we are ready
 	virtual AsciiString getPowerName() const override;
-	//MODDD - never implemented?
-	//void syncReadyFrameToStatusQuo();
 
 	virtual const SpecialPowerTemplate* getSpecialPowerTemplate() const override;
 	virtual ScienceType getRequiredScience() const override;
@@ -193,6 +188,7 @@ protected:
 	void createViewObject( const Coord3D *location );
 	void resolveSpecialPower();
 	void aboutToDoSpecialPower( const Coord3D *location );
+	Bool canDoSpecialPower() const; ///< Different to isReady()
 	//MODDD
 	void checkAddTimerForSharedSuperWeapon();
 
