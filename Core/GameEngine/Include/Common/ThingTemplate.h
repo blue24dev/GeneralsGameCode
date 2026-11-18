@@ -634,6 +634,7 @@ public:
 
 	//MODDD - getter
 	Bool isMaxSimultaneousDeterminedBySuperweaponRestriction() const { return m_maxSimultaneousDeterminedBySuperweaponRestriction; }
+	Bool isIntangible() const { return m_intangible; }
 
 	//MODDD
 	void determineHasInactiveBodyModule();
@@ -811,6 +812,7 @@ private:
 
 	//MODDD
 	Bool m_hasInactiveBodyModule;
+	Bool m_intangible;
 #if !PRESERVE_RETAIL_INI_JETAIUPDATE
 	Bool m_canOccupyAirFieldParkingSpace;
 #endif

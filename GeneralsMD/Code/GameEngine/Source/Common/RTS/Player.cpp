@@ -3497,7 +3497,10 @@ void Player::expressSpecialPowerReadyFrame( const SpecialPowerTemplate *temp, Un
 		timer = &(*it);
 		if ( timer->m_templateID == temp->getID() )
 		{
-			timer->m_readyFrame = frame;
+			//MODDD - no, leave it as it is, no need to reset it here if there is already a timer for this special power.
+			// Disabling this is a bugfix for CNC Redux: building repeated temple of nods (build limit lifted) resetting
+			// the cash-hack delay cooldown each time a superweapon countdown timer is started from a conyard-built one.
+			//timer->m_readyFrame = frame;
 			return;
 		}
 	}

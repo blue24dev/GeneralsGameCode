@@ -1823,7 +1823,8 @@ static Bool isValidExperienceSink(const Object* obj)
 static void checkAssignExperienceSink(Object* spawnedObj, const Object* sourceObj)
 {
 	// First, check 'spawnedObj'. If it's selectable, don't go further (typical in-game unit that responds to the player).
-	// 'UNATTACKABLE' and 'NO_COLLIDE' are tempting too, but going to err on the side of caution with those
+	// 'UNATTACKABLE' and 'NO_COLLIDE' are tempting too, but going to err on the side of caution with those.
+	// How about 'CLICK_THROUGH', 'NO_SELECT' ?
 	KindOfMaskType intangibleKindOfs;
 	intangibleKindOfs.set(KINDOF_PROJECTILE);
 	intangibleKindOfs.set(KINDOF_IGNORED_IN_GUI);

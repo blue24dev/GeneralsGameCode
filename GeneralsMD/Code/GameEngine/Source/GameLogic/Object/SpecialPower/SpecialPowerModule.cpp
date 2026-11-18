@@ -417,6 +417,8 @@ Bool SpecialPowerModule::isScriptOnly() const
 void SpecialPowerModule::startPowerRechargeInit(Bool fromOnSpecialPowerCreation)
 {
 	// There were two ways initialization was handled as of retail, preserved here by 'fromOnSpecialPowerCreation'.
+	//MODDD - TEST - let's try using only the latter route for any calls regardless of 'fromOnSpecialPowerCreation' then!
+	/*
 	if (!fromOnSpecialPowerCreation)
 	{
 		// Non-shared powers start charging when a unit is created, or a building finishes construction
@@ -432,16 +434,18 @@ void SpecialPowerModule::startPowerRechargeInit(Bool fromOnSpecialPowerCreation)
 		}
 	}
 	else
+	*/
 	{
 		// Shared special powers start charging when 'OnSpecialPowerCreation' is called by an object having a
 		// 'SpecialPowerCreate' module, or spending a promotion point that ties to the special power.
 		// In retail, a non-shared special power that reached this path would still make these calls, so preserving
 		// that for now.
-		startPowerRecharge();
-
-		//MODDD - NOTE - should this route also have the 'if (startsReady())' check?
-		// looks to me like this route shouldn't be used for non-shared powers anyway.
-		// This is a TheSuperHackers introduced change & not being here preserves the way they have it, for now.
+		// MODDD - moving this to 'else' of the 'startPowerRecharge' check.
+		// For shared special powers, the 'player->resetOrStartSpecialPowerReadyFrame' call this would reach is redundant
+		// with 'player->expressSpecialPowerReadyFrame' handling the player-specific special power timers soon after.
+		// This is a bugfix for CNC Redux: building repeated temple of nods (build limit lifted) resetting the cash-hack
+		// delay cooldown each time a superweapon countdown timer is started from a conyard-built one.
+		//startPowerRecharge();
 
 		// Dustin wants these special powers to start ready to fire,
 		// so here (and only here) we will expressly set them to ready-now.
@@ -451,9 +455,19 @@ void SpecialPowerModule::startPowerRechargeInit(Bool fromOnSpecialPowerCreation)
 			if ( player )
 			{
 				player->expressSpecialPowerReadyFrame( getSpecialPowerTemplate(), TheGameLogic->getFrame() );
-				//MODDD - disabled. Nothing here uses 'm_availableOnFrame' for shared special powers.
+				//MODDD - disabled. 'm_availableOnFrame' is irrelevant for shared special powers.
 				//m_availableOnFrame = player->getOrStartSpecialPowerReadyFrame( getSpecialPowerTemplate() );
 			}
+		}
+		else
+		{
+			//MODDD - moved from above
+			startPowerRecharge();
+
+			//MODDD - I'll go ahead and add this here, I don't see the harm just in case this unusual combo of a
+			// non-shared-special-power is reached in this route.
+			if (startsReady())
+				m_availableOnFrame = TheGameLogic->getFrame();
 		}
 
 	}

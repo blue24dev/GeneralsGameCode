@@ -1078,10 +1078,13 @@ ThingTemplate::ThingTemplate() :
 
 	//MODDD
 	m_hasInactiveBodyModule = false;
+	m_intangible = false;
+#if !PRESERVE_RETAIL_INI_JETAIUPDATE
+	m_canOccupyAirFieldParkingSpace = false;
+#endif
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
 	m_isRenewableMoneyOCLSource = false;
 #endif
-
 }
 
 //-------------------------------------------------------------------------------------------------
