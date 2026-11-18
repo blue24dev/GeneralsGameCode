@@ -62,14 +62,6 @@ MissileLauncherBuildingUpdate::~MissileLauncherBuildingUpdate()
 	}
 }
 
-//MODDD - set this up as soon as possible, all modules are known at the time
-void MissileLauncherBuildingUpdate::onObjectCreated() {
-	SpecialPowerUpdateModule::onObjectCreated();
-	const MissileLauncherBuildingUpdateModuleData* d = getMissileLauncherBuildingUpdateModuleData();
-	m_specialPowerModule = getObject()->getSpecialPowerModule(d->m_specialPowerTemplate);
-	DEBUG_ASSERTCRASH(m_specialPowerModule, ("Missing special power"));
-}
-
 //-------------------------------------------------------------------------------------------------
 void MissileLauncherBuildingUpdate::switchToState(DoorStateType dst)
 {
