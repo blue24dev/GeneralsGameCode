@@ -62,14 +62,6 @@ MissileLauncherBuildingUpdate::~MissileLauncherBuildingUpdate()
 	}
 }
 
-//MODDD - set this up as soon as possible, all modules are known at the time
-void MissileLauncherBuildingUpdate::onObjectCreated() {
-	SpecialPowerUpdateModule::onObjectCreated();
-	const MissileLauncherBuildingUpdateModuleData* d = getMissileLauncherBuildingUpdateModuleData();
-	m_specialPowerModule = getObject()->getSpecialPowerModule(d->m_specialPowerTemplate);
-	DEBUG_ASSERTCRASH(m_specialPowerModule, ("Missing special power"));
-}
-
 //-------------------------------------------------------------------------------------------------
 void MissileLauncherBuildingUpdate::switchToState(DoorStateType dst)
 {
@@ -206,17 +198,27 @@ void MissileLauncherBuildingUpdate::switchToState(DoorStateType dst)
 	}
 }
 
+#if !RETAIL_COMPATIBLE_CRC
+//-------------------------------------------------------------------------------------------------
+void MissileLauncherBuildingUpdate::onObjectCreated()
+{
+	// TheSuperHackers @bugfix Look up the special power module before the first update,
+	// so that a launch on the frame of creation or after loading a save finds it.
+	m_specialPowerModule = getObject()->getSpecialPowerModule(getMissileLauncherBuildingUpdateModuleData()->m_specialPowerTemplate);
+	DEBUG_ASSERTCRASH(m_specialPowerModule, ("Missing special power"));
+}
+#endif
+
 //-------------------------------------------------------------------------------------------------
 Bool MissileLauncherBuildingUpdate::initiateIntentToDoSpecialPower( const SpecialPowerTemplate *specialPowerTemplate, const Object *targetObj, const Coord3D *targetPos, const Waypoint *way, UnsignedInt commandOptions )
 {
-#if RETAIL_COMPATIBLE_CRC
 	// TheSuperHackers @bugfix Mauller 29/06/2025 prevent a game crash when told to launch before ready to do so
 	if (!m_specialPowerModule) {
-		Object* us = getObject();
-		us->getSpecialPowerModule(specialPowerTemplate)->setReadyFrame(0xFFFFFFFF);
+#if RETAIL_COMPATIBLE_CRC
+		getObject()->getSpecialPowerModule(specialPowerTemplate)->setReadyFrame(0xFFFFFFFF);
+#endif
 		return FALSE;
 	}
-#endif
 
 	if( m_specialPowerModule->getSpecialPowerTemplate() != specialPowerTemplate )
 	{
@@ -254,14 +256,13 @@ UpdateSleepTime MissileLauncherBuildingUpdate::update()
 	if( getObject()->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION) )
 		return UPDATE_SLEEP_NONE;
 
-	//MODDD - should no longer be needed
-	/*
+#if RETAIL_COMPATIBLE_CRC
 	if (!m_specialPowerModule)
 	{
 		m_specialPowerModule = getObject()->getSpecialPowerModule(d->m_specialPowerTemplate);
 		DEBUG_ASSERTCRASH(m_specialPowerModule, ("Missing special power"));
 	}
-	*/
+#endif
 
 	if (m_specialPowerModule)
 	{

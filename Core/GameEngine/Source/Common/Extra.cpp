@@ -816,6 +816,20 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 
 	}
 
+	// If this has kindofs suggesting it is intangible, let it know for easy reference
+	// Ex: things like 'AI_BlkHndVehicleMCV' from CNC Redux are invisible helper objects that have DOZER but should not
+	// count to keep a player in the game.
+	KindOfMaskType testMask;
+	testMask.set(KINDOF_IGNORED_IN_GUI);
+	testMask.set(KINDOF_CLICK_THROUGH);
+	testMask.set(KINDOF_NO_SELECT);
+	testMask.set(KINDOF_UNATTACKABLE);
+	//testMask.set(KINDOF_NO_COLLIDE);
+	if (_this->isAnyKindOf(testMask))
+	{
+		_this->m_intangible = true;
+	}
+
 	// This is here to disable the strange hackery of having 'KINDOF_SPAWNS_ARE_THE_WEAPONS' for the stinger soldier as of retail INI,
 	// even though this flag is clearly intended for the thing that handles the spawning (stinger site).
 	// A few other changes elsewhere in the codebase should make this no longer necessary.
