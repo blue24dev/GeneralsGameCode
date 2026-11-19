@@ -57,9 +57,6 @@ void SpecialPowerCreate::onCreate()
 //-------------------------------------------------------------------------------------------------
 void SpecialPowerCreate::onBuildComplete()
 {
-	//MODDD - TEST! dummy this out, this may not be a vestigial feature
-	return;
-
 	if( ! shouldDoOnBuildComplete() )
 		return;
 
