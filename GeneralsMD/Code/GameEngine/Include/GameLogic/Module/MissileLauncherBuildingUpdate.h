@@ -98,9 +98,6 @@ public:
 	MissileLauncherBuildingUpdate( Thing *thing, const ModuleData* moduleData );
 	// virtual destructor prototype provided by memory pool declaration
 
-	//MODDD - adding event
-	virtual void onObjectCreated() override;
-
 	//SpecialPowerUpdateInterface pure virtual implementations
 	virtual Bool initiateIntentToDoSpecialPower(const SpecialPowerTemplate *specialPowerTemplate, const Object *targetObj, const Coord3D *targetPos, const Waypoint *way, UnsignedInt commandOptions ) override;
 	virtual Bool isSpecialAbility() const override { return false; }
@@ -116,6 +113,9 @@ public:
 
 	virtual UpdateSleepTime update() override;	///< Deciding whether or not to make new guys
 	virtual Bool isPowerCurrentlyInUse( const CommandButton *command = nullptr ) const override;
+#if !RETAIL_COMPATIBLE_CRC
+	virtual void onObjectCreated() override;
+#endif
 
 private:
 	enum DoorStateType

@@ -1728,6 +1728,10 @@ Bool Team::hasAnyBuildings() const
 		if (obj->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ))
 			continue;
 		
+		//MODDD
+		if (obj->getTemplate()->isIntangible())
+			continue;
+
 		//MODDD - if this is something temporarily spawned to help rebuild a structure that will immediately disapepar,
 		// does not count.
 		// Otherwise, allowing a temporary hole-rebuild worker to keep a player in the game can cause a strange situation:
@@ -1784,6 +1788,10 @@ Bool Team::hasAnyBuildings(KindOfMaskType kindOf) const
 		
 		//MODDD
 		if (obj->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ))
+			continue;
+
+		//MODDD
+		if (obj->getTemplate()->isIntangible())
 			continue;
 
 		//MODDD
@@ -2629,7 +2637,10 @@ Bool Team::hasAnyBuildFacility() const
 		
 		if (obj->getStatusBits().test( OBJECT_STATUS_UNDER_CONSTRUCTION ))
 			continue;
-		
+
+		if (obj->getTemplate()->isIntangible())
+			continue;
+
 		if (obj->isTemporaryBuilder())
 		{
 			const Object* buildTarget = obj->getBuildTarget();
