@@ -190,7 +190,7 @@ protected:
 	void aboutToDoSpecialPower( const Coord3D *location );
 	Bool canDoSpecialPower() const; ///< Different to isReady()
 	//MODDD
-	void checkAddTimerForSharedSuperWeapon();
+	void checkAddPublicTimerDisplay();
 
 	UnsignedInt m_availableOnFrame;			///< on this frame, this special power is available
 	Int m_pausedCount;									///< Reference count of sources pausing me

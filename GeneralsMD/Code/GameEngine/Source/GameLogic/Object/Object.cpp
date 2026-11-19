@@ -7642,7 +7642,8 @@ void Object::doCommandButtonAtObject( const CommandButton *commandButton, Object
 				break;
 
 			case GUICOMMANDMODE_HIJACK_VEHICLE:
-				//MODDD - new custom supportif( ai )
+				//MODDD - new custom support
+				if( ai )
 				{
 					ai->aiHijack( obj, cmdSource );
 				}
