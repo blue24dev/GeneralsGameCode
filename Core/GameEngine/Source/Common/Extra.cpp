@@ -114,6 +114,8 @@ void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCrea
 	// First, see if there is a "SpecialPowerCreate" module.
 	// If so, this module's 'onBuildComplete' would have already run above, which would have called 'onSpecialPowerCreation' already
 	// (no need to do so manually further down).
+	//MODDD - TEST - dummying out 'SpecialPowerCreate' and letting below handle all cases.
+	/*
 	Bool foundSpecialPowerCreateModule = FALSE;
 	static NameKeyType key_SpecialPowerCreate = NAMEKEY("SpecialPowerCreate");
 	for (m = obj->getBehaviorModules(); *m; ++m)
@@ -124,8 +126,9 @@ void call_objectOnBuildComplete(Object* obj, Bool checkForSpecialPowerModuleCrea
 			break;
 		}
 	}
+	*/
 
-	if (!foundSpecialPowerCreateModule)
+	//if (!foundSpecialPowerCreateModule)
 	{
 		// Didn't find any 'SpecialPowerCreate' modules - call 'notifyBuildComplete'
 		for (m = obj->getBehaviorModules(); *m; ++m)
