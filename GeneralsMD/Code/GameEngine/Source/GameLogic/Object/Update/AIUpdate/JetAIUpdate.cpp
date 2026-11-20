@@ -1990,7 +1990,9 @@ HeliAIStateMachine::HeliAIStateMachine(Object *owner, AsciiString name) : AIStat
 #endif
 	defineState( RETURN_TO_DEAD_AIRFIELD, newInstance(JetOrHeliReturningToDeadAirfieldState)( this ), CIRCLING_DEAD_AIRFIELD, RETURN_TO_DEAD_AIRFIELD );
 	defineState( CIRCLING_DEAD_AIRFIELD, newInstance(JetOrHeliCirclingDeadAirfieldState)( this ), AI_IDLE, AI_IDLE );
-	defineState( TAXI_FROM_HANGAR, newInstance(JetOrHeliTaxiState)( this, FROM_HANGAR ), AI_IDLE, AI_IDLE );
+	//MODDD - success state changed from 'AI_IDLE' to 'RELOAD_AMMO' so helicopters that occupy a parking space are setup correctly
+	// (consistent start state with jet-aiStateMachine users)
+	defineState( TAXI_FROM_HANGAR, newInstance(JetOrHeliTaxiState)( this, FROM_HANGAR ), RELOAD_AMMO, AI_IDLE );
 
 	//MODDD - new
 	defineState( TAKING_OFF_NOAIRFIELD, newInstance(HeliTakeoffOrLandingNoAirFieldState)( this, false ), AI_IDLE, AI_IDLE );

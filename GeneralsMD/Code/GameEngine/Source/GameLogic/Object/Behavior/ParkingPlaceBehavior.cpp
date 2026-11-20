@@ -785,6 +785,12 @@ ExitDoorType ParkingPlaceBehavior::reserveDoorForExit( const ThingTemplate* objT
 	buildInfo();
 	purgeDead();
 
+	//MODDD - for crying out loud this can be null!
+	if (specificObject == nullptr)
+	{
+		return DOOR_NONE_NEEDED;
+	}
+
 	//MODDD
 	//if (objType->isKindOf(KINDOF_PRODUCED_AT_HELIPAD))
 	if (!objType->canOccupyAirFieldParkingSpace())
