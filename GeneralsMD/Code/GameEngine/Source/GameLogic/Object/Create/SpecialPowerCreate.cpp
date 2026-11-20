@@ -57,6 +57,9 @@ void SpecialPowerCreate::onCreate()
 //-------------------------------------------------------------------------------------------------
 void SpecialPowerCreate::onBuildComplete()
 {
+	//MODDD - TEST - dummying out 'SpecialPowerCreate' and letting 'rts_extra::call_objectOnBuildComplete' handle all cases.
+	return;
+
 	if( ! shouldDoOnBuildComplete() )
 		return;
 

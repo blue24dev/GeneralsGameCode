@@ -130,7 +130,10 @@ SpecialPowerModule::SpecialPowerModule( Thing *thing, const ModuleData *moduleDa
 	//MODDD - NOTE - should these be in 'startPowerRechargeInit' instead of the constructor?
 	resolveSpecialPower();
 
-	checkAddTimerForSharedSuperWeapon();
+	//MODDD - handled by the 'startPowerRechargeInit' call above now.
+	// If that isn't reached (this object starts under construction), finishing construction will reach there & that will
+	// call here as it should (100% construction -> check for adding a public timer then, makes sense).
+	//checkAddPublicTimerDisplay();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -199,16 +202,8 @@ void SpecialPowerModule::onSpecialPowerCreation()
 	//MODDD - script moved to there
 	startPowerRechargeInit(TRUE);
 
-	// add this weapon to the UI if it has a public timer for all to see
-	if( getSpecialPowerModuleData()->m_specialPowerTemplate->hasPublicTimer() == TRUE &&
-			getObject()->getControllingPlayer() &&
-			getObject()->isKindOf( KINDOF_STRUCTURE ) )
-	{
-		TheInGameUI->addSuperweapon( getObject()->getControllingPlayer()->getPlayerIndex(),
-																 getPowerName(),
-																 getObject()->getID(),
-																 getSpecialPowerModuleData()->m_specialPowerTemplate );
-	}
+	//MODDD - removed 'TheInGameUI->addSuperweapon' call/bounding-check.
+	// Now handled in 'startPowerRechargeInit' as a 'checkAddPublicTimerDisplay' call
 }
 
 //MODDD - bugfix for non-shared abilities on buildings being unusable on RETAIL_COMPATIBLE_CRC=0
@@ -495,6 +490,9 @@ void SpecialPowerModule::startPowerRechargeInit(Bool fromOnSpecialPowerCreation)
 	const SpecialPowerModuleData *md = getSpecialPowerModuleData();
 	if( md->m_startsPaused )
 		pauseCountdown( TRUE );
+
+	//MODDD - seems fine to do this check on any possible init route
+	checkAddPublicTimerDisplay();
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -807,17 +805,22 @@ void SpecialPowerModule::aboutToDoSpecialPower( const Coord3D *location )
 // Does retail even have any cases of a 'shared (special power?) superweapon'? Doesn't seem like it.
 // This logic was never called for outside of the constructor and 'loadPostProcess', this may have been
 // poorly tested.
-void SpecialPowerModule::checkAddTimerForSharedSuperWeapon()
+// Note - I originally called this 'checkAddTimerForSharedSuperWeapon' but this is used regardless of this being a shared
+// special power or not, or even superweapon technically.
+void SpecialPowerModule::checkAddPublicTimerDisplay()
 {
+
 	// Now, if we find that we have just come into being,
 	// but there is already a science granted for our shared superweapon,
 	// lets make sure TheIngameUI knows about our public timer
 	// add this weapon to the UI if it has a public timer for all to see
-	if( m_pausedCount == 0 &&
-			getSpecialPowerTemplate()->isSharedNSync() == TRUE &&
+	//MODDD - changing this to be more general-purpose. No need for 'm_pausedCount', 'isSharedNSync' and 'KINDOF_STRUCTURE'
+	// checks I think.
+	if( /*m_pausedCount == 0 &&
+			getSpecialPowerTemplate()->isSharedNSync() == TRUE &&*/
 			getSpecialPowerTemplate()->hasPublicTimer() == TRUE &&
-			getObject()->getControllingPlayer() &&
-			getObject()->isKindOf( KINDOF_STRUCTURE ) )
+			getObject()->getControllingPlayer() /* &&
+			getObject()->isKindOf( KINDOF_STRUCTURE )*/ )
 	{
 		TheInGameUI->addSuperweapon( getObject()->getControllingPlayer()->getPlayerIndex(),
 																 getPowerName(),
@@ -1069,5 +1072,5 @@ void SpecialPowerModule::loadPostProcess()
 	// extend base class
 	BehaviorModule::loadPostProcess();
 
-	checkAddTimerForSharedSuperWeapon();
+	checkAddPublicTimerDisplay();
 }

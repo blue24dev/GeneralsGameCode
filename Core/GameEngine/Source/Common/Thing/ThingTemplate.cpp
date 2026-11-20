@@ -1720,7 +1720,7 @@ Bool ThingTemplate::canOccupyAirFieldParkingSpace() const
 #if !PRESERVE_RETAIL_INI_JETAIUPDATE
 	return m_canOccupyAirFieldParkingSpace;
 #else
-	return isKindOf(KINDOF_PRODUCED_AT_HELIPAD);
+	return !isKindOf(KINDOF_PRODUCED_AT_HELIPAD);
 #endif
 }
 

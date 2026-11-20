@@ -2702,7 +2702,8 @@ void Object::reactToTurretChange( WhichTurretType turret, Real oldRotation, Real
 void Object::reactToTransformChange(const Matrix3D* oldMtx, const Coord3D* oldPos, Real oldAngle)
 {
 	//USE_PERF_TIMER(Object_reactToTransformChange)
-	if(_isnan(getPosition()->x) || _isnan(getPosition()->y) || _isnan(getPosition()->z)) {
+	if(std::isnan(getPosition()->x) || std::isnan(getPosition()->y) || std::isnan(getPosition()->z))
+	{
 		DEBUG_CRASH(("Object pos is nan."));
 #if EXTRA_DEBUG_HELP
 		g_destroyObjectSource.push_back(43);
@@ -7642,7 +7643,8 @@ void Object::doCommandButtonAtObject( const CommandButton *commandButton, Object
 				break;
 
 			case GUICOMMANDMODE_HIJACK_VEHICLE:
-				//MODDD - new custom supportif( ai )
+				//MODDD - new custom support
+				if( ai )
 				{
 					ai->aiHijack( obj, cmdSource );
 				}
