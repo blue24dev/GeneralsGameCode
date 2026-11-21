@@ -369,21 +369,8 @@ Real SpecialPowerModule::getPercentReady() const
 	}
 
 	// calculate the percent
-	//MODDD - replacement for potential edits
-	// ---------
-	/*
 	Real percent = 1.0f - ((readyFrame - TheGameLogic->getFrame()) /
 												 (Real)modData->m_specialPowerTemplate->getReloadTime());
-	*/
-	// ---------
-	UnsignedInt reloadTime = modData->m_specialPowerTemplate->getReloadTime();
-
-	//MODDD
-	SPECIALPOWER_RELOADTIME_ADJUSTMENT_FILTER(getObject(), reloadTime, modData->m_specialPowerTemplate->isSharedNSync())
-	
-	Real percent = 1.0f - ((readyFrame - TheGameLogic->getFrame()) /
-												 (Real)reloadTime);
-	// ---------
 
 	return percent;
 #else
@@ -398,7 +385,24 @@ Real SpecialPowerModule::getPercentReady() const
 	{
 		const UnsignedInt readyFrame = getReadyFrame();
 		const UnsignedInt now = TheGameLogic->getFrame();
-		percent = (readyFrame > now) ? 1.0f - (readyFrame - now) / (Real)getSpecialPowerTemplate()->getReloadTime() : 1.0f;
+
+		//MODDD - expanding this condition for potential edits
+		// ---------
+		//percent = (readyFrame > now) ? 1.0f - (readyFrame - now) / (Real)getSpecialPowerTemplate()->getReloadTime() : 1.0f;
+		// ---------
+		if (readyFrame > now)
+		{
+			//MODDD - new, potential injection
+			// ---
+			UnsignedInt reloadTime = getSpecialPowerTemplate()->getReloadTime();
+			SPECIALPOWER_RELOADTIME_ADJUSTMENT_FILTER(getObject(), reloadTime, modData->m_specialPowerTemplate->isSharedNSync())
+			// ---
+			percent = 1.0f - (readyFrame - now) / (Real)reloadTime;
+		}
+		else
+		{
+			percent = 1.0f;
+		}
 	}
 
 	return clamp(0.0f, percent, 0.99999f);
