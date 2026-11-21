@@ -394,7 +394,8 @@ Real SpecialPowerModule::getPercentReady() const
 		{
 			//MODDD - new, potential injection
 			// ---
-			UnsignedInt reloadTime = getSpecialPowerTemplate()->getReloadTime();
+			const SpecialPowerModuleData *modData = getSpecialPowerModuleData();
+			UnsignedInt reloadTime = modData->m_specialPowerTemplate->getReloadTime();
 			SPECIALPOWER_RELOADTIME_ADJUSTMENT_FILTER(getObject(), reloadTime, modData->m_specialPowerTemplate->isSharedNSync())
 			// ---
 			percent = 1.0f - (readyFrame - now) / (Real)reloadTime;
