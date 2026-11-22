@@ -785,8 +785,8 @@ ExitDoorType ParkingPlaceBehavior::reserveDoorForExit( const ThingTemplate* objT
 	buildInfo();
 	purgeDead();
 
-	//MODDD - for crying out loud this can be null!
-	if (specificObject == nullptr)
+	//MODDD - SpawnBehavior calls this with 'objType = nullptr' - handle accordingly
+	if (objType == nullptr)
 	{
 		return DOOR_NONE_NEEDED;
 	}

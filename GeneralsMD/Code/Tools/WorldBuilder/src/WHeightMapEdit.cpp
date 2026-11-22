@@ -2114,6 +2114,9 @@ void WorldHeightMapEdit::addObject(MapObject *pMapObj)
 void WorldHeightMapEdit::removeFirstObject()
 {
 	MapObject *firstObj = MapObject::TheMapObjectListPtr;
+	if (!firstObj) {
+		return;
+	}
 	MapObject::TheMapObjectListPtr = firstObj->getNext();
 	firstObj->setNextMap(nullptr); // so we don't delete the whole list.
 	deleteInstance(firstObj);
@@ -2153,20 +2156,22 @@ Bool WorldHeightMapEdit::selectDuplicates()
 			}
 
 			if (pObj->getFlag(FLAG_ROAD_FLAGS)) {
-				if (pObj->getNext() == nullptr) continue;
 				if (!pObj->getFlag(FLAG_ROAD_POINT1)) {
 					continue;
 				}
 				if (!prevObj->getFlag(FLAG_ROAD_POINT1)) {
 					continue;
 				}
-				Coord3D nextLoc = *pObj->getNext()->getLocation();
-				prevObj = prevObj->getNext();
-				if (!prevObj) continue;
-				if (!prevObj->getFlag(FLAG_ROAD_POINT2)) {
+				MapObject *nextObj = pObj->getNext();
+				if (!nextObj || !nextObj->getFlag(FLAG_ROAD_POINT2)) {
 					continue;
 				}
-				prevLoc = *prevObj->getLocation();
+				MapObject *prevNextObj = prevObj->getNext();
+				if (!prevNextObj || !prevNextObj->getFlag(FLAG_ROAD_POINT2)) {
+					continue;
+				}
+				Coord3D nextLoc = *nextObj->getLocation();
+				prevLoc = *prevNextObj->getLocation();
 				if (abs(nextLoc.x-prevLoc.x)>DELTA) {
 					continue; // locations don't match.
 				}
@@ -3501,7 +3506,7 @@ void WorldHeightMapEdit::removeLastBoundary()
 	m_boundaries.pop_back();
 }
 
-//MODDD - last param adjustments
+//MODDD - last param adjustments (last param 'outHandle' renamed to 'outMod')
 void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *outNdx, BorderModificationType *outMod)
 {
 	if (!outNdx) {
@@ -3545,8 +3550,7 @@ void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *ou
 		if (Vector3::Distance(vecPt, vecTestPt) <= okDistance) {
 			(*outNdx) = i;
 			if (outMod) {
-				//MODDD
-				(*outMod) = MOD_TYPE_FREE;
+				(*outMod) = 2;
 			}
 			return;
 		}
@@ -3555,8 +3559,7 @@ void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *ou
 		if (Vector3::Distance(vecPt, vecTestPt) <= okDistance) {
 			(*outNdx) = i;
 			if (outMod) {
-				//MODDD
-				(*outMod) = MOD_TYPE_UP;
+				(*outMod) = 1;
 			}
 			return;
 		}
@@ -3566,8 +3569,7 @@ void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *ou
 		if (Vector3::Distance(vecPt, vecTestPt) <= okDistance) {
 			(*outNdx) = i;
 			if (outMod) {
-				//MODDD
-				(*outMod) = MOD_TYPE_RIGHT;
+				(*outMod) = 3;
 			}
 			return;
 		}
@@ -3577,8 +3579,7 @@ void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *ou
 		if (Vector3::Distance(vecPt, vecTestPt) <= okDistance) {
 			(*outNdx) = i;
 			if (outMod) {
-				//MODDD
-				(*outMod) = MOD_TYPE_INVALID;
+				(*outMod) = 0;
 			}
 			return;
 		}
@@ -3648,10 +3649,14 @@ void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *ou
 	//MODDD - removed, assuming this just for reaching here no longer holds up
 	/*
 	(*outNdx) = -1;
-	(*outMod) = MOD_TYPE_NONE;
+	if (outMod) {
+		(*outMod) = -1;
+	}
 	*/
 
 	//MODDD - added
 	(*outNdx) = bestDistanceBorderNdx;
-	(*outMod) = bestDistanceMod;
+	if (outMod) {
+		(*outMod) = bestDistanceMod;
+	}
 }

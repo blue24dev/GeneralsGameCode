@@ -550,6 +550,61 @@ static void checkSampleBuildLocation( const Coord3D *samplePoint, void *userData
 
 }
 
+//MODDD - lazy copy to allow for docks ('PathfindCell::CELL_WATER' check removed).
+static void checkSampleBuildLocation_allowWater( const Coord3D *samplePoint, void *userData )
+{
+	TerrainType *terrain;
+	SampleBuildData *sampleData = (SampleBuildData *)userData;
+
+	// get the terrain tile here
+	terrain = TheTerrainVisual->getTerrainTile( samplePoint->x, samplePoint->y );
+	if( terrain )
+	{
+
+		// check for the restricts building flag
+		if( terrain->getRestrictConstruction() )
+			sampleData->terrainRestricted = TRUE;
+
+	}
+
+	Int cellX = REAL_TO_INT_FLOOR( samplePoint->x / PATHFIND_CELL_SIZE );
+	Int cellY = REAL_TO_INT_FLOOR( samplePoint->y / PATHFIND_CELL_SIZE );
+
+	PathfindCell* cell = TheAI->pathfinder()->getCell( LAYER_GROUND, cellX, cellY );
+	if (!cell) {
+		sampleData->terrainRestricted = TRUE;
+	}	else {
+		enum PathfindCell::CellType type = cell->getType();
+		// also removing the CELL_CLIFF check?
+		if (
+			(type == PathfindCell::CELL_IMPASSABLE)) {
+			sampleData->terrainRestricted = true;
+		}
+	}
+
+	//
+	// record the highest and lowest Z points from all the samples and do not allow
+	// building when the difference between them is too great
+	//
+	if( samplePoint->z < sampleData->loZ )
+		sampleData->loZ = samplePoint->z;
+	if( samplePoint->z > sampleData->hiZ )
+		sampleData->hiZ = samplePoint->z;
+
+	// too close to edge of map?
+	if (TheGlobalData->m_MinDistFromEdgeOfMapForBuild > 0.0f)
+	{
+		if (samplePoint->x < sampleData->mapRegion.lo.x + TheGlobalData->m_MinDistFromEdgeOfMapForBuild ||
+				samplePoint->x > sampleData->mapRegion.hi.x - TheGlobalData->m_MinDistFromEdgeOfMapForBuild ||
+				samplePoint->y < sampleData->mapRegion.lo.y + TheGlobalData->m_MinDistFromEdgeOfMapForBuild ||
+				samplePoint->y > sampleData->mapRegion.hi.y - TheGlobalData->m_MinDistFromEdgeOfMapForBuild)
+		{
+			sampleData->terrainRestricted = TRUE;
+		}
+	}
+
+}
+
 //-------------------------------------------------------------------------------------------------
 /** This function will call the user callback at each "sample point" across the footprint
 	* of where this object would be in the world.  The smaller the sample resolution param is
@@ -1067,18 +1122,13 @@ LegalBuildCode BuildAssistant::isLocationLegalToBuild( const Coord3D *worldPos,
 		if( ai == nullptr )
 			return LBC_NO_CLEAR_PATH;
 
-		if( ai->isQuickPathAvailable( worldPos ) == FALSE )
-				return LBC_NO_CLEAR_PATH;
+		//MODDD - skip this check if placing a dock, at least for now (new bounding check for KINDOF_FACTORY_EXIT_IN_WATER).
+		if (!build->isKindOf(KINDOF_FACTORY_EXIT_IN_WATER))
+		{
+			if( ai->isQuickPathAvailable( worldPos ) == FALSE )
+					return LBC_NO_CLEAR_PATH;
+		}
 
-	}
-
-	//MODDD - this is a cheezy hack for now: unconditionally skip the terrain check (i.e. allow the structure to be placed on water partially/entirely) if the building has that KINDOF.
-	//MODDD - TODO - check to see if the exit point from the building is on water. How to do this isn't obvious to me.
-	//MODDD - TODO - let rally points work in water for structures with this KINDOF too. I don't recall if something else
-	// is missing to cause rally points for a naval yard with an exit on land to not even work (Red Alert Redux mod).
-	if(build->isKindOf(KINDOF_FACTORY_EXIT_IN_WATER))
-	{
-		return LBC_OK;
 	}
 
 	// check basic terrain restrctions
@@ -1109,23 +1159,43 @@ LegalBuildCode BuildAssistant::isLocationLegalToBuild( const Coord3D *worldPos,
 		sampleData.terrainRestricted = FALSE;
 		sampleData.hiZ = terrainExtent.lo.z;  // note we set hi point to lowest point
 		sampleData.loZ = terrainExtent.hi.z;  // note we set lo point to highest point
+		
+		//MODDD - if a shipbuilding structure is being placed, allow water tiles and increase the tolerance for terrain uneven-ness.
+		//MODDD - TODO - check to see if the production exit point from the building is on water. How to do this isn't obvious to me.
+		//MODDD - TODO - let rally points work in water for structures with this KINDOF too. I don't recall if something else
+		// is missing to cause rally points for a naval yard with an exit on land to not even work (Red Alert Redux mod).
+		//MODDD - replaced later references to 'checkSampleBuildLocation' / 'TheGlobalData->m_allowedHeightVariationForBuilding' with the vars set below
+		IterateFootprintFunc footprintFunc;
+		Real allowedHeightVariation;
+		if (!build->isKindOf(KINDOF_FACTORY_EXIT_IN_WATER))
+		{
+			// as-is
+			footprintFunc = &checkSampleBuildLocation;
+			allowedHeightVariation = TheGlobalData->m_allowedHeightVariationForBuilding;
+		}
+		else
+		{
+			//MODDD - new route for water-borne structure
+			footprintFunc = &checkSampleBuildLocation_allowWater;
+			allowedHeightVariation = TheGlobalData->m_allowedHeightVariationForBuilding * 3.0f;
+		}
 
 		// quick check at triple res.
 		iterateFootprint( build, angle, worldPos, 3*sampleResolution,
-		                  checkSampleBuildLocation, &sampleData );
+		                  footprintFunc, &sampleData );
 		if( sampleData.terrainRestricted == TRUE )
 			return LBC_RESTRICTED_TERRAIN;
 		// check if the height across the whole footprint area is too varied (not flat enough)
-		if( sampleData.hiZ - sampleData.loZ > TheGlobalData->m_allowedHeightVariationForBuilding )
+		if( sampleData.hiZ - sampleData.loZ > allowedHeightVariation )
 			return LBC_NOT_FLAT_ENOUGH;
 
 		// careful check at full res.
 		iterateFootprint( build, angle, worldPos, sampleResolution,
-		                  checkSampleBuildLocation, &sampleData );
+		                  footprintFunc, &sampleData );
 		if( sampleData.terrainRestricted == TRUE )
 			return LBC_RESTRICTED_TERRAIN;
 		// check if the height across the whole footprint area is too varied (not flat enough)
-		if( sampleData.hiZ - sampleData.loZ > TheGlobalData->m_allowedHeightVariationForBuilding )
+		if( sampleData.hiZ - sampleData.loZ > allowedHeightVariation )
 			return LBC_NOT_FLAT_ENOUGH;
 
 	}
