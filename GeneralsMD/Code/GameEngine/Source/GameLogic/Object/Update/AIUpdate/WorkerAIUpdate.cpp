@@ -422,10 +422,14 @@ Object *WorkerAIUpdate::construct( const ThingTemplate *what,
 	obj->setOrientation( angle );
 
 	// Flatten the terrain underneath the object, then adjust to the flattened height. jba.
-	TheTerrainLogic->flattenTerrain(obj);
-	Coord3D adjustedPos = *pos;
-	adjustedPos.z = TheTerrainLogic->getGroundHeight(pos->x, pos->y);
-	obj->setPosition(&adjustedPos);
+	//MODDD - adding a condition that this isn't a dock, since flattening coasts can look strange if the dock is destroyed later.
+	if (!obj->isKindOf(KINDOF_FACTORY_EXIT_IN_WATER))
+	{
+		TheTerrainLogic->flattenTerrain(obj);
+		Coord3D adjustedPos = *pos;
+		adjustedPos.z = TheTerrainLogic->getGroundHeight(pos->x, pos->y);
+		obj->setPosition(&adjustedPos);
+	}
 
 	// Note - very important that we add to map AFTER we flatten terrain. jba.
 	TheAI->pathfinder()->addObjectToPathfindMap( obj );
