@@ -562,7 +562,7 @@ void PlayerList::postPlayersInit()
 				UnsignedInt newMoneyCount = (UnsignedInt)((Real)currentMoney * NOOB_START_MONEY_SCALAR);
 				moneyRef->deposit(newMoneyCount, FALSE, FALSE);
 				// override the score keeper's existing start-money value then
-				m_scoreKeeper.setMoneyStartedWith(newMoneyCount);
+				player->getScoreKeeper()->setMoneyStartedWith(newMoneyCount);
 				continue;
 			}
 	#endif
