@@ -998,8 +998,9 @@ void automaticThingTemplateChanges(ThingTemplate* _this)
 	}
 
 	// EXTRA SLOW-DOWN FOR EVERYTHING
-	_this->m_buildTime *= 1.30f;
+	//_this->m_buildTime *= 1.30f;
 	//_this->m_buildTime *= 1.80f;
+	_this->m_buildTime *= 10.00f;
 
 	// Extra shroud-clearing range boost for everything
 	if (_this->m_shroudClearingRange > 0)
