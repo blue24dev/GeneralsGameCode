@@ -341,9 +341,8 @@ void CountermeasuresBehavior::launchVolley()
 		const ThingTemplate *thing = TheThingFactory->findTemplate( data->m_flareTemplateName );
 		if( thing )
 		{
-			Object *flare = TheThingFactory->newObject( thing, obj->getControllingPlayer()->getDefaultTeam() );
-			flare->setPosition( obj->getPosition() );
-			flare->setOrientation( obj->getOrientation() );
+			//MODDD - 'newObject', position, angle moved to param
+			Object *flare = TheThingFactory->newObject( thing, obj->getControllingPlayer()->getDefaultTeam(), obj->getPosition(), obj->getOrientation() );
 			physics->transferVelocityTo( flare->getPhysics() );
 			flare->getPhysics()->applyMotiveForce( &vel );
 			m_activeCountermeasures++;

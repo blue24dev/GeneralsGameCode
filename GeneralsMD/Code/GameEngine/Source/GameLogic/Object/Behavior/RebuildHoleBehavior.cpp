@@ -238,13 +238,10 @@ UpdateSleepTime RebuildHoleBehavior::update()
 				m_workerTemplate = TheThingFactory->findTemplate( modData->m_workerTemplateName );
 
 			// create a worker
-			worker = TheThingFactory->newObject( m_workerTemplate, hole->getTeam() );
+			//MODDD - 'newObject', position moved to param
+			worker = TheThingFactory->newObject( m_workerTemplate, hole->getTeam(), hole->getPosition() );
 			if( worker )
 			{
-
-				// set the position of the worker to that of the hole
-				worker->setPosition( hole->getPosition() );
-
 				// save the ID of the worker spawned
 				m_workerID = worker->getID();
 

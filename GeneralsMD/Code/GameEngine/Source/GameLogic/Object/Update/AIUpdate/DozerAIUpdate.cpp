@@ -1710,7 +1710,9 @@ Object *DozerAIUpdate::construct( const ThingTemplate *what,
 		statusBits.set( OBJECT_STATUS_RECONSTRUCTING );
 
 	// create an object at the destination location
-	Object *obj = TheThingFactory->newObject( what, owningPlayer->getDefaultTeam(), statusBits );
+
+	//MODDD - 'newObject', position, angle moved to param
+	Object *obj = TheThingFactory->newObject( what, owningPlayer->getDefaultTeam(), pos, angle, statusBits );
 
 	// even though we haven't actually built anything yet, this keeps things tidy
 	obj->setProducer( getObject() );
@@ -1729,10 +1731,6 @@ Object *DozerAIUpdate::construct( const ThingTemplate *what,
 		//MODDD - let the object be aware of how much money was spent on it for easier refund logic.
 		obj->setMoneySpentOnMe(cost);
 	}
-
-	// initialize object
-	obj->setPosition( pos );
-	obj->setOrientation( angle );
 
 	// Flatten the terrain underneath the object, then adjust to the flattened height. jba.
 	//MODDD - adding a condition that this isn't a dock, since flattening coasts can look strange if the dock is destroyed later.

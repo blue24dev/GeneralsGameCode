@@ -433,15 +433,13 @@ void BattlePlanUpdate::createVisionObject()
 	Object *visionObject;
 
 	// create object for this player
-	visionObject = TheThingFactory->newObject( tt, pPlayer->getDefaultTeam() );
+	//MODDD - 'newObject', position moved to param
+	visionObject = TheThingFactory->newObject( tt, pPlayer->getDefaultTeam(), obj->getPosition() );
 	if( visionObject )
 	{
 
 		// record we have an object
 		m_visionObjectID = visionObject->getID();
-
-		// set position
-		visionObject->setPosition( obj->getPosition() );
 
 		// set the shroud clearing range
 		visionObject->setShroudClearingRange( obj->getGeometryInfo().getBoundingSphereRadius() );

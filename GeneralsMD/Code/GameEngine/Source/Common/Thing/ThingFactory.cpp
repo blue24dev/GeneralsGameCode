@@ -402,6 +402,57 @@ Object *ThingFactory::newObject( const ThingTemplate *tmplate, Team *team, Objec
 	return obj;
 }
 
+//MODDD - new overload to specify position
+Object *ThingFactory::newObject( const ThingTemplate *tmplate, Team *team, const Coord3D *pos, ObjectStatusMaskType statusMask )
+{
+	// cheezy way w/o needing a separate object constructor for now
+	Object* obj = newObject(tmplate, team, statusMask, true);
+	if (obj)
+	{
+		obj->setPosition(pos);
+	}
+	obj->finishInGameInit();
+	return obj;
+}
+
+//MODDD - new overload to specify position/orientation
+Object *ThingFactory::newObject( const ThingTemplate *tmplate, Team *team, const Coord3D *pos, Real angle, ObjectStatusMaskType statusMask )
+{
+	// cheezy way w/o needing a separate object constructor for now
+	Object* obj = newObject(tmplate, team, statusMask, true);
+	if (obj)
+	{
+		obj->setPosition(pos);
+		obj->setOrientation(angle);
+	}
+	obj->finishInGameInit();
+	return obj;
+}
+
+//MODDD - new overload to specify position/orientation
+Object *ThingFactory::newObject( const ThingTemplate *tmplate, Team *team, const Matrix3D *matrix, ObjectStatusMaskType statusMask )
+{
+	// cheezy way w/o needing a separate object constructor for now
+	Object* obj = newObject(tmplate, team, statusMask, true);
+	if (obj)
+	{
+		obj->setTransformMatrix(matrix);
+	}
+	obj->finishInGameInit();
+	return obj;
+}
+	
+//MODDD - new convenience overload to imply 'objectInitLockLocalTemp=true'.
+// The purpose is to defer some initialization (ex: 'onCreate' module calls) until the position/angle are set, so that
+// some sensitive parts of init can run with the final position known instead of with the bogus default '0,0,0'.
+// The caller of this must call the object's 'finishInGameInit' to resume the rest of init.
+// Ex: 'ProductionUpdate' leaves pos/angle up to 'exitInterface->exitObjectViaDoor', then calls 'newObj->finishInGameInit'
+// finish the reset of the init with the correct position in mind.
+Object *ThingFactory::newObject_partialInit( const ThingTemplate *tmplate, Team *team, ObjectStatusMaskType statusMask )
+{
+	return ThingFactory::newObject(tmplate, team, statusMask, true);
+}
+
 //=============================================================================
 Drawable *ThingFactory::newDrawable(const ThingTemplate *tmplate, DrawableStatusBits statusBits)
 {

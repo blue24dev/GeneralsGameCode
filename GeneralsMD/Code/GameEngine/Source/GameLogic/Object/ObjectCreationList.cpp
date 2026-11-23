@@ -413,7 +413,8 @@ Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary,
 		if( createOwner )
 		{
 			const ThingTemplate* ttn = TheThingFactory->findTemplate(m_transportName);
-			transport = TheThingFactory->newObject( ttn, owner );
+			//MODDD - 'newObject', position, angle moved to param
+			transport = TheThingFactory->newObject( ttn, owner, &startPos, orient );
 			if( !transport )
 			{
 				return nullptr;
@@ -422,8 +423,6 @@ Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary,
 			{
 				firstTransport = transport;
 			}
-			transport->setPosition(&startPos);
-			transport->setOrientation(orient);
 			transport->setProducer(primaryObj);
 			//Adding this nifty flag allows enemy players to target it manually with weapons :)
 			transport->setScriptStatus( OBJECT_STATUS_SCRIPT_TARGETABLE );
@@ -511,7 +510,8 @@ Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary,
 				}
 				for (int i = 0; i < it->m_payloadCount; ++i)
 				{
-					Object* payload = TheThingFactory->newObject( payloadTmpl, owner );
+					//MODDD - 'newObject', position moved to param
+					Object* payload = TheThingFactory->newObject( payloadTmpl, owner, &startPos );
 					//MODDD
 #if EXTRA_MONEY_CRATE_OCL_TRACKING
 					if (OCLSourcePlayerIndex != -1)
@@ -524,7 +524,6 @@ Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary,
 					payload->m_OCLSourceObjectID = primaryObj->getID();
 #endif
 
-					payload->setPosition(&startPos);
 					payload->setProducer(transport);
 
 					// Notify special power tracking
@@ -539,8 +538,8 @@ Object* DeliverPayloadNugget::create(Object* primaryObj, const Coord3D *primary,
 
 					if (putInContainerTmpl)
 					{
-						Object* container = TheThingFactory->newObject( putInContainerTmpl, owner );
-						container->setPosition(&startPos);
+						//MODDD - 'newObject', position moved to param
+						Object* container = TheThingFactory->newObject( putInContainerTmpl, owner, &startPos );
 						container->setProducer(transport);
 
 						// Notify special power tracking
@@ -1472,6 +1471,7 @@ Object* GenericObjectCreationNugget::reallyCreate(const Coord3D *pos, const Matr
 		if (!tmpl)
 			continue;
 
+		//MODDD - TODO - for debris and container, rip out deeper logic to deside pos/angle and be able to send it to 'newObject'
 		Object *debris = TheThingFactory->newObject( tmpl, debrisOwner );
 		if( !debris )
 		{

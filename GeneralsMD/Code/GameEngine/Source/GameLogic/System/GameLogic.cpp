@@ -575,13 +575,12 @@ static Object * placeObjectAtPosition(Int slotNum, AsciiString objectTemplateNam
 
 	DEBUG_ASSERTCRASH(btt, ("TheThingFactory didn't find a template in placeObjectAtPosition()") );
 
-	Object *obj = TheThingFactory->newObject( btt, pPlayer->getDefaultTeam() );
+	//MODDD - 'newObject', position, angle moved to param
+	Object *obj = TheThingFactory->newObject( btt, pPlayer->getDefaultTeam(), &pos, btt->getPlacementViewAngle() );
 	DEBUG_ASSERTCRASH(obj, ("TheThingFactory didn't give me a valid Object for player %d's (%ls) starting building",
 		slotNum, pTemplate->getDisplayName().str()));
 	if (obj)
 	{
-		obj->setOrientation(obj->getTemplate()->getPlacementViewAngle());
-		obj->setPosition( &pos );
 
 		CRCDEBUG_LOG(("Placed an object for %ls at pos (%g,%g,%g)", pPlayer->getPlayerDisplayName().str(),
 			pos.x, pos.y, pos.z));
@@ -1962,7 +1961,8 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 
 		Team *team = ThePlayerList->getNeutralPlayer()->getDefaultTeam();
 		// create new object in the world
-		Object *obj = TheThingFactory->newObject( thingTemplate, team ); //, OBJECT_STATUS_LOADING_FROM_MAP );
+		//MODDD - 'newObject' -> 'newObject_partialInit'
+		Object *obj = TheThingFactory->newObject_partialInit( thingTemplate, team ); //, OBJECT_STATUS_LOADING_FROM_MAP );
 		if( obj )
 		{
 			Coord3D pos = *pMapObj->getLocation();
@@ -1971,6 +1971,8 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 			Real angle = normalizeAngle(pMapObj->getAngle());
 			obj->setOrientation(angle);
 			obj->setPosition( &pos );
+			//MODDD - new
+			obj->finishInGameInit();
 			if (thingTemplate->isBridge()) {
 				TheTerrainLogic->addLandmarkBridgeToLogic(obj);
 			}
@@ -2188,7 +2190,8 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 			Team *team = ThePlayerList->validateTeam(originalOwner);
 
 			// create new object in the world
-			Object *obj = TheThingFactory->newObject( thingTemplate, team ); //, OBJECT_STATUS_LOADING_FROM_MAP );
+			//MODDD - 'newObject' -> 'newObject_partialInit'
+			Object *obj = TheThingFactory->newObject_partialInit( thingTemplate, team ); //, OBJECT_STATUS_LOADING_FROM_MAP );
 			if( obj )
 			{
 				if(pMapObj->getFlag(FLAG_DRAWS_IN_MIRROR) || obj->isKindOf(KINDOF_CAN_CAST_REFLECTIONS))
@@ -2199,6 +2202,9 @@ void GameLogic::tryStartNewGame( Bool loadingSaveGame )
 				}
 				obj->setOrientation(angle);
 				obj->setPosition( &pos );
+				
+				//MODDD - new
+				obj->finishInGameInit();
 
 				// Do this after positioning the object, because we may place objects in response to keys
 				// in the map object properties.
@@ -3492,7 +3498,7 @@ void GameLogic::friend_awakenUpdateModule(Object* obj, UpdateModulePtr u, Unsign
 	// How the base game never ran into this issue far more often is a mystery to me.
 	// Don't use 'gameStatus != GAMESTATUS_INGAME', or the game will fall to pieces.
 	//if (objectInitLock) {
-	if (g_objectInitLock && globalXferStatus == XFER_LOAD) {
+	if (g_objectInitLock && g_xferStatus == XFER_LOAD) {
 		return;
 	}
 
@@ -4546,7 +4552,7 @@ void GameLogic::registerObject( Object *obj )
 	// The end of setup can go through all objects and cover them that way.
 	//if (gameStatus == GAMESTATUS_INGAME) {
 	//if (!objectInitLock) {
-	if (!(g_objectInitLock && globalXferStatus == XFER_LOAD)) {
+	if (!(g_objectInitLock && g_xferStatus == XFER_LOAD)) {
 		addUpdateModulesToQueues(obj, true);
 	}
 }

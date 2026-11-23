@@ -654,13 +654,13 @@ void SpecialPowerModule::createViewObject( const Coord3D *location )
 	const ThingTemplate *viewObjectTemplate = TheThingFactory->findTemplate( objectName );
 	if( viewObjectTemplate == nullptr )
 		return;
-
-	Object *viewObject = TheThingFactory->newObject( viewObjectTemplate, getObject()->getControllingPlayer()->getDefaultTeam() );
+	
+	//MODDD - 'newObject', position moved to param
+	Object *viewObject = TheThingFactory->newObject( viewObjectTemplate, getObject()->getControllingPlayer()->getDefaultTeam(), location );
 
 	if( viewObject == nullptr )
 		return;
 
-	viewObject->setPosition( location );
 	viewObject->setShroudClearingRange( visionRange );
 
 	static NameKeyType key_DeletionUpdate = NAMEKEY("DeletionUpdate");

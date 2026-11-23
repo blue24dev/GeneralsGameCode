@@ -493,13 +493,8 @@ UpdateSleepTime HelicopterSlowDeathBehavior::update()
 
 		// we are now all done, destroy us and make a rubble shell copter
 		const ThingTemplate* ttn = TheThingFactory->findTemplate(modData->m_finalRubbleObject);
-		Object *rubble = TheThingFactory->newObject( ttn, copter->getTeam() );
-		if( rubble )
-		{
-
-			rubble->setTransformMatrix( copter->getTransformMatrix() );
-
-		}
+		//MODDD - 'newObject', matrix moved to param
+		TheThingFactory->newObject( ttn, copter->getTeam(), copter->getTransformMatrix() );
 
 		// destroy the copter finally
 #if EXTRA_DEBUG_HELP

@@ -632,23 +632,22 @@ Bool SpawnBehavior::createSpawn()
 			reclaimedOrphan = TRUE;
 	}
 
+	//MODDD - new
+	Bool needToFinishInit = false;
+
 													// This assures that an orphan has not just been reclaimed,
 	if( newSpawn == nullptr )	// and that we really want a new spawn, here.
 	{
 		m_spawnTemplate = TheThingFactory->findTemplate( *m_templateNameIterator );
 
 		//newSpawn = TheThingFactory->newObject( m_spawnTemplate, parent->getControllingPlayer()->getDefaultTeam() );
-		newSpawn = TheThingFactory->newObject( m_spawnTemplate, parent->getTeam() ); // just a little worried about this...
+		//MODDD - 'newObject' -> 'newObject_partialInit'
+		newSpawn = TheThingFactory->newObject_partialInit( m_spawnTemplate, parent->getTeam() ); // just a little worried about this...
 
-		// Count this unit towards our score.
-#if RTS_GENERALS && defined(_MSC_VER) && _MSC_VER < 1300
-		// TheSuperHackers @info Set m_onUnitProducedZeroInit to true so it can be used in AIPlayer::onUnitProduced.
-		TheGameLogic->m_onUnitProducedZeroInit = true;
-		newSpawn->getControllingPlayer()->onUnitCreated(parent, newSpawn);
-		TheGameLogic->m_onUnitProducedZeroInit = false;
-#else
-		newSpawn->getControllingPlayer()->onUnitCreated(parent, newSpawn);
-#endif
+		//MODDD - new
+		needToFinishInit = true;
+
+		//MODDD - 'onUnitCreated' handling script moved to after some 'exitInterface->exit...' call sets the pos/angle
 
 		// Gee, this is new...
 		// Now, we can have a list of template names.
@@ -754,6 +753,20 @@ Bool SpawnBehavior::createSpawn()
 		++ m_spawnCount;
 	}
 
+	//MODDD - 'onUnitCreated' handling script moved to here
+	// Count this unit towards our score.
+#if RTS_GENERALS && defined(_MSC_VER) && _MSC_VER < 1300
+		// TheSuperHackers @info Set m_onUnitProducedZeroInit to true so it can be used in AIPlayer::onUnitProduced.
+		TheGameLogic->m_onUnitProducedZeroInit = true;
+		newSpawn->getControllingPlayer()->onUnitCreated(parent, newSpawn);
+		TheGameLogic->m_onUnitProducedZeroInit = false;
+#else
+		newSpawn->getControllingPlayer()->onUnitCreated(parent, newSpawn);
+#endif
+		
+	//MODDD - new
+	if (needToFinishInit)
+		newSpawn->finishInGameInit();
 
 	return TRUE;
 }

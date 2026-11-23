@@ -3646,17 +3646,16 @@ void WorldHeightMapEdit::findBoundaryNear(Coord3D *pt, float okDistance, Int *ou
 
 	}
 
-	//MODDD - removed, assuming this just for reaching here no longer holds up
-	/*
-	(*outNdx) = -1;
-	if (outMod) {
-		(*outMod) = -1;
-	}
-	*/
-
-	//MODDD - added
+	//MODDD - replaced
+	// ------------
+	//(*outNdx) = -1;
+	//if (outMod) {
+	//	(*outMod) = -1;
+	//}
+	// ------------
 	(*outNdx) = bestDistanceBorderNdx;
 	if (outMod) {
 		(*outMod) = bestDistanceMod;
 	}
+	// ------------
 }
