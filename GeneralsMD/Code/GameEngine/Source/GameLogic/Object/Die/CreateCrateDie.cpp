@@ -232,9 +232,8 @@ Object *CreateCrateDie::createCrate( CrateTemplate const *currentCrateData )
 
 	if( spotFound )
 	{
-		Object *newCrate = TheThingFactory->newObject( crateType, nullptr );
-		newCrate->setPosition( &creationPoint );
-		newCrate->setOrientation( GameLogicRandomValueReal( 0, 2*PI ) );
+		//MODDD - 'newObject', position, angle moved to param
+		Object *newCrate = TheThingFactory->newObject( crateType, nullptr, &creationPoint, GameLogicRandomValueReal( 0, 2*PI ) );
 		newCrate->setLayer(layer);
 
 		Drawable *crateDrawable = newCrate->getDrawable();

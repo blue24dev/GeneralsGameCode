@@ -114,9 +114,10 @@ void ejectHijacker(Object* hijacker, Object* dyingObject, const ObjectCreationLi
 		DEBUG_ASSERTCRASH(putInContainerTmpl,("DeliverPayload: PutInContainer %s not found!",parachuteName.str()));
 		if (putInContainerTmpl)
 		{
-			Object* container = TheThingFactory->newObject( putInContainerTmpl, hijacker->getTeam() );
+			//MODDD - 'newObject', position moved to param
+			Object* container = TheThingFactory->newObject( putInContainerTmpl, hijacker->getTeam(), &ejectPos );
 			//MODDD - member var 'm_ejectPos' to a function-local one
-			container->setPosition(&ejectPos);
+			//container->setPosition(&ejectPos);
 			if (container->getContain()->isValidContainerFor(hijacker, true))
 			{
 				container->getContain()->addToContain(hijacker);

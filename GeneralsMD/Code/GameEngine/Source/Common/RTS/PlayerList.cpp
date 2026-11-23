@@ -507,59 +507,66 @@ void PlayerList::postPlayersInit()
 	int i;
 
 #if FORCE_GAME_CONTEXT == FGC_CAMPAIGN
-		// For FGC_CAMPAIGN, set the players associated with a slot to be named after the slot.
-		// ex: if you appear in a skirmish score screen as "Jake's PC", that will be the display name in the score screen instead
-		// of the generic "The Player" typically seen.
-		// This is needed because existing side/player-info from the map is used instead of generating the info right before
-		// "PlayerList::newGame()" is called.
-		for (i = 0; i < ThePlayerList->m_slotSoftMax; ++i)
+	// For FGC_CAMPAIGN, set the players associated with a slot to be named after the slot.
+	// ex: if you appear in a skirmish score screen as "Jake's PC", that will be the display name in the score screen instead
+	// of the generic "The Player" typically seen.
+	// This is needed because existing side/player-info from the map is used instead of generating the info right before
+	// "PlayerList::newGame()" is called.
+	for (i = 0; i < ThePlayerList->m_slotSoftMax; ++i)
+	{
+		Player* player = ThePlayerList->getPlayerFromSlotIndex(i);
+		if (player != nullptr)
 		{
-			Player* player = ThePlayerList->getPlayerFromSlotIndex(i);
-			if (player != nullptr)
-			{
-				GameSlot* slot = TheGameInfo->getSlot(i);
-				// a slot no one's using won't have a name
-				if (!slot->isOccupied())
-					continue;
+			GameSlot* slot = TheGameInfo->getSlot(i);
+			// a slot no one's using won't have a name
+			if (!slot->isOccupied())
+				continue;
 
-				player->setPlayerDisplayName(slot->getName());
-			}
+			player->setPlayerDisplayName(slot->getName());
 		}
+	}
 #endif
 
-	for (i=0; i < getPlayerCount(); ++i)
+	// The loop to adjust start money only needs to run for a real new game, not setting defaults for loading a game.
+	if (g_xferStatus != XFER_LOAD)
 	{
-		Player* player = ThePlayerList->getNthPlayer(i);
-
-		// If this is a slot player and there is game info to check, see if this slot is unoccupied (skip if so)
-		int slotIndex = getSlotIndex(player->getPlayerIndex());
-		if (TheGameInfo && slotIndex != -1)
+		for (i=0; i < getPlayerCount(); ++i)
 		{
-			GameSlot *slot = TheGameInfo->getSlot(slotIndex);
-			// NOTE - barring observer players with 'isParticipant' vs. 'isOccupied'
-			if (!slot->isParticipant())
+			Player* player = ThePlayerList->getNthPlayer(i);
+
+			// If this is a slot player and there is game info to check, see if this slot is unoccupied (skip if so)
+			int slotIndex = getSlotIndex(player->getPlayerIndex());
+			if (TheGameInfo && slotIndex != -1)
 			{
+				GameSlot *slot = TheGameInfo->getSlot(slotIndex);
+				// NOTE - barring observer players with 'isParticipant' vs. 'isOccupied'
+				if (!slot->isParticipant())
+				{
+					continue;
+				}
+			}
+		
+			//MODDD - this used to be handled in Player.cpp: initFromDict, but the 'slotIndex' wasn't seen since this
+			// is assigned in 'populateSlotPlayerRefs' instead of earlier in SidesInfo (this has the benefit of being
+			// re-determined on loading a saved game).
+			// Could do something like assign 'slotIndex' before 'initFromDict' so the old way works but doesn't seem
+			// worth it to decide what-player-belongs-to-what-slot so far in advance for only this cheap hack.
+			// So, decide who gets the n00b bonus here instead.
+	#if NOOB_MODE
+			if (slotIndex == 1 && player->getPlayerType() == PLAYER_HUMAN)
+			{
+				// get the current amount of money, remove it from the player, add it back with a scalar applied
+				Money* moneyRef = player->getMoney();
+				UnsignedInt currentMoney = moneyRef->countMoney();
+				moneyRef->withdraw(currentMoney, FALSE);
+				UnsignedInt newMoneyCount = (UnsignedInt)((Real)currentMoney * NOOB_START_MONEY_SCALAR);
+				moneyRef->deposit(newMoneyCount, FALSE, FALSE);
+				// override the score keeper's existing start-money value then
+				m_scoreKeeper.setMoneyStartedWith(newMoneyCount);
 				continue;
 			}
+	#endif
 		}
-		
-		//MODDD - this used to be handled in Player.cpp: initFromDict, but the 'slotIndex' wasn't seen since this
-		// is assigned in 'populateSlotPlayerRefs' instead of earlier in SidesInfo (this has the benefit of being
-		// re-determined on loading a saved game).
-		// Could do something like assign 'slotIndex' before 'initFromDict' so the old way works but doesn't seem
-		// worth it to decide what-player-belongs-to-what-slot so far in advance for only this cheap hack.
-		// So, decide who gets the n00b bonus here instead.
-#if NOOB_MODE
-		if (slotIndex == 1 && player->getPlayerType() == PLAYER_HUMAN)
-		{
-			// get the current amount of money, remove it from the player, add it back with a scalar applied
-			Money* moneyRef = player->getMoney();
-			UnsignedInt currentMoney = moneyRef->countMoney();
-			moneyRef->withdraw(currentMoney);
-			moneyRef->deposit((UnsignedInt)((Real)currentMoney * NOOB_START_MONEY_SCALAR), FALSE, FALSE);
-			continue;
-		}
-#endif
 	}
 }
 

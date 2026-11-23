@@ -380,7 +380,8 @@ Object *BuildAssistant::buildObjectNow( Object *constructorObject, const ThingTe
 		if( what->isKindOf( KINDOF_STRUCTURE ) )
 			startingStatus.set( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_UNDER_CONSTRUCTION ) );
 
-		Object *obj = TheThingFactory->newObject( what, owningPlayer->getDefaultTeam(), startingStatus );
+		//MODDD - 'newObject' -> 'newObject_partialInit'
+		Object *obj = TheThingFactory->newObject_partialInit( what, owningPlayer->getDefaultTeam(), startingStatus );
 		obj->setProducer(constructorObject);
 
 		// place on terrain surface
@@ -391,6 +392,9 @@ Object *BuildAssistant::buildObjectNow( Object *constructorObject, const ThingTe
 		obj->setPosition( &groundPos );
 
 		obj->setOrientation( angle );
+		
+		//MODDD - new
+		obj->finishInGameInit();
 
 		TheAI->pathfinder()->addObjectToPathfindMap( obj );
 

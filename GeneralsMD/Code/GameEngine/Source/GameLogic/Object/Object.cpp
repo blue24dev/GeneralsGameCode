@@ -804,7 +804,7 @@ void Object::runCreateModules()
 void Object::initHookup()
 {
 	// Don't involve the radar system if this is loading a game, when radar data is loaded this will be handled.
-	if (!(isInitLocked() && globalXferStatus == XFER_LOAD))
+	if (!(isInitLocked() && g_xferStatus == XFER_LOAD))
 	{
 		TheRadar->addObject( this );
 	}
@@ -1402,6 +1402,8 @@ void Object::onDestroy()
 	// Also, if I understand right, buildings being sold use a construction percent below 100 to steadily count down
 	// but lack the '..._UNDER_CONSTRUCTION' status. So redundant refunds shouldn't be an issue.
 	if (
+		//MODDD - TODO - I feel a lot of other 'onDestroy'/cleanup-handling places could just skip logic if the game is shutting down anyway?
+		g_gameStatus != GAMESTATUS_TEARDOWN &&
 		this->testStatus(OBJECT_STATUS_UNDER_CONSTRUCTION) &&
 		!this->testStatus(OBJECT_STATUS_RECONSTRUCTING) &&
 		!m_onDieProducedNonNegligibleObject

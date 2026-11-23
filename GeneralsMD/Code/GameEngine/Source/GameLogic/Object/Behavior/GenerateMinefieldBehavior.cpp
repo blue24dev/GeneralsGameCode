@@ -214,16 +214,10 @@ Object* GenerateMinefieldBehavior::placeMineAt(const Coord3D& pt, const ThingTem
 			return nullptr;
 	}
 
-	//MODDD - offset parts of creation with new params until the position/etc. is set
-	//Object* mine = TheThingFactory->newObject(mineTemplate, team);
-	Object* mine = TheThingFactory->newObject(mineTemplate, team, OBJECT_STATUS_MASK_NONE, true);
+	//MODDD - 'newObject', position, angle moved to param
+	Object* mine = TheThingFactory->newObject(mineTemplate, team, &pt, orient);
 
-	mine->setPosition(&pt);
-	mine->setOrientation(orient);
 	mine->setProducer(producer);
-
-	//MODDD - per above
-	mine->finishInGameInit();
 
 	for (BehaviorModule** bmi = mine->getBehaviorModules(); *bmi; ++bmi)
 	{

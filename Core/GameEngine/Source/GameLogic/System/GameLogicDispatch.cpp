@@ -2217,8 +2217,8 @@ bool GameLogic::onPlaceBeacon(MAYBE_UNUSED GameMessage *msg)
 
 			return false;
 		}
-		Object *object = TheThingFactory->newObject( thing, msgPlayer->getDefaultTeam() );
-		object->setPosition( &pos );
+		//MODDD - 'newObject', position moved to param
+		Object *object = TheThingFactory->newObject( thing, msgPlayer->getDefaultTeam(), &pos );
 		object->setProducer(nullptr);
 
 		if (msgPlayer->getRelationship( ThePlayerList->getLocalPlayer()->getDefaultTeam() ) == ALLIES || ThePlayerList->getLocalPlayer()->isPlayerObserver())

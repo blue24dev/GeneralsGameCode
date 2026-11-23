@@ -541,9 +541,9 @@ AsciiString GameState::findNextSaveFilename( UnicodeString desc )
 SaveResult GameState::saveGame( AsciiString filename, UnicodeString desc,
 															SaveFileType saveType, SnapshotType which )
 {
-	globalXferStatus = XFER_SAVE;
+	g_xferStatus = XFER_SAVE;
 	SaveResult result = _saveGame(filename, desc, saveType, which);
-	globalXferStatus = XFER_INVALID;
+	g_xferStatus = XFER_INVALID;
 	return result;
 }
 
@@ -648,9 +648,9 @@ SaveResult GameState::missionSave()
 //MODDD - convenience wrapper for the new global
 SaveCode GameState::loadGame( AvailableGameInfo gameInfo )
 {
-	globalXferStatus = XFER_LOAD;
+	g_xferStatus = XFER_LOAD;
 	SaveCode result = _loadGame(gameInfo);
-	globalXferStatus = XFER_INVALID;
+	g_xferStatus = XFER_INVALID;
 	return result;
 }
 
