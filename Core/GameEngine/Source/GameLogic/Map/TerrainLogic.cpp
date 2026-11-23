@@ -138,7 +138,8 @@ Object *Bridge::createTower( Coord3D *worldPos,
 	}
 
 	// create the tower object
-	Object *tower = TheThingFactory->newObject( towerTemplate, bridge->getTeam() );
+	//MODDD - 'newObject' -> 'newObject_partialInit'
+	Object *tower = TheThingFactory->newObject_partialInit( towerTemplate, bridge->getTeam() );
 
 	// location information
 	Real angle = 0;
@@ -175,6 +176,9 @@ Object *Bridge::createTower( Coord3D *worldPos,
 	// set the position and angle
 	tower->setPosition( worldPos );
 	tower->setOrientation( angle );
+
+	//MODDD - new
+	tower->finishInGameInit();
 
 	// tie it to the bridge
 	BridgeBehaviorInterface *bridgeInterface = BridgeBehavior::getBridgeBehaviorInterfaceFromObject( bridge );
@@ -235,7 +239,8 @@ m_bridgeInfo(theInfo)
 		DEBUG_LOG(("*** GenericBridge template not found."));
 		return;
 	}
-	Object *bridge = TheThingFactory->newObject(genericBridgeTemplate, nullptr);
+	//MODDD - 'newObject' -> 'newObject_partialInit'
+	Object *bridge = TheThingFactory->newObject_partialInit(genericBridgeTemplate, nullptr);
 	Coord3D center;
 	center.x = (m_bridgeInfo.fromLeft.x + m_bridgeInfo.toRight.x)/2.0f;
 	center.y = (m_bridgeInfo.fromLeft.y + m_bridgeInfo.toRight.y)/2.0f;
@@ -252,6 +257,9 @@ m_bridgeInfo(theInfo)
 	v.x = m_bridgeInfo.toLeft.x - m_bridgeInfo.fromLeft.x;
 	v.y = m_bridgeInfo.toLeft.y - m_bridgeInfo.fromLeft.y;
 	bridge->setOrientation( v.toAngle() );
+
+	//MODDD - new
+	bridge->finishInGameInit();
 
 	v.x = m_bridgeInfo.toLeft.x - m_bridgeInfo.toRight.x;
 	v.y = m_bridgeInfo.toLeft.y - m_bridgeInfo.toRight.y;

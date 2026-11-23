@@ -87,6 +87,12 @@ public:
 	Object *newObject( const ThingTemplate *tmplate );
 	//MODDD - added param 'objectInitLockLocalTemp'
 	Object *newObject( const ThingTemplate *tmplate, Team *team, ObjectStatusMaskType statusMask = OBJECT_STATUS_MASK_NONE, Bool objectInitLockLocalTemp = false );
+	//MODDD - new overloads to specify position, position/orientation, and matrix
+	Object *newObject( const ThingTemplate *tmplate, Team *team, const Coord3D *pos, ObjectStatusMaskType statusMask = OBJECT_STATUS_MASK_NONE );
+	Object *newObject( const ThingTemplate *tmplate, Team *team, const Coord3D *pos, Real angle, ObjectStatusMaskType statusMask = OBJECT_STATUS_MASK_NONE );
+	Object *newObject( const ThingTemplate *tmplate, Team *team, const Matrix3D *matrix, ObjectStatusMaskType statusMask = OBJECT_STATUS_MASK_NONE );
+	//MODDD - new convenience overload to imply 'objectInitLockLocalTemp=true'
+	Object *newObject_partialInit( const ThingTemplate *tmplate, Team *team, ObjectStatusMaskType statusMask = OBJECT_STATUS_MASK_NONE );
 
 	/** request a new drawable using the given template.
 		this will throw an exception on failure; it will never return null.

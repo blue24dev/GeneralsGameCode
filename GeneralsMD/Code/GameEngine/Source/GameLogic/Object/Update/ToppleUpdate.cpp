@@ -213,11 +213,10 @@ void ToppleUpdate::applyTopplingForce( const Coord3D* toppleDirection, Real topp
 	if (!d->m_stumpName.isEmpty())
 	{
 		const ThingTemplate* ttn = TheThingFactory->findTemplate(d->m_stumpName);
-		Object *stump = TheThingFactory->newObject( ttn, nullptr );
+		//MODDD - 'newObject', position, angle moved to param
+		Object *stump = TheThingFactory->newObject( ttn, nullptr, getObject()->getPosition(), getObject()->getOrientation() );
 		if (stump)
 		{
-			stump->setPosition( getObject()->getPosition() );
-			stump->setOrientation( getObject()->getOrientation() );
 			m_stumpID = stump->getID();
 
 			// if we are "burned", then we will burn our stump

@@ -676,7 +676,8 @@ void WaveGuideUpdate::doDamage()
 					if( obj->isKindOf( KINDOF_BRIDGE ) )
 					{
 						const ThingTemplate* ttn = TheThingFactory->findTemplate("WaterWaveBridge");
-						Object *newBridge = TheThingFactory->newObject( ttn, nullptr );
+						//MODDD - 'newObject' -> 'newObject_partialInit'
+						Object *newBridge = TheThingFactory->newObject_partialInit( ttn, nullptr );
 
 						if( newBridge )
 						{
@@ -702,6 +703,8 @@ void WaveGuideUpdate::doDamage()
 							// put new bridge looking object in the world
 							newBridge->setPosition( obj->getPosition() );
 							newBridge->setOrientation( angle );
+							//MODDD - new
+							newBridge->finishInGameInit();
 
 							// create and attach a wave hit bridge particle system to the new object
 							ParticleSystem *particleSystem = TheParticleSystemManager->createParticleSystem( modData->m_bridgeParticle );

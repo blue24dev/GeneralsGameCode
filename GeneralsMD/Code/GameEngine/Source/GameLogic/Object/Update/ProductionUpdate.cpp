@@ -780,14 +780,13 @@ UpdateSleepTime ProductionUpdate::update()
 							// cost at the moment!
 							player->getScoreKeeper()->addMoneySpent(production->m_objectToProduce->calcCostToBuild(player));
 
-							//MODDD - stop the object from calling 'gamePostLoad' until after 'exitObjectViaDoor' sets its
-							// position/angle. That way, modules that want to run instantly like shroud generation will do
-							// so at the right place, not the bottom-left corner of the map (point 0,0,0) the first frame.
-							Object *newObj = TheThingFactory->newObject( production->m_objectToProduce,
-																	creationBuilding->getControllingPlayer()->getDefaultTeam(),
-								//MODDD - added params. Ensures that 'runCreateModules', etc. won't run in the constructor.
-																	OBJECT_STATUS_MASK_NONE,
-																	true );
+							//MODDD - changed 'newObject' to 'newObject_partialInit'.
+							// Stops the object from calling 'gamePostLoad' until after 'exitObjectViaDoor' sets its position/angle.
+							// That way, modules that want to run instantly like shroud generation will do so at the right place, not
+							// the bottom-left corner of the map (point 0,0,0) the first frame.
+							Object *newObj = TheThingFactory->newObject_partialInit( production->m_objectToProduce,
+																	creationBuilding->getControllingPlayer()->getDefaultTeam() );
+
 							newObj->setProducer(creationBuilding);
 
 							// call the exit interface to do the rally point and position stuff

@@ -1020,7 +1020,8 @@ void ScriptActions::doCreateObject(const AsciiString& objectName, const AsciiStr
 	thingTemplate = TheThingFactory->findTemplate(thingName);
 	if (thingTemplate) {
 		// create new object in the world
-		Object *obj = TheThingFactory->newObject( thingTemplate, theTeam );
+		//MODDD - 'newObject' -> 'newObject_partialInit'
+		Object *obj = TheThingFactory->newObject_partialInit( thingTemplate, theTeam );
 		if( obj )
 		{
 			if (objectName != m_unnamedUnit) {
@@ -1034,6 +1035,9 @@ void ScriptActions::doCreateObject(const AsciiString& objectName, const AsciiStr
 
 			obj->setOrientation(angle);
 			obj->setPosition( pos );
+			
+			//MODDD - new
+			obj->finishInGameInit();
 
       if ( obj->isKindOf( KINDOF_BLAST_CRATER ) ) // since these footprints are permanent
       {
@@ -1215,7 +1219,8 @@ void ScriptActions::createUnitOnTeamAt(const AsciiString& unitName, const AsciiS
 	thingTemplate = TheThingFactory->findTemplate(objType);
 	if (thingTemplate) {
 		// create new object in the world
-		Object *obj = TheThingFactory->newObject( thingTemplate, theTeam );
+		//MODDD - 'newObject' -> 'newObject_partialInit'
+		Object *obj = TheThingFactory->newObject_partialInit( thingTemplate, theTeam );
 		if( obj )
 		{
 			if (unitName != m_unnamedUnit) {
@@ -1233,6 +1238,9 @@ void ScriptActions::createUnitOnTeamAt(const AsciiString& unitName, const AsciiS
 				Coord3D destination = *way->getLocation();
 				obj->setPosition(&destination);
 			}
+
+			//MODDD - new
+			obj->finishInGameInit();
 			
 			//MODDD - needed so spawning a building still lets units move around it.
 			// If this causes side effects in spawning units (typical usage of this feature), maybe checking the template

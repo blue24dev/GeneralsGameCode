@@ -739,11 +739,8 @@ UpdateSleepTime ParticleUplinkCannonUpdate::update()
 					if( thing )
 					{
 						//Fire and forget
-						Object *remnant = TheThingFactory->newObject( thing, me->getTeam() );
-						if( remnant )
-						{
-							remnant->setPosition( &m_currentTargetPosition );
-						}
+						//MODDD - 'newObject', position moved to param
+						TheThingFactory->newObject( thing, me->getTeam(), &m_currentTargetPosition );
 					}
 				}
 

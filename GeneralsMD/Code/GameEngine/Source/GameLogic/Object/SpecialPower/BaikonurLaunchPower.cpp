@@ -112,11 +112,8 @@ void BaikonurLaunchPower::doSpecialPowerAtLocation( const Coord3D *loc, Real ang
 	const ThingTemplate *thing = TheThingFactory->findTemplate( data->m_detonationObject );
 	if( thing )
 	{
-		Object *detonation = TheThingFactory->newObject( thing, getObject()->getTeam() );
-		if( detonation )
-		{
-			detonation->setPosition( loc );
-		}
+		//MODDD - 'newObject', position moved to param
+		TheThingFactory->newObject( thing, getObject()->getTeam(), loc );
 	}
 }
 

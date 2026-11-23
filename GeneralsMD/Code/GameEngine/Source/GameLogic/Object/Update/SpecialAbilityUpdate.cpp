@@ -1737,14 +1737,12 @@ Object* SpecialAbilityUpdate::createSpecialObject()
   if( thingTemplate )
   {
     //Create a new special object
-    specialObject = TheThingFactory->newObject( thingTemplate, getObject()->getTeam() );
+    //MODDD - 'newObject', position, angle moved to param
+    specialObject = TheThingFactory->newObject( thingTemplate, getObject()->getTeam(), getObject()->getPosition(), getObject()->getOrientation() );
     if( specialObject )
     {
       m_specialObjectIDList.push_back( specialObject->getID() );
       m_specialObjectEntries++;
-      specialObject->setPosition( getObject()->getPosition() );
-
-      specialObject->setOrientation( getObject()->getOrientation() );
 
       //So we can get experience from it when it blows up (if applicable)
       //specialObject->setProducer( getObject() ); --This causes it to be an enemy which is naughty.

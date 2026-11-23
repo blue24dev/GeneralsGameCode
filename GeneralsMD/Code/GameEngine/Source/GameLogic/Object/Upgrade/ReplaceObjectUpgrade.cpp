@@ -102,9 +102,9 @@ void ReplaceObjectUpgrade::upgradeImplementation()
 #endif
 		TheGameLogic->destroyObject(me);
 	}
-
-	Object *replacementObject = TheThingFactory->newObject(replacementTemplate, myTeam);
-	replacementObject->setTransformMatrix(&myMatrix);
+	
+	//MODDD - 'newObject', matrix moved to param
+	Object *replacementObject = TheThingFactory->newObject(replacementTemplate, myTeam, &myMatrix);
 	TheAI->pathfinder()->addObjectToPathfindMap( replacementObject );
 
 	// Now onCreates were called at the constructor.  This magically created

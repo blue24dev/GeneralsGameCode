@@ -66,7 +66,8 @@ Bool UnitCrateCollide::executeCrateBehavior( Object *other )
 	for( UnsignedInt unitIndex = 0; unitIndex < unitCount; unitIndex++ )
 	{
 		Team *creationTeam = other->getControllingPlayer()->getDefaultTeam();
-		Object *newObj = TheThingFactory->newObject( unitType, creationTeam );
+		//MODDD - 'newObject' -> 'newObject_partialInit'
+		Object *newObj = TheThingFactory->newObject_partialInit( unitType, creationTeam );
 		if( newObj )
 		{
 			Coord3D creationPoint = *other->getPosition();
@@ -80,6 +81,9 @@ Bool UnitCrateCollide::executeCrateBehavior( Object *other )
 
 			newObj->setOrientation( other->getOrientation() );
 			newObj->setPosition( &creationPoint );
+			
+			//MODDD - new
+			newObj->finishInGameInit();
 		}
 	}
 

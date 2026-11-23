@@ -131,12 +131,9 @@ void RebuildHoleExposeDie::onDie( const DamageInfo *damageInfo )
 		Object *hole;
 
 		// create the hole
+		//MODDD - 'newObject', position, angle moved to param
 		hole = TheThingFactory->newObject( TheThingFactory->findTemplate( modData->m_holeName ),
-																			 getObject()->getTeam() );
-
-		// put the hole at our position and angle
-		hole->setPosition( us->getPosition() );
-		hole->setOrientation( us->getOrientation() );
+																			 getObject()->getTeam(), us->getPosition(), us->getOrientation() );
 
 		//
 		// modify the hole extents to be the same as ours because we need to preserve the

@@ -1153,7 +1153,8 @@ void BridgeBehavior::createScaffolding()
 											 ("Creating too many scaffold objects") );
 
 		// create object
-		obj = TheThingFactory->newObject( scaffoldTemplate, us->getTeam() );
+		//MODDD - 'newObject' -> 'newObject_partialInit'
+		obj = TheThingFactory->newObject_partialInit( scaffoldTemplate, us->getTeam() );
 
 		// this object is from the "left" side of the bridge
 		riseToPos = &leftStart;
@@ -1175,6 +1176,9 @@ void BridgeBehavior::createScaffolding()
 		//
 		setScaffoldData( obj, angle, &scaffoldHeight, riseToPos, &destinationPos, center );
 
+		//MODDD - new
+		obj->finishInGameInit();
+
 		// keeping track of objects created
 		scaffoldObjectsCreated++;
 		m_scaffoldObjectIDList.push_back( obj->getID() );
@@ -1193,13 +1197,19 @@ void BridgeBehavior::createScaffolding()
 			supportRiseToPos.z -= scaffoldSupportHeight;
 			supportDestinationPos.z -= scaffoldSupportHeight;
 			supportBridgeCenter.z -= scaffoldSupportHeight;
-			obj = TheThingFactory->newObject( scaffoldSupportTemplate, us->getTeam() );
+
+			//MODDD - 'newObject' -> 'newObject_partialInit'
+			obj = TheThingFactory->newObject_partialInit( scaffoldSupportTemplate, us->getTeam() );
 			setScaffoldData( obj,
 											 angle,
 											 &scaffoldSupportHeight,
 											 &supportRiseToPos,
 											 &supportDestinationPos,
 											 &supportBridgeCenter );
+
+			//MODDD - new
+			obj->finishInGameInit();
+
 			m_scaffoldObjectIDList.push_back( obj->getID() );
 
 
@@ -1221,7 +1231,8 @@ void BridgeBehavior::createScaffolding()
 												 ("Creating too many scaffold objects") );
 
 			// create new object
-			obj = TheThingFactory->newObject( scaffoldTemplate, us->getTeam() );
+			//MODDD - 'newObject' -> 'newObject_partialInit'
+			obj = TheThingFactory->newObject_partialInit( scaffoldTemplate, us->getTeam() );
 
 			// this object is on the "right" side of the bridge
 			riseToPos = &rightStart;
@@ -1239,6 +1250,9 @@ void BridgeBehavior::createScaffolding()
 
 			// set the rest scaffold data again
 			setScaffoldData( obj, angle, &scaffoldHeight, riseToPos, &destinationPos, center );
+			
+			//MODDD - new
+			obj->finishInGameInit();
 
 			// keeping track of objects created
 			scaffoldObjectsCreated++;
@@ -1258,13 +1272,18 @@ void BridgeBehavior::createScaffolding()
 				supportRiseToPos.z -= scaffoldSupportHeight;
 				supportDestinationPos.z -= scaffoldSupportHeight;
 				supportBridgeCenter.z -= scaffoldSupportHeight;
-				obj = TheThingFactory->newObject( scaffoldSupportTemplate, us->getTeam() );
+				//MODDD - 'newObject' -> 'newObject_partialInit'
+				obj = TheThingFactory->newObject_partialInit( scaffoldSupportTemplate, us->getTeam() );
 				setScaffoldData( obj,
 												 angle,
 												 &scaffoldSupportHeight,
 												 &supportRiseToPos,
 												 &supportDestinationPos,
 												 &supportBridgeCenter );
+
+				//MODDD - new
+				obj->finishInGameInit();
+
 				m_scaffoldObjectIDList.push_back( obj->getID() );
 
 

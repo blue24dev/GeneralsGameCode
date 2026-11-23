@@ -210,15 +210,11 @@ void FlightDeckBehavior::buildInfo(Bool createUnits)
 			Object *jet = nullptr;
 			if( m_thingTemplate && createUnits )
 			{
-				jet = TheThingFactory->newObject( m_thingTemplate, getObject()->getControllingPlayer()->getDefaultTeam() );
+				//MODDD - 'newObject', position, angle, status moved to param
+				jet = TheThingFactory->newObject( m_thingTemplate, getObject()->getControllingPlayer()->getDefaultTeam(), &flightDeckInfo.m_prep, flightDeckInfo.m_orientation, MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_DECK_HEIGHT_OFFSET ) );
 				if( jet )
 				{
 					jet->setProducer( getObject() );
-					jet->setStatus( MAKE_OBJECT_STATUS_MASK( OBJECT_STATUS_DECK_HEIGHT_OFFSET ) );
-
-					//Init positioning.
-					jet->setPosition( &flightDeckInfo.m_prep );
-					jet->setOrientation( flightDeckInfo.m_orientation );
 
 					//Assign jet to space
 					flightDeckInfo.m_objectInSpace = jet->getID();
