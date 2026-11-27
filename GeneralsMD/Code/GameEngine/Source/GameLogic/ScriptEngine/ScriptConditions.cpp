@@ -220,6 +220,33 @@ void ScriptConditions::objectTypesFromParam(Parameter *pTypeParm, ObjectTypes *o
 Bool ScriptConditions::evaluateAllDestroyed(Parameter *pSideParm )
 {
 	Player *pPlayer = playerFromParam(pSideParm);
+
+	//MODDD - for non-standard builds, if this refers to the first slot player, do the check for all players instead.
+	// This stops the game from being overly particular to the first player being in the game. If that player leaves, the
+	// game shouldn't end in defeat until all other slot players are absent/defeated).
+#if FORCE_GAME_CONTEXT != FGC_NONE
+	if (TheGameLogic->getGameMode() != GAME_SHELL && ThePlayerList->getSlotIndex(pPlayer->getPlayerIndex()) == 0)
+	{
+		// check all slot players
+		for (int i=0; i < ThePlayerList->m_slotSoftMax; ++i)
+		{
+			// Also, note the use of 'requireActiveParticipant' instead of 'requireOccupied'.
+			// This means to check for being a non-observer and not previously marked as defeated ('active') as well as for
+			// an occupied slot (intended to have an assigned player vs. being closed/unset).
+			Player* player = ThePlayerList->getPlayerFromSlotIndex_requireActiveParticipant(i);
+			if (player == nullptr)
+				continue;
+			if (player->hasAnyObjects())
+			{
+				// any player is still in -> no defeat for anyone!
+				return false;
+			}
+		}
+		// No players able to be checked or none say they have something nonetheless? Defeated.
+		return true;
+	}
+#endif
+
 	if (pPlayer) {
 		return (!pPlayer->hasAnyObjects());
 	}
@@ -232,6 +259,26 @@ Bool ScriptConditions::evaluateAllDestroyed(Parameter *pSideParm )
 Bool ScriptConditions::evaluateAllBuildFacilitiesDestroyed(Parameter *pSideParm )
 {
 	Player *pPlayer = playerFromParam(pSideParm);
+
+	//MODDD - for non-standard builds, if this refers to the first slot player, do the check for all players instead.
+#if FORCE_GAME_CONTEXT != FGC_NONE
+	if (TheGameLogic->getGameMode() != GAME_SHELL && ThePlayerList->getSlotIndex(pPlayer->getPlayerIndex()) == 0)
+	{
+		// check all slot players
+		for (int i=0; i < ThePlayerList->m_slotSoftMax; ++i)
+		{
+			Player* player = ThePlayerList->getPlayerFromSlotIndex_requireActiveParticipant(i);
+			if (player == nullptr)
+				continue;
+			if (player->hasAnyBuildFacility())
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+#endif
+
 	if (pPlayer) {
 		return (!pPlayer->hasAnyBuildFacility());
 	}
