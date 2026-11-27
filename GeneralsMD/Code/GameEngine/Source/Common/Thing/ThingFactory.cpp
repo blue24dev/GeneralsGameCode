@@ -378,27 +378,8 @@ Object *ThingFactory::newObject( const ThingTemplate *tmplate, Team *team, Objec
 	//the onCreate() calls... in the case of constructing.
 	Object *obj = TheGameLogic->friend_createObject( tmplate, team, statusBits, objectInitLockLocalTemp );
 
-	//MODDD - handle elsewhere
-	/*
-	// run the create function for the thing
-	for (BehaviorModule** m = obj->getBehaviorModules(); *m; ++m)
-	{
-		CreateModuleInterface* create = (*m)->getCreate();
-		if (!create)
-			continue;
-
-		create->onCreate();
-	}
-
-	//
-	// all objects are part of the partition manager system, add it to that
-	// system now
-	//
-	ThePartitionManager->registerObject( obj );
-
-	obj->initObject();
-
-	*/
+	//MODDD - removed - handle these elsewhere
+	// (was CreateModuleInterface -> create->onCreate() calls, ThePartitionManager->registerObject( obj ), obj->initObject())
 	return obj;
 }
 
@@ -410,8 +391,8 @@ Object *ThingFactory::newObject( const ThingTemplate *tmplate, Team *team, const
 	if (obj)
 	{
 		obj->setPosition(pos);
+		obj->finishInGameInit();
 	}
-	obj->finishInGameInit();
 	return obj;
 }
 
@@ -424,8 +405,8 @@ Object *ThingFactory::newObject( const ThingTemplate *tmplate, Team *team, const
 	{
 		obj->setPosition(pos);
 		obj->setOrientation(angle);
+		obj->finishInGameInit();
 	}
-	obj->finishInGameInit();
 	return obj;
 }
 
@@ -437,11 +418,11 @@ Object *ThingFactory::newObject( const ThingTemplate *tmplate, Team *team, const
 	if (obj)
 	{
 		obj->setTransformMatrix(matrix);
+		obj->finishInGameInit();
 	}
-	obj->finishInGameInit();
 	return obj;
 }
-	
+
 //MODDD - new convenience overload to imply 'objectInitLockLocalTemp=true'.
 // The purpose is to defer some initialization (ex: 'onCreate' module calls) until the position/angle are set, so that
 // some sensitive parts of init can run with the final position known instead of with the bogus default '0,0,0'.
