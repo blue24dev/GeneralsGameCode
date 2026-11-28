@@ -90,6 +90,8 @@ public:
 	Bool isAutoSaving() {return m_autoSaving;};
 	void handleCameraChange();
 	void onEditScripts();
+	//MODDD - new
+	void onScriptDialogDestroy();
 
 	//MODDD - getters
 	ObjectOptions* getObjectOptionsPanel() { return &m_objectOptions; }

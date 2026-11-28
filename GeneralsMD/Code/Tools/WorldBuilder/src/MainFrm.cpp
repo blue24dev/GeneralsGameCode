@@ -447,6 +447,13 @@ void CMainFrame::onEditScripts()
 	m_scriptDialog->ShowWindow(SW_SHOWNA);
 }
 
+//MODDD - new
+void CMainFrame::onScriptDialogDestroy()
+{
+	delete m_scriptDialog;
+	m_scriptDialog = nullptr;
+}
+
 //MODDD - new event
 // Called at the start of creating a new map (File -> New, clicking 'OK' in that prompt).
 void CMainFrame::onNewMapStart()

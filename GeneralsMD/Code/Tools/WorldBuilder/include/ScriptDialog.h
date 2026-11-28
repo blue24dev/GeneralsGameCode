@@ -27,15 +27,22 @@ class ListType  {
 public:
 	enum {BOGUS_TYPE = 0, PLAYER_TYPE = 1, GROUP_TYPE, SCRIPT_IN_PLAYER_TYPE, SCRIPT_IN_GROUP_TYPE};
 	unsigned char m_objType;		 // 4 bits
-	unsigned char m_playerIndex; // 4 bits
+	//MODDD - more capacity needed now that over 16 players are possible
+	//unsigned char m_playerIndex; // 4 bits
+	unsigned short m_playerIndex; // 8 bits
 	unsigned short int m_groupIndex;	 // 12 bits
 	unsigned short int m_scriptIndex; // 12 bits
 
-	ListType() {m_objType=BOGUS_TYPE;m_playerIndex=0;m_groupIndex = 0; m_scriptIndex=0;}
+	//MODDD - contents of constructor moved to a new 'reset' method for re-useability
+	ListType() {reset();}
 
-	Int ListToInt() { return((m_objType<<28)+(m_playerIndex<<24)+(m_groupIndex<<12)+m_scriptIndex);}
+	//MODDD - constructor contents moved to here
+	void reset() {m_objType=BOGUS_TYPE;m_playerIndex=0;m_groupIndex = 0; m_scriptIndex=0;}
 
-	void IntToList(int i) {m_objType = ((i)>>28)&0x0F; m_playerIndex = ((i)>>24)&0x0F; m_groupIndex = ((i)>>12)&0x0FFF; m_scriptIndex = (i)&0x0FFF;}
+	//MODDD - no longer fits into an int, sadly
+	//Int ListToInt() { return((m_objType<<28)+(m_playerIndex<<24)+(m_groupIndex<<12)+m_scriptIndex);}
+	//MODDD - same point as above
+	//void IntToList(int i) {m_objType = ((i)>>28)&0x0F; m_playerIndex = ((i)>>24)&0x0F; m_groupIndex = ((i)>>12)&0x0FFF; m_scriptIndex = (i)&0x0FFF;}
 };
 
 class ScriptList;
@@ -96,6 +103,10 @@ protected:
 	CImageList m_imageList;
 	SidesList	m_sides;
 	static ScriptDialog *m_staticThis;
+
+	//MODDD
+	std::vector<ListType> scriptTreeNodeUserDataStore;
+
 	CSDTreeCtrl *mTree;
 	Bool			m_draggingTreeView;
 	Bool m_autoUpdateWarnings;	///< flag whether we should updateWarnings on script editor actions.
@@ -135,6 +146,10 @@ protected:
 
 protected:
 
+	//MODDD - new
+	Int addScriptTreeNodeUserDataItem(const ListType&& userDataItem);
+	const ListType& getScriptTreeNodeUserDataItem(Int scriptTreeNodeID);
+
 	// Generated message map functions
 	//{{AFX_MSG(ScriptDialog)
 	afx_msg void OnSelchangedScriptTree(NMHDR* pNMHDR, LRESULT* pResult);
@@ -150,6 +165,8 @@ protected:
 	afx_msg void OnSave();
 	afx_msg void OnLoad();
 	afx_msg void OnDblclkScriptTree(NMHDR* pNMHDR, LRESULT* pResult);
+	//MODDD - new
+	afx_msg void OnDestroy();
 	virtual void OnOK() override;
 	virtual void OnCancel() override;
 	afx_msg void OnBegindragScriptTree(NMHDR* pNMHDR, LRESULT* pResult);

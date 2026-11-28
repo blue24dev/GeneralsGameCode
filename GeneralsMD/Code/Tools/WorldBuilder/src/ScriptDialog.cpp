@@ -42,6 +42,9 @@
 #include "WaypointOptions.h"
 #include "Common/UnicodeString.h"
 
+//MODDD - new
+#include "MainFrm.h"
+
 
 static const Int K_LOCAL_TEAMS_VERSION_1 = 1;
 
@@ -164,6 +167,8 @@ ScriptDialog::~ScriptDialog()
 {
 	EditParameter::setCurSidesList(nullptr);
 	m_staticThis=nullptr;
+	//MODDD
+	scriptTreeNodeUserDataStore.clear();
 }
 
 
@@ -178,6 +183,8 @@ void ScriptDialog::DoDataExchange(CDataExchange* pDX)
 
 BEGIN_MESSAGE_MAP(ScriptDialog, CDialog)
 	//{{AFX_MSG_MAP(ScriptDialog)
+	//MODDD - new
+	ON_WM_DESTROY()
 	ON_NOTIFY(TVN_SELCHANGED, IDC_SCRIPT_TREE, OnSelchangedScriptTree)
 	ON_BN_CLICKED(IDC_NEW_FOLDER, OnNewFolder)
 	ON_BN_CLICKED(IDC_NEW_SCRIPT, OnNewScript)
@@ -206,10 +213,16 @@ void ScriptDialog::OnSelchangedScriptTree(NMHDR* pNMHDR, LRESULT* pResult)
 	NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
 	CTreeCtrl *pTree = (CTreeCtrl*)GetDlgItem(IDC_SCRIPT_TREE);
 	if (pNMTreeView->itemNew.hItem==nullptr) {
-		m_curSelection.IntToList(0);
+		//MODDD - replaced (intent is to reset all fields of the current selection, not arbitrarily select the first item)
+		//m_curSelection.IntToList(0);
+		m_curSelection.reset();
+
 		m_curSelection.m_objType = ListType::PLAYER_TYPE;
 	} else {
-		m_curSelection.IntToList(pNMTreeView->itemNew.lParam);
+		//MODDD - replaced
+		//m_curSelection.IntToList(pNMTreeView->itemNew.lParam);
+		m_curSelection = getScriptTreeNodeUserDataItem(pNMTreeView->itemNew.lParam);
+
 		DEBUG_ASSERTCRASH(m_curSelection.m_playerIndex <m_sides.getNumSides(),(""));
 		DEBUG_ASSERTCRASH(m_curSelection.m_objType != ListType::BOGUS_TYPE, (""));
 	}
@@ -591,7 +604,11 @@ HTREEITEM ScriptDialog::addPlayer(Int playerIndx)
 	ins.item.mask = TVIF_PARAM|TVIF_TEXT|TVIF_STATE;
 	ins.item.state = INDEXTOSTATEIMAGEMASK(1);
 	ins.item.stateMask = TVIS_STATEIMAGEMASK ;
-	ins.item.lParam = lt.ListToInt();
+
+	//MODDD - replaced
+	//ins.item.lParam = lt.ListToInt();
+	ins.item.lParam = addScriptTreeNodeUserDataItem(std::move(lt));
+
 	ins.item.pszText = (char *)fmt.str();
 	ins.item.cchTextMax = 0;
 	HTREEITEM hItem = pTree->InsertItem(&ins);
@@ -639,8 +656,10 @@ Bool ScriptDialog::updateIcons(HTREEITEM hItem)
 	HTREEITEM child = pTree->GetChildItem(hItem);
 
 	while (child != nullptr) {
-		ListType lt;
-		lt.IntToList(pTree->GetItemData(child));
+		//MODDD - replaced
+		//ListType lt;
+		//lt.IntToList(pTree->GetItemData(child));
+		const ListType& lt = getScriptTreeNodeUserDataItem(pTree->GetItemData(child));
 
 		/// player type
 		if (lt.m_objType == ListType::PLAYER_TYPE)
@@ -707,7 +726,11 @@ void ScriptDialog::addScriptList(HTREEITEM hPlayer, Int playerIndex, ScriptList 
 		ins.hParent = hPlayer;
 		ins.hInsertAfter = TVI_LAST;
 		ins.item.mask = TVIF_PARAM|TVIF_TEXT|TVIF_STATE;
-		ins.item.lParam = lt.ListToInt();
+
+		//MODDD - replaced
+		//ins.item.lParam = lt.ListToInt();
+		ins.item.lParam = addScriptTreeNodeUserDataItem(std::move(lt));
+
 		ins.item.pszText = (char *)fmt.str();
 		ins.item.cchTextMax = 0;
 		ins.item.state = INDEXTOSTATEIMAGEMASK(1);
@@ -740,7 +763,11 @@ void ScriptDialog::addScriptList(HTREEITEM hPlayer, Int playerIndex, ScriptList 
 					warnings = true;
 				}
 				ins.item.stateMask = TVIS_STATEIMAGEMASK ;
-				ins.item.lParam = lt.ListToInt();
+
+				//MODDD - replaced
+				//ins.item.lParam = lt.ListToInt();
+				ins.item.lParam = addScriptTreeNodeUserDataItem(std::move(lt));
+
 				ins.item.pszText = (char *)fmt.str();
 				ins.item.cchTextMax = 0;
 				/*HTREEITEM hItem =*/ pTree->InsertItem(&ins);
@@ -770,7 +797,11 @@ void ScriptDialog::addScriptList(HTREEITEM hPlayer, Int playerIndex, ScriptList 
 				warnings = true;
 			}
 			ins.item.stateMask = TVIS_STATEIMAGEMASK ;
-			ins.item.lParam = lt.ListToInt();
+
+			//MODDD - replaced
+			//ins.item.lParam = lt.ListToInt();
+			ins.item.lParam = addScriptTreeNodeUserDataItem(std::move(lt));
+
 			ins.item.pszText = (char *)fmt.str();
 			ins.item.cchTextMax = 0;
 			/*HTREEITEM hItem =*/ pTree->InsertItem(&ins);
@@ -796,8 +827,12 @@ void ScriptDialog::reloadPlayer(Int playerIndex, ScriptList *pSL)
 		item.mask = TVIF_HANDLE|TVIF_PARAM;
 		item.hItem = player;
 		pTree->GetItem(&item);
-		ListType lt;
-		lt.IntToList(item.lParam);
+
+		//MODDD - replaced
+		//ListType lt;
+		//lt.IntToList(item.lParam);
+		const ListType& lt = getScriptTreeNodeUserDataItem(item.lParam);
+
 		if (lt.m_playerIndex==playerIndex) {
 			break;
 		}
@@ -841,8 +876,12 @@ HTREEITEM ScriptDialog::findItem(ListType sel, Bool failSafe)
 		item.mask = TVIF_HANDLE|TVIF_PARAM;
 		item.hItem = player;
 		pTree->GetItem(&item);
-		ListType lt;
-		lt.IntToList(item.lParam);
+
+		//MODDD - replaced
+		//ListType lt;
+		//lt.IntToList(item.lParam);
+		const ListType& lt = getScriptTreeNodeUserDataItem(item.lParam);
+
 		if (lt.m_playerIndex==sel.m_playerIndex) {
 			break;
 		}
@@ -864,8 +903,12 @@ HTREEITEM ScriptDialog::findItem(ListType sel, Bool failSafe)
 			item.mask = TVIF_HANDLE|TVIF_PARAM;
 			item.hItem = group;
 			pTree->GetItem(&item);
-			ListType lt;
-			lt.IntToList(item.lParam);
+
+			//MODDD - replaced
+			//ListType lt;
+			//lt.IntToList(item.lParam);
+			const ListType& lt = getScriptTreeNodeUserDataItem(item.lParam);
+
 			if (lt.m_groupIndex==sel.m_groupIndex) {
 				break;
 			}
@@ -885,8 +928,12 @@ HTREEITEM ScriptDialog::findItem(ListType sel, Bool failSafe)
 		item.mask = TVIF_HANDLE|TVIF_PARAM;
 		item.hItem = script;
 		pTree->GetItem(&item);
-		ListType lt;
-		lt.IntToList(item.lParam);
+
+		//MODDD - replaced
+		//ListType lt;
+		//lt.IntToList(item.lParam);
+		const ListType& lt = getScriptTreeNodeUserDataItem(item.lParam);
+
 		if (sel.m_objType == ListType::SCRIPT_IN_PLAYER_TYPE && lt.m_objType == ListType::GROUP_TYPE) {
 			continue;
 		}
@@ -1939,6 +1986,13 @@ void ScriptDialog::OnDblclkScriptTree(NMHDR* pNMHDR, LRESULT* pResult)
 	*pResult = 0;
 }
 
+//MODDD - new - strangely not observed to be called on closure by clicking the OK or Cancel buttons?
+void ScriptDialog::OnDestroy()
+{
+	CMainFrame::GetMainFrame()->onScriptDialogDestroy();
+	CDialog::OnDestroy();
+}
+
 void ScriptDialog::OnOK()
 {
 	CWorldBuilderDoc* pDoc = CWorldBuilderDoc::GetActiveDoc();
@@ -1946,12 +2000,16 @@ void ScriptDialog::OnOK()
 	pDoc->AddAndDoUndoable(pUndo);
 	REF_PTR_RELEASE(pUndo); // belongs to pDoc now.
 	CDialog::OnOK();
+	//MODDD - needed because 'OnDestroy' isn't being called?
+	CMainFrame::GetMainFrame()->onScriptDialogDestroy();
 }
 
 void ScriptDialog::OnCancel()
 {
 
 	CDialog::OnCancel();
+	//MODDD - needed because 'OnDestroy' isn't being called?
+	CMainFrame::GetMainFrame()->onScriptDialogDestroy();
 }
 
 void ScriptDialog::OnBegindragScriptTree(NMHDR* pNMHDR, LRESULT* pResult)
@@ -1959,7 +2017,10 @@ void ScriptDialog::OnBegindragScriptTree(NMHDR* pNMHDR, LRESULT* pResult)
 	NM_TREEVIEW* pNMTreeView = (NM_TREEVIEW*)pNMHDR;
 	CTreeCtrl *pTree = (CTreeCtrl*)GetDlgItem(IDC_SCRIPT_TREE);
 
-	m_curSelection.IntToList(pNMTreeView->itemNew.lParam);
+	//MODDD - replaced
+	//m_curSelection.IntToList(pNMTreeView->itemNew.lParam);
+	m_curSelection = getScriptTreeNodeUserDataItem(pNMTreeView->itemNew.lParam);
+
 	if (m_curSelection.m_objType != ListType::PLAYER_TYPE) {
 		m_dragItem = pNMTreeView->itemNew.hItem;
     pTree->SelectItem(m_dragItem);
@@ -2014,10 +2075,16 @@ void ScriptDialog::doDropOn(HTREEITEM hDrag, HTREEITEM hTarget)
 {
 	if (hDrag == hTarget) return;
 	CTreeCtrl *pTree = (CTreeCtrl*)GetDlgItem(IDC_SCRIPT_TREE);
-	ListType drag;
-	drag.IntToList(pTree->GetItemData(hDrag));
-	ListType target;
-	target.IntToList(pTree->GetItemData(hTarget));
+
+	//MODDD - replaced
+	//ListType drag;
+	//drag.IntToList(pTree->GetItemData(hDrag));
+	ListType drag = getScriptTreeNodeUserDataItem(pTree->GetItemData(hDrag));
+
+	//MODDD - replaced
+	//ListType target;
+	//target.IntToList(pTree->GetItemData(hTarget));
+	ListType target = getScriptTreeNodeUserDataItem(pTree->GetItemData(hTarget));
 
 	Script *dragScript = nullptr;
 	ScriptGroup *dragGroup = nullptr;
@@ -2158,4 +2225,15 @@ void ScriptDialog::OnScriptActivate()
 				pTree->SetItemState(item, INDEXTOSTATEIMAGEMASK(5), TVIS_STATEIMAGEMASK);
 		}
 	}
+}
+
+//MODDD
+Int ScriptDialog::addScriptTreeNodeUserDataItem(const ListType&& userDataItem)
+{
+	scriptTreeNodeUserDataStore.push_back(userDataItem);
+	return scriptTreeNodeUserDataStore.size() - 1;
+}
+const ListType& ScriptDialog::getScriptTreeNodeUserDataItem(Int scriptTreeNodeID)
+{
+	return scriptTreeNodeUserDataStore[scriptTreeNodeID];
 }
